@@ -1,8 +1,8 @@
 // Node-only helpers. Kept out of the main entry so the editor UI and engine
 // bundles never import node:fs.
-import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
-import type { ProjectFs } from "./fs.ts";
+import { KEEP_FILE, type ProjectFs } from "./fs.ts";
 
 /** A project folder on local disk (D12). */
 export class NodeFs implements ProjectFs {
@@ -13,17 +13,30 @@ export class NodeFs implements ProjectFs {
     return join(this.root, ...path.split("/"));
   }
 
-  async list() {
-    const out: string[] = [];
-    const walk = async (dir: string) => {
+  private async walk(onFile: (rel: string) => void, onDir: (rel: string) => void) {
+    const go = async (dir: string) => {
       for (const entry of await readdir(dir, { withFileTypes: true })) {
         if (entry.name.startsWith(".")) continue;
         const full = join(dir, entry.name);
-        if (entry.isDirectory()) await walk(full);
-        else if (entry.isFile()) out.push(relative(this.root, full).split(sep).join("/"));
+        const rel = relative(this.root, full).split(sep).join("/");
+        if (entry.isDirectory()) {
+          onDir(rel);
+          await go(full);
+        } else if (entry.isFile()) onFile(rel);
       }
     };
-    await walk(this.root);
+    await go(this.root);
+  }
+
+  async list() {
+    const out: string[] = [];
+    await this.walk((f) => out.push(f), () => {});
+    return out.sort();
+  }
+
+  async listFolders() {
+    const out: string[] = [];
+    await this.walk(() => {}, (d) => out.push(d));
     return out.sort();
   }
 
@@ -32,15 +45,50 @@ export class NodeFs implements ProjectFs {
   }
 
   /** Write to a temp file then rename, so a crash mid-autosave never leaves a half-written file. */
-  async writeText(path: string, content: string) {
+  private async atomicWrite(path: string, content: string | Uint8Array) {
     const target = this.abs(path);
     await mkdir(dirname(target), { recursive: true });
     const tmp = `${target}.${process.pid}.tmp`;
-    await writeFile(tmp, content, "utf8");
+    await writeFile(tmp, content, typeof content === "string" ? "utf8" : undefined);
     await rename(tmp, target);
+  }
+
+  writeText(path: string, content: string) {
+    return this.atomicWrite(path, content);
+  }
+
+  writeBytes(path: string, bytes: Uint8Array) {
+    return this.atomicWrite(path, bytes);
+  }
+
+  async move(from: string, to: string) {
+    const target = this.abs(to);
+    await mkdir(dirname(target), { recursive: true });
+    await rename(this.abs(from), target);
   }
 
   async remove(path: string) {
     await rm(this.abs(path), { force: true });
+  }
+
+  async makeFolder(path: string) {
+    await mkdir(this.abs(path), { recursive: true });
+  }
+
+  async removeFolder(path: string) {
+    const dir = this.abs(path);
+    let entries: string[];
+    try {
+      entries = await readdir(dir);
+    } catch {
+      return;
+    }
+    if (entries.some((e) => e !== KEEP_FILE)) return;
+    await rm(join(dir, KEEP_FILE), { force: true });
+    await rmdir(dir);
+  }
+
+  async removeTree(path: string) {
+    await rm(this.abs(path), { recursive: true, force: true });
   }
 }

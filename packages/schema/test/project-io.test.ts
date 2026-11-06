@@ -8,6 +8,7 @@ import {
   classify,
   loadProject,
   migrate,
+  isEmptyPlan,
   moveAsset,
   planSave,
   saveProject,
@@ -54,7 +55,7 @@ describe("round-trip (spec 01 acceptance)", () => {
     const before = await snapshot(dir);
     const { project } = await loadProject(fs);
     const { plan } = await saveProject(fs, project);
-    expect(plan).toEqual({ writes: [], deletes: [] });
+    expect(plan).toSatisfy(isEmptyPlan);
     expect(await snapshot(dir)).toEqual(before);
   });
 
@@ -75,7 +76,7 @@ describe("round-trip (spec 01 acceptance)", () => {
     expect(first.plan.writes.map((w) => w.path)).toEqual(["items/coin.item.yaml"]);
     expect(fs.files.get("items/coin.item.yaml")).toBe(original);
     const second = await saveProject(fs, (await loadProject(fs)).project);
-    expect(second.plan).toEqual({ writes: [], deletes: [] });
+    expect(second.plan).toSatisfy(isEmptyPlan);
   });
 
   it("writes only the file whose data changed", async () => {

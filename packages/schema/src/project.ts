@@ -5,7 +5,7 @@ import { CharacterFile } from "./character.ts";
 import { Id } from "./common.ts";
 import { DialogueFile } from "./dialogue.ts";
 import { FlagsFile } from "./flags.ts";
-import type { ProjectFs } from "./fs.ts";
+import { KEEP_FILE, type ProjectFs } from "./fs.ts";
 import { GameFile } from "./game.ts";
 import { ItemFile } from "./item.ts";
 import { migrate } from "./migrate.ts";
@@ -30,10 +30,16 @@ export interface Project {
   items: Doc<ItemFile>[];
   characters: Doc<CharacterFile>[];
   dialogues: Doc<DialogueFile>[];
-  /** Every file on disk at load time (used to check that asset files exist). */
+  /** Browser folders inside the section roots, e.g. `scenes/act1` (D83). Sorted. */
+  folders: string[];
+  // Disk state: what is on disk as of the last load or save. Undo history keeps
+  // the fields above and carries these over from the current project (D84).
+  /** Every file on disk (used to check that asset files exist). */
   files: string[];
   /** Text of each file as last loaded or saved; `planSave` diffs against it. */
   saved: Record<string, string>;
+  /** `folders` as last loaded or saved. */
+  savedFolders: string[];
 }
 
 export const SCHEMAS = {
@@ -58,6 +64,28 @@ export const ASSET_LAYOUT = {
 
 type ListKey = (typeof ASSET_LAYOUT)[AssetKind]["list"];
 
+/** Kinds that live in a browser section made of real folders (D83). */
+export type FolderSection = AssetKind | "image" | "audio";
+
+/** The folder each section's folders live under. */
+export const SECTION_ROOTS: Record<FolderSection, string> = {
+  scene: "scenes",
+  item: "items",
+  character: "characters",
+  dialogue: "dialogues",
+  image: "assets/images",
+  audio: "assets/audio",
+};
+
+/** Which section a project folder path belongs to, if any (section roots themselves aren't folders). */
+export function sectionOfFolder(path: string): FolderSection | null {
+  let best: FolderSection | null = null;
+  for (const [section, root] of Object.entries(SECTION_ROOTS) as [FolderSection, string][]) {
+    if (path.startsWith(`${root}/`) && (best === null || root.length > SECTION_ROOTS[best].length)) best = section;
+  }
+  return best;
+}
+
 /** Which kind of project file a path is, or null if it isn't one. */
 export function classify(path: string): FileKind | null {
   for (const [kind, file] of Object.entries(ROOT_FILES)) if (path === file) return kind as FileKind;
@@ -68,7 +96,19 @@ export function classify(path: string): FileKind | null {
 }
 
 export function emptyProject(): Project {
-  return { game: null, flags: null, assets: null, scenes: [], items: [], characters: [], dialogues: [], files: [], saved: {} };
+  return {
+    game: null,
+    flags: null,
+    assets: null,
+    scenes: [],
+    items: [],
+    characters: [],
+    dialogues: [],
+    folders: [],
+    files: [],
+    saved: {},
+    savedFolders: [],
+  };
 }
 
 const lastKey = (path: DataPath) => {
@@ -127,6 +167,8 @@ export async function loadProject(fs: ProjectFs): Promise<{ project: Project; pr
   const project = emptyProject();
   const problems: Problem[] = [];
   project.files = await fs.list();
+  project.folders = (await fs.listFolders()).filter((d) => sectionOfFolder(d) !== null).sort();
+  project.savedFolders = project.folders;
   for (const file of Object.values(ROOT_FILES)) {
     if (!project.files.includes(file)) {
       problems.push({ severity: "error", code: "missing_file", breadcrumb: file, message: "is missing from the project folder.", location: { file, path: [] } });
@@ -161,9 +203,19 @@ export function* allDocs(project: Project): Generator<{ kind: FileKind; doc: Doc
 }
 
 export interface SavePlan {
+  /** New folders to create. Parents first. */
+  makeFolders: string[];
+  /** Folders that get a `.keep` file because they'll be empty (D83). */
+  keeps: string[];
   writes: { path: string; content: string }[];
   deletes: string[];
+  /** Folders that were removed from the project. Deepest first; only removed once empty. */
+  removeFolders: string[];
 }
+
+/** True when a save would touch nothing. */
+export const isEmptyPlan = (plan: SavePlan) =>
+  plan.makeFolders.length + plan.keeps.length + plan.writes.length + plan.deletes.length + plan.removeFolders.length === 0;
 
 export class SaveError extends Error {
   constructor(readonly problems: Problem[]) {
@@ -194,20 +246,39 @@ export function planSave(project: Project): SavePlan {
   }
   if (problems.length) throw new SaveError(problems);
   const deletes = Object.keys(project.saved).filter((p) => !current.has(p)).sort();
-  return { writes, deletes };
+  const folders = new Set(project.folders);
+  const savedFolders = new Set(project.savedFolders);
+  // A folder needs a `.keep` when it's new, or when its last file or sub-folder leaves (D83).
+  const nowPaths = [...current, ...assetEntries(project.assets?.data).map((e) => e.path)];
+  const beforePaths = [...Object.keys(project.saved), ...project.files];
+  const isEmpty = (f: string, paths: string[], dirs: string[]) =>
+    !paths.some((p) => p.startsWith(`${f}/`)) && !dirs.some((d) => d.startsWith(`${f}/`));
+  const makeFolders = project.folders.filter((f) => !savedFolders.has(f)).sort();
+  const keeps = project.folders
+    .filter(
+      (f) =>
+        isEmpty(f, nowPaths, project.folders) &&
+        (!savedFolders.has(f) || !isEmpty(f, beforePaths, project.savedFolders)),
+    )
+    .sort();
+  const removeFolders = project.savedFolders.filter((f) => !folders.has(f)).sort().reverse();
+  return { makeFolders, keeps, writes, deletes, removeFolders };
 }
 
 /** Saves changed files and returns the project with its saved snapshot updated. */
 export async function saveProject(fs: ProjectFs, project: Project): Promise<{ project: Project; plan: SavePlan }> {
   const plan = planSave(project);
+  for (const path of plan.makeFolders) await fs.makeFolder(path);
+  for (const path of plan.keeps) await fs.writeText(`${path}/${KEEP_FILE}`, "");
   // Write before deleting, so a failed write never loses the old copy of a moved file.
   for (const { path, content } of plan.writes) await fs.writeText(path, content);
   for (const path of plan.deletes) await fs.remove(path);
+  for (const path of plan.removeFolders) await fs.removeFolder(path);
   const saved = { ...project.saved };
   for (const { path, content } of plan.writes) saved[path] = content;
   for (const path of plan.deletes) delete saved[path];
   const files = [...new Set([...project.files.filter((f) => !plan.deletes.includes(f)), ...plan.writes.map((w) => w.path)])].sort();
-  return { project: { ...project, saved, files }, plan };
+  return { project: { ...project, saved, files, savedFolders: project.folders }, plan };
 }
 
 const FOLDER_SEGMENT = /^[^/\\.][^/\\]*$/;
@@ -226,6 +297,26 @@ export function folderOf(path: string): string {
   return path.split("/").slice(1, -1).join("/");
 }
 
+/** Every image and audio entry of an assets manifest. */
+export function assetEntries(assets: AssetsFile | undefined): { kind: "image" | "audio"; id: string; path: string }[] {
+  if (!assets) return [];
+  return [
+    ...assets.images.map((a) => ({ kind: "image" as const, id: a.id, path: a.path })),
+    ...assets.audio.map((a) => ({ kind: "audio" as const, id: a.id, path: a.path })),
+  ];
+}
+
+/** The project with `folder` (a full path like `scenes/a/b`) and its parents added to `folders`. */
+export function withFolder(project: Project, folder: string): Project {
+  const section = sectionOfFolder(folder);
+  if (!section) throw new Error(`Not a folder inside a section: ${folder}`);
+  const root = SECTION_ROOTS[section];
+  const segs = folder.slice(root.length + 1).split("/");
+  if (!segs.every((s) => FOLDER_SEGMENT.test(s))) throw new Error(`Invalid folder name: ${folder}`);
+  const add = segs.map((_, i) => [root, ...segs.slice(0, i + 1)].join("/")).filter((f) => !project.folders.includes(f));
+  return add.length ? { ...project, folders: [...project.folders, ...add].sort() } : project;
+}
+
 /** Moves an asset to another folder. Only its file path changes (D22). */
 export function moveAsset(project: Project, kind: AssetKind, id: string, folder: string): Project {
   const list = ASSET_LAYOUT[kind].list as ListKey;
@@ -236,5 +327,6 @@ export function moveAsset(project: Project, kind: AssetKind, id: string, folder:
   if (path !== doc.path && [...allDocs(project)].some(({ doc: d }) => d.path === path)) {
     throw new Error(`A file already exists at ${path}`);
   }
-  return { ...project, [list]: docs.map((d) => (d === doc ? { ...d, path } : d)) };
+  const withDir = folder === "" ? project : withFolder(project, `${ASSET_LAYOUT[kind].dir}/${folder}`);
+  return { ...withDir, [list]: docs.map((d) => (d === doc ? { ...d, path } : d)) };
 }

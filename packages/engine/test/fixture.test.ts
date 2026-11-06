@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadProject, planSave, validateProject, type CharacterFile, type Project } from "@questforge/schema";
+import { isEmptyPlan, loadProject, planSave, validateProject, type CharacterFile, type Project } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { Session } from "../src/session.ts";
 import { sheetFits, type Rect } from "../src/sprite.ts";
@@ -50,7 +50,7 @@ describe("the M1 fixture", () => {
     const { project, problems } = await load();
     expect(problems).toEqual([]);
     expect(validateProject(project)).toEqual([]);
-    expect(planSave(project)).toEqual({ writes: [], deletes: [] });
+    expect(planSave(project)).toSatisfy(isEmptyPlan);
   });
 
   it("has real PNGs whose sheets fit", async () => {
