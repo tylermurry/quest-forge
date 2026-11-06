@@ -56,3 +56,32 @@ input:focus, textarea:focus { outline: 1px solid var(--accent); }
 .tabs { grid-area: tabs; overflow: auto; min-height: 0; display: flex; flex-direction: column; }
 .inspector { grid-area: inspector; background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 10px; min-height: 0; }
 .dock { grid-area: dock; border-top: 1px solid var(--line); background: var(--panel); overflow: auto; min-height: 0; display: flex; flex-direction: column; }
+
+/* Project browser */
+.project-browser { display: flex; flex-direction: column; min-height: 100%; }
+.project-browser .search { margin: 8px; }
+.project-browser ul { list-style: none; margin: 0; padding: 0; }
+.node { display: flex; align-items: center; gap: 4px; padding: 2px 6px; min-height: 24px; cursor: default; border: 1px solid transparent; }
+.node:hover { background: var(--panel-2); }
+.node.selected { background: var(--accent-bg); }
+.node[data-drop="true"] { border-color: var(--accent); background: #24354f; }
+.node .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.node.section { font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--muted); margin-top: 6px; }
+.node .twisty { background: none; border: none; padding: 0 2px; width: 16px; color: var(--muted); }
+.node .more { background: none; border: none; padding: 0 4px; color: var(--muted); visibility: hidden; }
+.node:hover .more, .node.selected .more { visibility: visible; }
+.node .icon { font-size: 11px; }
+.node .count { font-weight: normal; }
+.node:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
+.rename { flex: 1; min-width: 0; padding: 0 4px; }
+
+/* Menus and dialogs */
+.menu { position: fixed; z-index: 20; list-style: none; margin: 0; padding: 4px 0; min-width: 160px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 24px #0008; }
+.menu button { width: 100%; text-align: left; background: none; border: none; border-radius: 0; padding: 4px 12px; }
+.menu button:hover:not(:disabled) { background: var(--accent-bg); }
+.backdrop { position: fixed; inset: 0; z-index: 30; background: #0007; display: grid; place-items: center; }
+.dialog { width: min(480px, 92vw); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; box-shadow: 0 12px 48px #000a; }
+.dialog h3 { margin: 0 0 10px; font-size: 15px; }
+.dialog .refs { max-height: 200px; overflow: auto; margin: 6px 0; padding-left: 18px; color: var(--text); }
+.dialog .field { display: flex; flex-direction: column; gap: 4px; }
+.row.end { justify-content: flex-end; margin-top: 12px; }

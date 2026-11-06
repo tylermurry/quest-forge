@@ -1,6 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
+import { WorkspaceState } from "../model/workspace.ts";
+import { ProjectBrowser } from "./ProjectBrowser.tsx";
 import { useEditor } from "./hooks.ts";
 
 interface Props {
@@ -14,6 +17,9 @@ const STATUS_TEXT = { saved: "Saved", unsaved: "Unsaved changes", saving: "Savin
 /** Main layout (spec 08): browser · tabs · inspector · dock. */
 export function Workspace({ editor, onClose }: Props) {
   const ed = useEditor(editor);
+  const [actions] = useState(() => new Actions(editor, new WorkspaceState()));
+  const ws = actions.ws;
+  useSyncExternalStore(ws.subscribe, () => ws.version);
   const status = ed.status;
 
   useEffect(() => {
@@ -66,7 +72,9 @@ export function Workspace({ editor, onClose }: Props) {
           </button>
         </div>
       )}
-      <aside className="browser">Project</aside>
+      <aside className="browser">
+        <ProjectBrowser actions={actions} />
+      </aside>
       <main className="tabs">Editor</main>
       <aside className="inspector">Inspector</aside>
       <footer className="dock">Problems</footer>
