@@ -45,10 +45,10 @@ export class WorkspaceState {
   pointPick: (PointPick & { restore: Selection }) | null = null;
   /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
   highlight: Highlight | null = null;
-  /** The Dock's open tab. */
-  dockTab: "problems" | "playtest" = "problems";
-  /** Bumped when something asks to show the Dock (e.g. Play blocked by errors opens Problems, D38); the Workspace expands it. */
+  /** Bumped when something asks to show the Problems dock (e.g. Play blocked by errors, D38); the Workspace expands it. */
   dockRequest = 0;
+  /** Bumped by every jump-to so the Workspace shows the Inspector before the spot is highlighted. */
+  inspectorRequest = 0;
   /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
   readonly sceneUi = new SceneUiStore();
 
@@ -91,15 +91,8 @@ export class WorkspaceState {
     this.changed();
   }
 
-  setDockTab(tab: "problems" | "playtest") {
-    if (this.dockTab === tab) return;
-    this.dockTab = tab;
-    this.changed();
-  }
-
-  /** Opens the Dock on a tab, expanding it if it is collapsed. */
-  showDock(tab: "problems" | "playtest") {
-    this.dockTab = tab;
+  /** Shows the Problems dock, expanding it if it is collapsed. */
+  showProblems() {
     this.dockRequest++;
     this.changed();
   }
@@ -135,6 +128,7 @@ export class WorkspaceState {
 
   /** Jump-to from a problem (spec 14, D120): opens and selects the exact thing, then highlights the spot. */
   jumpTo({ target, location }: Jump) {
+    this.inspectorRequest++;
     switch (target.kind) {
       case "entry":
         if (opensTab(target.entry.section)) this.open(target.entry);

@@ -19,12 +19,11 @@ const pondLook = (text: string) => (s: SceneFile): SceneFile => ({
 });
 
 describe("Play and the validation gate (D38)", () => {
-  it("Play starts at the game start and opens the Playtest tab", async () => {
-    const { playtest, ws, session, dispose } = await playtestEditor();
+  it("Play starts at the game start", async () => {
+    const { playtest, session, dispose } = await playtestEditor();
     expect(playtest.play()).toBe(true);
     expect(session().scene.id).toBe("garden");
     expect(session().world.player.pos).toEqual([200, 380]);
-    expect(ws.dockTab).toBe("playtest");
     dispose();
   });
 
@@ -34,7 +33,6 @@ describe("Play and the validation gate (D38)", () => {
     const before = ws.dockRequest;
     expect(playtest.play()).toBe(false);
     expect(playtest.playing).toBe(false);
-    expect(ws.dockTab).toBe("problems");
     expect(ws.dockRequest).toBe(before + 1);
     expect(editor.notice?.kind).toBe("error");
     expect(editor.notice?.text).toMatch(/Problems/);

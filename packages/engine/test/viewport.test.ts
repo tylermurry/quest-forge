@@ -19,6 +19,14 @@ describe("fitViewport (spec 03, D31)", () => {
     expect(v.offsetY).toBe(200); // letterboxed top and bottom
   });
 
+  it("fill scales fractionally above 1× too, still letterboxed (playtest window, D135)", () => {
+    const v = fitViewport(1000, 560, 1, true);
+    expect(v.scale).toBeCloseTo(1.4);
+    expect(v.offsetX).toBe(52);
+    expect(v.offsetY).toBe(0);
+    expect(fitViewport(1000, 560).scale).toBe(1);
+  });
+
   it("never crops: the scene always fits", () => {
     for (const [w, h] of [[375, 812], [812, 375], [1000, 1000], [641, 401], [3000, 500]] as const) {
       const v = fitViewport(w, h);

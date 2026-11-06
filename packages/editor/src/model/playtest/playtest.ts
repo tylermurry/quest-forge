@@ -1,5 +1,5 @@
 // Playtest (spec 12, D126–D132): runs the engine on a snapshot of the in-memory
-// project in the Dock. DOM-free: the Dock mounts the canvas for the current run
+// project in the playtest area. DOM-free: the playtest area mounts the canvas for the current run
 // and hands the engine's session back with `attach`; Node tests build the session
 // themselves through `createSession`.
 import { DEBUG_OFF, type DebugFlags, type GameState, type Session, type SessionStart, type TraceEvent } from "@questforge/engine";
@@ -17,7 +17,7 @@ export type RunOrigin =
 
 /** One launch of the engine: the project it plays and how its session starts. */
 export interface Run {
-  /** Changes on every launch, so the Dock remounts the game. */
+  /** Changes on every launch, so the playtest area remounts the game. */
   readonly id: number;
   readonly project: Project;
   readonly start: SessionStart;
@@ -25,7 +25,7 @@ export interface Run {
 }
 
 export interface PlaytestOptions {
-  /** Builds the session at once (Node tests). Without it the Dock's canvas calls `attach`. */
+  /** Builds the session at once (Node tests). Without it the area's canvas calls `attach`. */
   createSession?(run: Run, hooks: { trace: (e: TraceEvent) => void; restart: () => void }): Session;
 }
 
@@ -42,7 +42,7 @@ export class Playtest {
   private nextId = 1;
   /** Engine trace events of the current run; the event log formats them (D129). */
   readonly events: TraceEvent[] = [];
-  /** Turned-on debug layers (D132). The Dock passes this object to the engine, which reads it each frame. */
+  /** Turned-on debug layers (D132). The game view passes this object to the engine, which reads it each frame. */
   readonly debug: DebugFlags = { ...DEBUG_OFF };
   /** Named state snapshots in `.editor/presets.json` (D126). */
   readonly presets = new PresetStore();
@@ -145,14 +145,14 @@ export class Playtest {
     this.changed();
   }
 
-  /** The Dock's game for `run` has loaded; ignored if a newer run replaced it. */
+  /** The playtest area's game for `run` has loaded; ignored if a newer run replaced it. */
   attach(run: Run, session: Session) {
     if (this._run !== run) return;
     this._session = session;
     this.changed();
   }
 
-  /** The hooks a session for the current run needs (the Dock passes them to createGame). */
+  /** The hooks a session for the current run needs (the game view passes them to createGame). */
   hooks(run: Run) {
     return {
       trace: (e: TraceEvent) => {
@@ -173,7 +173,7 @@ export class Playtest {
     this.editor.validateNow();
     const errors = this.editor.problems.filter((p) => p.severity === "error");
     if (!hasBlockingErrors(this.editor.problems)) return true;
-    this.ws.showDock("problems");
+    this.ws.showProblems();
     this.editor.showNotice({ kind: "error", text: `Fix ${errors.length === 1 ? "the error" : `the ${errors.length} errors`} in Problems before playing.` });
     return false;
   }
@@ -193,7 +193,6 @@ export class Playtest {
     this._session = null;
     this.events.length = 0;
     if (this.options.createSession) this._session = this.options.createSession(run, this.hooks(run));
-    this.ws.showDock("playtest");
     this.changed();
     return true;
   }

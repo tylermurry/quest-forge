@@ -8,7 +8,7 @@ export interface CommandSpec {
   id: string;
   label: string;
   menu: MenuName;
-  /** `Mod` is Cmd on macOS and Ctrl elsewhere, e.g. `Mod+Shift+Z`. */
+  /** `Mod` is Cmd on macOS and Ctrl elsewhere, e.g. `Mod+Shift+Z`; `Ctrl` is the Control key everywhere. */
   shortcut?: string;
   /** Draw a separator above it in its menu. */
   separated?: boolean;
@@ -29,7 +29,8 @@ export const COMMANDS = [
   { id: "edit.delete", label: "Delete", menu: "edit", shortcut: "Backspace", separated: true },
   { id: "view.browser", label: "Project Browser", menu: "view", shortcut: "Mod+1" },
   { id: "view.inspector", label: "Inspector", menu: "view", shortcut: "Mod+2" },
-  { id: "view.dock", label: "Problems and Playtest", menu: "view", shortcut: "Mod+3" },
+  { id: "view.dock", label: "Problems", menu: "view", shortcut: "Mod+3" },
+  { id: "view.panels", label: "Hide All Panels", menu: "view", shortcut: "Ctrl+\\", separated: true },
   { id: "scene.tool.select", label: "Select / Move Tool", menu: "scene", shortcut: "V" },
   { id: "scene.tool.polygon", label: "Polygon Tool", menu: "scene", shortcut: "P" },
   { id: "scene.tool.rect", label: "Rectangle Tool", menu: "scene", shortcut: "R" },
@@ -118,7 +119,8 @@ export interface KeyPress {
 export function matchesShortcut(shortcut: string, e: KeyPress, mac: boolean): boolean {
   const parts = shortcut.split("+");
   const key = parts.pop()!.toLowerCase();
-  const want = { mod: parts.includes("Mod"), shift: parts.includes("Shift"), alt: parts.includes("Alt") };
+  const want = { mod: parts.includes("Mod"), ctrl: parts.includes("Ctrl"), shift: parts.includes("Shift"), alt: parts.includes("Alt") };
+  if (want.ctrl) return e.key.toLowerCase() === key && e.ctrlKey && !e.metaKey && e.shiftKey === want.shift && e.altKey === want.alt;
   const mod = mac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
   return e.key.toLowerCase() === key && mod === want.mod && e.shiftKey === want.shift && e.altKey === want.alt;
 }
@@ -131,7 +133,10 @@ const isFunctionKey = (shortcut: string) => /^F\d{1,2}$/.test(shortcut.split("+"
  * these in both hosts and never inside a text field; the native menu lists them
  * without an accelerator so it can't swallow typing. Function keys aren't plain.
  */
-export const isPlainShortcut = (shortcut: string) => !shortcut.split("+").includes("Mod") && !isFunctionKey(shortcut);
+export const isPlainShortcut = (shortcut: string) => {
+  const parts = shortcut.split("+");
+  return !parts.includes("Mod") && !parts.includes("Ctrl") && !isFunctionKey(shortcut);
+};
 
 export interface KeyOptions {
   /** Only plain shortcuts (the native menu handles the rest). */
@@ -159,4 +164,5 @@ export function commandForKey(e: KeyPress, mac: boolean, inTextField: boolean, o
 }
 
 /** Tauri accelerator form of a shortcut: `Mod+Shift+Z` → `CmdOrCtrl+Shift+Z`. */
-export const accelerator = (shortcut: string) => shortcut.replace("Mod", "CmdOrCtrl").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus");
+export const accelerator = (shortcut: string) =>
+  shortcut.replace("Mod", "CmdOrCtrl").replace(/^Ctrl\+/, "Control+").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash");

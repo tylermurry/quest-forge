@@ -45,7 +45,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   behind a `SequenceHost`), `session.ts` (a game being played: state, verbs, scene changes, regions,
   text), `ui/` (`textbox.ts` layout and timing, `layout.ts` 44 CSS px controls, `controller.ts`
   pointer input → bar/inventory/session, `icons.ts` + `draw.ts` drawing), `render.ts` (Canvas 2D),
-  `game.ts` (`createGame`, image cache, DOM glue).
+  `game.ts` (`createGame`, image cache, DOM glue), `trace.ts` (playtest trace events, D129), `debug.ts` (debug layer
+  shapes, D132).
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.
   Only `game.ts`, `render.ts`, `ui/draw.ts` and `ui/icons.ts` touch the canvas or DOM.
 - Everything that must survive a scene change or a save lives in `GameState` as plain JSON (D75).
@@ -147,6 +148,20 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `model/problemList.ts` filters the panel. UI in `ui/rules/` (`RuleInspector`, `RuleCard`, `PartFields`, `Picker`,
   `GameInspector`); `Dock.tsx` is the Problems panel. Every Inspector page goes through `ui/InspectorShell.tsx` (sticky
   title, Details / Rules tabs for rule owners, tab in `ws.inspectorTab`, D125). Rule cards are dnd-kit sortables tagged `kind: "ruleCard"`.
+- Playtest (M6, spec 12, D126–D135): DOM-free logic in `packages/editor/src/model/playtest/`: `playtest.ts` (`Playtest`: runs,
+  the D38 gate via `validateNow()`, Restart = the run's origin, Restart scene = `session.entry` + the current project, `stale`,
+  `hooks(run)` for trace and the in-game Restart), `state.ts` (`stateView`, `applyStateEdit`; live edits mutate the session's
+  GameState and are never undo steps), `presets.ts` (`PresetStore` on `.editor/presets.json`, `readState`, `sanitizeState` drops
+  stale IDs; every saved-state start goes through it), `log.ts` (`formatLog(events, runProject, nowProject)`: trace → plain-English
+  lines from `rules/vocab.ts`, jumps found by rule ID). The engine side: `Session` takes `SessionHooks` (`trace`, `restart`) and
+  `SessionStart.state`; `firstMatch` takes an optional `RuleReport`; `debugShapes(world, flags)` is what the toggles draw. Nothing
+  is traced unless a hook is passed, so the exported game is unchanged. UI in `ui/playtest/` (`PlaytestPanel`, `GameView` mounts
+  `createGame` per run with `key={run.id}`, `StatePanel`, `EventLog`, `Presets`); panels re-render through `usePlaytest`
+  (once a frame, plus every 200 ms while playing). `PlaytestArea` replaces the scene editor and Problems in `Workspace` while `playtest.playing`, which also collapses the browser and inspector until Stop (D133); `ws.showProblems()` expands the Problems dock.
+  Play commands are `play.*` in a Play menu; F-keys are accelerators, not plain shortcuts. The game canvas has
+  `data-playtest-game`: plain shortcuts and Space skip it (`inPlaytestGame`), Escape blurs it. Tests use
+  `test/support/playtest.ts` (`playtestEditor()` on an m1 disk copy, headless sessions, `tap`/`settle`). Dev page:
+  `window.game` is the running playtest game.
 - Validation is debounced: `Editor.problems` is the last result, refreshed 250 ms after a change (D120). Tests call
   `editor.validateNow()` instead of waiting. Browser-tool clicks by `ref` may scroll the page first; prefer coordinates or a
   JS `click()` when testing popovers. Radix dropdowns open from the keyboard in jsdom (`focus()` + `{Enter}`).

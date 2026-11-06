@@ -41,6 +41,8 @@ export interface GameOptions {
   restart?: () => void;
   /** Playtest debug layers (D132), changeable while playing through `Game.debug`. */
   debug?: Partial<DebugFlags>;
+  /** Scale to fill the canvas instead of whole multiples (the editor's playtest area, D135). Still letterboxed. */
+  fill?: boolean;
 }
 
 export interface Game {
@@ -73,6 +75,9 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   if (!scene) throw new Error(`Scene ${sceneId} doesn't exist`);
   const characters = new Map<string, CharacterFile>(project.characters.map((c) => [c.data.id, c.data]));
 
+  // The canvas's own window drives frames and pixel ratio, so a game in a pop-up
+  // window (the editor's playtest) keeps animating while its opener is hidden.
+  const view = (canvas.ownerDocument.defaultView ?? window) as Window & typeof globalThis;
   const screen = canvas.getContext("2d")!;
   const back = document.createElement("canvas");
   back.width = SCENE_WIDTH;
@@ -89,15 +94,15 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
 
   // Size the canvas to its CSS box in device pixels so nearest-neighbor stays crisp.
   const resize = () => {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = view.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
-    viewport = fitViewport(canvas.width, canvas.height, dpr);
+    viewport = fitViewport(canvas.width, canvas.height, dpr, options.fill);
     // CSS px per scene px, for the 44 CSS px minimum (D76).
     ui?.setScale(viewport.scale / dpr);
   };
-  const observer = new ResizeObserver(resize);
+  const observer = new view.ResizeObserver(resize);
   observer.observe(canvas);
   resize();
 
@@ -149,9 +154,9 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0);
     present(screen, back, viewport);
-    raf = requestAnimationFrame(frame);
+    raf = view.requestAnimationFrame(frame);
   };
-  raf = requestAnimationFrame(frame);
+  raf = view.requestAnimationFrame(frame);
 
   // The first scene (and every item icon) before play starts; later scenes load on
   // change_scene and are prefetched on entry (D75).
@@ -182,7 +187,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     debug,
     destroy() {
       destroyed = true;
-      cancelAnimationFrame(raf);
+      view.cancelAnimationFrame(raf);
       observer.disconnect();
       for (const [type, fn] of listeners) canvas.removeEventListener(type, fn as EventListener);
     },

@@ -1,23 +1,39 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
 import { Editor } from "../src/model/editor.ts";
 import type { Platform } from "../src/platform/platform.ts";
 import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
-import { m1Project } from "./support/fixtures.ts";
+import { m1Copy, m1Project } from "./support/fixtures.ts";
 
-// The Dock's Playtest tab (D127): toolbar, debug toggles and the D38 gate.
+// Play controls in the title bar and the playtest area (D133): only what applies
+// shows, related actions sit behind split buttons, and the game replaces the scene editor.
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
-async function mount() {
-  // Saved to memory without its PNGs, so the project has "missing image file" errors.
-  const fs = new MemoryFs();
-  await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });
-  const editor = await Editor.open({ fs });
+/** jsdom has no 2D canvas: a context that accepts every call keeps the game's frame loop quiet. */
+function fakeCanvas() {
+  const ctx: unknown = new Proxy({}, { get: () => () => ctx, set: () => true });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => ctx as never);
+}
+
+async function mount(opts: { valid?: boolean } = {}) {
+  let editor: Editor;
+  if (opts.valid) {
+    editor = await Editor.open({ fs: (await m1Copy()).fs });
+  } else {
+    // Saved to memory without its PNGs, so the project has "missing image file" errors.
+    const fs = new MemoryFs();
+    await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });
+    editor = await Editor.open({ fs });
+  }
   const registry = new CommandRegistry();
   const platform = { assetUrl: (_r: string, p: string) => p } as unknown as Platform;
   render(
@@ -30,28 +46,56 @@ async function mount() {
   return { editor, registry };
 }
 
-describe("Playtest tab", () => {
-  it("shows how to start, and the debug layers toggle", async () => {
+const nextFrame = () => act(() => new Promise((r) => requestAnimationFrame(() => r(undefined))));
+
+describe("play controls (D133)", () => {
+  it("shows Play while stopped, with From here (disabled without a scene) and presets behind the split", async () => {
     await mount();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Playtest" }));
-    expect(screen.getByText(/to start from the beginning/)).toBeTruthy();
+    const controls = screen.getByRole("toolbar", { name: "Play controls" });
+    expect(within(controls).getByRole("button", { name: "Play" })).toBeTruthy();
+    expect(within(controls).queryByRole("button", { name: "Restart" })).toBeNull();
+    expect(within(controls).queryByRole("button", { name: "Stop" })).toBeNull();
+    // Radix dropdowns open from the keyboard in jsdom.
+    within(controls).getByRole("button", { name: "More ways to play" }).focus();
+    await userEvent.keyboard("{Enter}");
+    const here = await screen.findByRole("menuitem", { name: /Play from here/ });
+    expect(here.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText(/No presets yet/)).toBeTruthy();
+  });
+
+  it("Play with errors opens Problems and stays in the editor (D38)", async () => {
+    const { registry, editor } = await mount();
+    const notice = vi.spyOn(editor, "showNotice");
+    act(() => void registry.run("play.start"));
+    expect(screen.queryByLabelText("Running game")).toBeNull();
+    expect(screen.getByRole("list", { name: "Problems" })).toBeTruthy();
+    expect(notice.mock.calls[0]?.[0].text).toMatch(/Problems/);
+  });
+
+  it("Play replaces the editor with debug bar, state and log and hides the side panels; Stop restores them", async () => {
+    fakeCanvas();
+    const { registry } = await mount({ valid: true });
+    expect(screen.getByLabelText("Project browser")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Problems panel" })).toBeTruthy();
+    act(() => void registry.run("play.start"));
+    await nextFrame();
     const layers = screen.getByRole("group", { name: "Debug layers" });
     const walkable = within(layers).getByRole("button", { name: "Walkable" });
     expect(walkable.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(walkable);
-    // The panel re-renders on the next frame.
-    await act(() => new Promise((r) => requestAnimationFrame(() => r(undefined))));
+    await nextFrame();
     expect(walkable.getAttribute("aria-pressed")).toBe("true");
-    // No scene tab is open: Play from here is disabled (D132).
-    expect((screen.getByRole("button", { name: "Play from here (F6)" }) as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it("Play with errors opens Problems instead (D38)", async () => {
-    const { registry } = await mount();
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Playtest" }));
-    expect(screen.getByRole("tab", { name: "Playtest" }).getAttribute("aria-selected")).toBe("true");
-    act(() => void registry.run("play.start"));
-    expect(screen.getByRole("tab", { name: /^Problems/ }).getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByRole("list", { name: "Problems" })).toBeTruthy();
+    expect(screen.getByLabelText("Running game")).toBeTruthy();
+    expect(screen.getByText("Loading…")).toBeTruthy();
+    expect(screen.getByLabelText("Event log")).toBeTruthy();
+    // The scene editor and Problems are gone while playing; the side panels are collapsed.
+    expect(screen.queryByRole("region", { name: "Problems panel" })).toBeNull();
+    expect(screen.queryByRole("complementary", { name: "Inspector" })?.closest("[data-panel]")?.getAttribute("data-collapsed") ?? "true").not.toBe("false");
+    act(() => void registry.run("play.stop"));
+    await nextFrame();
+    expect(screen.queryByLabelText("Running game")).toBeNull();
+    expect(screen.getByRole("region", { name: "Problems panel" })).toBeTruthy();
+    const controls = screen.getByRole("toolbar", { name: "Play controls" });
+    expect(within(controls).getByRole("button", { name: "Play" })).toBeTruthy();
   });
 });

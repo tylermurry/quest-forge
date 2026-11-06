@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
+import { togglePanels, type PanelName } from "../model/panels.ts";
 import { Playtest } from "../model/playtest/playtest.ts";
 import { WorkspaceState } from "../model/workspace.ts";
 import { Button } from "./components/ui/button.tsx";
@@ -17,6 +18,8 @@ import { Inspector } from "./Inspector.tsx";
 import { ProjectBrowser } from "./ProjectBrowser.tsx";
 import { TitleBar } from "./TitleBar.tsx";
 import { CanvasImages, CanvasImagesContext } from "./scene/images.ts";
+import { PlayControls } from "./playtest/PlayControls.tsx";
+import { PlaytestArea } from "./playtest/PlaytestArea.tsx";
 import { useCommands, useEditor, usePlatform } from "./hooks.ts";
 import { cn } from "./lib/utils.ts";
 
@@ -102,6 +105,38 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     setTick((t) => t + 1);
   };
   const shown = (p: React.RefObject<PanelImperativeHandle | null>) => !(p.current?.isCollapsed() ?? false);
+  // Ctrl+\ hides every panel, then brings back the ones that were up (D134).
+  const hiddenPanels = useRef<PanelName[] | null>(null);
+  const toggleAll = () => {
+    const refs = { browser, inspector, dock };
+    const next = togglePanels({ browser: shown(browser), inspector: shown(inspector), dock: shown(dock) }, hiddenPanels.current);
+    hiddenPanels.current = next.saved;
+    for (const name of ["browser", "inspector", "dock"] as const) {
+      const panel = refs[name].current;
+      if (!panel) continue;
+      if (next.shown[name] && panel.isCollapsed()) panel.expand();
+      if (!next.shown[name] && !panel.isCollapsed()) panel.collapse();
+    }
+    setTick((t) => t + 1);
+    registry.changed();
+  };
+
+  // While a game runs, the playtest area replaces the scene editor and the browser and
+  // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up (D133).
+  const playing = useSyncExternalStore(playtest.subscribe, () => playtest.playing);
+  const hiddenForPlay = useRef<("browser" | "inspector")[] | null>(null);
+  useEffect(() => {
+    if (playing) {
+      const up = (["browser", "inspector"] as const).filter((n) => shown(n === "browser" ? browser : inspector));
+      hiddenForPlay.current = up;
+      for (const n of up) (n === "browser" ? browser : inspector).current?.collapse();
+    } else if (hiddenForPlay.current) {
+      for (const n of hiddenForPlay.current) (n === "browser" ? browser : inspector).current?.expand();
+      hiddenForPlay.current = null;
+    }
+    setTick((t) => t + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing]);
 
   // Notices (outside reloads, refused imports, command errors) show as toasts.
   useEffect(() => {
@@ -113,8 +148,8 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   }, [ed, ed.notice]);
 
   // Edit and View menu commands (D92); the registry refreshes menus when the editor changes.
-  const panels = useRef({ browser, inspector, dock, toggle });
-  panels.current = { browser, inspector, dock, toggle };
+  const panels = useRef({ browser, inspector, dock, toggle, toggleAll, shown });
+  panels.current = { browser, inspector, dock, toggle, toggleAll, shown };
   useEffect(() => {
     const off = registry.register({
       "edit.undo": { run: () => ed.undo(), enabled: () => ed.history.canUndo, label: () => (ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo") },
@@ -122,6 +157,13 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
       "view.browser": { run: () => panels.current.toggle(panels.current.browser) },
       "view.inspector": { run: () => panels.current.toggle(panels.current.inspector) },
       "view.dock": { run: () => panels.current.toggle(panels.current.dock) },
+      "view.panels": {
+        run: () => panels.current.toggleAll(),
+        label: () => {
+          const { shown: up, browser: b, inspector: i, dock: d } = panels.current;
+          return up(b) || up(i) || up(d) ? "Hide All Panels" : "Show Panels";
+        },
+      },
     });
     const unsub = ed.subscribe(() => registry.changed());
     return () => {
@@ -152,11 +194,20 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     };
   }, [playtest, ws, registry]);
 
-  // Something asked to show the Dock (Play opens Playtest; errors open Problems, D38).
+  // Something asked to show the Problems dock (Play blocked by errors, D38).
   const dockRequest = ws.dockRequest;
   useEffect(() => {
     if (dockRequest > 0 && dock.current?.isCollapsed()) dock.current.expand();
   }, [dockRequest]);
+
+  // A jump-to (a problem, a log line) shows the Inspector so the highlighted rule is visible.
+  const inspectorRequest = ws.inspectorRequest;
+  useEffect(() => {
+    if (inspectorRequest > 0 && inspector.current?.isCollapsed()) {
+      inspector.current.expand();
+      setTick((t) => t + 1);
+    }
+  }, [inspectorRequest]);
 
   // Scene canvas view state lives in .editor/view.json (D101).
   useEffect(() => {
@@ -190,10 +241,12 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
         </div>
         <SaveStatus editor={ed} />
         <div className="ml-auto flex items-center gap-0.5">
+          <PlayControls playtest={playtest} />
+          <span className="bg-border mx-2 h-4 w-px" aria-hidden />
           <IconButton label="Show project browser" active={shown(browser)} onClick={() => toggle(browser)}>
             <PanelLeft />
           </IconButton>
-          <IconButton label="Show problems and playtest" active={shown(dock)} onClick={() => toggle(dock)}>
+          <IconButton label="Show problems" active={shown(dock)} onClick={() => toggle(dock)}>
             <PanelBottom />
           </IconButton>
           <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
@@ -214,19 +267,23 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="center" minSize="30%">
-          <ResizablePanelGroup orientation="vertical" id="questforge.rows" defaultLayout={rows.defaultLayout} onLayoutChanged={rows.onLayoutChanged}>
-            <ResizablePanel id="tabs" minSize="25%">
-              <main className="h-full">
-                <EditorTabs actions={actions} />
-              </main>
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel id="dock" panelRef={dock} defaultSize="28%" minSize="80px" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-              <footer className="flex h-full flex-col">
-                <Dock actions={actions} playtest={playtest} />
-              </footer>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+          {playing ? (
+            <PlaytestArea playtest={playtest} actions={actions} />
+          ) : (
+            <ResizablePanelGroup orientation="vertical" id="questforge.rows" defaultLayout={rows.defaultLayout} onLayoutChanged={rows.onLayoutChanged}>
+              <ResizablePanel id="tabs" minSize="25%">
+                <main className="h-full">
+                  <EditorTabs actions={actions} />
+                </main>
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel id="dock" panelRef={dock} defaultSize="28%" minSize="80px" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
+                <footer className="flex h-full flex-col">
+                  <Dock actions={actions} />
+                </footer>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          )}
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="inspector" panelRef={inspector} defaultSize="280px" minSize="200px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>

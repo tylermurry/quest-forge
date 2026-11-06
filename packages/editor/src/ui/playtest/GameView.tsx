@@ -27,6 +27,8 @@ export function GameView({ playtest, run }: { playtest: Playtest; run: Run }) {
         ...(start.state ? { state: start.state } : {}),
         ...playtest.hooks(run),
         debug: playtest.debug,
+        // The playtest area grows the game as large as it fits (D135).
+        fill: true,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

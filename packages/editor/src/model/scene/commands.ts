@@ -152,9 +152,10 @@ export function moveObject(p: Project, sceneId: string, id: string, dx: number, 
     let [rx, ry] = [Math.round(dx), Math.round(dy)];
     rx = Math.max(-SCENE_WIDTH - o.x, Math.min(SCENE_WIDTH * 2 - o.x, rx));
     ry = Math.max(-SCENE_HEIGHT - o.y, Math.min(SCENE_HEIGHT * 2 - o.y, ry));
-    // Attached geometry must stay inside the scene.
-    const attached: [number, number][] = [...(o.obstacle ?? []), ...(o.baseline !== undefined ? [[0, o.baseline] as [number, number]] : [])];
-    [rx, ry] = clampDelta(attached, rx, ry);
+    // Attached geometry must stay inside the scene. The baseline is a height only, so it limits
+    // the vertical move and never the horizontal one.
+    [rx, ry] = clampDelta(o.obstacle ?? [], rx, ry);
+    if (o.baseline !== undefined) ry = Math.max(-o.baseline, Math.min(SCENE_HEIGHT - o.baseline, ry));
     const moved = { ...o, x: o.x + rx, y: o.y + ry };
     if (o.obstacle) moved.obstacle = shift(o.obstacle, rx, ry);
     if (o.baseline !== undefined) moved.baseline = o.baseline + ry;

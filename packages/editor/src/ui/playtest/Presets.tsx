@@ -1,36 +1,12 @@
-import { Bookmark, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import type { Playtest } from "../../model/playtest/playtest.ts";
 import { Button } from "../components/ui/button.tsx";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "../components/ui/dropdown-menu.tsx";
 import { Input } from "../components/ui/input.tsx";
 
 function usePresets(playtest: Playtest) {
   useSyncExternalStore(playtest.presets.subscribe, () => playtest.presets.version);
   return playtest.presets.list;
-}
-
-/** Toolbar menu: start from a saved preset (D126), playing or not. */
-export function PresetMenu({ playtest }: { playtest: Playtest }) {
-  const list = usePresets(playtest);
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs" className="gap-1 px-1.5 text-[12px]" aria-label="Start from preset">
-          <Bookmark className="size-3.5" /> Presets
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" onKeyDown={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-        <DropdownMenuLabel className="text-[11px]">Start from preset</DropdownMenuLabel>
-        {list.length === 0 && <p className="text-muted-foreground px-2 py-1 text-[12px]">No presets yet. Save one from the state panel while playing.</p>}
-        {list.map((p) => (
-          <DropdownMenuItem key={p.name} className="text-[13px]" onSelect={() => playtest.playPreset(p.name)}>
-            {p.name}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 /** State panel section: save the current state under a name, start or delete saved ones. */

@@ -17,9 +17,10 @@ export interface Viewport {
 }
 
 /** Fit 640×400 into a surface of `width`×`height` device pixels at `dpr` device px per CSS px. */
-export function fitViewport(width: number, height: number, dpr = 1): Viewport {
+export function fitViewport(width: number, height: number, dpr = 1, fill = false): Viewport {
   const fit = Math.min(width / SCENE_WIDTH, height / SCENE_HEIGHT) / dpr;
-  const scale = (fit >= 1 ? Math.floor(fit) : fit) * dpr;
+  // Whole multiples keep pixels even (spec 03); `fill` (the editor's playtest area, D135) uses all the room.
+  const scale = (fit >= 1 && !fill ? Math.floor(fit) : fit) * dpr;
   return {
     scale,
     offsetX: Math.floor((width - SCENE_WIDTH * scale) / 2),

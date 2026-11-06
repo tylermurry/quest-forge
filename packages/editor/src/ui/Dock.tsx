@@ -1,15 +1,8 @@
 import { CircleX, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { Actions } from "../model/actions.ts";
-import type { Playtest } from "../model/playtest/playtest.ts";
-import { PlaytestPanel } from "./playtest/PlaytestPanel.tsx";
-import { EventLog } from "./playtest/EventLog.tsx";
-import { PresetSection } from "./playtest/Presets.tsx";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./components/ui/resizable.tsx";
-import { StatePanel } from "./playtest/StatePanel.tsx";
 import { locate } from "../model/locate.ts";
 import { ALL_SEVERITIES, problemCounts, visibleProblems, type SeverityFilter } from "../model/problemList.ts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx";
 import { cn } from "./lib/utils.ts";
 
 function FilterToggle(props: { label: string; count: number; on: boolean; onToggle(): void; icon: typeof CircleX; tone: string }) {
@@ -27,41 +20,17 @@ function FilterToggle(props: { label: string; count: number; on: boolean; onTogg
   );
 }
 
-/** Bottom dock: the Problems panel (spec 14, D120) and Playtest (spec 12, D127). The open tab is `ws.dockTab`. */
-export function Dock({ actions, playtest }: { actions: Actions; playtest: Playtest }) {
+/** Bottom dock: the Problems panel (spec 14, D120). The game plays in the playtest area (D133). */
+export function Dock({ actions }: { actions: Actions }) {
   const { editor, ws } = actions;
   const [filter, setFilter] = useState<SeverityFilter>(ALL_SEVERITIES);
   const problems = editor.problems;
   const counts = problemCounts(problems);
   const shown = visibleProblems(problems, filter);
   return (
-    <Tabs value={ws.dockTab} onValueChange={(v) => ws.setDockTab(v as "problems" | "playtest")} className="flex h-full min-h-0 flex-col gap-0">
-      <TabsList className="h-8 shrink-0 rounded-none border-b bg-transparent px-1">
-        <TabsTrigger value="problems" className="h-6 flex-none px-2 text-[12px]">
-          Problems ({problems.length})
-        </TabsTrigger>
-        <TabsTrigger value="playtest" className="h-6 flex-none px-2 text-[12px]">
-          Playtest
-        </TabsTrigger>
-      </TabsList>
-      {/* Kept mounted so the game keeps running while Problems is shown. */}
-      <TabsContent value="playtest" forceMount className="min-h-0 data-[state=inactive]:hidden">
-        <PlaytestPanel
-          playtest={playtest}
-          side={
-            <ResizablePanelGroup orientation="horizontal" id="questforge.playtest.side">
-              <ResizablePanel id="state" defaultSize="45%" minSize="20%">
-                <StatePanel playtest={playtest} project={editor.project} footer={<PresetSection playtest={playtest} />} />
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel id="log" minSize="20%">
-                <EventLog playtest={playtest} project={editor.project} ws={ws} />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          }
-        />
-      </TabsContent>
-      <TabsContent value="problems" className="min-h-0 overflow-auto px-1 py-1">
+    <section aria-label="Problems panel" className="flex h-full min-h-0 flex-col">
+      <h2 className="flex h-8 shrink-0 items-center border-b px-3 text-[12px] font-medium">Problems ({problems.length})</h2>
+      <div className="min-h-0 flex-1 overflow-auto px-1 py-1">
         {problems.length === 0 && <p className="text-ok px-2 py-1">No problems.</p>}
         {problems.length > 0 && (
           <>
@@ -95,7 +64,7 @@ export function Dock({ actions, playtest }: { actions: Actions; playtest: Playte
             </ul>
           </>
         )}
-      </TabsContent>
-    </Tabs>
+      </div>
+    </section>
   );
 }
