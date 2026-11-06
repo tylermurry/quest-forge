@@ -24,7 +24,10 @@ export type ProblemCode =
   | "dialogue_multiple_starts"
   | "invalid_polygon"
   | "duplicate_id"
-  | "missing_image_file";
+  | "missing_image_file"
+  // Sprites (D66)
+  | "frame_out_of_range"
+  | "origin_outside_frame";
 
 export interface Problem {
   severity: Severity;

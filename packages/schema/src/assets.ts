@@ -7,7 +7,31 @@ export const AssetPath = z
   .regex(/^assets\/(?:[^/\\]+\/)*[^/\\]+$/, "must be a file inside the project's assets folder")
   .refine((p) => !p.split("/").includes(".."), "must not leave the assets folder");
 
-export const ImageAsset = z.strictObject({ id: Id, path: AssetPath });
+/**
+ * How a spritesheet is cut into frames (spec 05, D66). The editor fills in all four
+ * fields whether the user slices by cell size or by rows × columns. Frames are cell
+ * indices counted row by row from the top-left; cells start at the image's top-left.
+ */
+export const SpriteSheet = z.strictObject({
+  columns: z.int().positive(),
+  rows: z.int().positive(),
+  cellWidth: z.int().positive(),
+  cellHeight: z.int().positive(),
+});
+export type SpriteSheet = z.infer<typeof SpriteSheet>;
+
+/** Sprite origin `[x, y]` in pixels from a frame's top-left (spec 05, D66). */
+export const SpriteOrigin = z.tuple([z.int().min(0), z.int().min(0)]);
+
+export const ImageAsset = z.strictObject({
+  id: Id,
+  path: AssetPath,
+  /** Absent: the whole image is a single frame. */
+  sheet: SpriteSheet.optional(),
+  /** Where the feet are. Absent: bottom-center of the frame. */
+  origin: SpriteOrigin.optional(),
+});
+export type ImageAsset = z.infer<typeof ImageAsset>;
 export const AudioAsset = z.strictObject({ id: Id, path: AssetPath });
 
 /** `assets.yaml` (D55): imported files are referenced by ID, never by path. */

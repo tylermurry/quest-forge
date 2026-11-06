@@ -20,10 +20,28 @@ images:
     path: assets/images/items/lit_lantern_icon.png
   - id: hero_sheet
     path: assets/images/hero_sheet.png
+    sheet:
+      columns: 4
+      rows: 2
+      cellWidth: 32
+      cellHeight: 48
+    origin: [16, 48]
   - id: shopkeeper_sheet
     path: assets/images/shopkeeper_sheet.png
+    sheet:
+      columns: 4
+      rows: 2
+      cellWidth: 32
+      cellHeight: 48
+    origin: [16, 48]
   - id: villager_sheet
     path: assets/images/villager_sheet.png
+    sheet:
+      columns: 4
+      rows: 2
+      cellWidth: 32
+      cellHeight: 48
+    origin: [16, 48]
 audio:
   - id: beach_theme
     path: assets/audio/beach_theme.mp3

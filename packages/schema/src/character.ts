@@ -9,8 +9,8 @@ export const AnimationSlot = z.enum(ANIMATION_SLOTS);
 export type AnimationSlot = z.infer<typeof AnimationSlot>;
 
 /**
- * A named animation (spec 05). Provisional until M1 defines spritesheet slicing:
- * `image` is an image asset ID and `frames` are cell indices into it.
+ * A named animation (spec 05). `image` is an image asset ID and `frames` are cell
+ * indices into its sheet (D66); an unsliced image has the single frame 0.
  */
 export const Animation = z.strictObject({
   image: Id,

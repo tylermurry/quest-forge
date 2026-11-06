@@ -238,6 +238,40 @@ function checkImageFiles(project: Project, out: Collector) {
   });
 }
 
+/** Frames must exist in their sheet, and origins must sit inside a frame (D66). */
+function checkSprites(project: Project, out: Collector) {
+  const assets = project.assets;
+  if (!assets) return;
+  const images = new Map(assets.data.images.map((img) => [img.id, img]));
+  assets.data.images.forEach((img, i) => {
+    if (!img.sheet || !img.origin) return;
+    const [x, y] = img.origin;
+    if (x > img.sheet.cellWidth || y > img.sheet.cellHeight) {
+      out.error(
+        "origin_outside_frame",
+        "assets",
+        assets.path,
+        ["images", i, "origin"],
+        `has its origin at (${x}, ${y}), outside its ${img.sheet.cellWidth}×${img.sheet.cellHeight} frames.`,
+        ["images", i],
+      );
+    }
+  });
+  for (const { path, data } of project.characters) {
+    for (const [slot, anim] of Object.entries(data.animations)) {
+      if (!anim) continue;
+      const img = images.get(anim.image);
+      if (!img) continue; // reported as a missing reference
+      const count = img.sheet ? img.sheet.columns * img.sheet.rows : 1;
+      anim.frames.forEach((f, j) => {
+        if (f < count) return;
+        const has = count === 1 ? "has only 1 frame (it isn't sliced into a sheet)" : `has only ${count} frames (0 to ${count - 1})`;
+        out.error("frame_out_of_range", "character", path, ["animations", slot, "frames", j], `animation ${slot} uses frame ${f}, but image ${img.id} ${has}.`, []);
+      });
+    }
+  }
+}
+
 /** Errors in a loaded project (spec 14). Load problems come from `loadProject`. */
 export function validateProject(project: Project): Problem[] {
   const out = new Collector(project);
@@ -246,6 +280,7 @@ export function validateProject(project: Project): Problem[] {
   project.scenes.forEach((s) => checkScene(s, out));
   project.dialogues.forEach((d) => checkDialogue(d, out));
   checkImageFiles(project, out);
+  checkSprites(project, out);
   return out.problems;
 }
 
