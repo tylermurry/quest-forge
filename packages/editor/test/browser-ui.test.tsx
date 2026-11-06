@@ -102,6 +102,7 @@ describe("project browser UI", () => {
     await user.click(screen.getByRole("menuitem", { name: "Delete" }));
     await user.click(screen.getByRole("button", { name: "Delete anyway" }));
     expect(a.editor.project.items.some((i) => i.data.id === "stick")).toBe(false);
+    a.editor.validateNow();
     expect(a.editor.problems.filter((p) => p.code === "missing_reference")).toHaveLength(3);
   });
 

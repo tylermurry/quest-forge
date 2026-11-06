@@ -1,7 +1,6 @@
 import { CircleX, TriangleAlert } from "lucide-react";
 import { formatProblem } from "@questforge/schema";
 import type { Actions } from "../model/actions.ts";
-import { isAssetKind } from "../model/browser.ts";
 import { locate } from "../model/locate.ts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx";
 import { cn } from "./lib/utils.ts";
@@ -43,12 +42,7 @@ export function Dock({ actions }: { actions: Actions }) {
                         pr.severity === "error" ? "text-err" : "text-warn",
                       )}
                       disabled={!target}
-                      onClick={() => {
-                        if (!target) return;
-                        if (isAssetKind(target.section)) ws.open(target);
-                        else ws.select({ kind: "entry", ...target });
-                        ws.reveal(target.section, "");
-                      }}
+                      onClick={() => target && ws.jumpTo(target)}
                     >
                       <Icon className="mt-0.5 size-3.5 shrink-0" />
                       <span>{formatProblem(pr)}</span>

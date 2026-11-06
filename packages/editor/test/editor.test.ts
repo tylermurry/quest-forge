@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, loadProject, type Project, type SceneFile } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { deleteSceneThing, renameEntry } from "../src/model/commands.ts";
-import { AUTOSAVE_DELAY_MS, Editor, WATCH_SETTLE_MS, describeSaveError, type ProjectHost } from "../src/model/editor.ts";
+import { AUTOSAVE_DELAY_MS, Editor, VALIDATE_DELAY_MS, WATCH_SETTLE_MS, describeSaveError, type ProjectHost } from "../src/model/editor.ts";
 import { M1 } from "./support/fixtures.ts";
 
 /** The m1 fixture in memory, plus a hand-driven watcher. */
@@ -228,5 +228,44 @@ describe("opening", () => {
     await Editor.open(host);
     expect([...fs.bytes.keys()].some((k) => k.startsWith(".editor/trash"))).toBe(false);
     expect((await loadProject(fs)).problems).toEqual([]);
+  });
+});
+
+describe("continuous validation (spec 14, D120)", () => {
+  const dropStick = (p: Project) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") });
+  const missing = (ed: Editor) => ed.problems.filter((x) => x.code === "missing_reference").length;
+
+  it("validates on open, then 250 ms after the last change, including undo", async () => {
+    const { host } = await memoryHost();
+    const ed = await Editor.open(host);
+    expect(missing(ed)).toBe(0);
+    expect(ed.validationPending).toBe(false);
+    ed.apply("Delete item", dropStick);
+    expect(ed.validationPending).toBe(true);
+    await vi.advanceTimersByTimeAsync(VALIDATE_DELAY_MS - 50);
+    ed.apply("Rename item", (p) => renameEntry(p, "item", "fish", "Trout"));
+    await vi.advanceTimersByTimeAsync(VALIDATE_DELAY_MS - 50);
+    expect(missing(ed)).toBe(0); // still typing: not yet
+    const seen = vi.fn();
+    ed.subscribe(seen);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(missing(ed)).toBeGreaterThan(0);
+    expect(seen).toHaveBeenCalled();
+    ed.undo();
+    ed.undo();
+    await vi.advanceTimersByTimeAsync(VALIDATE_DELAY_MS);
+    expect(missing(ed)).toBe(0);
+  });
+
+  it("an autosave doesn't make validation stale, and validateNow skips the wait", async () => {
+    const { host } = await memoryHost();
+    const ed = await Editor.open(host);
+    ed.apply("Delete item", dropStick);
+    ed.validateNow();
+    const problems = ed.problems;
+    await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS + 100);
+    expect(ed.status.state).toBe("saved");
+    expect(ed.validationPending).toBe(false);
+    expect(ed.problems).toBe(problems);
   });
 });

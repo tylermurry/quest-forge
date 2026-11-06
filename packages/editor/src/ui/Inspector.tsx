@@ -36,6 +36,10 @@ export function Inspector({ actions }: { actions: Actions }) {
     return <SceneThingInspector key={`${sel.scene}:${sel.list}:${sel.key}`} actions={actions} sceneId={sel.scene} thing={{ list: sel.list, key: sel.key }} />;
   }
 
+  if (sel.kind === "game") {
+    return <p className="text-muted-foreground">Game rules and default responses arrive with the Game inspector.</p>;
+  }
+
   const entry = sectionEntries(p, sel.section).find((e) => e.id === sel.id);
   if (!entry) return null;
   const refs = entryReferences(p, sel.section, sel.id);

@@ -1,9 +1,10 @@
 // Editor UI state (spec 08 layout): open tabs, selection, expanded folders, search.
 // Not game data and never undone (D84). DOM-free; React subscribes to it.
-import type { Project } from "@questforge/schema";
-import { sectionEntries, sectionFolders, type Section } from "./browser.ts";
+import type { Location, Project } from "@questforge/schema";
+import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
+import type { Jump } from "./locate.ts";
 import { SceneUiStore } from "./scene/sceneUi.ts";
-import type { ThingList } from "./scene/things.ts";
+import { LIST_LAYER, type ThingList } from "./scene/things.ts";
 
 export interface EntryRef {
   section: Section;
@@ -14,7 +15,15 @@ export type Selection =
   | { kind: "entry"; section: Section; id: string }
   | { kind: "folder"; section: Section; path: string }
   | { kind: "sceneThing"; scene: string; list: ThingList; key: string }
+  /** Game-level rules and default responses (spec 10). */
+  | { kind: "game" }
   | null;
+
+/** The spot a jump-to points at, which the Inspector scrolls to and flashes (D120). `seq` changes on every jump. */
+export interface Highlight {
+  location: Location;
+  seq: number;
+}
 
 export const refKey = (r: EntryRef) => `${r.section}:${r.id}`;
 export const folderKey = (section: Section, path: string) => `${section}/${path}`;
@@ -29,6 +38,8 @@ export class WorkspaceState {
   search = "";
   /** A field the Inspector should focus next (e.g. a new hotspot's name, D99); it clears it. */
   focusRequest: string | null = null;
+  /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
+  highlight: Highlight | null = null;
   /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
   readonly sceneUi = new SceneUiStore();
 
@@ -84,6 +95,40 @@ export class WorkspaceState {
 
   select(selection: Selection) {
     this.selection = selection;
+    this.changed();
+  }
+
+  /** Jump-to from a problem (spec 14, D120): opens and selects the exact thing, then highlights the spot. */
+  jumpTo({ target, location }: Jump) {
+    switch (target.kind) {
+      case "entry":
+        if (opensTab(target.entry.section)) this.open(target.entry);
+        else this.selection = { kind: "entry", ...target.entry };
+        this.collapsedSections.delete(target.entry.section);
+        break;
+      case "sceneThing":
+        this.open({ section: "scene", id: target.scene });
+        this.selection = { kind: "sceneThing", scene: target.scene, list: target.list, key: target.key };
+        this.sceneUi.setLayer(target.scene, LIST_LAYER[target.list]);
+        break;
+      case "scene":
+        this.open({ section: "scene", id: target.scene });
+        break;
+      case "game":
+        this.selection = { kind: "game" };
+        break;
+      case "dialogueNode":
+        this.open({ section: "dialogue", id: target.dialogue });
+        break;
+    }
+    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
+    this.changed();
+  }
+
+  /** The Inspector showed the highlight; it doesn't come back on the next render. */
+  clearHighlight() {
+    if (!this.highlight) return;
+    this.highlight = null;
     this.changed();
   }
 

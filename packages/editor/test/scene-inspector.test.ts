@@ -39,10 +39,14 @@ describe("live validation on the canvas (D100)", () => {
     click([300, 320]);
     // Move the whole hole down past the outline's bottom edge (y 395); it stops at the scene's edge.
     drag([300, 320], [300, 380]);
+    // Validation waits for a pause (D120).
+    expect(c.frame()!.invalid.has("walkable:hole:0")).toBe(false);
+    c.editor.validateNow();
     expect(c.frame()!.invalid.has("walkable:hole:0")).toBe(true);
     expect(c.problemsFor({ list: "walkable", key: "hole:0" })[0]!.message).toContain("sticks out");
     c.setLayer("guides");
     drag([200, 380], [5, 5]);
+    c.editor.validateNow();
     expect(c.frame()!.invalid.has("spawns:default")).toBe(true);
     dispose();
   });

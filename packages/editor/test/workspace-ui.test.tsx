@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryFs, saveProject, type SceneFile } from "@questforge/schema";
 import { Editor } from "../src/model/editor.ts";
@@ -78,10 +78,13 @@ describe("workspace (D89, D103)", () => {
   it("the Problems list jumps to the entry", async () => {
     const ed = await mount();
     ed.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") }));
+    act(() => ed.validateNow());
     const list = await screen.findByRole("list", { name: "Problems" });
     const first = within(list).getAllByRole("button").find((b) => !b.hasAttribute("disabled") && b.textContent?.includes("Garden"))!;
     fireEvent.click(first);
     expect(screen.getByRole("tab", { name: "Garden" }).getAttribute("aria-selected")).toBe("true");
+    // It selects the exact hotspot or object whose rule uses the item, not just the scene (D120).
+    expect(screen.getByLabelText("Inspector").textContent).not.toContain("Select something");
   });
 
   it("item details edit as one undo step per field", async () => {

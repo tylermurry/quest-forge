@@ -24,6 +24,8 @@ export const AUTOSAVE_DELAY_MS = 1000;
 export const RETRY_DELAYS_MS = [2000, 5000, 10000];
 /** Watcher events are gathered this long before the disk is checked. */
 export const WATCH_SETTLE_MS = 200;
+/** Validation runs this long after the last change (D120). */
+export const VALIDATE_DELAY_MS = 250;
 
 export type SaveStatus =
   | { state: "saved" }
@@ -60,7 +62,10 @@ export class Editor {
   private _loadProblems: Problem[];
   private _status: SaveStatus = { state: "saved" };
   private _notice: Notice | null = null;
-  private problemsCache: { project: Project; problems: Problem[] } | null = null;
+  /** The last validation result; the canvas, Inspector and Problems panel all read it (D120). */
+  private _problems: Problem[] = [];
+  private validatedFor: Project | null = null;
+  private validateTimer: ReturnType<typeof setTimeout> | null = null;
   readonly history = new History();
 
   /** Bumped on every change; React reads it through useSyncExternalStore. */
@@ -85,6 +90,7 @@ export class Editor {
     this._project = loaded.project;
     this._loadProblems = loaded.problems;
     this.stopWatching = host.watch?.((paths) => this.onDiskChange(paths)) ?? null;
+    this.validateNow();
   }
 
   /** Opens a project folder. The trash from the last session is emptied first (D88). */
@@ -119,12 +125,32 @@ export class Editor {
   get loadProblems() {
     return this._loadProblems;
   }
-  /** Load problems plus validation of the current project. */
+  /**
+   * Load problems plus validation of the project as it was at most VALIDATE_DELAY_MS
+   * ago: validation runs once typing or dragging pauses, not on every change (D120).
+   */
   get problems(): Problem[] {
-    if (this.problemsCache?.project !== this._project) {
-      this.problemsCache = { project: this._project, problems: [...this._loadProblems, ...validateProject(this._project)] };
-    }
-    return this.problemsCache.problems;
+    return this._problems;
+  }
+  /** True while a change hasn't been validated yet. */
+  get validationPending() {
+    return this.validatedFor !== this._project;
+  }
+
+  /** Validates the current project now (also used by tests instead of waiting). */
+  validateNow() {
+    if (this.validateTimer) clearTimeout(this.validateTimer);
+    this.validateTimer = null;
+    if (this.validatedFor === this._project) return;
+    this.validatedFor = this._project;
+    this._problems = [...this._loadProblems, ...validateProject(this._project)];
+    this.changed();
+  }
+
+  private scheduleValidate() {
+    if (this.disposed) return;
+    if (this.validateTimer) clearTimeout(this.validateTimer);
+    this.validateTimer = setTimeout(() => this.validateNow(), VALIDATE_DELAY_MS);
   }
   get hasUnsavedChanges() {
     return this.dirty || this._status.state === "saving";
@@ -202,6 +228,7 @@ export class Editor {
     this.failures = 0;
     this._status = { state: "unsaved" };
     this.scheduleSave(AUTOSAVE_DELAY_MS);
+    this.scheduleValidate();
     this.changed();
   }
 
@@ -240,7 +267,11 @@ export class Editor {
         const { project: saved } = await saveProject(this.host.fs, started);
         this.failures = 0;
         // Edits made during the save keep their content; disk state comes from the save.
+        const wasValidated = this.validatedFor === this._project;
         this._project = this._project === started ? saved : withDiskState(this._project, saved);
+        // A save only moves disk state, which validation sees after the save too (filesAfterSave).
+        if (wasValidated) this.validatedFor = this._project;
+        else this.scheduleValidate();
         this._status = this.dirty ? { state: "unsaved" } : { state: "saved" };
         if (this.dirty) this.scheduleSave(AUTOSAVE_DELAY_MS);
       } catch (e) {
@@ -322,6 +353,8 @@ export class Editor {
     this.failures = 0;
     this.history.clear();
     this._status = { state: "saved" };
+    this.validatedFor = null;
+    this.validateNow();
     if (reason === "outside") {
       this._notice = {
         kind: "info",
@@ -335,6 +368,7 @@ export class Editor {
     this.disposed = true;
     if (this.saveTimer) clearTimeout(this.saveTimer);
     if (this.watchTimer) clearTimeout(this.watchTimer);
+    if (this.validateTimer) clearTimeout(this.validateTimer);
     this.stopWatching?.();
   }
 }
