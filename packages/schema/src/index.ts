@@ -5,3 +5,5 @@ export * from "./item.ts";
 export * from "./character.ts";
 export * from "./rules.ts";
 export * from "./game.ts";
+export * from "./scene.ts";
+export * from "./dialogue.ts";
