@@ -267,19 +267,24 @@ function drawGrid(ctx: Ctx, t: Transform, size: { w: number; h: number }) {
   const x1 = Math.min(SCENE_WIDTH, Math.ceil((size.w - t.x) / t.scale));
   const y0 = Math.max(0, Math.floor(-t.y / t.scale));
   const y1 = Math.min(SCENE_HEIGHT, Math.ceil((size.h - t.y) / t.scale));
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.beginPath();
-  for (let x = x0; x <= x1; x++) {
-    const sx = Math.round(t.x + x * t.scale) + 0.5;
-    ctx.moveTo(sx, t.y + y0 * t.scale);
-    ctx.lineTo(sx, t.y + y1 * t.scale);
-  }
-  for (let y = y0; y <= y1; y++) {
-    const sy = Math.round(t.y + y * t.scale) + 0.5;
-    ctx.moveTo(t.x + x0 * t.scale, sy);
-    ctx.lineTo(t.x + x1 * t.scale, sy);
-  }
-  ctx.stroke();
+  // Dark lines with a faint light edge read on both light and dark art.
+  const lines = (dx: number, style: string) => {
+    ctx.strokeStyle = style;
+    ctx.beginPath();
+    for (let x = x0; x <= x1; x++) {
+      const sx = Math.round(t.x + x * t.scale) + 0.5 + dx;
+      ctx.moveTo(sx, t.y + y0 * t.scale);
+      ctx.lineTo(sx, t.y + y1 * t.scale);
+    }
+    for (let y = y0; y <= y1; y++) {
+      const sy = Math.round(t.y + y * t.scale) + 0.5 + dx;
+      ctx.moveTo(t.x + x0 * t.scale, sy);
+      ctx.lineTo(t.x + x1 * t.scale, sy);
+    }
+    ctx.stroke();
+  };
+  lines(0, "rgba(0,0,0,0.28)");
+  lines(1, "rgba(255,255,255,0.10)");
 }
 
 function label(ctx: Ctx, at: (p: Vec) => Vec, pts: readonly Vec[], text: string, color: string) {
