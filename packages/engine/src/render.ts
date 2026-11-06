@@ -3,6 +3,7 @@ import type { PlayerUi } from "./ui/controller.ts";
 import { drawUi, type IconImage } from "./ui/draw.ts";
 import { TEXT_FONT, TEXT_LINE, layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { Viewport } from "./viewport.ts";
+import type { Drawable } from "./drawables.ts";
 import type { World } from "./world.ts";
 
 // Canvas 2D drawing (spec 03, D30). Everything draws into the 640×400 back buffer,
@@ -25,8 +26,15 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
   if (background) ctx.drawImage(background, 0, 0);
+  drawSprites(ctx, world.drawList());
 
-  for (const d of world.drawList()) {
+  if (debug.overlay) drawDebug(ctx, world);
+  drawUi(ctx, ui, icons, () => session.text && drawTextBox(ctx, session.text));
+}
+
+/** Blits sprites in the order given (back to front), mirroring flipped ones (D39). Shared with the editor (D93). */
+export function drawSprites(ctx: Ctx, list: readonly Drawable[]) {
+  for (const d of list) {
     const el = d.image.el;
     if (!el) continue;
     const { src, dest } = d;
@@ -40,9 +48,6 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
       ctx.drawImage(el, src.x, src.y, src.w, src.h, dest.x, dest.y, dest.w, dest.h);
     }
   }
-
-  if (debug.overlay) drawDebug(ctx, world);
-  drawUi(ctx, ui, icons, () => session.text && drawTextBox(ctx, session.text));
 }
 
 export function drawLoading(ctx: Ctx, progress: number) {

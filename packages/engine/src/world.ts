@@ -1,7 +1,8 @@
-import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type ImageAsset, type SceneFile } from "@questforge/schema";
-import { objectBaseline, scaleAt, sortByBaseline, walkSpeedAt } from "./depth.ts";
+import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type SceneFile } from "@questforge/schema";
+import { scaleAt, walkSpeedAt } from "./depth.ts";
+import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage } from "./drawables.ts";
 import { NavMesh, sceneNav } from "./nav.ts";
-import { facingFor, frameAt, frameRect, frameSize, originOf, resolveAnim, spriteRect, type AnimKind, type Rect, type Size } from "./sprite.ts";
+import { facingFor, type AnimKind } from "./sprite.ts";
 import type { Position } from "./state.ts";
 import { dist, sub, type Vec } from "./vec.ts";
 
@@ -9,15 +10,7 @@ import { dist, sub, type Vec } from "./vec.ts";
 // text live in `session.ts`. Pure logic with no DOM, so it runs in tests; `render.ts`
 // draws it.
 
-export interface LoadedImage {
-  asset: ImageAsset;
-  size: Size;
-  /** The decoded image; absent in headless tests. */
-  el?: CanvasImageSource;
-}
-
-/** What the world needs to know about images: their asset entry and decoded size. */
-export type ImageLookup = (id: string) => LoadedImage | undefined;
+export type { Drawable, ImageLookup, LoadedImage };
 
 export interface Actor {
   /** Character ID. */
@@ -38,21 +31,6 @@ export type Target =
   | { kind: "hotspot"; id: string; name: string }
   | { kind: "object"; id: string; name: string }
   | { kind: "character"; id: string; name: string };
-
-/** One sprite in the frame, in draw order. */
-export interface Drawable {
-  kind: "object" | "character";
-  id: string;
-  /** Interactive name, if any. */
-  name?: string;
-  image: LoadedImage;
-  /** Source rectangle in the image. */
-  src: Rect;
-  /** Destination rectangle in scene space. */
-  dest: Rect;
-  mirror: boolean;
-  baseline: number;
-}
 
 export interface WorldOptions {
   /** Character ID of the player. */
@@ -249,30 +227,8 @@ export class World {
 
   /** Every visible sprite, back to front (spec 04 baseline sort). */
   drawList(): Drawable[] {
-    const out: Drawable[] = [];
-    for (const o of this.scene.objects) {
-      if (!this.isObjectVisible(o.id)) continue;
-      const image = this.images(o.image);
-      if (!image) continue;
-      // Objects draw their whole image in M1 (D66).
-      const src = { x: 0, y: 0, w: image.size.w, h: image.size.h };
-      out.push({
-        kind: "object",
-        id: o.id,
-        ...(o.name ? { name: o.name } : {}),
-        image,
-        src,
-        dest: { x: o.x, y: o.y, w: src.w, h: src.h },
-        mirror: false,
-        baseline: objectBaseline(o, image.size.h),
-      });
-    }
-    for (const a of [...this.npcs, this.player]) {
-      if (!a.visible) continue;
-      const d = this.actorDrawable(a);
-      if (d) out.push(d);
-    }
-    return sortByBaseline(out);
+    const actors = [...this.npcs, this.player].filter((a) => a.visible);
+    return sceneDrawables(this.scene, this.images, (id) => this.isObjectVisible(id), actors);
   }
 
   /** What's under a scene point (D69): hotspots first, then named sprites, topmost first. */
@@ -312,24 +268,7 @@ export class World {
   }
 
   private actorDrawable(a: Actor): Drawable | null {
-    const resolved = a.special ? { anim: a.special.anim, mirror: a.special.mirror, still: false } : resolveAnim(a.character, a.kind, a.facing);
-    if (!resolved) return null;
-    const image = this.images(resolved.anim.image);
-    if (!image) return null;
-    const time = a.special ? a.special.time : a.animTime;
-    const frame = resolved.still ? resolved.anim.frames[0]! : frameAt(resolved.anim, time);
-    const size = frameSize(image.asset, image.size);
-    const scale = scaleAt(this.scene.depth, a.pos[1]);
-    return {
-      kind: "character",
-      id: a.id,
-      name: a.character.name,
-      image,
-      src: frameRect(image.asset, image.size, frame),
-      dest: spriteRect(a.pos, originOf(image.asset, size), size, scale, resolved.mirror),
-      mirror: resolved.mirror,
-      baseline: a.pos[1],
-    };
+    return actorDrawable(a, this.scene.depth, this.images);
   }
 
   private buildNav() {
