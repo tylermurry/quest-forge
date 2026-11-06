@@ -1,6 +1,6 @@
 import { inWalkable, polygonIssue, type PolygonIssue } from "./geometry.ts";
 import { describePath, type DataPath, type FileKind, type Problem, type ProblemCode } from "./problems.ts";
-import { allDocs, type Doc, type Project } from "./project.ts";
+import { allDocs, filesAfterSave, type Doc, type Project } from "./project.ts";
 import { collectReferences, type RefKind, type Reference } from "./references.ts";
 import type { Polygon } from "./common.ts";
 import type { SceneFile } from "./scene.ts";
@@ -238,7 +238,7 @@ function checkDialogue(doc: Doc<DialogueFile>, out: Collector) {
 
 function checkImageFiles(project: Project, out: Collector) {
   if (!project.assets) return;
-  const files = new Set(project.files);
+  const files = filesAfterSave(project);
   project.assets.data.images.forEach((img, i) => {
     if (!files.has(img.path)) {
       out.error("missing_image_file", "assets", project.assets!.path, ["images", i, "path"], `points to ${img.path}, which isn't in the project folder.`, ["images", i]);

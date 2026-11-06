@@ -32,6 +32,8 @@ export interface Project {
   dialogues: Doc<DialogueFile>[];
   /** Browser folders inside the section roots, e.g. `scenes/act1` (D83). Sorted. */
   folders: string[];
+  /** Imported files not yet written, keyed by path. Written on save if `assets.yaml` still uses them (D88). */
+  pendingFiles: Record<string, Uint8Array>;
   // Disk state: what is on disk as of the last load or save. Undo history keeps
   // the fields above and carries these over from the current project (D84).
   /** Every file on disk (used to check that asset files exist). */
@@ -40,7 +42,12 @@ export interface Project {
   saved: Record<string, string>;
   /** `folders` as last loaded or saved. */
   savedFolders: string[];
+  /** Asset paths whose file the editor moved into `.editor/trash` this session (D88). */
+  trash: string[];
 }
+
+/** Where deleted image and audio files wait so undo can bring them back (D88). */
+export const TRASH_DIR = ".editor/trash";
 
 export const SCHEMAS = {
   game: GameFile,
@@ -105,9 +112,11 @@ export function emptyProject(): Project {
     characters: [],
     dialogues: [],
     folders: [],
+    pendingFiles: {},
     files: [],
     saved: {},
     savedFolders: [],
+    trash: [],
   };
 }
 
@@ -208,6 +217,10 @@ export interface SavePlan {
   /** Folders that get a `.keep` file because they'll be empty (D83). */
   keeps: string[];
   writes: { path: string; content: string }[];
+  /** Imported files to write (D88). */
+  binaryWrites: { path: string; bytes: Uint8Array }[];
+  /** Image/audio files that follow `assets.yaml`: moved, sent to trash, or restored (D88). */
+  moves: { from: string; to: string }[];
   deletes: string[];
   /** Folders that were removed from the project. Deepest first; only removed once empty. */
   removeFolders: string[];
@@ -215,7 +228,67 @@ export interface SavePlan {
 
 /** True when a save would touch nothing. */
 export const isEmptyPlan = (plan: SavePlan) =>
-  plan.makeFolders.length + plan.keeps.length + plan.writes.length + plan.deletes.length + plan.removeFolders.length === 0;
+  plan.makeFolders.length +
+    plan.keeps.length +
+    plan.writes.length +
+    plan.binaryWrites.length +
+    plan.moves.length +
+    plan.deletes.length +
+    plan.removeFolders.length ===
+  0;
+
+const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
+
+/**
+ * How image and audio files follow `assets.yaml` (D88). Compares the manifest as
+ * last saved with the current one: an entry whose file isn't on disk gets it from
+ * its old path (same ID, else same file name), from the pending imports, or back
+ * from the trash; files no entry uses any more go to the trash.
+ */
+export function planAssetFiles(project: Project): Pick<SavePlan, "binaryWrites" | "moves"> {
+  const binaryWrites: SavePlan["binaryWrites"] = [];
+  const moves: SavePlan["moves"] = [];
+  const current = assetEntries(project.assets?.data);
+  const savedText = project.saved[ROOT_FILES.assets];
+  const parsed = savedText === undefined ? null : parseFile("assets", ROOT_FILES.assets, savedText);
+  const before = parsed?.ok ? assetEntries(parsed.data) : [];
+  const used = new Set(current.map((e) => e.path));
+  const onDisk = new Set(project.files);
+  const orphans = before.filter((e, i) => !used.has(e.path) && onDisk.has(e.path) && before.findIndex((b) => b.path === e.path) === i);
+  const trash = new Set(project.trash);
+  const placed = new Set<string>();
+  for (const e of current) {
+    if (onDisk.has(e.path) || placed.has(e.path)) continue;
+    placed.add(e.path);
+    const pending = project.pendingFiles[e.path];
+    const take = (pick: (o: (typeof orphans)[number]) => boolean) => {
+      const i = orphans.findIndex((o) => o.kind === e.kind && pick(o));
+      return i < 0 ? undefined : orphans.splice(i, 1)[0];
+    };
+    if (pending) {
+      binaryWrites.push({ path: e.path, bytes: pending });
+      continue;
+    }
+    const from = take((o) => o.id === e.id) ?? take((o) => basename(o.path) === basename(e.path));
+    if (from) moves.push({ from: from.path, to: e.path });
+    else if (trash.has(e.path)) moves.push({ from: `${TRASH_DIR}/${e.path}`, to: e.path });
+    // Otherwise the file is missing; validation reports it.
+  }
+  for (const o of orphans) moves.push({ from: o.path, to: `${TRASH_DIR}/${o.path}` });
+  return { binaryWrites, moves };
+}
+
+/** The files the project will have on disk once saved (validation checks images against this). */
+export function filesAfterSave(project: Project): Set<string> {
+  const files = new Set(project.files);
+  const { binaryWrites, moves } = planAssetFiles(project);
+  for (const w of binaryWrites) files.add(w.path);
+  for (const m of moves) {
+    files.delete(m.from);
+    if (!m.to.startsWith(`${TRASH_DIR}/`)) files.add(m.to);
+  }
+  return files;
+}
 
 export class SaveError extends Error {
   constructor(readonly problems: Problem[]) {
@@ -262,7 +335,7 @@ export function planSave(project: Project): SavePlan {
     )
     .sort();
   const removeFolders = project.savedFolders.filter((f) => !folders.has(f)).sort().reverse();
-  return { makeFolders, keeps, writes, deletes, removeFolders };
+  return { makeFolders, keeps, writes, ...planAssetFiles(project), deletes, removeFolders };
 }
 
 /** Saves changed files and returns the project with its saved snapshot updated. */
@@ -272,13 +345,27 @@ export async function saveProject(fs: ProjectFs, project: Project): Promise<{ pr
   for (const path of plan.keeps) await fs.writeText(`${path}/${KEEP_FILE}`, "");
   // Write before deleting, so a failed write never loses the old copy of a moved file.
   for (const { path, content } of plan.writes) await fs.writeText(path, content);
+  for (const { path, bytes } of plan.binaryWrites) await fs.writeBytes(path, bytes);
+  for (const { from, to } of plan.moves) await fs.move(from, to);
   for (const path of plan.deletes) await fs.remove(path);
   for (const path of plan.removeFolders) await fs.removeFolder(path);
   const saved = { ...project.saved };
   for (const { path, content } of plan.writes) saved[path] = content;
   for (const path of plan.deletes) delete saved[path];
-  const files = [...new Set([...project.files.filter((f) => !plan.deletes.includes(f)), ...plan.writes.map((w) => w.path)])].sort();
-  return { project: { ...project, saved, files, savedFolders: project.folders }, plan };
+  const files = new Set(project.files);
+  const trash = new Set(project.trash);
+  for (const w of [...plan.writes, ...plan.binaryWrites]) files.add(w.path);
+  for (const { from, to } of plan.moves) {
+    files.delete(from);
+    if (from.startsWith(`${TRASH_DIR}/`)) trash.delete(from.slice(TRASH_DIR.length + 1));
+    if (to.startsWith(`${TRASH_DIR}/`)) trash.add(to.slice(TRASH_DIR.length + 1));
+    else files.add(to);
+  }
+  for (const path of plan.deletes) files.delete(path);
+  return {
+    project: { ...project, saved, files: [...files].sort(), savedFolders: project.folders, pendingFiles: {}, trash: [...trash].sort() },
+    plan,
+  };
 }
 
 const FOLDER_SEGMENT = /^[^/\\.][^/\\]*$/;
