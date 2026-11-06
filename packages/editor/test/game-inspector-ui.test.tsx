@@ -33,10 +33,12 @@ describe("the Game item (spec 10)", () => {
     fireEvent.click(within(screen.getByRole("treeitem", { name: "Game" })).getByText("Game"));
     const inspector = screen.getByLabelText("Inspector");
     expect(within(inspector).getByRole("heading", { name: "M1 Engine Fixture" })).toBeTruthy();
+    fireEvent.mouseDown(within(inspector).getByRole("tab", { name: /^Rules/ }));
     // The combine rule reads as a sentence: When Combine [stick] with [string].
     const card = within(inspector).getByRole("listitem", { name: "Rule 1" });
     expect(within(card).getByRole("combobox", { name: "Other item" }).textContent).toBe("string");
     expect(within(card).getAllByRole("combobox", { name: "Item" })[0]!.textContent).toBe("stick");
+    fireEvent.mouseDown(within(inspector).getByRole("tab", { name: /^Details/ }));
     expect(within(inspector).getByText(/add up to 25/)).toBeTruthy();
     const look = within(inspector).getByLabelText("Look at something with no rule");
     fireEvent.focus(look);

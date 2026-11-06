@@ -32,11 +32,14 @@ const garden = (ed: Editor) => ed.project.scenes.find((s) => s.data.id === "gard
 const hotspot = (ed: Editor, id: string) => garden(ed).hotspots.find((h) => h.id === id)!;
 const selectHotspot = (name: RegExp) => fireEvent.click(within(screen.getByRole("region", { name: "Hotspots layer" })).getByText(name));
 const inspector = () => screen.getByLabelText("Inspector");
+/** Rules live on their own Inspector tab (D125); Radix tabs switch on mouse down. */
+const rulesTab = () => fireEvent.mouseDown(within(inspector()).getByRole("tab", { name: /^Rules/ }));
 
 describe("rule inspector (spec 10)", () => {
   it("a quick field types one plain rule as one undo step, and clearing it deletes the rule", async () => {
     const editor = await mount();
     selectHotspot(/^pond/);
+    rulesTab();
     const talk = within(inspector()).getByLabelText("Talk text");
     fireEvent.focus(talk);
     for (const v of ["N", "No", "No answer."]) fireEvent.change(talk, { target: { value: v } });
@@ -51,6 +54,7 @@ describe("rule inspector (spec 10)", () => {
     const editor = await mount();
     const user = userEvent.setup();
     selectHotspot(/^pond/);
+    rulesTab();
     const cards = within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ });
     expect(cards).toHaveLength(4);
     // "When [Use ▾] with [fishing rod ▾]"
@@ -83,6 +87,7 @@ describe("rule inspector (spec 10)", () => {
   it("a quick field whose rule was edited by hand says which rule sets it", async () => {
     await mount();
     fireEvent.click(within(screen.getByRole("region", { name: "Objects layer" })).getByText(/^gardener/));
+    rulesTab();
     expect(within(inspector()).getByRole("button", { name: "Set by rule 6" })).toBeTruthy();
   });
 
@@ -91,6 +96,7 @@ describe("rule inspector (spec 10)", () => {
     act(() => void editor.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "rod") })));
     act(() => editor.validateNow());
     selectHotspot(/^pond/);
+    rulesTab();
     const cards = within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ });
     for (const i of [1, 2]) {
       const trigger = within(cards[i]!).getAllByRole("combobox", { name: "Item" })[0]!;
@@ -102,9 +108,27 @@ describe("rule inspector (spec 10)", () => {
     expect(within(cards[0]!).queryByRole("combobox", { name: "Item" })).toBeNull();
   });
 
-  it("selecting the scene shows its own rules", async () => {
+  it("selecting the scene shows its own rules on the Rules tab", async () => {
     await mount();
+    expect(within(inspector()).queryByRole("region", { name: "Rules" })).toBeNull();
+    rulesTab();
     expect(within(inspector()).getByRole("region", { name: "Rules" })).toBeTruthy();
     expect(within(inspector()).queryByRole("region", { name: "Quick fields" })).toBeNull();
+  });
+
+  it("keeps the title above Details / Rules tabs, and a jump into a rule opens the Rules tab (D125)", async () => {
+    const editor = await mount();
+    selectHotspot(/^pond/);
+    const header = within(inspector()).getByRole("heading", { name: "pond" }).closest("header")!;
+    expect(header.className).toContain("sticky");
+    expect(within(header).getByRole("tab", { name: /^Details/ }).getAttribute("aria-selected")).toBe("true");
+    expect(within(header).getByRole("tab", { name: /^Rules/ }).textContent).toContain("4");
+    expect(within(inspector()).queryByRole("region", { name: "Rules" })).toBeNull();
+    act(() => void editor.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "rod") })));
+    act(() => editor.validateNow());
+    expect(within(header).getByLabelText("Some rules have problems")).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("list", { name: "Problems" })).getAllByText(/item rod/)[0]!);
+    expect(within(inspector()).getByRole("tab", { name: /^Rules/ }).getAttribute("aria-selected")).toBe("true");
+    expect(within(inspector()).getByRole("region", { name: "Rules" })).toBeTruthy();
   });
 });

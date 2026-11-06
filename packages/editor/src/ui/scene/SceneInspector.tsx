@@ -29,7 +29,7 @@ import { NumberField } from "../NumberField.tsx";
 import { TextField } from "../TextField.tsx";
 import { useCanvasImages } from "./images.ts";
 import { ObjectAnimations } from "../sprites/ObjectAnimations.tsx";
-import { RuleInspector } from "../rules/RuleInspector.tsx";
+import { InspectorShell } from "../InspectorShell.tsx";
 import { thingOwner } from "../../model/rules/owner.ts";
 import { objectFrameSize } from "@questforge/engine";
 
@@ -193,7 +193,6 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
               <p className="text-muted-foreground text-[12px]">Not set: the player walks to the nearest walkable point. Use the Walk-to tool (W) to place one.</p>
             )}
           </Section>
-          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -206,7 +205,6 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
           <Section title="ID">
             <div ref={nameBox}>{idRow}</div>
           </Section>
-          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -257,7 +255,6 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
               </Button>
             )}
           </Section>
-          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -275,7 +272,6 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
             </div>
           </Section>
           <Check label="Visible when the scene starts" checked={c.visible} onChange={(visible) => run(visible ? "Show character" : "Hide character", (q) => setPlacement(q, sceneId, c.character, { visible }))} />
-          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -340,11 +336,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
           ? TITLE[thing.list]
           : thing.key;
   return (
-    <div className="grid gap-1.5">
-      <h3 className="text-[15px] font-semibold">{title}</h3>
-      <p className="text-muted-foreground -mt-1 text-[12px]">
-        {TITLE[thing.list]} in {scene.name}
-      </p>
+    <InspectorShell actions={actions} title={title} subtitle={`${TITLE[thing.list]} in ${scene.name}`} owner={ruleOwner}>
       <Problems problems={problems} />
       {body}
       {kind && (
@@ -368,7 +360,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
           }}
         />
       )}
-    </div>
+    </InspectorShell>
   );
 }
 

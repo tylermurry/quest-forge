@@ -145,7 +145,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   (problems by rule and part), `pointPick.ts` (Pick on canvas, D124). `model/game.ts` edits game settings; `model/locate.ts`
   returns a `Jump` (`ws.jumpTo` opens, selects, activates the layer and sets `ws.highlight` for the card to flash);
   `model/problemList.ts` filters the panel. UI in `ui/rules/` (`RuleInspector`, `RuleCard`, `PartFields`, `Picker`,
-  `GameInspector`); `Dock.tsx` is the Problems panel. Rule cards are dnd-kit sortables tagged `kind: "ruleCard"`.
+  `GameInspector`); `Dock.tsx` is the Problems panel. Every Inspector page goes through `ui/InspectorShell.tsx` (sticky
+  title, Details / Rules tabs for rule owners, tab in `ws.inspectorTab`, D125). Rule cards are dnd-kit sortables tagged `kind: "ruleCard"`.
 - Validation is debounced: `Editor.problems` is the last result, refreshed 250 ms after a change (D120). Tests call
   `editor.validateNow()` instead of waiting. Browser-tool clicks by `ref` may scroll the page first; prefer coordinates or a
   JS `click()` when testing popovers. Radix dropdowns open from the keyboard in jsdom (`focus()` + `{Enter}`).

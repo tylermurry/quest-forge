@@ -39,6 +39,8 @@ export class WorkspaceState {
   search = "";
   /** A field the Inspector should focus next (e.g. a new hotspot's name, D99); it clears it. */
   focusRequest: string | null = null;
+  /** The Inspector's tab for things with rules (D125). Kept while the selection changes. */
+  inspectorTab: "details" | "rules" = "details";
   /** A rule action's point waiting for a click on its scene's canvas (D124). */
   pointPick: (PointPick & { restore: Selection }) | null = null;
   /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
@@ -85,7 +87,15 @@ export class WorkspaceState {
     this.changed();
   }
 
+  setInspectorTab(tab: "details" | "rules") {
+    if (this.inspectorTab === tab) return;
+    this.inspectorTab = tab;
+    this.changed();
+  }
+
   requestFocus(field: string) {
+    // The fields that ask for focus (a new hotspot's name) are on the Details tab.
+    this.inspectorTab = "details";
     this.focusRequest = field;
     this.changed();
   }
@@ -124,6 +134,8 @@ export class WorkspaceState {
         this.open({ section: "dialogue", id: target.dialogue });
         break;
     }
+    // A problem inside a rule opens the Rules tab; anything else, Details (D125).
+    this.inspectorTab = location.path.includes("rules") ? "rules" : "details";
     this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
     this.changed();
   }

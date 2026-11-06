@@ -63,3 +63,17 @@ describe("jump-to (D120, D121)", () => {
     expect(ws.selection).toEqual({ kind: "entry", section: "flag", id: p.flags!.data.flags[0]!.id });
   });
 });
+
+describe("jump-to picks the Inspector tab (D125)", () => {
+  it("opens Rules for a rule part and Details for anything else", async () => {
+    const p = await m1Project();
+    const ws = new WorkspaceState();
+    ws.jumpTo(locate(p, { file: "game.yaml", path: ["rules", 0, "do", 0] })!);
+    expect(ws.inspectorTab).toBe("rules");
+    ws.jumpTo(locate(p, { file: "game.yaml", path: ["maxScore"] })!);
+    expect(ws.inspectorTab).toBe("details");
+    ws.setInspectorTab("rules");
+    ws.requestFocus("name");
+    expect(ws.inspectorTab).toBe("details");
+  });
+});

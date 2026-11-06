@@ -194,7 +194,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="inspector" panelRef={inspector} defaultSize="280px" minSize="200px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-          <aside aria-label="Inspector" className="h-full overflow-auto p-3">
+          <aside aria-label="Inspector" className="h-full overflow-auto px-3 pb-3">
             <Inspector actions={actions} />
           </aside>
         </ResizablePanel>
