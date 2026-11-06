@@ -1,2 +1,5 @@
-/** Version written to every project file (spec 01). */
-export const SCHEMA_VERSION = 1 as const;
+export * from "./common.ts";
+export * from "./assets.ts";
+export * from "./flags.ts";
+export * from "./item.ts";
+export * from "./character.ts";
