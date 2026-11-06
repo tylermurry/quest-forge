@@ -12,6 +12,7 @@ import {
 } from "@questforge/schema";
 import { drawLoading, drawSession, present, type DebugFlags } from "./render.ts";
 import { Session } from "./session.ts";
+import { PlayerUi, type PointerKind } from "./ui/controller.ts";
 import { sheetFits } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
 import type { LoadedImage, World } from "./world.ts";
@@ -37,6 +38,8 @@ export interface Game {
   readonly ready: Promise<void>;
   /** The game being played, once loaded. */
   readonly session: Session | null;
+  /** Its player UI (icon bar, inventory), once loaded. */
+  readonly ui: PlayerUi | null;
   /** The playing scene, once loaded. */
   readonly world: World | null;
   readonly debug: DebugFlags;
@@ -68,6 +71,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const debug: DebugFlags = { overlay: false, ...options.debug };
 
   let session: Session | null = null;
+  let ui: PlayerUi | null = null;
   const images = new ImageCache(project, characters, bundle.assetUrl);
   let viewport = fitViewport(canvas.width, canvas.height);
   let destroyed = false;
@@ -80,6 +84,8 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
     viewport = fitViewport(canvas.width, canvas.height);
+    // CSS px per scene px, for the 44 CSS px minimum (D76).
+    ui?.setScale(viewport.scale / dpr);
   };
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
@@ -89,32 +95,40 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     const rect = canvas.getBoundingClientRect();
     return toScene(viewport, ((e.clientX - rect.left) / rect.width) * canvas.width, ((e.clientY - rect.top) / rect.height) * canvas.height);
   };
+  const kindOf = (e: PointerEvent): PointerKind => (e.pointerType === "touch" || e.pointerType === "pen" ? e.pointerType : "mouse");
   const onPointerDown = (e: PointerEvent) => {
-    if (!session) return;
+    if (!ui) return;
     e.preventDefault();
-    if (e.button === 2) {
-      session.secondaryClick();
-      return;
-    }
-    if (e.button !== 0) return;
-    if (session.ending) {
-      session.restart();
-      return;
-    }
-    const p = scenePoint(e);
-    if (p) session.primaryClick(p);
+    if (e.pointerType !== "mouse") canvas.setPointerCapture(e.pointerId);
+    ui.pointerDown(scenePoint(e), kindOf(e), e.button);
   };
+  const onPointerMove = (e: PointerEvent) => ui?.pointerMove(scenePoint(e), kindOf(e));
+  const onPointerUp = (e: PointerEvent) => ui?.pointerUp(scenePoint(e), kindOf(e));
+  const onPointerCancel = () => ui?.pointerCancel();
+  const onPointerLeave = (e: PointerEvent) => e.pointerType === "mouse" && ui?.pointerMove(null, "mouse");
   const onContextMenu = (e: Event) => e.preventDefault();
-  canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("contextmenu", onContextMenu);
+  const listeners = [
+    ["pointerdown", onPointerDown],
+    ["pointermove", onPointerMove],
+    ["pointerup", onPointerUp],
+    ["pointercancel", onPointerCancel],
+    ["pointerleave", onPointerLeave],
+    ["contextmenu", onContextMenu],
+  ] as const;
+  for (const [type, fn] of listeners) canvas.addEventListener(type, fn as EventListener);
   canvas.style.touchAction = "none";
+  // The cursor is drawn in the back buffer (D77).
+  canvas.style.cursor = "none";
 
-  const loop = new FixedStep((dt) => session?.tick(dt));
+  const loop = new FixedStep((dt) => {
+    session?.tick(dt);
+    ui?.tick(dt);
+  });
   const frame = (now: number) => {
     if (destroyed) return;
     loop.advance(now);
     const loading = session ? session.loading : scene;
-    if (session && !loading) drawSession(backCtx, session, images.loaded.get(session.scene.background)?.el, debug);
+    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, images.loaded.get(session.scene.background)?.el, debug);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0);
     present(screen, back, viewport);
     raf = requestAnimationFrame(frame);
@@ -128,12 +142,17 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     if (destroyed) return;
     const start = { ...(options.scene ? { scene: options.scene } : {}), ...(options.spawn ? { spawn: options.spawn } : {}) };
     session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch });
+    ui = new PlayerUi(session);
+    resize();
   });
 
   return {
     ready,
     get session() {
       return session;
+    },
+    get ui() {
+      return ui;
     },
     get world() {
       return session?.world ?? null;
@@ -143,8 +162,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       destroyed = true;
       cancelAnimationFrame(raf);
       observer.disconnect();
-      canvas.removeEventListener("pointerdown", onPointerDown);
-      canvas.removeEventListener("contextmenu", onContextMenu);
+      for (const [type, fn] of listeners) canvas.removeEventListener(type, fn as EventListener);
     },
   };
 }

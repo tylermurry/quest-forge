@@ -1,5 +1,6 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
-import type { Session } from "./session.ts";
+import type { PlayerUi } from "./ui/controller.ts";
+import { drawUi, type IconImage } from "./ui/draw.ts";
 import { TEXT_FONT, TEXT_LINE, layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { Viewport } from "./viewport.ts";
 import type { World } from "./world.ts";
@@ -17,7 +18,8 @@ export interface DebugFlags {
 }
 
 /** Draws one frame of play into the back buffer, in spec 03 order. */
-export function drawSession(ctx: Ctx, session: Session, background: CanvasImageSource | undefined, debug: DebugFlags) {
+export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags) {
+  const session = ui.session;
   const world = session.world;
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = "#000";
@@ -39,10 +41,8 @@ export function drawSession(ctx: Ctx, session: Session, background: CanvasImageS
     }
   }
 
-  if (session.text) drawTextBox(ctx, session.text);
-  if (session.ending) drawEnding(ctx, session);
-  drawVerb(ctx, session);
   if (debug.overlay) drawDebug(ctx, world);
+  drawUi(ctx, ui, icons, () => session.text && drawTextBox(ctx, session.text));
 }
 
 export function drawLoading(ctx: Ctx, progress: number) {
@@ -96,24 +96,6 @@ function drawTextBox(ctx: Ctx, box: TextBox) {
     ctx.font = FONT;
   }
   l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
-}
-
-/** The D71 stand-in for M8's death box: the message and a Restart hint. */
-function drawEnding(ctx: Ctx, session: Session) {
-  const e = session.ending!;
-  const text = e.kind === "die" ? e.message : "You won!";
-  drawTextBox(ctx, { kind: "narrate", text: `${text}\n\n[ Restart ]`, timeLeft: 0 });
-}
-
-function drawVerb(ctx: Ctx, session: Session) {
-  ctx.font = FONT;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  const label = session.verb === "item" ? `Use ${session.itemFile(session.item ?? "")?.name ?? ""}` : session.verb[0]!.toUpperCase() + session.verb.slice(1);
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(4, 4, ctx.measureText(label).width + 8, 14);
-  ctx.fillStyle = "#ff0";
-  ctx.fillText(label, 8, 6);
 }
 
 function drawDebug(ctx: Ctx, world: World) {

@@ -4,8 +4,26 @@
     {
       "name": "engine-dev",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "--filter", "@questforge/engine", "dev"],
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@questforge/engine",
+        "dev"
+      ],
       "port": 5174
+    },
+    {
+      "name": "engine-dev-alt",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@questforge/engine",
+        "dev",
+        "--port",
+        "5176"
+      ],
+      "port": 5176
     }
   ]
 }
