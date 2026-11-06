@@ -1,21 +1,21 @@
-import { useMemo, useRef, useState, type DragEvent, type MouseEvent, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Search } from "lucide-react";
+import { useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
 import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, type Entry, type FolderNode, type Section } from "../model/browser.ts";
-import { ConfirmDelete, Menu, Prompt, type MenuItem } from "./Dialogs.tsx";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
+import { Input } from "./components/ui/input.tsx";
+import { ConfirmDelete, MenuItems, Prompt, type MenuItem, type MenuParts } from "./Dialogs.tsx";
+import { cn } from "./lib/utils.ts";
 
 const DRAG_TYPE = "application/x-questforge";
 
-type Popup =
-  | { kind: "menu"; x: number; y: number; items: MenuItem[] }
-  | { kind: "delete"; warning: DeleteWarning; run(): void }
-  | { kind: "changeId"; section: Section; id: string }
-  | null;
+const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
+const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
+
+type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
 type Editing = { section: Section; kind: "entry"; id: string; value: string } | { section: Section; kind: "folder"; path: string; value: string } | null;
-
-interface Props {
-  actions: Actions;
-}
 
 /** Reads dropped or picked files and imports them (D88). */
 async function importInto(actions: Actions, section: Section, folder: string, files: File[]) {
@@ -23,24 +23,60 @@ async function importInto(actions: Actions, section: Section, folder: string, fi
   actions.importFiles(section, folder, read);
 }
 
+/** A row with a right-click menu and a "⋯" button showing the same items. */
+function MenuRow({ items, label, className, children, ...rest }: { items: MenuItem[]; label: string; className?: string; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
+  // When a menu closes, an inline rename box it opened gets focus instead of the row.
+  const keepFocus = (e: Event) => {
+    const box = document.querySelector<HTMLInputElement>("input[data-rename]");
+    if (!box) return;
+    e.preventDefault();
+    box.focus();
+    box.select();
+  };
+  // Menu content is portaled, but React still bubbles its events to the row (click would toggle or select it).
+  const contain = {
+    onClick: (e: React.SyntheticEvent) => e.stopPropagation(),
+    onDoubleClick: (e: React.SyntheticEvent) => e.stopPropagation(),
+    onKeyDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+    onPointerDown: (e: React.SyntheticEvent) => e.stopPropagation(),
+  };
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div className={cn("group flex h-6 items-center gap-1 rounded-sm pr-1 outline-none", className)} {...rest}>
+          {children}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={label}
+              className="text-muted-foreground hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded-sm opacity-0 group-hover:opacity-100 group-aria-selected:opacity-100 data-[state=open]:opacity-100"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Ellipsis className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
+              <MenuItems items={items} parts={DROPDOWN} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
+        <MenuItems items={items} parts={CONTEXT} />
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
 /** The project browser (spec 08). Thin: every change goes through Actions. */
-export function ProjectBrowser({ actions }: Props) {
-  const onImport = (section: Section, folder: string, files: File[]) => void importInto(actions, section, folder, files);
-  const picker = useRef<HTMLInputElement>(null);
-  const [pickTarget, setPickTarget] = useState<{ section: Section; folder: string } | null>(null);
+export function ProjectBrowser({ actions }: { actions: Actions }) {
   const { editor, ws } = actions;
   const project = editor.project;
   const [popup, setPopup] = useState<Popup>(null);
   const [editing, setEditing] = useState<Editing>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const picker = useRef<HTMLInputElement>(null);
+  const [pickTarget, setPickTarget] = useState<{ section: Section; folder: string } | null>(null);
   const trees = useMemo(() => SECTIONS.map((s) => ({ ...s, tree: buildSection(project, s.section) })), [project]);
-
-  const menuAt = (e: MouseEvent, items: MenuItem[]) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setPopup({ kind: "menu", x: e.type === "contextmenu" ? e.clientX : r.left, y: e.type === "contextmenu" ? e.clientY : r.bottom, items });
-  };
+  const onImport = (section: Section, folder: string, files: File[]) => void importInto(actions, section, folder, files);
 
   const askDelete = (warning: DeleteWarning | null, run: () => void) => (warning ? setPopup({ kind: "delete", warning, run }) : run());
 
@@ -49,11 +85,11 @@ export function ProjectBrowser({ actions }: Props) {
     { label: "Rename", onSelect: () => setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name }) },
     ...(isAssetKind(e.section) ? [{ label: "Change ID…", onSelect: () => setPopup({ kind: "changeId", section: e.section, id: e.id }) }] : []),
     ...(e.section !== "image" && e.section !== "audio" ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
-    { label: "Delete", onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)) },
+    { label: "Delete", separated: true, destructive: true, onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)) },
   ];
 
   const folderMenu = (section: Section, path: string): MenuItem[] => [
-    { label: "New folder", onSelect: () => actions.newFolder(section, path) },
+    { label: "New folder", onSelect: () => startNewFolder(section, path) },
     ...(section !== "image" && section !== "audio" ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
     ...(section === "image" || section === "audio"
       ? [
@@ -68,11 +104,17 @@ export function ProjectBrowser({ actions }: Props) {
       : []),
     ...(path
       ? [
-          { label: "Rename folder", onSelect: () => setEditing({ section, kind: "folder", path, value: path.split("/").pop()! }) },
-          { label: "Delete folder", onSelect: () => askDelete(actions.deleteFolderWarning(section, path), () => actions.deleteFolder(section, path)) },
+          { label: "Rename folder", separated: true, onSelect: () => setEditing({ section, kind: "folder", path, value: path.split("/").pop()! }) },
+          { label: "Delete folder", destructive: true, onSelect: () => askDelete(actions.deleteFolderWarning(section, path), () => actions.deleteFolder(section, path)) },
         ]
       : []),
   ];
+
+  /** New folders start in rename mode, like Finder. */
+  const startNewFolder = (section: Section, parent: string) => {
+    const made = actions.newFolder(section, parent);
+    if (made) setEditing({ section, kind: "folder", path: made, value: made.split("/").pop()! });
+  };
 
   // ── Drag and drop: moves inside a section (D83), files from the OS (D88) ──
   const dragStart = (e: DragEvent, item: DragItem) => {
@@ -105,23 +147,22 @@ export function ProjectBrowser({ actions }: Props) {
 
   const commitEdit = () => {
     if (!editing) return;
-    const ok =
-      editing.kind === "entry"
-        ? actions.rename(editing.section, editing.id, editing.value)
-        : editing.value.trim() !== "" && actions.renameFolder(editing.section, editing.path, editing.value);
-    void ok;
+    if (editing.kind === "entry") actions.rename(editing.section, editing.id, editing.value);
+    else if (editing.value.trim() !== "") actions.renameFolder(editing.section, editing.path, editing.value);
     setEditing(null);
   };
   const editBox = (label: string) =>
     editing && (
       <input
-        className="rename"
+        className="bg-background border-ring h-5 min-w-0 flex-1 rounded-sm border px-1 text-[13px] outline-none"
         aria-label={label}
+        data-rename=""
         autoFocus
         value={editing.value}
         onChange={(e) => setEditing({ ...editing, value: e.target.value })}
         onFocus={(e) => e.currentTarget.select()}
         onBlur={commitEdit}
+        onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter") commitEdit();
           if (e.key === "Escape") setEditing(null);
@@ -130,7 +171,11 @@ export function ProjectBrowser({ actions }: Props) {
       />
     );
 
+  const rowClass = (selected: boolean) =>
+    cn("hover:bg-muted/70 data-[drop=true]:bg-accent data-[drop=true]:ring-ring ring-inset data-[drop=true]:ring-1", selected && "bg-selection hover:bg-selection");
   const sel = ws.selection;
+  const indent = (depth: number) => ({ paddingLeft: 4 + depth * 14 });
+
   const renderFolder = (node: FolderNode, depth: number, searching: boolean): ReactNode => {
     const open = searching || ws.isExpanded(node.section, node.path);
     return (
@@ -139,27 +184,31 @@ export function ProjectBrowser({ actions }: Props) {
           const isOpen = searching || ws.isExpanded(f.section, f.path);
           const selected = sel?.kind === "folder" && sel.section === f.section && sel.path === f.path;
           const isEditing = editing?.kind === "folder" && editing.section === f.section && editing.path === f.path;
+          const Icon = isOpen ? FolderOpen : Folder;
           return (
-            <li key={`f:${f.path}`} role="treeitem" aria-expanded={isOpen} aria-selected={selected} aria-label={`Folder ${f.path}`}>
-              <div
-                className={`node folder${selected ? " selected" : ""}`}
-                style={{ paddingLeft: 8 + depth * 14 }}
+            <li key={`f:${f.path}`} role="treeitem" aria-expanded={isOpen} aria-selected={selected} aria-label={`Folder ${f.path}`} className="group/item">
+              <MenuRow
+                items={folderMenu(f.section, f.path)}
+                label={`Actions for folder ${f.path}`}
+                className={rowClass(selected)}
+                style={indent(depth)}
+                aria-selected={selected}
                 draggable={!isEditing}
                 onDragStart={(e) => dragStart(e, { section: f.section, kind: "folder", path: f.path })}
                 {...dropProps(f.section, f.path)}
                 onClick={() => ws.select({ kind: "folder", section: f.section, path: f.path })}
                 onDoubleClick={() => ws.toggleFolder(f.section, f.path)}
-                onContextMenu={(e) => menuAt(e, folderMenu(f.section, f.path))}
               >
-                <button className="twisty" aria-label={isOpen ? "Collapse" : "Expand"} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(f.section, f.path))}>
-                  {isOpen ? "▾" : "▸"}
+                <button
+                  className="text-muted-foreground flex size-4 shrink-0 items-center justify-center"
+                  aria-label={isOpen ? "Collapse" : "Expand"}
+                  onClick={(e) => (e.stopPropagation(), ws.toggleFolder(f.section, f.path))}
+                >
+                  {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>
-                <span className="icon">📁</span>
-                {isEditing ? editBox("Folder name") : <span className="label">{f.name}</span>}
-                <button className="more" aria-label={`Actions for folder ${f.path}`} onClick={(e) => menuAt(e, folderMenu(f.section, f.path))}>
-                  ⋯
-                </button>
-              </div>
+                <Icon className="text-muted-foreground size-3.5 shrink-0" />
+                {isEditing ? editBox("Folder name") : <span className="flex-1 truncate">{f.name}</span>}
+              </MenuRow>
               {isOpen && <ul role="group">{renderFolder(f, depth + 1, searching)}</ul>}
             </li>
           );
@@ -170,32 +219,32 @@ export function ProjectBrowser({ actions }: Props) {
             const isEditing = editing?.kind === "entry" && editing.section === e.section && editing.id === e.id;
             return (
               <li key={`e:${e.id}`} role="treeitem" aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
-                <div
-                  className={`node entry${selected ? " selected" : ""}`}
-                  style={{ paddingLeft: 22 + depth * 14 }}
+                <MenuRow
+                  items={entryMenu(e)}
+                  label={`Actions for ${NOUN[e.section]} ${e.id}`}
+                  className={rowClass(selected)}
+                  style={indent(depth + 1.15)}
+                  aria-selected={selected}
+                  tabIndex={0}
                   draggable={!isEditing}
                   onDragStart={(ev) => dragStart(ev, { section: e.section, kind: "entry", id: e.id })}
                   onClick={() => ws.select({ kind: "entry", section: e.section, id: e.id })}
                   onDoubleClick={() => isAssetKind(e.section) && ws.open({ section: e.section, id: e.id })}
-                  onContextMenu={(ev) => menuAt(ev, entryMenu(e))}
                   onKeyDown={(ev) => {
                     if (ev.key === "F2") setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name });
+                    if (ev.key === "Enter" && isAssetKind(e.section)) ws.open({ section: e.section, id: e.id });
                     if (ev.key === "Delete" || ev.key === "Backspace") askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id));
                   }}
-                  tabIndex={0}
                 >
                   {isEditing ? (
                     editBox(isAssetKind(e.section) ? "Name" : "ID")
                   ) : (
-                    <span className="label">
+                    <span className="flex-1 truncate">
                       {e.name}
-                      {e.name !== e.id && <span className="muted"> {e.id}</span>}
+                      {e.name !== e.id && <span className="text-muted-foreground ml-1.5 text-[12px]">{e.id}</span>}
                     </span>
                   )}
-                  <button className="more" aria-label={`Actions for ${NOUN[e.section]} ${e.id}`} onClick={(ev) => menuAt(ev, entryMenu(e))}>
-                    ⋯
-                  </button>
-                </div>
+                </MenuRow>
               </li>
             );
           })}
@@ -205,7 +254,7 @@ export function ProjectBrowser({ actions }: Props) {
 
   const searching = ws.search.trim() !== "";
   return (
-    <div className="project-browser">
+    <div className="flex h-full min-h-0 flex-col">
       <input
         ref={picker}
         type="file"
@@ -219,30 +268,35 @@ export function ProjectBrowser({ actions }: Props) {
           if (pickTarget && files.length) onImport(pickTarget.section, pickTarget.folder, files);
         }}
       />
-      <input className="search" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
-      <ul role="tree" aria-label="Project">
+      <div className="relative p-2">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2" />
+        <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
+      </div>
+      <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
         {trees.map(({ section, title, tree }) => {
           const shown = filterTree(tree, ws.search);
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
           return (
-            <li key={section} role="treeitem" aria-expanded={open} aria-label={title}>
-              <div className="node section" {...dropProps(section, "")} onContextMenu={(e) => menuAt(e, folderMenu(section, ""))}>
-                <button className="twisty" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={() => ws.toggleFolder(section, "")}>
-                  {open ? "▾" : "▸"}
+            <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-1.5">
+              <MenuRow
+                items={folderMenu(section, "")}
+                label={`Actions for ${title}`}
+                className={cn("text-muted-foreground text-[11px] font-semibold tracking-wider uppercase", rowClass(false))}
+                {...dropProps(section, "")}
+                onClick={() => ws.toggleFolder(section, "")}
+              >
+                <button className="flex size-4 shrink-0 items-center justify-center" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}>
+                  {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>
-                <span className="label">{title}</span>
-                <span className="muted count">{countEntries(shown ?? tree)}</span>
-                <button className="more" aria-label={`Actions for ${title}`} onClick={(e) => menuAt(e, folderMenu(section, ""))}>
-                  +
-                </button>
-              </div>
+                <span className="flex-1">{title}</span>
+                <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
+              </MenuRow>
               {open && shown && <ul role="group">{renderFolder(shown, 1, searching)}</ul>}
             </li>
           );
         })}
       </ul>
-      {popup?.kind === "menu" && <Menu x={popup.x} y={popup.y} items={popup.items} onClose={() => setPopup(null)} />}
       {popup?.kind === "delete" && (
         <ConfirmDelete
           warning={popup.warning}

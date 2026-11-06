@@ -50,7 +50,7 @@ describe("workspace (D89)", () => {
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     const objects = screen.getByRole("region", { name: "Objects" });
     fireEvent.click(within(objects).getByRole("button", { name: /^Delete .*boulder/ }));
-    expect(screen.getByRole("dialog").textContent).toContain("Used by");
+    expect(screen.getByRole("alertdialog").textContent).toContain("Used by");
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(garden(ed).objects.some((o) => o.id === "boulder")).toBe(true);
   });

@@ -1,126 +1,105 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Questforge is a dark, dense desktop editor (D92). shadcn/ui reads these tokens. */
 :root {
-  --bg: #1e1f22;
-  --panel: #26282c;
-  --panel-2: #2d3035;
-  --line: #3a3d43;
-  --text: #dcdcdc;
-  --muted: #8b8f96;
-  --accent: #5b9cf5;
-  --accent-bg: #2f4a72;
-  --ok: #7fc47f;
-  --warn: #e0b453;
-  --err: #ef7070;
   color-scheme: dark;
+  --radius: 0.375rem;
+  --background: oklch(0.2 0.004 264);
+  --foreground: oklch(0.89 0.004 264);
+  --card: oklch(0.235 0.005 264);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.26 0.006 264);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.68 0.14 255);
+  --primary-foreground: oklch(0.16 0.02 255);
+  --secondary: oklch(0.29 0.006 264);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.27 0.005 264);
+  --muted-foreground: oklch(0.64 0.01 264);
+  --accent: oklch(0.32 0.05 255);
+  --accent-foreground: oklch(0.95 0.005 264);
+  --destructive: oklch(0.63 0.19 25);
+  --border: oklch(0.33 0.006 264);
+  --input: oklch(0.33 0.006 264);
+  --ring: oklch(0.68 0.14 255);
+  /* Questforge extras */
+  --panel: oklch(0.235 0.005 264);
+  --selection: oklch(0.36 0.08 255);
+  --ok: oklch(0.76 0.13 145);
+  --warn: oklch(0.8 0.13 85);
+  --err: oklch(0.7 0.16 25);
 }
-* { box-sizing: border-box; }
-html, body, #root { margin: 0; height: 100%; }
-body { font: 13px/1.4 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-button { font: inherit; color: inherit; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 3px 10px; cursor: pointer; }
-button:hover:not(:disabled) { border-color: var(--accent); }
-button:disabled { opacity: 0.45; cursor: default; }
-button.small { padding: 1px 6px; font-size: 12px; }
-button.link { background: none; border: none; padding: 2px 0; text-align: left; }
-button.link:hover:not(:disabled) { color: var(--accent); }
-button.danger { background: #6b2b2b; border-color: #8b3a3a; }
-input, select, textarea { font: inherit; color: inherit; background: #17181a; border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; }
-input:focus, textarea:focus { outline: 1px solid var(--accent); }
-.muted { color: var(--muted); }
-.error { color: var(--err); }
-.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-/* Start screen */
-.start { max-width: 640px; margin: 0 auto; padding: 48px 16px; }
-.start h1 { font-size: 28px; margin: 0 0 24px; }
-.start h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 28px 0 8px; }
-.start input { min-width: 240px; }
-.list { list-style: none; padding: 0; margin: 8px 0; }
-.list li { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
-.list li.missing strong { text-decoration: line-through; }
-
-/* Shell */
-.shell {
-  height: 100%;
-  display: grid;
-  grid-template-columns: minmax(220px, 280px) 1fr minmax(220px, 300px);
-  grid-template-rows: auto auto 1fr minmax(120px, 28%);
-  grid-template-areas: "top top top" "notice notice notice" "browser tabs inspector" "browser dock inspector";
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-panel: var(--panel);
+  --color-selection: var(--selection);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-err: var(--err);
 }
-.topbar { grid-area: top; display: flex; gap: 8px; align-items: center; padding: 6px 10px; background: var(--panel); border-bottom: 1px solid var(--line); }
-.topbar .push { margin-left: auto; }
-.status { margin-left: 8px; color: var(--muted); }
-.status-saved { color: var(--ok); }
-.status-error { color: var(--err); }
-.notice { grid-area: notice; display: flex; gap: 10px; align-items: center; padding: 6px 10px; background: #2c3a52; border-bottom: 1px solid var(--line); }
-.notice-error { background: #4a2a2a; }
-.browser { grid-area: browser; background: var(--panel); border-right: 1px solid var(--line); overflow: auto; min-height: 0; }
-.tabs { grid-area: tabs; overflow: auto; min-height: 0; display: flex; flex-direction: column; }
-.inspector { grid-area: inspector; background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 10px; min-height: 0; }
-.dock { grid-area: dock; border-top: 1px solid var(--line); background: var(--panel); overflow: auto; min-height: 0; display: flex; flex-direction: column; }
 
-/* Project browser */
-.project-browser { display: flex; flex-direction: column; min-height: 100%; }
-.project-browser .search { margin: 8px; }
-.project-browser ul { list-style: none; margin: 0; padding: 0; }
-.node { display: flex; align-items: center; gap: 4px; padding: 2px 6px; min-height: 24px; cursor: default; border: 1px solid transparent; }
-.node:hover { background: var(--panel-2); }
-.node.selected { background: var(--accent-bg); }
-.node[data-drop="true"] { border-color: var(--accent); background: #24354f; }
-.node .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.node.section { font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--muted); margin-top: 6px; }
-.node .twisty { background: none; border: none; padding: 0 2px; width: 16px; color: var(--muted); }
-.node .more { background: none; border: none; padding: 0 4px; color: var(--muted); visibility: hidden; }
-.node:hover .more, .node.selected .more { visibility: visible; }
-.node .icon { font-size: 11px; }
-.node .count { font-weight: normal; }
-.node:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
-.rename { flex: 1; min-width: 0; padding: 0 4px; }
-
-/* Menus and dialogs */
-.menu { position: fixed; z-index: 20; list-style: none; margin: 0; padding: 4px 0; min-width: 160px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 24px #0008; }
-.menu button { width: 100%; text-align: left; background: none; border: none; border-radius: 0; padding: 4px 12px; }
-.menu button:hover:not(:disabled) { background: var(--accent-bg); }
-.backdrop { position: fixed; inset: 0; z-index: 30; background: #0007; display: grid; place-items: center; }
-.dialog { width: min(480px, 92vw); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; box-shadow: 0 12px 48px #000a; }
-.dialog h3 { margin: 0 0 10px; font-size: 15px; }
-.dialog .refs { max-height: 200px; overflow: auto; margin: 6px 0; padding-left: 18px; color: var(--text); }
-.dialog .field { display: flex; flex-direction: column; gap: 4px; }
-.row.end { justify-content: flex-end; margin-top: 12px; }
-
-/* Tabs */
-.editor-tabs { display: flex; flex-direction: column; min-height: 100%; }
-.tabstrip { display: flex; gap: 2px; padding: 4px 4px 0; background: var(--panel); border-bottom: 1px solid var(--line); min-height: 30px; overflow-x: auto; }
-.tab { display: flex; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-bottom: none; border-radius: 4px 4px 0 0; }
-.tab.active { background: var(--bg); }
-.tab button { background: none; border: none; border-radius: 0; padding: 4px 8px; white-space: nowrap; }
-.tab .close { padding: 4px 6px; color: var(--muted); }
-.tabbody { flex: 1; overflow: auto; padding: 14px 18px; }
-.center { text-align: center; margin-top: 48px; }
-.tab-content { max-width: 720px; display: flex; flex-direction: column; gap: 10px; }
-.tab-content h2 { margin: 0; font-size: 18px; }
-.tab-content h2 .muted { font-size: 13px; font-weight: normal; }
-.field { display: flex; flex-direction: column; gap: 3px; }
-.outline h3 { font-size: 13px; margin: 14px 0 4px; }
-.rows { list-style: none; margin: 0; padding: 0; }
-.rows li { display: flex; align-items: center; gap: 8px; padding: 2px 6px; border-radius: 4px; }
-.rows li:hover { background: var(--panel-2); }
-.rows li.selected { background: var(--accent-bg); }
-.grow { flex: 1; }
-.small { font-size: 12px; }
-.ok { color: var(--ok); }
-
-/* Inspector */
-.props { margin: 0; }
-.props h3 { margin: 0 0 8px; font-size: 15px; }
-.props dt { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 10px; }
-.props dd { margin: 2px 0 0; word-break: break-word; }
-.props .refs { padding-left: 16px; margin: 4px 0; }
-.preview { display: block; max-width: 100%; margin-top: 10px; image-rendering: pixelated; background: repeating-conic-gradient(#333 0 25%, #2a2a2a 0 50%) 0 0 / 16px 16px; }
-
-/* Dock */
-.docktabs { display: flex; gap: 2px; padding: 4px 6px 0; border-bottom: 1px solid var(--line); }
-.docktabs button { border-radius: 4px 4px 0 0; border-bottom: none; }
-.docktabs button[aria-selected="true"] { background: var(--bg); }
-.dockbody { flex: 1; overflow: auto; padding: 6px 10px; }
-.problems { list-style: none; margin: 0; padding: 0; }
-.problems li.error button { color: var(--err); }
-.problems li.warning button { color: var(--warn); }
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+  /* Desktop app hygiene (D92): no page scroll or rubber-banding, no text selection
+     outside fields, default cursor, system font at desktop density. */
+  html,
+  body {
+    overscroll-behavior: none;
+    overflow: hidden;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 13px;
+    line-height: 1.4;
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable="true"],
+  .selectable {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  button,
+  [role="button"],
+  a {
+    cursor: default;
+  }
+  img {
+    -webkit-user-drag: none;
+  }
+}

@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { Input } from "./components/ui/input.tsx";
+import { Label } from "./components/ui/label.tsx";
+import { Textarea } from "./components/ui/textarea.tsx";
 
 /**
  * A text field that edits project data as you type. Every keystroke within a
@@ -6,6 +9,7 @@ import { useEffect, useState } from "react";
  * (e.g. empty) stay in the box without being applied.
  */
 export function TextField(props: { label: string; value: string; multiline?: boolean; onChange(value: string): void; onBlur(): void; valid?(v: string): boolean }) {
+  const id = useId();
   const [text, setText] = useState(props.value);
   const [focused, setFocused] = useState(false);
   useEffect(() => {
@@ -16,8 +20,10 @@ export function TextField(props: { label: string; value: string; multiline?: boo
     if ((props.valid ?? ((x: string) => x.trim() !== ""))(v)) props.onChange(v);
   };
   const common = {
+    id,
     "aria-label": props.label,
     value: text,
+    className: "text-[13px]",
     onFocus: () => setFocused(true),
     onBlur: () => {
       setFocused(false);
@@ -26,9 +32,15 @@ export function TextField(props: { label: string; value: string; multiline?: boo
     },
   };
   return (
-    <label className="field">
-      <span className="muted">{props.label}</span>
-      {props.multiline ? <textarea rows={3} {...common} onChange={(e) => change(e.target.value)} /> : <input {...common} onChange={(e) => change(e.target.value)} />}
-    </label>
+    <div className="grid gap-1.5">
+      <Label htmlFor={id} className="text-muted-foreground text-[12px] font-normal">
+        {props.label}
+      </Label>
+      {props.multiline ? (
+        <Textarea rows={3} {...common} onChange={(e) => change(e.target.value)} />
+      ) : (
+        <Input {...common} className="h-8 text-[13px]" onChange={(e) => change(e.target.value)} />
+      )}
+    </div>
   );
 }

@@ -1,13 +1,21 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { CircleAlert, CircleCheck, LoaderCircle, PanelBottom, PanelLeft, PanelRight, Redo2, Undo2 } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useDefaultLayout, type PanelImperativeHandle } from "react-resizable-panels";
+import { toast } from "sonner";
 import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
 import { WorkspaceState } from "../model/workspace.ts";
+import { Button } from "./components/ui/button.tsx";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./components/ui/resizable.tsx";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/ui/tooltip.tsx";
 import { Dock } from "./Dock.tsx";
 import { EditorTabs } from "./EditorTabs.tsx";
 import { Inspector } from "./Inspector.tsx";
 import { ProjectBrowser } from "./ProjectBrowser.tsx";
+import { TitleBar } from "./TitleBar.tsx";
 import { useEditor, usePlatform } from "./hooks.ts";
+import { cn } from "./lib/utils.ts";
 
 interface Props {
   root: string;
@@ -15,16 +23,78 @@ interface Props {
   onClose(): void;
 }
 
-const STATUS_TEXT = { saved: "Saved", unsaved: "Unsaved changes", saving: "Saving…" } as const;
+/** Panel sizes are a per-user preference, kept in the webview's storage (D92). */
+function layoutStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
 
-/** Main layout (spec 08): browser · tabs · inspector · dock. */
+function SaveStatus({ editor }: { editor: Editor }) {
+  const s = editor.status;
+  const icon = {
+    saved: <CircleCheck className="text-ok size-3.5" />,
+    unsaved: <span className="bg-muted-foreground size-2 rounded-full" />,
+    saving: <LoaderCircle className="size-3.5 animate-spin" />,
+    error: <CircleAlert className="text-err size-3.5" />,
+  }[s.state];
+  const text = s.state === "error" ? s.message : { saved: "Saved", unsaved: "Unsaved changes", saving: "Saving…" }[s.state];
+  return (
+    <span className={cn("flex min-w-0 items-center gap-1.5 text-[12px]", s.state === "error" ? "text-err" : "text-muted-foreground")}>
+      {icon}
+      <span role="status" aria-label="Save status" className="truncate">
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function IconButton({ label, onClick, disabled, active, children }: { label: string; onClick(): void; disabled?: boolean; active?: boolean; children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="ghost" size="icon-xs" aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick} className={cn(active === false && "text-muted-foreground")}>
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** Main layout (spec 08): browser · tabs · inspector · dock, each resizable (D92). */
 export function Workspace({ root, editor, onClose }: Props) {
   const ed = useEditor(editor);
   const platform = usePlatform();
   const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
   const ws = actions.ws;
   useSyncExternalStore(ws.subscribe, () => ws.version);
-  const status = ed.status;
+  const storage = layoutStorage();
+  const columns = useDefaultLayout({ id: "questforge.columns", storage });
+  const rows = useDefaultLayout({ id: "questforge.rows", storage });
+  const browser = useRef<PanelImperativeHandle | null>(null);
+  const inspector = useRef<PanelImperativeHandle | null>(null);
+  const dock = useRef<PanelImperativeHandle | null>(null);
+  const [, setTick] = useState(0);
+  const toggle = (p: React.RefObject<PanelImperativeHandle | null>) => {
+    const panel = p.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) panel.expand();
+    else panel.collapse();
+    setTick((t) => t + 1);
+  };
+  const shown = (p: React.RefObject<PanelImperativeHandle | null>) => !(p.current?.isCollapsed() ?? false);
+
+  // Notices (outside reloads, refused imports, command errors) show as toasts.
+  useEffect(() => {
+    const n = ed.notice;
+    if (!n) return;
+    if (n.kind === "error") toast.error(n.text);
+    else toast(n.text, { duration: 8000 });
+    ed.dismissNotice();
+  }, [ed, ed.notice]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -52,42 +122,64 @@ export function Workspace({ root, editor, onClose }: Props) {
   }, [ed]);
 
   return (
-    <div className="shell">
-      <header className="topbar">
-        <strong>{projectTitle(ed.project)}</strong>
-        <button onClick={() => ed.undo()} disabled={!ed.history.canUndo} title={ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Nothing to undo"}>
-          Undo
-        </button>
-        <button onClick={() => ed.redo()} disabled={!ed.history.canRedo} title={ed.history.redoLabel ? `Redo ${ed.history.redoLabel}` : "Nothing to redo"}>
-          Redo
-        </button>
-        <span className={`status status-${status.state}`} role="status" aria-label="Save status">
-          {status.state === "error" ? status.message : STATUS_TEXT[status.state]}
-        </span>
-        <button className="push" onClick={onClose}>
-          Close project
-        </button>
-      </header>
-      {ed.notice && (
-        <div className={`notice notice-${ed.notice.kind}`} role="alert">
-          {ed.notice.text}
-          <button className="small" onClick={() => ed.dismissNotice()}>
-            Dismiss
-          </button>
+    <TooltipProvider delayDuration={500}>
+    <div className="flex h-full flex-col">
+      <TitleBar>
+        <span className="truncate text-[13px] font-semibold">{projectTitle(ed.project)}</span>
+        <div className="flex items-center">
+          <IconButton label={ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo"} disabled={!ed.history.canUndo} onClick={() => ed.undo()}>
+            <Undo2 />
+          </IconButton>
+          <IconButton label={ed.history.redoLabel ? `Redo ${ed.history.redoLabel}` : "Redo"} disabled={!ed.history.canRedo} onClick={() => ed.redo()}>
+            <Redo2 />
+          </IconButton>
         </div>
-      )}
-      <aside className="browser">
-        <ProjectBrowser actions={actions} />
-      </aside>
-      <main className="tabs">
-        <EditorTabs actions={actions} />
-      </main>
-      <aside className="inspector" aria-label="Inspector">
-        <Inspector actions={actions} />
-      </aside>
-      <footer className="dock">
-        <Dock actions={actions} />
-      </footer>
+        <SaveStatus editor={ed} />
+        <div className="ml-auto flex items-center gap-0.5">
+          <IconButton label="Show project browser" active={shown(browser)} onClick={() => toggle(browser)}>
+            <PanelLeft />
+          </IconButton>
+          <IconButton label="Show problems and playtest" active={shown(dock)} onClick={() => toggle(dock)}>
+            <PanelBottom />
+          </IconButton>
+          <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
+            <PanelRight />
+          </IconButton>
+          <Button variant="ghost" size="xs" className="ml-2" onClick={onClose}>
+            Close project
+          </Button>
+        </div>
+      </TitleBar>
+      <ResizablePanelGroup orientation="horizontal" id="questforge.columns" defaultLayout={columns.defaultLayout} onLayoutChanged={columns.onLayoutChanged} className="min-h-0 flex-1">
+        <ResizablePanel id="browser" panelRef={browser} defaultSize="260px" minSize="180px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
+          <aside aria-label="Project browser" className="h-full">
+            <ProjectBrowser actions={actions} />
+          </aside>
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel id="center" minSize="30%">
+          <ResizablePanelGroup orientation="vertical" id="questforge.rows" defaultLayout={rows.defaultLayout} onLayoutChanged={rows.onLayoutChanged}>
+            <ResizablePanel id="tabs" minSize="25%">
+              <main className="h-full">
+                <EditorTabs actions={actions} />
+              </main>
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel id="dock" panelRef={dock} defaultSize="28%" minSize="80px" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
+              <footer className="flex h-full flex-col">
+                <Dock actions={actions} />
+              </footer>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel id="inspector" panelRef={inspector} defaultSize="280px" minSize="200px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
+          <aside aria-label="Inspector" className="h-full overflow-auto p-3">
+            <Inspector actions={actions} />
+          </aside>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
+    </TooltipProvider>
   );
 }
