@@ -7,6 +7,7 @@ import { useCommands } from "../hooks.ts";
 import { cn } from "../lib/utils.ts";
 import { GameView } from "./GameView.tsx";
 import { usePlaytest } from "./hooks.ts";
+import { PresetMenu } from "./Presets.tsx";
 
 const LAYERS: { key: keyof DebugFlags; label: string }[] = [
   { key: "walkable", label: "Walkable" },
@@ -47,6 +48,7 @@ export function PlaytestPanel({ playtest, side }: { playtest: Playtest; side?: R
         <ToolButton label="Stop (Shift+F5)" onClick={() => registry.run("play.stop")} disabled={!run}>
           <Square className="size-3.5" /> Stop
         </ToolButton>
+        <PresetMenu playtest={playtest} />
         <span className="bg-border mx-1 h-4 w-px" />
         <Bug className="text-muted-foreground size-3.5" aria-hidden />
         <div role="group" aria-label="Debug layers" className="flex items-center gap-0.5">

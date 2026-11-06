@@ -79,6 +79,11 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   useSyncExternalStore(ws.subscribe, () => ws.version);
   const [playtest] = useState(() => new Playtest(editor, ws));
   useEffect(() => () => playtest.stop(), [playtest]);
+  // Presets live in .editor/presets.json (D126).
+  useEffect(() => {
+    void playtest.presets.attach(ed.host.fs);
+    return () => playtest.presets.detach();
+  }, [playtest, ed]);
   const [images] = useState(() => new CanvasImages((path) => platform.assetUrl(root, path)));
   useEffect(() => () => images.dispose(), [images]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));

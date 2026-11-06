@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Actions } from "../model/actions.ts";
 import type { Playtest } from "../model/playtest/playtest.ts";
 import { PlaytestPanel } from "./playtest/PlaytestPanel.tsx";
+import { PresetSection } from "./playtest/Presets.tsx";
 import { StatePanel } from "./playtest/StatePanel.tsx";
 import { locate } from "../model/locate.ts";
 import { ALL_SEVERITIES, problemCounts, visibleProblems, type SeverityFilter } from "../model/problemList.ts";
@@ -43,7 +44,7 @@ export function Dock({ actions, playtest }: { actions: Actions; playtest: Playte
       </TabsList>
       {/* Kept mounted so the game keeps running while Problems is shown. */}
       <TabsContent value="playtest" forceMount className="min-h-0 data-[state=inactive]:hidden">
-        <PlaytestPanel playtest={playtest} side={<StatePanel playtest={playtest} project={editor.project} />} />
+        <PlaytestPanel playtest={playtest} side={<StatePanel playtest={playtest} project={editor.project} footer={<PresetSection playtest={playtest} />} />} />
       </TabsContent>
       <TabsContent value="problems" className="min-h-0 overflow-auto px-1 py-1">
         {problems.length === 0 && <p className="text-ok px-2 py-1">No problems.</p>}

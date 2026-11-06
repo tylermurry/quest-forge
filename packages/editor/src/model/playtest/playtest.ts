@@ -2,11 +2,12 @@
 // project in the Dock. DOM-free: the Dock mounts the canvas for the current run
 // and hands the engine's session back with `attach`; Node tests build the session
 // themselves through `createSession`.
-import { cloneState, DEBUG_OFF, type DebugFlags, type GameState, type Session, type SessionStart, type TraceEvent } from "@questforge/engine";
+import { DEBUG_OFF, type DebugFlags, type GameState, type Session, type SessionStart, type TraceEvent } from "@questforge/engine";
 import { hasBlockingErrors, type Project, type SceneFile } from "@questforge/schema";
 import type { Editor } from "../editor.ts";
 import { sameContent } from "../history.ts";
 import type { WorkspaceState } from "../workspace.ts";
+import { droppedNotice, PresetStore, sanitizeState } from "./presets.ts";
 
 /** Where a run began; Restart goes back here (D128, D132). */
 export type RunOrigin =
@@ -43,6 +44,8 @@ export class Playtest {
   readonly events: TraceEvent[] = [];
   /** Turned-on debug layers (D132). The Dock passes this object to the engine, which reads it each frame. */
   readonly debug: DebugFlags = { ...DEBUG_OFF };
+  /** Named state snapshots in `.editor/presets.json` (D126). */
+  readonly presets = new PresetStore();
 
   private _version = 0;
   private listeners = new Set<() => void>();
@@ -102,9 +105,17 @@ export class Playtest {
     return here ? this.launch({ kind: "here", ...here }) : false;
   }
 
-  /** Start from a state (a preset, D126). The caller has already dropped stale IDs. */
-  playState(name: string, state: GameState): boolean {
-    return this.launch({ kind: "preset", name, state: cloneState(state) });
+  /** Start from a saved preset (D126): IDs the project lost are dropped, with a notice. */
+  playPreset(name: string): boolean {
+    const preset = this.presets.find(name);
+    return preset ? this.launch({ kind: "preset", name, state: preset.state }) : false;
+  }
+
+  /** Saves the running game's state as a preset ("Before cave"). */
+  async savePreset(name: string): Promise<boolean> {
+    if (!this._session || !name.trim()) return false;
+    await this.presets.save(name, this._session.state);
+    return true;
   }
 
   /** Restart: the run's original start, with the current project (D128, D132). */
@@ -167,8 +178,15 @@ export class Playtest {
 
   private launch(origin: RunOrigin, override?: SessionStart): boolean {
     if (!this.gate()) return false;
-    const start: SessionStart = override ?? (origin.kind === "game" ? {} : origin.kind === "here" ? { scene: origin.scene, spawn: origin.spawn } : { state: origin.state });
-    const run: Run = { id: this.nextId++, project: this.editor.project, start, origin };
+    const project = this.editor.project;
+    let start: SessionStart = override ?? (origin.kind === "game" ? {} : origin.kind === "here" ? { scene: origin.scene, spawn: origin.spawn } : { state: origin.state });
+    // A saved state may name things the project no longer has (D126).
+    if (start.state) {
+      const { state, dropped } = sanitizeState(project, start.state);
+      if (dropped.length) this.editor.showNotice({ kind: "info", text: droppedNotice(override ? "Restart scene" : `Preset "${origin.kind === "preset" ? origin.name : ""}"`, dropped) });
+      start = { state };
+    }
+    const run: Run = { id: this.nextId++, project, start, origin };
     this._run = run;
     this._session = null;
     this.events.length = 0;
