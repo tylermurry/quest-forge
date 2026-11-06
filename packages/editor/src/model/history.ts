@@ -11,6 +11,15 @@ export const MERGE_WINDOW_MS = 1000;
 /** Fields describing what's on disk. They're never undone: undo keeps the current ones (D84). */
 const DISK_KEYS = ["files", "saved", "savedFolders", "trash"] as const satisfies readonly (keyof Project)[];
 
+/** Whether two projects hold the same content (disk state aside); unchanged docs are shared, so this compares references. */
+export function sameContent(a: Project, b: Project): boolean {
+  if (a === b) return true;
+  const disk = new Set<string>(DISK_KEYS);
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of keys) if (!disk.has(k) && (a as unknown as Record<string, unknown>)[k] !== (b as unknown as Record<string, unknown>)[k]) return false;
+  return true;
+}
+
 /** `content` with the disk state of `disk`. */
 export function withDiskState(content: Project, disk: Project): Project {
   const out = { ...content };

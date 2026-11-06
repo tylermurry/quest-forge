@@ -2,7 +2,7 @@
 // shortcuts and (later) a command palette all run, so they never disagree.
 // DOM-free: hosts register handlers and render the list however they like.
 
-export type MenuName = "file" | "edit" | "view" | "scene";
+export type MenuName = "file" | "edit" | "view" | "scene" | "play";
 
 export interface CommandSpec {
   id: string;
@@ -42,6 +42,11 @@ export const COMMANDS = [
   { id: "scene.zoomOut", label: "Zoom Out", menu: "scene", shortcut: "Mod+-" },
   { id: "scene.zoomFit", label: "Zoom to Fit", menu: "scene", shortcut: "Mod+0" },
   { id: "scene.zoomActual", label: "Actual Size (1×)", menu: "scene" },
+  { id: "play.start", label: "Play", menu: "play", shortcut: "F5" },
+  { id: "play.here", label: "Play from Here", menu: "play", shortcut: "F6" },
+  { id: "play.restart", label: "Restart", menu: "play", separated: true },
+  { id: "play.restartScene", label: "Restart Scene", menu: "play" },
+  { id: "play.stop", label: "Stop", menu: "play", shortcut: "Shift+F5" },
 ] as const satisfies readonly CommandSpec[];
 
 export type CommandId = (typeof COMMANDS)[number]["id"];
@@ -118,16 +123,21 @@ export function matchesShortcut(shortcut: string, e: KeyPress, mac: boolean): bo
   return e.key.toLowerCase() === key && mod === want.mod && e.shiftKey === want.shift && e.altKey === want.alt;
 }
 
+/** Function keys can't be typed into a field, so they are real accelerators (D131). */
+const isFunctionKey = (shortcut: string) => /^F\d{1,2}$/.test(shortcut.split("+").at(-1)!);
+
 /**
  * A shortcut with no Mod key (a tool letter, Enter, Delete…). The webview handles
  * these in both hosts and never inside a text field; the native menu lists them
- * without an accelerator so it can't swallow typing.
+ * without an accelerator so it can't swallow typing. Function keys aren't plain.
  */
-export const isPlainShortcut = (shortcut: string) => !shortcut.split("+").includes("Mod");
+export const isPlainShortcut = (shortcut: string) => !shortcut.split("+").includes("Mod") && !isFunctionKey(shortcut);
 
 export interface KeyOptions {
   /** Only plain shortcuts (the native menu handles the rest). */
   plainOnly?: boolean;
+  /** The playtest game has focus: plain shortcuts don't reach the editor (D131). */
+  inGame?: boolean;
 }
 
 /** The command a key press triggers, if any. Text-aware and plain commands are left to a focused text field. */
@@ -138,6 +148,7 @@ export function commandForKey(e: KeyPress, mac: boolean, inTextField: boolean, o
     if (!c.shortcut || !matchesShortcut(c.shortcut, key, mac)) continue;
     const plain = isPlainShortcut(c.shortcut);
     if (opts.plainOnly && !plain) continue;
+    if (opts.inGame && plain) return null;
     if (inTextField && (c.textAware || plain)) return null;
     return c.id as CommandId;
   }

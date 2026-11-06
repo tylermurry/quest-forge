@@ -40,6 +40,8 @@ export interface SessionStart {
 export interface SessionHooks {
   /** Hears rule verdicts, default responses, actions, scene changes and notes. */
   trace?: Trace;
+  /** Replaces what the in-game Restart button does (playtest restarts the run's original start, D132). */
+  restart?: () => void;
 }
 
 /** Scene asset loading, owned by the host (spec 03). Headless sessions use `ALWAYS_READY`. */
@@ -94,6 +96,7 @@ export class Session implements SequenceHost {
   private readonly items: Map<string, ItemFile>;
   private readonly ctx: RuleContext;
   private readonly trace: Trace | undefined;
+  private readonly onRestart: (() => void) | undefined;
   private _entry!: { state: GameState; spawn: string | null };
 
   constructor(
@@ -104,6 +107,7 @@ export class Session implements SequenceHost {
     hooks: SessionHooks = {},
   ) {
     this.trace = hooks.trace;
+    this.onRestart = hooks.restart;
     this.game = project.game!.data;
     this.scenes = new Map(project.scenes.map((s) => [s.data.id, s.data]));
     this.characters = new Map(project.characters.map((c) => [c.data.id, c.data]));
@@ -138,7 +142,13 @@ export class Session implements SequenceHost {
     return { state: cloneState(this._entry.state), spawn: this._entry.spawn };
   }
 
-  /** Back to the start (also the D71 Restart button). */
+  /** The in-game Restart button (D71): the host's restart if it has one, else `restart()`. */
+  requestRestart() {
+    if (this.onRestart) this.onRestart();
+    else this.restart();
+  }
+
+  /** Back to the start. */
   restart() {
     this.sequence?.stop();
     this.sequence = null;

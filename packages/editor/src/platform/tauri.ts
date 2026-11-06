@@ -104,6 +104,7 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
       }),
       await Submenu.new({ text: "View", items: [...(await ours("view")), await sep(), await PredefinedMenuItem.new({ item: "Fullscreen" })] }),
       await Submenu.new({ text: "Scene", items: await ours("scene") }),
+      await Submenu.new({ text: "Play", items: await ours("play") }),
       await Submenu.new({
         text: "Window",
         items: [await PredefinedMenuItem.new({ item: "Minimize" }), await PredefinedMenuItem.new({ item: "Maximize" }), await sep(), await PredefinedMenuItem.new({ item: "CloseWindow" })],

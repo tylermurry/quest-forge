@@ -37,6 +37,8 @@ export interface GameOptions {
   state?: GameState;
   /** Playtest event log sink (D129); the exported game passes none. */
   trace?: Trace;
+  /** Playtest: what the in-game Restart button does instead (D132). */
+  restart?: () => void;
   /** Playtest debug layers (D132), changeable while playing through `Game.debug`. */
   debug?: Partial<DebugFlags>;
 }
@@ -161,7 +163,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       ...(options.spawn ? { spawn: options.spawn } : {}),
       ...(options.state ? { state: options.state } : {}),
     };
-    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, options.trace ? { trace: options.trace } : {});
+    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) });
     ui = new PlayerUi(session);
     resize();
   });

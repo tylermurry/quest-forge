@@ -45,6 +45,10 @@ export class WorkspaceState {
   pointPick: (PointPick & { restore: Selection }) | null = null;
   /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
   highlight: Highlight | null = null;
+  /** The Dock's open tab. */
+  dockTab: "problems" | "playtest" = "problems";
+  /** Bumped when something asks to show the Dock (e.g. Play blocked by errors opens Problems, D38); the Workspace expands it. */
+  dockRequest = 0;
   /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
   readonly sceneUi = new SceneUiStore();
 
@@ -85,6 +89,24 @@ export class WorkspaceState {
     this.active = refKey(ref);
     this.selection = { kind: "entry", ...ref };
     this.changed();
+  }
+
+  setDockTab(tab: "problems" | "playtest") {
+    if (this.dockTab === tab) return;
+    this.dockTab = tab;
+    this.changed();
+  }
+
+  /** Opens the Dock on a tab, expanding it if it is collapsed. */
+  showDock(tab: "problems" | "playtest") {
+    this.dockTab = tab;
+    this.dockRequest++;
+    this.changed();
+  }
+
+  /** The scene of the active tab, if a scene tab is active. */
+  get activeScene(): string | null {
+    return this.active?.startsWith("scene:") ? this.active.slice("scene:".length) : null;
   }
 
   setInspectorTab(tab: "details" | "rules") {

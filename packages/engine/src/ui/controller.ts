@@ -234,7 +234,7 @@ export class PlayerUi {
   }
 
   private restart() {
-    this.session.restart();
+    this.session.requestRestart();
     this.panel = null;
     this.barOpen = false;
     this.label = null;
