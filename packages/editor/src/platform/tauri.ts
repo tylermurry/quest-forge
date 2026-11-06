@@ -2,6 +2,7 @@
 // folder (src-tauri/src/lib.rs), native folder dialogs, and recent projects in the
 // app config folder.
 import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { commands } from "./bindings.ts";
 import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { ProjectFs } from "@questforge/schema";
@@ -10,23 +11,26 @@ import { COMMANDS, accelerator, type CommandId, type CommandRegistry, type Comma
 import { parseRecent, type RecentProject } from "../model/recent.ts";
 import type { Platform } from "./platform.ts";
 
-/** Tauri rejects with the Rust error string; wrap it so describeSaveError can read it. */
-async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  try {
-    return await invoke<T>(cmd, args);
-  } catch (e) {
-    throw new Error(typeof e === "string" ? e : String(e));
-  }
+/** Unwraps a typed command result; the Rust error string becomes an Error describeSaveError can read. */
+async function ok<T>(result: Promise<{ status: "ok"; data: T } | { status: "error"; error: string }>): Promise<T> {
+  const r = await result;
+  if (r.status === "error") throw new Error(r.error);
+  return r.data;
 }
 
-/** ProjectFs for a folder on disk, through the Tauri commands (D56). */
+/** ProjectFs for a folder on disk, through the typed Tauri commands (D56, D92). */
 export class TauriFs implements ProjectFs {
   constructor(readonly root: string) {}
-  list = () => call<string[]>("fs_list", { root: this.root });
-  listFolders = () => call<string[]>("fs_list_folders", { root: this.root });
-  readText = (path: string) => call<string>("fs_read_text", { root: this.root, path });
-  writeText = (path: string, content: string) => call<void>("fs_write_text", { root: this.root, path, content });
-  /** Raw bytes as the request body; root and path ride in URI-encoded headers. */
+  list = () => ok(commands.fsList(this.root));
+  listFolders = () => ok(commands.fsListFolders(this.root));
+  readText = (path: string) => ok(commands.fsReadText(this.root, path));
+  writeText = async (path: string, content: string) => void (await ok(commands.fsWriteText(this.root, path, content)));
+  move = async (from: string, to: string) => void (await ok(commands.fsMove(this.root, from, to)));
+  remove = async (path: string) => void (await ok(commands.fsRemove(this.root, path)));
+  makeFolder = async (path: string) => void (await ok(commands.fsMakeFolder(this.root, path)));
+  removeFolder = async (path: string) => void (await ok(commands.fsRemoveFolder(this.root, path)));
+  removeTree = async (path: string) => void (await ok(commands.fsRemoveTree(this.root, path)));
+  /** Raw bytes as the request body (not typed by specta); root and path ride in URI-encoded headers. */
   async writeBytes(path: string, bytes: Uint8Array) {
     try {
       await invoke<void>("fs_write_bytes", bytes, { headers: { "x-root": encodeURIComponent(this.root), "x-path": encodeURIComponent(path) } });
@@ -34,11 +38,6 @@ export class TauriFs implements ProjectFs {
       throw new Error(typeof e === "string" ? e : String(e));
     }
   }
-  move = (from: string, to: string) => call<void>("fs_move", { root: this.root, from, to });
-  remove = (path: string) => call<void>("fs_remove", { root: this.root, path });
-  makeFolder = (path: string) => call<void>("fs_make_folder", { root: this.root, path });
-  removeFolder = (path: string) => call<void>("fs_remove_folder", { root: this.root, path });
-  removeTree = (path: string) => call<void>("fs_remove_tree", { root: this.root, path });
 }
 
 const textFieldFocused = () => {
@@ -130,31 +129,31 @@ export const tauriPlatform: Platform = {
     return typeof picked === "string" ? picked : null;
   },
   joinPath: (parent, name) => `${parent.replace(/[/\\]+$/, "")}/${name}`,
-  makeProjectFolder: (root) => call<void>("fs_make_project_folder", { root }),
-  exists: (root) => call<boolean>("fs_exists", { root }),
+  makeProjectFolder: async (root) => void (await ok(commands.fsMakeProjectFolder(root))),
+  exists: (root) => commands.fsExists(root),
   host(root): ProjectHost {
     return {
       fs: new TauriFs(root),
       watch(onChange) {
         const channel = new Channel<string[]>();
         channel.onmessage = onChange;
-        const id = call<number>("watch_start", { root, channel });
-        return () => void id.then((watchId) => call("watch_stop", { id: watchId }));
+        const id = ok(commands.watchStart(root, channel));
+        return () => void id.then((watchId) => commands.watchStop(watchId));
       },
     };
   },
   assetUrl: (root, path) => convertFileSrc(`${root}/${path}`),
   async loadRecent() {
     try {
-      return parseRecent(JSON.parse(await call<string>("recent_load")));
+      return parseRecent(JSON.parse(await ok(commands.recentLoad())));
     } catch {
       return [];
     }
   },
   async saveRecent(list: RecentProject[]) {
-    await call("recent_save", { json: JSON.stringify(list) });
+    await ok(commands.recentSave(JSON.stringify(list)));
   },
-  launchProject: () => call<string | null>("launch_project"),
+  launchProject: () => commands.launchProject(),
   installMenu,
   displayPath: (root) => root,
 };

@@ -10,7 +10,9 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::ipc::{Channel, InvokeBody, Request};
+use specta_typescript::Typescript;
 use tauri::{Manager, State};
+use tauri_specta::{collect_commands, Builder};
 
 type Res<T> = Result<T, String>;
 
@@ -87,21 +89,25 @@ fn atomic_write(target: &Path, bytes: &[u8]) -> Res<()> {
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_list(root: String) -> Res<Vec<String>> {
     walk(Path::new(&root), false)
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_list_folders(root: String) -> Res<Vec<String>> {
     walk(Path::new(&root), true)
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_read_text(root: String, path: String) -> Res<String> {
     fs::read_to_string(resolve(&root, &path)?).map_err(err)
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_write_text(root: String, path: String, content: String) -> Res<()> {
     atomic_write(&resolve(&root, &path)?, content.as_bytes())
 }
@@ -139,6 +145,7 @@ fn fs_write_bytes(request: Request<'_>) -> Res<()> {
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_move(root: String, from: String, to: String) -> Res<()> {
     let (from, to) = (resolve(&root, &from)?, resolve(&root, &to)?);
     if let Some(parent) = to.parent() {
@@ -148,6 +155,7 @@ fn fs_move(root: String, from: String, to: String) -> Res<()> {
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_remove(root: String, path: String) -> Res<()> {
     match fs::remove_file(resolve(&root, &path)?) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -156,12 +164,14 @@ fn fs_remove(root: String, path: String) -> Res<()> {
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_make_folder(root: String, path: String) -> Res<()> {
     fs::create_dir_all(resolve(&root, &path)?).map_err(err)
 }
 
 /// Removes a folder only if nothing but a `.keep` file is left in it (D83).
 #[tauri::command]
+#[specta::specta]
 fn fs_remove_folder(root: String, path: String) -> Res<()> {
     let dir = resolve(&root, &path)?;
     let Ok(entries) = fs::read_dir(&dir) else { return Ok(()) };
@@ -175,6 +185,7 @@ fn fs_remove_folder(root: String, path: String) -> Res<()> {
 
 /// Deletes a folder tree. Only ever called for `.editor/trash` (D88).
 #[tauri::command]
+#[specta::specta]
 fn fs_remove_tree(root: String, path: String) -> Res<()> {
     if !path.starts_with(".editor/") {
         return Err(format!("Refusing to delete {path}"));
@@ -186,12 +197,14 @@ fn fs_remove_tree(root: String, path: String) -> Res<()> {
 }
 
 #[tauri::command]
+#[specta::specta]
 fn fs_exists(root: String) -> bool {
     Path::new(&root).is_dir()
 }
 
 /// Creates a new project folder; fails if one already exists there.
 #[tauri::command]
+#[specta::specta]
 fn fs_make_project_folder(root: String) -> Res<()> {
     let dir = PathBuf::from(&root);
     if !dir.is_absolute() {
@@ -205,6 +218,7 @@ fn fs_make_project_folder(root: String) -> Res<()> {
 
 /// A project folder passed on the command line (`Questforge <folder>`), opened at startup.
 #[tauri::command]
+#[specta::specta]
 fn launch_project() -> Option<String> {
     let arg = std::env::args().skip(1).find(|a| !a.starts_with('-'))?;
     let path = fs::canonicalize(arg).ok()?;
@@ -219,6 +233,7 @@ struct Watches {
 
 /// Watches a project folder; changed paths (relative) arrive on `channel` (spec 08).
 #[tauri::command]
+#[specta::specta]
 fn watch_start(root: String, channel: Channel<Vec<String>>, watches: State<'_, Watches>) -> Res<u32> {
     let base = PathBuf::from(&root);
     let canonical = base.canonicalize().unwrap_or(base.clone());
@@ -242,6 +257,7 @@ fn watch_start(root: String, channel: Channel<Vec<String>>, watches: State<'_, W
 }
 
 #[tauri::command]
+#[specta::specta]
 fn watch_stop(id: u32, watches: State<'_, Watches>) -> Res<()> {
     watches.active.lock().map_err(err)?.remove(&id);
     Ok(())
@@ -253,17 +269,60 @@ fn recent_file(app: &tauri::AppHandle) -> Res<PathBuf> {
 
 /// Recent projects live in the app config folder (D87).
 #[tauri::command]
+#[specta::specta]
 fn recent_load(app: tauri::AppHandle) -> Res<String> {
     Ok(fs::read_to_string(recent_file(&app)?).unwrap_or_else(|_| "[]".into()))
 }
 
 #[tauri::command]
+#[specta::specta]
 fn recent_save(app: tauri::AppHandle, json: String) -> Res<()> {
     atomic_write(&recent_file(&app)?, json.as_bytes())
 }
 
+/// The typed commands (D92): tauri-specta generates their TypeScript bindings.
+/// `fs_write_bytes` takes a raw request body, which specta can't describe, so it is
+/// registered separately and called by hand in `tauri.ts`.
+pub fn specta_builder() -> Builder<tauri::Wry> {
+    Builder::<tauri::Wry>::new().commands(collect_commands![
+        fs_list,
+        fs_list_folders,
+        fs_read_text,
+        fs_write_text,
+        fs_move,
+        fs_remove,
+        fs_make_folder,
+        fs_remove_folder,
+        fs_remove_tree,
+        fs_exists,
+        fs_make_project_folder,
+        watch_start,
+        watch_stop,
+        recent_load,
+        recent_save,
+        launch_project,
+    ])
+}
+
+/// Where the generated bindings live, relative to this crate.
+pub const BINDINGS: &str = "../src/platform/bindings.ts";
+
+/// Writes the TypeScript bindings. Run by `cargo test export_bindings`.
+pub fn export_bindings() {
+    specta_builder()
+        .export(Typescript::default().header("// Generated by tauri-specta from src-tauri/src/lib.rs. Don't edit; run `cargo test export_bindings`.\n// @ts-nocheck"), BINDINGS)
+        .expect("failed to export TypeScript bindings");
+}
+
+/// Commands specta can't type (raw request bodies).
+fn raw_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync + 'static {
+    tauri::generate_handler![fs_write_bytes]
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let typed = specta_builder().invoke_handler();
+    let raw = raw_handler();
     tauri::Builder::default()
         // A second launch focuses the window that's already open (D92). Must be the first plugin.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -276,25 +335,10 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(Watches::default())
-        .invoke_handler(tauri::generate_handler![
-            fs_list,
-            fs_list_folders,
-            fs_read_text,
-            fs_write_text,
-            fs_write_bytes,
-            fs_move,
-            fs_remove,
-            fs_make_folder,
-            fs_remove_folder,
-            fs_remove_tree,
-            fs_exists,
-            fs_make_project_folder,
-            watch_start,
-            watch_stop,
-            recent_load,
-            recent_save,
-            launch_project
-        ])
+        .invoke_handler(move |invoke| match invoke.message.command() {
+            "fs_write_bytes" => raw(invoke),
+            _ => typed(invoke),
+        })
         .run(tauri::generate_context!())
         .expect("error while running Questforge");
 }
@@ -309,6 +353,12 @@ mod tests {
         assert!(resolve("/p", "../x").is_err());
         assert!(resolve("/p", "/etc/passwd").is_err());
         assert!(resolve("relative", "a").is_err());
+    }
+
+    /// Regenerates `src/platform/bindings.ts`; a test so CI can check it's current.
+    #[test]
+    fn export_bindings() {
+        super::export_bindings();
     }
 
     #[test]
