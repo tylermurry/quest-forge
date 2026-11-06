@@ -2,7 +2,8 @@ import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Vec } from "./vec.ts";
 
 // Back buffer → window (spec 03, D31): largest integer multiple that fits, fractional
-// fit below 1×, always letterboxed, never cropped.
+// fit below 1×, always letterboxed, never cropped. The multiple is chosen in CSS px
+// (D82), so a phone with a 2× screen still gets its fractional fit.
 
 export interface Viewport {
   /** Device pixels per scene pixel. */
@@ -15,10 +16,10 @@ export interface Viewport {
   height: number;
 }
 
-/** Fit 640×400 into a surface of `width`×`height` device pixels. */
-export function fitViewport(width: number, height: number): Viewport {
-  const fit = Math.min(width / SCENE_WIDTH, height / SCENE_HEIGHT);
-  const scale = fit >= 1 ? Math.floor(fit) : fit;
+/** Fit 640×400 into a surface of `width`×`height` device pixels at `dpr` device px per CSS px. */
+export function fitViewport(width: number, height: number, dpr = 1): Viewport {
+  const fit = Math.min(width / SCENE_WIDTH, height / SCENE_HEIGHT) / dpr;
+  const scale = (fit >= 1 ? Math.floor(fit) : fit) * dpr;
   return {
     scale,
     offsetX: Math.floor((width - SCENE_WIDTH * scale) / 2),

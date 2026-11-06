@@ -81,3 +81,16 @@ describe("FixedStep (60 Hz logic, spec 03)", () => {
     expect(ticks).toBeLessThanOrEqual(7);
   });
 });
+
+describe("high-DPI screens (D82)", () => {
+  it("chooses the integer multiple in CSS px", () => {
+    // iPhone 14 landscape: 844×390 CSS at 2× → fractional fit, not 1 device px per scene px.
+    const v = fitViewport(1688, 780, 2);
+    expect(v.scale / 2).toBeCloseTo(0.975, 6);
+    expect(v.offsetY).toBe(0);
+    // Desktop 1440×900 CSS at 2×: 2× in CSS, 4 device px per scene px.
+    expect(fitViewport(2880, 1800, 2).scale).toBe(4);
+    // dpr 1 behaves as before.
+    expect(fitViewport(1280, 800).scale).toBe(2);
+  });
+});
