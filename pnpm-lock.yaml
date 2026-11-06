@@ -190,6 +190,10 @@ importers:
       '@questforge/schema':
         specifier: workspace:*
         version: link:../schema
+    devDependencies:
+      vite:
+        specifier: ^8.3.5
+        version: 8.3.5(@types/node@26.6.6)(yaml@2.9.1)
 
   packages/schema:
     dependencies:

@@ -1,0 +1,12 @@
+schemaVersion: 1
+id: visitor
+name: Visitor
+textColor: "#88cc88"
+walkSpeed: 60
+mirrorLeft: true
+animations:
+  idle_down:
+    image: gardener_sheet
+    frames: [0, 0, 0, 1]
+    fps: 2
+    loop: true

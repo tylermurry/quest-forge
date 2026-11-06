@@ -7,9 +7,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "dev": "vite",
+    "fixture": "node --experimental-transform-types --disable-warning=ExperimentalWarning scripts/build-m1-fixture.ts"
   },
   "dependencies": {
     "@questforge/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.5"
   }
 }

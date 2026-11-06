@@ -235,6 +235,10 @@ describe("look text (D67)", () => {
     w.primaryClick([560, 360]);
     run(w, 10);
     expect(w.text).toEqual(["A busy gardener."]);
+    // Stands beside the gardener (approaching from the left), facing them.
+    expect(w.player.pos[1]).toBeCloseTo(380, 6);
+    expect(w.player.pos[0]).toBeLessThan(560 - 20);
+    expect(w.player.facing).toBe("right");
     w.primaryClick([0, 0]);
     w.primaryClick([500, 200]);
     run(w, 10);

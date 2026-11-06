@@ -1,0 +1,153 @@
+schemaVersion: 1
+id: stress
+name: Stress test
+background: garden_bg
+depth:
+  far:
+    y: 150
+    scale: 0.35
+  near:
+    y: 395
+    scale: 1
+walkable:
+  outer:
+    - [20, 395]
+    - [620, 395]
+    - [540, 240]
+    - [360, 240]
+    - [360, 175]
+    - [470, 175]
+    - [470, 150]
+    - [190, 150]
+    - [190, 175]
+    - [300, 175]
+    - [300, 240]
+    - [100, 240]
+  holes: []
+spawns:
+  default:
+    x: 200
+    y: 380
+    facing: up
+objects:
+  - id: rock_0
+    name: rock
+    image: rock_img
+    x: 30
+    y: 200
+    visible: true
+    rules: []
+  - id: boulder_1
+    name: boulder
+    image: boulder_img
+    x: 150
+    y: 200
+    visible: true
+    rules: []
+  - id: palm_2
+    name: palm
+    image: palm_img
+    x: 270
+    y: -40
+    visible: true
+    rules: []
+  - id: rock_3
+    name: rock
+    image: rock_img
+    x: 390
+    y: 200
+    visible: true
+    rules: []
+  - id: boulder_4
+    name: boulder
+    image: boulder_img
+    x: 510
+    y: 200
+    visible: true
+    rules: []
+  - id: palm_5
+    name: palm
+    image: palm_img
+    x: 50
+    y: 20
+    visible: true
+    rules: []
+  - id: rock_6
+    name: rock
+    image: rock_img
+    x: 170
+    y: 260
+    visible: true
+    rules: []
+  - id: boulder_7
+    name: boulder
+    image: boulder_img
+    x: 290
+    y: 260
+    visible: true
+    rules: []
+  - id: palm_8
+    name: palm
+    image: palm_img
+    x: 410
+    y: 20
+    visible: true
+    rules: []
+  - id: rock_9
+    name: rock
+    image: rock_img
+    x: 530
+    y: 260
+    visible: true
+    rules: []
+  - id: boulder_10
+    name: boulder
+    image: boulder_img
+    x: 70
+    y: 320
+    visible: true
+    rules: []
+  - id: palm_11
+    name: palm
+    image: palm_img
+    x: 190
+    y: 80
+    visible: true
+    rules: []
+  - id: rock_12
+    name: rock
+    image: rock_img
+    x: 310
+    y: 320
+    visible: true
+    rules: []
+  - id: boulder_13
+    name: boulder
+    image: boulder_img
+    x: 430
+    y: 320
+    visible: true
+    rules: []
+  - id: palm_14
+    name: palm
+    image: palm_img
+    x: 550
+    y: 80
+    visible: true
+    rules: []
+characters:
+  - character: gardener
+    x: 560
+    y: 360
+    facing: left
+    visible: true
+    rules: []
+  - character: visitor
+    x: 140
+    y: 300
+    facing: right
+    visible: true
+    rules: []
+hotspots: []
+regions: []
+rules: []

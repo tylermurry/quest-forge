@@ -138,7 +138,18 @@ export class World {
     if (!target) return;
     const hotspot = target.kind === "hotspot" ? this.scene.hotspots.find((h) => h.id === target.id) : undefined;
     const walkTo = hotspot?.walkTo;
-    this.walkTo(walkTo ? [walkTo.x, walkTo.y] : p, { target, facing: walkTo?.facing ?? null, toward: p });
+    const dest: Vec = walkTo ? [walkTo.x, walkTo.y] : target.kind === "character" ? this.besideCharacter(target.id) : p;
+    this.walkTo(dest, { target, facing: walkTo?.facing ?? null, toward: p });
+  }
+
+  /** Characters have no walk-to point: stand beside them, on the side the player is on. */
+  private besideCharacter(id: string): Vec {
+    const npc = this.npcs.find((a) => a.id === id)!;
+    const sprite = this.actorDrawable(npc);
+    const gap = (sprite ? sprite.dest.w : 20) * 0.75 + 4;
+    const side = this.player.pos[0] <= npc.pos[0] ? -1 : 1;
+    const spot: Vec = [npc.pos[0] + side * gap, npc.pos[1]];
+    return this.navMesh.isWalkable(spot) ? spot : [npc.pos[0] - side * gap, npc.pos[1]];
   }
 
   /** Advance one logic tick (spec 03: fixed 60 Hz). */

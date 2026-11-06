@@ -1,0 +1,26 @@
+schemaVersion: 1
+images:
+  - id: garden_bg
+    path: assets/images/garden_bg.png
+  - id: palm_img
+    path: assets/images/palm.png
+  - id: rock_img
+    path: assets/images/rock.png
+  - id: boulder_img
+    path: assets/images/boulder.png
+  - id: hero_sheet
+    path: assets/images/characters/hero_sheet.png
+    sheet:
+      columns: 4
+      rows: 3
+      cellWidth: 32
+      cellHeight: 48
+    origin: [16, 47]
+  - id: gardener_sheet
+    path: assets/images/characters/gardener_sheet.png
+    sheet:
+      columns: 4
+      rows: 1
+      cellWidth: 32
+      cellHeight: 48
+audio: []

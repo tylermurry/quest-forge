@@ -1,0 +1,142 @@
+schemaVersion: 1
+id: garden
+name: Garden
+background: garden_bg
+depth:
+  far:
+    y: 150
+    scale: 0.35
+  near:
+    y: 395
+    scale: 1
+walkable:
+  outer:
+    - [20, 395]
+    - [620, 395]
+    - [540, 240]
+    - [360, 240]
+    - [360, 175]
+    - [470, 175]
+    - [470, 150]
+    - [190, 150]
+    - [190, 175]
+    - [300, 175]
+    - [300, 240]
+    - [100, 240]
+  holes:
+    - - [230, 300]
+      - [330, 290]
+      - [390, 320]
+      - [330, 350]
+      - [240, 345]
+spawns:
+  default:
+    x: 200
+    y: 380
+    facing: up
+objects:
+  - id: boulder
+    name: boulder
+    image: boulder_img
+    x: 288
+    y: 186
+    baseline: 248
+    visible: true
+    obstacle:
+      - [294, 222]
+      - [366, 222]
+      - [366, 248]
+      - [294, 248]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A huge boulder blocks the narrow path.
+        once: false
+  - id: rock
+    name: rock
+    image: rock_img
+    x: 440
+    y: 262
+    baseline: 296
+    visible: true
+    obstacle:
+      - [446, 288]
+      - [504, 288]
+      - [504, 300]
+      - [446, 300]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A mossy rock.
+        once: false
+  - id: palm
+    name: palm tree
+    image: palm_img
+    x: 20
+    y: 40
+    baseline: 362
+    visible: true
+    obstacle:
+      - [58, 356]
+      - [84, 356]
+      - [84, 366]
+      - [58, 366]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A palm tree, swaying gently.
+        once: false
+characters:
+  - character: gardener
+    x: 560
+    y: 360
+    facing: left
+    visible: true
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: The gardener is busy pulling weeds.
+        once: false
+hotspots:
+  - id: pond
+    name: pond
+    shape:
+      - [230, 300]
+      - [330, 290]
+      - [390, 320]
+      - [330, 350]
+      - [240, 345]
+    walkTo:
+      x: 300
+      y: 372
+      facing: up
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A still pond. Tiny fish dart about.
+        once: false
+  - id: sky
+    name: sky
+    shape:
+      - [0, 0]
+      - [640, 0]
+      - [640, 120]
+      - [0, 120]
+    rules: []
+regions: []
+rules: []

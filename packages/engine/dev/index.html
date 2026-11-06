@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Questforge engine — M1</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #111; color: #ddd; font: 13px system-ui, sans-serif; }
+      body { display: flex; flex-direction: column; }
+      header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 12px; background: #1c1c1c; border-bottom: 1px solid #333; }
+      header strong { color: #fff; }
+      button, select { font: inherit; padding: 4px 10px; min-height: 30px; }
+      #stats { margin-left: auto; font-variant-numeric: tabular-nums; color: #9c9; }
+      #game { flex: 1; width: 100%; min-height: 0; display: block; }
+      #errors { white-space: pre-wrap; color: #f88; padding: 12px; }
+      .hint { color: #888; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>M1 engine fixture</strong>
+      <label>Scene <select id="scene"><option value="garden">Garden</option><option value="stress">Stress (15 objects, 3 characters)</option></select></label>
+      <label><input type="checkbox" id="debug" /> Debug overlay</label>
+      <button id="boulder">Hide boulder</button>
+      <span class="hint">Left-click: use verb · Right-click: switch Walk/Look</span>
+      <span id="stats"></span>
+    </header>
+    <div id="errors" hidden></div>
+    <canvas id="game"></canvas>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

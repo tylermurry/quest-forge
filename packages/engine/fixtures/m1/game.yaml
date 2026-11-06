@@ -1,0 +1,15 @@
+schemaVersion: 1
+id: m1_fixture
+title: M1 Engine Fixture
+version: 1
+startScene: garden
+startSpawn: default
+player: hero
+maxScore: 0
+defaultResponses:
+  look: You see nothing special.
+  hand: You can't do that.
+  talk: Nobody answers.
+  use_item: That doesn't work.
+  combine: Those don't go together.
+rules: []
