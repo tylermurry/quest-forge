@@ -82,7 +82,7 @@ export function SceneCanvas({
   useEffect(() => {
     const typing = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || !!t.closest?.("[data-playtest-game]"));
     };
     const down = (e: KeyboardEvent) => {
       if (e.code === "Space" && !typing(e)) {

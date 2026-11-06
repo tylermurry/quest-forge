@@ -31,6 +31,11 @@ export function inTextField(el: Element | null = document.activeElement): boolea
   return !!h && (h.tagName === "INPUT" || h.tagName === "TEXTAREA" || h.isContentEditable);
 }
 
+/** True when the event comes from the playtest game, which keeps plain keys to itself (D131). */
+export function inPlaytestGame(el: Element | null): boolean {
+  return !!el?.closest?.("[data-playtest-game]");
+}
+
 export const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
 /**
@@ -41,7 +46,8 @@ export function useShortcutKeys(registry: CommandRegistry, nativeMenu = false) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat && e.key !== "Backspace") return;
-      const id = commandForKey(e, isMac(), inTextField(e.target as Element), { plainOnly: nativeMenu });
+      const target = e.target as Element;
+      const id = commandForKey(e, isMac(), inTextField(target), { plainOnly: nativeMenu, inGame: inPlaytestGame(target) });
       if (id && registry.run(id)) e.preventDefault();
     };
     window.addEventListener("keydown", onKey);

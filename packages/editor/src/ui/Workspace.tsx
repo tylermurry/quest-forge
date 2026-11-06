@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
+import { Playtest } from "../model/playtest/playtest.ts";
 import { WorkspaceState } from "../model/workspace.ts";
 import { Button } from "./components/ui/button.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./components/ui/resizable.tsx";
@@ -76,6 +77,8 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
   const ws = actions.ws;
   useSyncExternalStore(ws.subscribe, () => ws.version);
+  const [playtest] = useState(() => new Playtest(editor, ws));
+  useEffect(() => () => playtest.stop(), [playtest]);
   const [images] = useState(() => new CanvasImages((path) => platform.assetUrl(root, path)));
   useEffect(() => () => images.dispose(), [images]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -121,6 +124,34 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
       off();
     };
   }, [ed, registry]);
+
+  // Play menu (spec 12, D131).
+  useEffect(() => {
+    const off = registry.register({
+      "play.start": { run: () => playtest.play() },
+      "play.here": { run: () => playtest.playHere(), enabled: () => playtest.hereTarget() !== null },
+      "play.restart": { run: () => playtest.restart(), enabled: () => playtest.playing },
+      "play.restartScene": { run: () => playtest.restartScene(), enabled: () => playtest.session !== null },
+      "play.stop": { run: () => playtest.stop(), enabled: () => playtest.playing },
+    });
+    // Trace events change the playtest often; menus only care whether a game runs.
+    let shown = "";
+    const refresh = () => {
+      const now = `${playtest.playing}/${playtest.session !== null}/${playtest.hereTarget() !== null}`;
+      if (now !== shown) (shown = now), registry.changed();
+    };
+    const unsubs = [playtest.subscribe(refresh), ws.subscribe(refresh)];
+    return () => {
+      unsubs.forEach((u) => u());
+      off();
+    };
+  }, [playtest, ws, registry]);
+
+  // Something asked to show the Dock (Play opens Playtest; errors open Problems, D38).
+  const dockRequest = ws.dockRequest;
+  useEffect(() => {
+    if (dockRequest > 0 && dock.current?.isCollapsed()) dock.current.expand();
+  }, [dockRequest]);
 
   // Scene canvas view state lives in .editor/view.json (D101).
   useEffect(() => {
@@ -187,7 +218,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
             <ResizableHandle />
             <ResizablePanel id="dock" panelRef={dock} defaultSize="28%" minSize="80px" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
               <footer className="flex h-full flex-col">
-                <Dock actions={actions} />
+                <Dock actions={actions} playtest={playtest} />
               </footer>
             </ResizablePanel>
           </ResizablePanelGroup>

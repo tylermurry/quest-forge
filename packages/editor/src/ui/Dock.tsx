@@ -1,6 +1,8 @@
 import { CircleX, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { Actions } from "../model/actions.ts";
+import type { Playtest } from "../model/playtest/playtest.ts";
+import { PlaytestPanel } from "./playtest/PlaytestPanel.tsx";
 import { locate } from "../model/locate.ts";
 import { ALL_SEVERITIES, problemCounts, visibleProblems, type SeverityFilter } from "../model/problemList.ts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.tsx";
@@ -21,15 +23,15 @@ function FilterToggle(props: { label: string; count: number; on: boolean; onTogg
   );
 }
 
-/** Bottom dock: the Problems panel (spec 14, D120); Playtest arrives in M6. */
-export function Dock({ actions }: { actions: Actions }) {
+/** Bottom dock: the Problems panel (spec 14, D120) and Playtest (spec 12, D127). The open tab is `ws.dockTab`. */
+export function Dock({ actions, playtest }: { actions: Actions; playtest: Playtest }) {
   const { editor, ws } = actions;
   const [filter, setFilter] = useState<SeverityFilter>(ALL_SEVERITIES);
   const problems = editor.problems;
   const counts = problemCounts(problems);
   const shown = visibleProblems(problems, filter);
   return (
-    <Tabs defaultValue="problems" className="flex h-full min-h-0 flex-col gap-0">
+    <Tabs value={ws.dockTab} onValueChange={(v) => ws.setDockTab(v as "problems" | "playtest")} className="flex h-full min-h-0 flex-col gap-0">
       <TabsList className="h-8 shrink-0 rounded-none border-b bg-transparent px-1">
         <TabsTrigger value="problems" className="h-6 flex-none px-2 text-[12px]">
           Problems ({problems.length})
@@ -38,8 +40,9 @@ export function Dock({ actions }: { actions: Actions }) {
           Playtest
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="playtest" className="text-muted-foreground p-3">
-        Playtest arrives in M6.
+      {/* Kept mounted so the game keeps running while Problems is shown. */}
+      <TabsContent value="playtest" forceMount className="min-h-0 data-[state=inactive]:hidden">
+        <PlaytestPanel playtest={playtest} />
       </TabsContent>
       <TabsContent value="problems" className="min-h-0 overflow-auto px-1 py-1">
         {problems.length === 0 && <p className="text-ok px-2 py-1">No problems.</p>}
