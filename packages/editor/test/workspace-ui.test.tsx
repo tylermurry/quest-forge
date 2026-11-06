@@ -87,6 +87,24 @@ describe("workspace (D89, D103)", () => {
     expect(screen.getByLabelText("Inspector").textContent).not.toContain("Select something");
   });
 
+  it("the Problems panel filters by severity, with counts (D120)", async () => {
+    const ed = await mount();
+    ed.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") }));
+    act(() => ed.validateNow());
+    const errors = screen.getByRole("button", { name: "Show errors" });
+    const warnings = screen.getByRole("button", { name: "Show warnings" });
+    expect(errors.textContent).toMatch(/^\d+ errors$/);
+    const list = () => within(screen.getByRole("list", { name: "Problems" })).getAllByRole("button");
+    const total = list().length;
+    fireEvent.click(warnings);
+    expect(warnings.getAttribute("aria-pressed")).toBe("false");
+    expect(list().every((b) => b.className.includes("text-err"))).toBe(true);
+    expect(list().length).toBeLessThan(total);
+    fireEvent.click(warnings);
+    fireEvent.click(errors);
+    expect(list().every((b) => b.className.includes("text-warn"))).toBe(true);
+  });
+
   it("item details edit as one undo step per field", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!);
