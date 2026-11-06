@@ -38,22 +38,22 @@ async function mount() {
 
 const garden = (ed: Editor) => ed.project.scenes.find((s) => s.data.id === "garden")!.data as SceneFile;
 
-describe("workspace (D89)", () => {
-  it("opens a scene outline; deleting a hotspot with rules is undone by Cmd+Z (spec 08 acceptance)", async () => {
+describe("workspace (D89, D103)", () => {
+  it("opens a scene with its Layers panel; deleting a hotspot with rules is undone by Cmd+Z (spec 08 acceptance)", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     expect(screen.getByRole("tab", { name: "Garden" })).toBeTruthy();
     const hotspot = garden(ed).hotspots.find((h) => h.rules.length > 0)!;
-    const hotspots = screen.getByRole("region", { name: "Hotspots" });
+    const hotspots = screen.getByRole("region", { name: "Hotspots layer" });
     const row = within(hotspots).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` });
     expect(row.textContent).toContain(`${hotspot.rules.length} rule`);
     fireEvent.click(within(row).getByRole("button", { name: /^Delete/ }));
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
-    expect(within(screen.getByRole("region", { name: "Hotspots" })).queryByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeNull();
+    expect(within(screen.getByRole("region", { name: "Hotspots layer" })).queryByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeNull();
 
     fireEvent.keyDown(window, { key: "z", ...mod() });
     expect(garden(ed).hotspots.find((h) => h.id === hotspot.id)).toEqual(hotspot);
-    expect(within(screen.getByRole("region", { name: "Hotspots" })).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeTruthy();
     fireEvent.keyDown(window, { key: "z", ...mod(), shiftKey: true });
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
@@ -61,7 +61,7 @@ describe("workspace (D89)", () => {
   it("deleting a referenced object asks first", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
-    const objects = screen.getByRole("region", { name: "Objects" });
+    const objects = screen.getByRole("region", { name: "Objects layer" });
     fireEvent.click(within(objects).getByRole("button", { name: /^Delete .*boulder/ }));
     expect(screen.getByRole("alertdialog").textContent).toContain("Used by");
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));

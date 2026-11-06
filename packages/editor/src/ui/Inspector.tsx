@@ -38,8 +38,10 @@ export function Inspector({ actions }: { actions: Actions }) {
       sel.list === "spawns"
         ? scene.spawns[sel.key]
         : sel.list === "characters"
-          ? scene.characters[Number(sel.key.split("#")[1])]
-          : (scene[sel.list] as { id: string; rules: unknown[] }[]).find((x) => x.id === sel.key);
+          ? scene.characters.find((c) => c.character === sel.key)
+          : sel.list === "objects" || sel.list === "hotspots" || sel.list === "regions"
+            ? (scene[sel.list] as { id: string; rules: unknown[] }[]).find((x) => x.id === sel.key)
+            : undefined;
     const refKind = sel.list === "spawns" ? "spawn" : sel.list === "objects" ? "object" : null;
     const refs = refKind ? sceneThingReferences(p, scene.id, refKind, sel.key) : [];
     return (

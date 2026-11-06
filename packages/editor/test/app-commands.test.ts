@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { COMMANDS, CommandRegistry, accelerator, commandForKey, matchesShortcut } from "../src/model/appCommands.ts";
+import { COMMANDS, CommandRegistry, accelerator, commandForKey, isPlainShortcut, matchesShortcut, type CommandSpec } from "../src/model/appCommands.ts";
 
 const key = (k: string, mods: Partial<{ meta: boolean; ctrl: boolean; shift: boolean; alt: boolean }> = {}) => ({
   key: k,
@@ -45,8 +45,22 @@ describe("app commands (D92)", () => {
   });
 
   it("gives every command a unique shortcut and a Tauri accelerator", () => {
-    const shortcuts = COMMANDS.map((c) => c.shortcut);
+    const shortcuts = (COMMANDS as readonly CommandSpec[]).flatMap((c) => (c.shortcut ? [c.shortcut] : []));
     expect(new Set(shortcuts).size).toBe(shortcuts.length);
     expect(accelerator("Mod+Shift+Z")).toBe("CmdOrCtrl+Shift+Z");
+    expect(accelerator("Mod+=")).toBe("CmdOrCtrl+Equal");
+  });
+
+  it("runs plain shortcuts (tools, Delete) outside text fields only, in both hosts", () => {
+    expect(commandForKey(key("p"), true, false)).toBe("scene.tool.polygon");
+    expect(commandForKey(key("p"), true, true)).toBeNull();
+    expect(commandForKey(key("Backspace"), true, false)).toBe("edit.delete");
+    expect(commandForKey(key("Delete"), false, false)).toBe("edit.delete");
+    expect(commandForKey(key("Backspace"), true, true)).toBeNull();
+    expect(commandForKey(key("Enter"), true, false)).toBe("scene.finish");
+    // With a native menu only plain shortcuts are left to the page.
+    expect(commandForKey(key("z", { meta: true }), true, false, { plainOnly: true })).toBeNull();
+    expect(commandForKey(key("v"), true, false, { plainOnly: true })).toBe("scene.tool.select");
+    expect(isPlainShortcut("Mod+0")).toBe(false);
   });
 });

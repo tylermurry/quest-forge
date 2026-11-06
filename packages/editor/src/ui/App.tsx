@@ -34,7 +34,7 @@ export function App() {
   }, [platform]);
 
   // The native menu bar (app) or page shortcuts (dev page) run the same commands (D92).
-  useShortcutKeys(registry, !native);
+  useShortcutKeys(registry, native);
   useEffect(() => {
     if (!platform.installMenu) return;
     let remove: (() => void) | null = null;

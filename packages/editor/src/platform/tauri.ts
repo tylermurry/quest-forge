@@ -7,7 +7,7 @@ import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/men
 import { open } from "@tauri-apps/plugin-dialog";
 import type { ProjectFs } from "@questforge/schema";
 import type { ProjectHost } from "../model/editor.ts";
-import { COMMANDS, accelerator, type CommandId, type CommandRegistry, type CommandSpec, type MenuName } from "../model/appCommands.ts";
+import { COMMANDS, accelerator, isPlainShortcut, type CommandId, type CommandRegistry, type CommandSpec, type MenuName } from "../model/appCommands.ts";
 import { parseRecent, type RecentProject } from "../model/recent.ts";
 import type { Platform } from "./platform.ts";
 
@@ -61,7 +61,8 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
         id,
         text: registry.label(id),
         enabled: registry.isEnabled(id),
-        ...(c.shortcut && { accelerator: accelerator(c.shortcut) }),
+        // Plain shortcuts (tool letters, Enter, Delete) stay with the webview (isPlainShortcut).
+        ...(c.shortcut && !isPlainShortcut(c.shortcut) && { accelerator: accelerator(c.shortcut) }),
         action: () => {
           if (c.textAware && textFieldFocused()) document.execCommand(id === "edit.undo" ? "undo" : "redo");
           else registry.run(id);
@@ -102,6 +103,7 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
         ],
       }),
       await Submenu.new({ text: "View", items: [...(await ours("view")), await sep(), await PredefinedMenuItem.new({ item: "Fullscreen" })] }),
+      await Submenu.new({ text: "Scene", items: await ours("scene") }),
       await Submenu.new({
         text: "Window",
         items: [await PredefinedMenuItem.new({ item: "Minimize" }), await PredefinedMenuItem.new({ item: "Maximize" }), await sep(), await PredefinedMenuItem.new({ item: "CloseWindow" })],

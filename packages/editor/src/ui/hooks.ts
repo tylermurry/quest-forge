@@ -33,15 +33,18 @@ export function inTextField(el: Element | null = document.activeElement): boolea
 
 export const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
-/** Runs registry commands from key presses (the dev page; the app's native menu owns them there). */
-export function useShortcutKeys(registry: CommandRegistry, enabled = true) {
+/**
+ * Runs registry commands from key presses. With a native menu (the app) only plain
+ * shortcuts are handled here; the menu's accelerators own the rest.
+ */
+export function useShortcutKeys(registry: CommandRegistry, nativeMenu = false) {
   useEffect(() => {
-    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
-      const id = commandForKey(e, isMac(), inTextField(e.target as Element));
+      if (e.repeat && e.key !== "Backspace") return;
+      const id = commandForKey(e, isMac(), inTextField(e.target as Element), { plainOnly: nativeMenu });
       if (id && registry.run(id)) e.preventDefault();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [registry, enabled]);
+  }, [registry, nativeMenu]);
 }

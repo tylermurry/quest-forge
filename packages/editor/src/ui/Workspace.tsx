@@ -117,6 +117,12 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     };
   }, [ed, registry]);
 
+  // Scene canvas view state lives in .editor/view.json (D101).
+  useEffect(() => {
+    void ws.sceneUi.attach(ed.host.fs);
+    return () => ws.sceneUi.detach();
+  }, [ws, ed]);
+
   useEffect(() => {
     const beforeUnload = (e: BeforeUnloadEvent) => {
       if (ed.hasUnsavedChanges) e.preventDefault();

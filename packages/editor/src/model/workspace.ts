@@ -2,7 +2,8 @@
 // Not game data and never undone (D84). DOM-free; React subscribes to it.
 import type { Project } from "@questforge/schema";
 import { sectionEntries, sectionFolders, type Section } from "./browser.ts";
-import type { SceneList } from "./commands.ts";
+import { SceneUiStore } from "./scene/sceneUi.ts";
+import type { ThingList } from "./scene/things.ts";
 
 export interface EntryRef {
   section: Section;
@@ -12,7 +13,7 @@ export interface EntryRef {
 export type Selection =
   | { kind: "entry"; section: Section; id: string }
   | { kind: "folder"; section: Section; path: string }
-  | { kind: "sceneThing"; scene: string; list: SceneList | "spawns"; key: string }
+  | { kind: "sceneThing"; scene: string; list: ThingList; key: string }
   | null;
 
 export const refKey = (r: EntryRef) => `${r.section}:${r.id}`;
@@ -26,6 +27,8 @@ export class WorkspaceState {
   expanded = new Set<string>();
   collapsedSections = new Set<Section>();
   search = "";
+  /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
+  readonly sceneUi = new SceneUiStore();
 
   private _version = 0;
   private listeners = new Set<() => void>();
@@ -106,6 +109,8 @@ export class WorkspaceState {
     this.tabs = this.tabs.map(remap);
     if (this.active === refKey({ section, id: from })) this.active = refKey({ section, id: to });
     if (this.selection?.kind === "entry" && this.selection.section === section && this.selection.id === from) this.selection = { ...this.selection, id: to };
+    if (this.selection?.kind === "sceneThing" && section === "scene" && this.selection.scene === from) this.selection = { ...this.selection, scene: to };
+    if (section === "scene") this.sceneUi.renamed(from, to);
     this.changed();
   }
 
