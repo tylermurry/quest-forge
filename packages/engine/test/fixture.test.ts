@@ -27,7 +27,7 @@ async function world(project: Project, sceneId = "garden") {
   for (const asset of project.assets!.data.images) images.set(asset.id, { asset, size: await pngSize(asset.path) });
   const characters = new Map<string, CharacterFile>(project.characters.map((c) => [c.data.id, c.data]));
   const scene = project.scenes.find((s) => s.data.id === sceneId)!.data;
-  return new World(project.game!.data, scene, characters, (id) => images.get(id), Object.keys(scene.spawns)[0]!);
+  return new World(scene, characters, (id) => images.get(id), { player: project.game!.data.player, spawn: Object.values(scene.spawns)[0]! });
 }
 
 const run = (w: World, seconds: number) => {
@@ -61,32 +61,32 @@ describe("the M1 fixture", () => {
     const order = () => w.drawList().map((d) => d.id);
 
     // Around the pond.
-    w.primaryClick([300, 270]);
+    w.walkTo([300, 270]);
     expect(w.route.length).toBeGreaterThan(1);
     run(w, 10);
     expect(Math.round(w.player.pos[0])).toBe(300);
     expect(Math.round(w.player.pos[1])).toBe(270);
 
     // Behind the palm (above its baseline), then in front of it.
-    w.primaryClick([70, 345]);
+    w.walkTo([70, 345]);
     run(w, 10);
     expect(order().indexOf("hero")).toBeLessThan(order().indexOf("palm"));
-    w.primaryClick([70, 385]);
+    w.walkTo([70, 385]);
     run(w, 10);
     expect(order().indexOf("hero")).toBeGreaterThan(order().indexOf("palm"));
 
     // In front of the rock.
-    w.primaryClick([475, 320]);
+    w.walkTo([475, 320]);
     run(w, 10);
     expect(order().indexOf("hero")).toBeGreaterThan(order().indexOf("rock"));
 
     // The boulder blocks the path to the ledge; hiding it opens one.
     const before = w.playerScale;
-    w.primaryClick([330, 160]);
+    w.walkTo([330, 160]);
     run(w, 15);
     expect(w.player.pos[1]).toBeGreaterThan(240);
     w.setObjectVisible("boulder", false);
-    w.primaryClick([330, 160]);
+    w.walkTo([330, 160]);
     run(w, 15);
     expect(Math.round(w.player.pos[1])).toBe(160);
     // Shrunk toward the far line.

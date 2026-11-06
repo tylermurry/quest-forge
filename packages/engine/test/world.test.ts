@@ -1,22 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CharacterFile, GameFile, SceneFile, type ImageAsset } from "@questforge/schema";
+import { CharacterFile, SceneFile, type ImageAsset } from "@questforge/schema";
 import { World, type LoadedImage } from "../src/world.ts";
 import type { Vec } from "../src/vec.ts";
 
-// Headless runtime: walking, depth, occlusion, hit-testing and M1 look text.
-
-const game = GameFile.parse({
-  schemaVersion: 1,
-  id: "test",
-  title: "Test",
-  version: 1,
-  startScene: "yard",
-  startSpawn: "default",
-  player: "hero",
-  maxScore: 0,
-  defaultResponses: { look: "You see nothing special.", hand: "No.", talk: "Nobody answers.", use_item: "No.", combine: "No." },
-  rules: [],
-});
+// Headless scene simulation: walking, depth, occlusion, hit-testing, approach points.
 
 const anim = (frames: number[]) => ({ image: "hero_sheet", frames, fps: 8, loop: true });
 const hero = CharacterFile.parse({
@@ -28,7 +15,12 @@ const hero = CharacterFile.parse({
   mirrorLeft: true,
   animations: { idle_down: anim([0]), walk_down: anim([0, 1, 2, 3]), walk_right: anim([4, 5, 6, 7]), idle_right: anim([4]) },
 });
-const gardener = CharacterFile.parse({ ...hero, id: "gardener", name: "Gardener" });
+const gardener = CharacterFile.parse({
+  ...hero,
+  id: "gardener",
+  name: "Gardener",
+  animations: { ...hero.animations, talk_right: { ...anim([4, 5]), loop: false } },
+});
 
 const look = (text: string) => ({ when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
 const scene = SceneFile.parse({
@@ -72,7 +64,7 @@ const images = new Map<string, LoadedImage>([
   ["rock_img", img({ id: "rock_img", path: "assets/r.png" }, 60, 30)],
 ]);
 
-const make = () => new World(game, scene, new Map([["hero", hero], ["gardener", gardener]]), (id) => images.get(id), "default");
+const make = () => new World(scene, new Map([["hero", hero], ["gardener", gardener]]), (id) => images.get(id), { player: "hero", spawn: scene.spawns.default! });
 const run = (w: World, seconds: number) => {
   for (let i = 0; i < seconds * 60; i++) w.tick(1 / 60);
 };
@@ -83,7 +75,7 @@ describe("walking", () => {
   it("spawns at the start spawn and walks around the hole to a click", () => {
     const w = make();
     expect(w.player.pos).toEqual([100, 380]);
-    w.primaryClick([500, 300]);
+    w.walkTo([500, 300]);
     expect(w.route.length).toBeGreaterThan(0);
     run(w, 10);
     expect(near(w.player.pos, [500, 300])).toBe(true);
@@ -93,9 +85,9 @@ describe("walking", () => {
 
   it("goes around a hole instead of through it", () => {
     const w = make();
-    w.primaryClick([320, 370]);
+    w.walkTo([320, 370]);
     run(w, 10);
-    w.primaryClick([320, 270]);
+    w.walkTo([320, 270]);
     expect(w.route.length).toBeGreaterThan(1);
     for (let i = 0; i < 600; i++) {
       w.tick(1 / 60);
@@ -106,14 +98,14 @@ describe("walking", () => {
 
   it("faces and animates along the direction of travel", () => {
     const w = make();
-    w.primaryClick([300, 380]);
+    w.walkTo([300, 380]);
     w.tick(1 / 60);
     expect(w.player.kind).toBe("walk");
     expect(w.player.facing).toBe("right");
     const sprite = w.drawList().find((d) => d.id === "hero")!;
     expect(sprite.src.y).toBe(48); // walk_right row
     expect(sprite.mirror).toBe(false);
-    w.primaryClick([20, 380]);
+    w.walkTo([20, 380]);
     w.tick(1 / 60);
     expect(w.player.facing).toBe("left");
     expect(w.drawList().find((d) => d.id === "hero")!.mirror).toBe(true);
@@ -121,14 +113,14 @@ describe("walking", () => {
 
   it("walks slower and draws smaller toward the far line", () => {
     const w = make();
-    w.primaryClick([100, 270]);
+    w.walkTo([100, 270]);
     const start = w.player.pos[1];
     w.tick(1 / 60);
     const nearStep = start - w.player.pos[1];
     const nearHeight = w.drawList().find((d) => d.id === "hero")!.dest.h;
     run(w, 10);
     expect(w.playerScale).toBeCloseTo(0.5 + 0.5 * (70 / 200), 6);
-    w.primaryClick([100, 262]);
+    w.walkTo([100, 262]);
     const farStart = w.player.pos[1];
     w.tick(1 / 60);
     expect(farStart - w.player.pos[1]).toBeLessThan(nearStep);
@@ -137,11 +129,11 @@ describe("walking", () => {
 
   it("can't pass a visible obstacle, and can once it's hidden (D42)", () => {
     const w = make();
-    w.primaryClick([320, 220]);
+    w.walkTo([320, 220]);
     run(w, 15);
     expect(w.player.pos[1]).toBeGreaterThanOrEqual(260);
     w.setObjectVisible("boulder", false);
-    w.primaryClick([320, 220]);
+    w.walkTo([320, 220]);
     run(w, 15);
     expect(near(w.player.pos, [320, 220])).toBe(true);
   });
@@ -149,7 +141,7 @@ describe("walking", () => {
   it("re-plans an ongoing walk when an obstacle appears", () => {
     const w = make();
     w.setObjectVisible("boulder", false);
-    w.primaryClick([320, 220]);
+    w.walkTo([320, 220]);
     run(w, 0.5);
     w.setObjectVisible("boulder", true);
     run(w, 15);
@@ -160,10 +152,10 @@ describe("walking", () => {
 describe("occlusion by baseline", () => {
   it("walks behind the tree above its baseline and in front below it", () => {
     const w = make();
-    w.primaryClick([530, 300]);
+    w.walkTo([530, 300]);
     run(w, 10);
     expect(order(w).indexOf("hero")).toBeLessThan(order(w).indexOf("tree"));
-    w.primaryClick([530, 360]);
+    w.walkTo([530, 360]);
     run(w, 10);
     expect(order(w).indexOf("hero")).toBeGreaterThan(order(w).indexOf("tree"));
   });
@@ -194,72 +186,53 @@ describe("hit-testing (D69)", () => {
   });
 });
 
-describe("look text (D67)", () => {
-  it("right-click toggles Walk and Look", () => {
+describe("approach and actors", () => {
+  it("approaches a hotspot at its walk-to point and a character from the side (D74)", () => {
     const w = make();
-    expect(w.verb).toBe("walk");
-    w.secondaryClick();
-    expect(w.verb).toBe("look");
-    w.secondaryClick();
-    expect(w.verb).toBe("walk");
+    expect(w.approach({ kind: "hotspot", id: "pond", name: "pond" }, [300, 300])).toEqual({ dest: [320, 340], facing: "up", toward: [300, 300] });
+    const a = w.approach({ kind: "character", id: "gardener", name: "Gardener" }, [560, 360]);
+    expect(a.dest[0]).toBeLessThan(540);
+    expect(a.dest[1]).toBe(380);
+    expect(a.facing).toBe(null);
   });
 
-  it("walks to the hotspot's walk-to point, faces it, then shows the first unconditional look rule", () => {
+  it("calls back on arrival, and a new walk replaces the callback", () => {
     const w = make();
-    w.secondaryClick();
-    w.primaryClick([300, 300]);
-    expect(w.text).toBe(null);
+    let arrived = 0;
+    w.walkTo([300, 380], () => arrived++);
+    run(w, 0.2);
+    w.walkTo([200, 380]);
     run(w, 10);
-    expect(near(w.player.pos, [320, 340])).toBe(true);
-    expect(w.player.facing).toBe("up");
-    expect(w.text).toEqual(["A still pond.", "Fish dart about."]);
+    expect(arrived).toBe(0);
+    w.walkTo([200, 380], () => arrived++);
+    expect(arrived).toBe(1);
   });
 
-  it("locks input while text shows; a click dismisses it", () => {
-    const w = make();
-    w.secondaryClick();
-    w.primaryClick([300, 300]);
-    run(w, 10);
-    w.secondaryClick();
-    expect(w.verb).toBe("look");
-    const pos = w.player.pos;
-    w.primaryClick([100, 380]);
-    expect(w.text).toBe(null);
-    run(w, 1);
-    expect(w.player.pos).toEqual(pos);
+  it("starts objects and NPCs from overrides", () => {
+    const w = new World(scene, new Map([["hero", hero], ["gardener", gardener]]), (id) => images.get(id), {
+      player: "hero",
+      spawn: { x: 50, y: 390, facing: "right" },
+      objectVisible: (id) => id !== "tree",
+      characterPosition: (id) => (id === "gardener" ? { x: 400, y: 300, facing: "down" } : undefined),
+    });
+    expect(w.player.pos).toEqual([50, 390]);
+    expect(w.isObjectVisible("tree")).toBe(false);
+    expect(w.npcs[0]!.pos).toEqual([400, 300]);
+    w.placeCharacter("gardener", { x: 10, y: 390, facing: "up" });
+    expect(w.npcs[0]!.pos).toEqual([10, 390]);
   });
 
-  it("faces toward objects and characters, which have no walk-to point", () => {
+  it("plays a one-shot slot then returns to the normal animation (D71)", () => {
     const w = make();
-    w.secondaryClick();
-    w.primaryClick([560, 360]);
-    run(w, 10);
-    expect(w.text).toEqual(["A busy gardener."]);
-    // Stands beside the gardener (approaching from the left), facing them.
-    expect(w.player.pos[1]).toBeCloseTo(380, 6);
-    expect(w.player.pos[0]).toBeLessThan(560 - 20);
-    expect(w.player.facing).toBe("right");
-    w.primaryClick([0, 0]);
-    w.primaryClick([500, 200]);
-    run(w, 10);
-    expect(w.text).toEqual(["A tall tree."]);
-    expect(w.player.facing).toBe("up");
-  });
-
-  it("falls back to the default look response", () => {
-    const w = make();
-    w.secondaryClick();
-    w.primaryClick([20, 5]);
-    run(w, 10);
-    expect(w.text).toEqual(["You see nothing special."]);
-  });
-
-  it("ignores Look on empty ground", () => {
-    const w = make();
-    w.secondaryClick();
-    w.primaryClick([200, 380]);
-    run(w, 5);
-    expect(w.text).toBe(null);
-    expect(w.player.pos).toEqual([100, 380]);
+    // Looping slots report 0 (they don't block); one-shots their length.
+    expect(w.playSlot("gardener", "walk_right")).toBe(0);
+    expect(w.playSlot("gardener", "talk_up")).toBe(null);
+    expect(w.playSlot("gardener", "dance")).toBe(null);
+    // Left mirrors right.
+    expect(w.playSlot("gardener", "talk_left")).toBeCloseTo(0.25, 6);
+    expect(w.drawList().find((d) => d.id === "gardener")!.mirror).toBe(true);
+    run(w, 0.3);
+    expect(w.npcs[0]!.special).toBe(null);
+    expect(w.drawList().find((d) => d.id === "gardener")!.mirror).toBe(true); // still facing left
   });
 });

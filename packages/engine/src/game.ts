@@ -9,10 +9,11 @@ import {
   type Project,
   type SceneFile,
 } from "@questforge/schema";
-import { drawLoading, drawWorld, present, type DebugFlags } from "./render.ts";
+import { drawLoading, drawSession, present, type DebugFlags } from "./render.ts";
+import { Session } from "./session.ts";
 import { sheetFits } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
-import { World, type LoadedImage } from "./world.ts";
+import type { LoadedImage, World } from "./world.ts";
 
 // The engine entry point (spec 03): data in, no user code.
 
@@ -33,6 +34,8 @@ export interface GameOptions {
 export interface Game {
   /** Resolves once the first scene's assets are loaded and play has begun. */
   readonly ready: Promise<void>;
+  /** The game being played, once loaded. */
+  readonly session: Session | null;
   /** The playing scene, once loaded. */
   readonly world: World | null;
   readonly debug: DebugFlags;
@@ -54,7 +57,6 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const sceneId = options.scene ?? game.startScene;
   const scene = project.scenes.find((s) => s.data.id === sceneId)?.data;
   if (!scene) throw new Error(`Scene ${sceneId} doesn't exist`);
-  const spawn = options.spawn ?? (options.scene ? Object.keys(scene.spawns)[0]! : game.startSpawn);
   const characters = new Map<string, CharacterFile>(project.characters.map((c) => [c.data.id, c.data]));
 
   const screen = canvas.getContext("2d")!;
@@ -64,8 +66,8 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const backCtx = back.getContext("2d")!;
   const debug: DebugFlags = { overlay: false, ...options.debug };
 
-  let world: World | null = null;
-  let background: LoadedImage | undefined;
+  let session: Session | null = null;
+  let images = new Map<string, LoadedImage>();
   let progress = 0;
   let viewport = fitViewport(canvas.width, canvas.height);
   let destroyed = false;
@@ -88,42 +90,50 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     return toScene(viewport, ((e.clientX - rect.left) / rect.width) * canvas.width, ((e.clientY - rect.top) / rect.height) * canvas.height);
   };
   const onPointerDown = (e: PointerEvent) => {
-    if (!world) return;
+    if (!session) return;
     e.preventDefault();
     if (e.button === 2) {
-      world.secondaryClick();
+      session.secondaryClick();
       return;
     }
     if (e.button !== 0) return;
+    if (session.ending) {
+      session.restart();
+      return;
+    }
     const p = scenePoint(e);
-    if (p) world.primaryClick(p);
+    if (p) session.primaryClick(p);
   };
   const onContextMenu = (e: Event) => e.preventDefault();
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("contextmenu", onContextMenu);
   canvas.style.touchAction = "none";
 
-  const loop = new FixedStep((dt) => world?.tick(dt));
+  const loop = new FixedStep((dt) => session?.tick(dt));
   const frame = (now: number) => {
     if (destroyed) return;
     loop.advance(now);
-    if (world) drawWorld(backCtx, world, background?.el, debug);
+    if (session) drawSession(backCtx, session, images.get(session.scene.background)?.el, debug);
     else drawLoading(backCtx, progress);
     present(screen, back, viewport);
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame);
 
-  const ready = loadSceneImages(project, scene, characters, bundle.assetUrl, (p) => (progress = p)).then((images) => {
+  // M2 T4: every scene's images up front; T5 loads per scene with prefetch.
+  const ready = Promise.all(project.scenes.map((s) => loadSceneImages(project, s.data, characters, bundle.assetUrl, (p) => (progress = p)))).then((maps) => {
     if (destroyed) return;
-    background = images.get(scene.background);
-    world = new World(game, scene, characters, (id) => images.get(id), spawn);
+    images = new Map(maps.flatMap((m) => [...m]));
+    session = new Session(project, (id) => images.get(id), { ...(options.scene ? { scene: options.scene } : {}), ...(options.spawn ? { spawn: options.spawn } : {}) });
   });
 
   return {
     ready,
+    get session() {
+      return session;
+    },
     get world() {
-      return world;
+      return session?.world ?? null;
     },
     debug,
     destroy() {

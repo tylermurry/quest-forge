@@ -1,13 +1,13 @@
-import type { CharacterFile, Facing, GameFile, ImageAsset, SceneFile } from "@questforge/schema";
+import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type ImageAsset, type SceneFile } from "@questforge/schema";
 import { objectBaseline, scaleAt, sortByBaseline, walkSpeedAt } from "./depth.ts";
-import { lookText } from "./look.ts";
 import { NavMesh, sceneNav } from "./nav.ts";
 import { facingFor, frameAt, frameRect, frameSize, originOf, resolveAnim, spriteRect, type AnimKind, type Rect, type Size } from "./sprite.ts";
+import type { Position } from "./state.ts";
 import { dist, sub, type Vec } from "./vec.ts";
-import { pointInPolygon } from "@questforge/schema";
 
-// The playing scene: player movement, depth, draw order, hit-testing and M1 look text.
-// Pure logic with no DOM, so it runs in tests; `render.ts` draws it.
+// The playing scene: movement, depth, draw order and hit-testing. Verbs, rules and
+// text live in `session.ts`. Pure logic with no DOM, so it runs in tests; `render.ts`
+// draws it.
 
 export interface LoadedImage {
   asset: ImageAsset;
@@ -19,10 +19,7 @@ export interface LoadedImage {
 /** What the world needs to know about images: their asset entry and decoded size. */
 export type ImageLookup = (id: string) => LoadedImage | undefined;
 
-/** M1 verbs (D67). M2 adds Hand, Talk and items. */
-export type Verb = "walk" | "look";
-
-interface Actor {
+export interface Actor {
   /** Character ID. */
   id: string;
   character: CharacterFile;
@@ -32,9 +29,11 @@ interface Actor {
   /** Seconds since the current animation started. */
   animTime: number;
   visible: boolean;
+  /** A slot played by `play_animation` (D71), shown until it ends or the actor walks. */
+  special: { anim: Animation; mirror: boolean; time: number } | null;
 }
 
-/** Something that can be looked at (D69 hit-test result). */
+/** Something that can be clicked (D69 hit-test result). */
 export type Target =
   | { kind: "hotspot"; id: string; name: string }
   | { kind: "object"; id: string; name: string }
@@ -55,39 +54,50 @@ export interface Drawable {
   baseline: number;
 }
 
-interface Pending {
-  target: Target;
+export interface WorldOptions {
+  /** Character ID of the player. */
+  player: string;
+  /** Where the player stands. */
+  spawn: Position;
+  /** Object visibility at entry (from game state); defaults to the scene file. */
+  objectVisible?: (id: string) => boolean;
+  /** Overridden NPC positions (from game state). */
+  characterPosition?: (id: string) => Position | undefined;
+}
+
+/** Where the player stands to use a verb on a target, and which way they then face. */
+export interface Approach {
+  dest: Vec;
   facing: Facing | null;
-  /** Point to face toward when no facing is given. */
+  /** Point to face toward when there's no facing. */
   toward: Vec;
 }
 
 export class World {
   readonly scene: SceneFile;
-  verb: Verb = "walk";
-  /** The look text being shown (D67); input waits for a click to dismiss it. */
-  text: string[] | null = null;
   readonly player: Actor;
   readonly npcs: Actor[];
   private readonly objectVisible: Map<string, boolean>;
   private navMesh: NavMesh;
   private path: Vec[] = [];
-  private pending: Pending | null = null;
+  private onArrive: (() => void) | null = null;
 
   constructor(
-    private readonly game: GameFile,
     scene: SceneFile,
     private readonly characters: Map<string, CharacterFile>,
     private readonly images: ImageLookup,
-    spawnId: string,
+    opts: WorldOptions,
   ) {
     this.scene = scene;
-    this.objectVisible = new Map(scene.objects.map((o) => [o.id, o.visible]));
+    this.objectVisible = new Map(scene.objects.map((o) => [o.id, opts.objectVisible ? opts.objectVisible(o.id) : o.visible]));
     this.navMesh = this.buildNav();
-    const spawn = scene.spawns[spawnId];
-    if (!spawn) throw new Error(`Scene ${scene.id} has no spawn point ${spawnId}`);
-    this.player = this.actor(game.player, [spawn.x, spawn.y], spawn.facing, true);
-    this.npcs = scene.characters.filter((c) => c.character !== game.player).map((c) => this.actor(c.character, [c.x, c.y], c.facing, c.visible));
+    this.player = this.actor(opts.player, [opts.spawn.x, opts.spawn.y], opts.spawn.facing, true);
+    this.npcs = scene.characters
+      .filter((c) => c.character !== opts.player)
+      .map((c) => {
+        const at = opts.characterPosition?.(c.character) ?? c;
+        return this.actor(c.character, [at.x, at.y], at.facing, c.visible);
+      });
   }
 
   get nav(): NavMesh {
@@ -110,7 +120,7 @@ export class World {
     this.navMesh = this.buildNav();
     // Re-plan an ongoing walk against the new area.
     const dest = this.path.at(-1);
-    if (dest) this.walkTo(dest, this.pending);
+    if (dest) this.walkTo(dest, this.onArrive);
   }
 
   /** Depth scale at the player's feet. */
@@ -118,28 +128,84 @@ export class World {
     return scaleAt(this.scene.depth, this.player.pos[1]);
   }
 
-  /** Right-click: cycle verbs (D32, D67). */
-  secondaryClick() {
-    if (this.text) return;
-    this.verb = this.verb === "walk" ? "look" : "walk";
+  get walking(): boolean {
+    return this.path.length > 0;
   }
 
-  /** Left-click or tap at a scene point with the current verb. */
-  primaryClick(p: Vec) {
-    if (this.text) {
-      this.text = null;
-      return;
-    }
-    if (this.verb === "walk") {
-      this.walkTo(p, null);
-      return;
-    }
-    const target = this.hitTest(p);
-    if (!target) return;
+  /** The player or an NPC in this scene. */
+  actorById(id: string): Actor | undefined {
+    return id === this.player.id ? this.player : this.npcs.find((a) => a.id === id);
+  }
+
+  /**
+   * Walk the player to `p` (or the nearest reachable point). `onArrive` runs when
+   * they get there; a later walk replaces it.
+   */
+  walkTo(p: Vec, onArrive: (() => void) | null = null) {
+    this.onArrive = onArrive;
+    this.player.special = null;
+    this.path = this.navMesh.findPath(this.player.pos, p).slice(1);
+    if (this.path.length === 0) this.arrive();
+  }
+
+  /** Stop where the player is, dropping any arrival callback. */
+  stop() {
+    this.path = [];
+    this.onArrive = null;
+    this.setAnim(this.player, "idle", this.player.facing);
+  }
+
+  face(facing: Facing) {
+    this.setAnim(this.player, this.player.kind === "walk" ? "walk" : "idle", facing);
+  }
+
+  faceToward(p: Vec) {
+    this.face(facingFor(sub(p, this.player.pos), this.player.facing));
+  }
+
+  /** Where to stand to use a verb on `target` clicked at `p` (D74). */
+  approach(target: Target, p: Vec): Approach {
     const hotspot = target.kind === "hotspot" ? this.scene.hotspots.find((h) => h.id === target.id) : undefined;
     const walkTo = hotspot?.walkTo;
     const dest: Vec = walkTo ? [walkTo.x, walkTo.y] : target.kind === "character" ? this.besideCharacter(target.id) : p;
-    this.walkTo(dest, { target, facing: walkTo?.facing ?? null, toward: p });
+    return { dest, facing: walkTo?.facing ?? null, toward: p };
+  }
+
+  /** Set an actor talking (while a `say` box shows) or back to idle. */
+  setTalking(id: string, talking: boolean) {
+    const a = this.actorById(id);
+    if (!a || a.kind === "walk") return;
+    this.setAnim(a, talking ? "talk" : "idle", a.facing);
+  }
+
+  /** Move an NPC (adding it to this scene if it isn't here yet). */
+  placeCharacter(id: string, p: Position) {
+    const a = this.actorById(id);
+    if (a && a !== this.player) {
+      a.pos = [p.x, p.y];
+      this.setAnim(a, "idle", p.facing);
+      return;
+    }
+    if (!a) this.npcs.push(this.actor(id, [p.x, p.y], p.facing, true));
+  }
+
+  /**
+   * Play one of a character's animation slots (D71). Returns its length in seconds
+   * if it's one-shot, 0 if it loops, null if there's no such slot.
+   */
+  playSlot(id: string, slot: string): number | null {
+    const a = this.actorById(id);
+    if (!a || !(ANIMATION_SLOTS as readonly string[]).includes(slot)) return null;
+    const anims = a.character.animations;
+    let anim = anims[slot as AnimationSlot];
+    let mirror = false;
+    if (!anim && slot.endsWith("_left") && a.character.mirrorLeft) {
+      anim = anims[slot.replace(/_left$/, "_right") as AnimationSlot];
+      mirror = true;
+    }
+    if (!anim) return null;
+    a.special = { anim, mirror, time: 0 };
+    return anim.loop ? 0 : anim.frames.length / anim.fps;
   }
 
   /** Characters have no walk-to point: stand beside them, on the side the player is on. */
@@ -154,7 +220,14 @@ export class World {
 
   /** Advance one logic tick (spec 03: fixed 60 Hz). */
   tick(dt: number) {
-    for (const a of [this.player, ...this.npcs]) a.animTime += dt;
+    for (const a of [this.player, ...this.npcs]) {
+      a.animTime += dt;
+      if (a.special) {
+        a.special.time += dt;
+        const { anim } = a.special;
+        if (!anim.loop && a.special.time >= anim.frames.length / anim.fps) a.special = null;
+      }
+    }
     if (this.path.length === 0) return;
     let budget = walkSpeedAt(this.scene.depth, this.player.pos[1], this.player.character.walkSpeed) * dt;
     while (budget > 0 && this.path.length > 0) {
@@ -218,31 +291,11 @@ export class World {
     return null;
   }
 
-  private walkTo(p: Vec, pending: Pending | null) {
-    this.pending = pending;
-    this.path = this.navMesh.findPath(this.player.pos, p).slice(1);
-    if (this.path.length === 0) this.arrive();
-  }
-
   private arrive() {
     this.setAnim(this.player, "idle", this.player.facing);
-    const pending = this.pending;
-    this.pending = null;
-    if (!pending) return;
-    const facing = pending.facing ?? facingFor(sub(pending.toward, this.player.pos), this.player.facing);
-    this.setAnim(this.player, "idle", facing);
-    this.text = lookText(this.rulesOf(pending.target), this.game.defaultResponses);
-  }
-
-  private rulesOf(t: Target) {
-    switch (t.kind) {
-      case "hotspot":
-        return this.scene.hotspots.find((h) => h.id === t.id)?.rules ?? [];
-      case "object":
-        return this.scene.objects.find((o) => o.id === t.id)?.rules ?? [];
-      case "character":
-        return this.scene.characters.find((c) => c.character === t.id)?.rules ?? [];
-    }
+    const cb = this.onArrive;
+    this.onArrive = null;
+    cb?.();
   }
 
   private setAnim(a: Actor, kind: AnimKind, facing: Facing) {
@@ -255,15 +308,16 @@ export class World {
   private actor(id: string, pos: Vec, facing: Facing, visible: boolean): Actor {
     const character = this.characters.get(id);
     if (!character) throw new Error(`Character ${id} doesn't exist`);
-    return { id, character, pos, facing, kind: "idle", animTime: 0, visible };
+    return { id, character, pos, facing, kind: "idle", animTime: 0, visible, special: null };
   }
 
   private actorDrawable(a: Actor): Drawable | null {
-    const resolved = resolveAnim(a.character, a.kind, a.facing);
+    const resolved = a.special ? { anim: a.special.anim, mirror: a.special.mirror, still: false } : resolveAnim(a.character, a.kind, a.facing);
     if (!resolved) return null;
     const image = this.images(resolved.anim.image);
     if (!image) return null;
-    const frame = resolved.still ? resolved.anim.frames[0]! : frameAt(resolved.anim, a.animTime);
+    const time = a.special ? a.special.time : a.animTime;
+    const frame = resolved.still ? resolved.anim.frames[0]! : frameAt(resolved.anim, time);
     const size = frameSize(image.asset, image.size);
     const scale = scaleAt(this.scene.depth, a.pos[1]);
     return {

@@ -1,4 +1,6 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import type { Session } from "./session.ts";
+import { TEXT_FONT, TEXT_LINE, layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { Viewport } from "./viewport.ts";
 import type { World } from "./world.ts";
 
@@ -7,16 +9,16 @@ import type { World } from "./world.ts";
 
 export type Ctx = CanvasRenderingContext2D;
 
-const FONT = "10px monospace";
-const LINE = 12;
+const FONT = TEXT_FONT;
 
 export interface DebugFlags {
   /** Walkable outline, holes, obstacles, graph nodes, route, baselines, depth lines. */
   overlay: boolean;
 }
 
-/** Draws one frame of the world into the back buffer, in spec 03 order. */
-export function drawWorld(ctx: Ctx, world: World, background: CanvasImageSource | undefined, debug: DebugFlags) {
+/** Draws one frame of play into the back buffer, in spec 03 order. */
+export function drawSession(ctx: Ctx, session: Session, background: CanvasImageSource | undefined, debug: DebugFlags) {
+  const world = session.world;
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
@@ -37,8 +39,9 @@ export function drawWorld(ctx: Ctx, world: World, background: CanvasImageSource 
     }
   }
 
-  if (world.text) drawTextBox(ctx, world.text);
-  drawVerb(ctx, world.verb);
+  if (session.text) drawTextBox(ctx, session.text);
+  if (session.ending) drawEnding(ctx, session);
+  drawVerb(ctx, session);
   if (debug.overlay) drawDebug(ctx, world);
 }
 
@@ -63,48 +66,50 @@ export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
   screen.drawImage(back, v.offsetX, v.offsetY, SCENE_WIDTH * v.scale, SCENE_HEIGHT * v.scale);
 }
 
-/** Word-wraps to a pixel width using the context's current font. */
-export function wrap(ctx: Pick<Ctx, "measureText">, text: string, width: number): string[] {
-  const lines: string[] = [];
-  for (const para of text.split("\n")) {
-    let line = "";
-    for (const word of para.split(/\s+/).filter(Boolean)) {
-      const next = line ? `${line} ${word}` : word;
-      if (line && ctx.measureText(next).width > width) {
-        lines.push(line);
-        line = word;
-      } else line = next;
-    }
-    lines.push(line);
-  }
-  return lines;
-}
-
-/** M1 look text (D67): a plain centered Sierra-style box. */
-function drawTextBox(ctx: Ctx, paragraphs: string[]) {
+/** A `narrate` or `say` box (spec 06, D78). */
+function drawTextBox(ctx: Ctx, box: TextBox) {
   ctx.font = FONT;
-  const lines = paragraphs.flatMap((p, i) => (i === 0 ? wrap(ctx, p, 360) : ["", ...wrap(ctx, p, 360)]));
-  const w = Math.min(380, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 24);
-  const h = lines.length * LINE + 20;
-  const x = Math.round((SCENE_WIDTH - w) / 2);
-  const y = Math.round((SCENE_HEIGHT - h) / 2) - 40;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = "#a00";
+  const l = layoutTextBox(box, (t) => ctx.measureText(t).width);
   ctx.lineWidth = 1;
-  ctx.strokeRect(x + 2.5, y + 2.5, w - 5, h - 5);
-  ctx.strokeRect(x + 4.5, y + 4.5, w - 9, h - 9);
-  ctx.fillStyle = "#000";
-  ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  lines.forEach((l, i) => ctx.fillText(l, SCENE_WIDTH / 2, y + 10 + i * LINE));
+  if (box.kind === "narrate") {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(l.x, l.y, l.w, l.h);
+    ctx.strokeStyle = "#a00";
+    ctx.strokeRect(l.x + 2.5, l.y + 2.5, l.w - 5, l.h - 5);
+    ctx.strokeRect(l.x + 4.5, l.y + 4.5, l.w - 9, l.h - 9);
+    ctx.fillStyle = "#000";
+    ctx.textAlign = "center";
+    l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
+    return;
+  }
+  const color = box.speaker?.color ?? "#fff";
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.fillRect(l.x, l.y, l.w, l.h);
+  ctx.strokeStyle = color;
+  ctx.strokeRect(l.x + 1.5, l.y + 1.5, l.w - 3, l.h - 3);
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  if (l.name) {
+    ctx.font = `bold ${FONT}`;
+    ctx.fillText(l.name, l.x + l.w / 2, l.textY - TEXT_LINE);
+    ctx.font = FONT;
+  }
+  l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
 }
 
-function drawVerb(ctx: Ctx, verb: string) {
+/** The D71 stand-in for M8's death box: the message and a Restart hint. */
+function drawEnding(ctx: Ctx, session: Session) {
+  const e = session.ending!;
+  const text = e.kind === "die" ? e.message : "You won!";
+  drawTextBox(ctx, { kind: "narrate", text: `${text}\n\n[ Restart ]`, timeLeft: 0 });
+}
+
+function drawVerb(ctx: Ctx, session: Session) {
   ctx.font = FONT;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const label = verb === "walk" ? "Walk" : "Look";
+  const label = session.verb === "item" ? `Use ${session.itemFile(session.item ?? "")?.name ?? ""}` : session.verb[0]!.toUpperCase() + session.verb.slice(1);
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillRect(4, 4, ctx.measureText(label).width + 8, 14);
   ctx.fillStyle = "#ff0";
