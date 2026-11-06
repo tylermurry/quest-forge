@@ -1,7 +1,9 @@
 import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
 import { defaultResponse, firstMatch, type RuleContext, type RuleOwner } from "./rules.ts";
 import { Sequence, type Done, type SequenceHost } from "./sequence.ts";
+import type { Trace } from "./trace.ts";
 import {
+  cloneState,
   initialState,
   markFired,
   markVisited,
@@ -27,6 +29,17 @@ export type Ending = { kind: "die"; message: string } | { kind: "win" };
 export interface SessionStart {
   scene?: string;
   spawn?: string;
+  /**
+   * Start from this state instead (playtest presets and Restart scene, D126, D128):
+   * its scene, at its player position. Copied, never changed. Wins over `scene`/`spawn`.
+   */
+  state?: GameState;
+}
+
+/** Playtest-only hooks (D129). The exported game passes none. */
+export interface SessionHooks {
+  /** Hears rule verdicts, default responses, actions, scene changes and notes. */
+  trace?: Trace;
 }
 
 /** Scene asset loading, owned by the host (spec 03). Headless sessions use `ALWAYS_READY`. */
@@ -80,13 +93,17 @@ export class Session implements SequenceHost {
   private readonly characters: Map<string, CharacterFile>;
   private readonly items: Map<string, ItemFile>;
   private readonly ctx: RuleContext;
+  private readonly trace: Trace | undefined;
+  private _entry!: { state: GameState; spawn: string | null };
 
   constructor(
     private readonly project: Project,
     private readonly images: ImageLookup,
     private readonly start: SessionStart = {},
     private readonly assets: SceneAssets = ALWAYS_READY,
+    hooks: SessionHooks = {},
   ) {
+    this.trace = hooks.trace;
     this.game = project.game!.data;
     this.scenes = new Map(project.scenes.map((s) => [s.data.id, s.data]));
     this.characters = new Map(project.characters.map((c) => [c.data.id, c.data]));
@@ -113,11 +130,32 @@ export class Session implements SequenceHost {
     return this.items.get(id);
   }
 
+  /**
+   * The state as the current scene was entered (before its `scene_enter` rule) and
+   * the spawn used, null when play began from a given state (D128). A copy.
+   */
+  get entry(): { state: GameState; spawn: string | null } {
+    return { state: cloneState(this._entry.state), spawn: this._entry.spawn };
+  }
+
   /** Back to the start (also the D71 Restart button). */
   restart() {
     this.sequence?.stop();
     this.sequence = null;
     this.change = null;
+    this.verb = "walk";
+    this.item = null;
+    this.text = null;
+    this.ending = null;
+    if (this.start.state) {
+      const state = cloneState(this.start.state);
+      const scene = this.scenes.get(state.scene);
+      if (!scene) throw new Error(`Scene ${state.scene} doesn't exist`);
+      this.state = state;
+      this.ctx.state = state;
+      this.enterScene(scene, null, null);
+      return;
+    }
     const sceneId = this.start.scene ?? this.game.startScene;
     const scene = this.scenes.get(sceneId);
     if (!scene) throw new Error(`Scene ${sceneId} doesn't exist`);
@@ -126,11 +164,7 @@ export class Session implements SequenceHost {
     if (!spawn) throw new Error(`Scene ${sceneId} has no spawn point ${spawnId}`);
     this.state = initialState(this.project.flags?.data ?? null, sceneId, spawn);
     this.ctx.state = this.state;
-    this.verb = "walk";
-    this.item = null;
-    this.text = null;
-    this.ending = null;
-    this.enterScene(scene);
+    this.enterScene(scene, spawnId, null);
   }
 
   // ── Input ─────────────────────────────────────────────────────────────────
@@ -229,9 +263,11 @@ export class Session implements SequenceHost {
 
   // ── Rules ─────────────────────────────────────────────────────────────────
 
-  private enterScene(scene: SceneFile) {
+  private enterScene(scene: SceneFile, spawn: string | null, from: string | null) {
     const s = this.state;
     s.scene = scene.id;
+    this._entry = { state: cloneState(s), spawn };
+    this.trace?.({ type: "scene", from, to: scene.id, spawn });
     this.world = new World(scene, this.characters, this.images, {
       player: this.game.player,
       spawn: s.player,
@@ -266,7 +302,7 @@ export class Session implements SequenceHost {
     const spawn = c.scene.spawns[c.spawn]!;
     this.state.player = { x: spawn.x, y: spawn.y, facing: spawn.facing };
     this.text = null;
-    this.enterScene(c.scene);
+    this.enterScene(c.scene, c.spawn, this.scene.id);
   }
 
   private regionsAt(): Set<string> {
@@ -308,13 +344,16 @@ export class Session implements SequenceHost {
   /** First match runs (D40); otherwise the verb's default response, if it has one. */
   /** Returns whether a rule matched. */
   private fire(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): boolean {
-    const m = firstMatch(rules, owner, trigger, this.ctx);
+    const trace = this.trace;
+    trace?.({ type: "trigger", owner, trigger });
+    const m = firstMatch(rules, owner, trigger, this.ctx, trace && ((rule, index, key, verdict) => trace({ type: "rule", owner, trigger, rule, index, key, verdict })));
     if (m) {
       markFired(this.state, m.key);
       this.run(m.rule.do);
       return true;
     }
     const fallback = defaultResponse(this.game, trigger);
+    trace?.({ type: "no_match", owner, trigger, response: fallback });
     if (fallback) this.run([{ type: "narrate", text: fallback }]);
     return false;
   }
@@ -351,7 +390,8 @@ export class Session implements SequenceHost {
     }
   }
 
-  private note(message: string) {
+  private note(message: string, milestone?: "M7" | "M8") {
+    this.trace?.({ type: "note", message, ...(milestone ? { milestone } : {}) });
     this.log.push(message);
     if (this.log.length > MAX_LOG) this.log.shift();
   }
@@ -434,11 +474,11 @@ export class Session implements SequenceHost {
   }
 
   playSound(sound: string) {
-    this.note(`Sound: ${sound}`);
+    this.note(`Sound: ${sound} (no sound until audio arrives in M8)`, "M8");
   }
 
   playMusic(music: string | null) {
-    this.note(music ? `Music: ${music}` : "Music stopped");
+    this.note(music ? `Music: ${music} (no sound until audio arrives in M8)` : "Music stopped", "M8");
   }
 
   endGame(ending: Ending) {
@@ -447,7 +487,11 @@ export class Session implements SequenceHost {
     this.ending = ending;
   }
 
-  warn(message: string) {
-    this.note(message);
+  warn(message: string, milestone?: "M7" | "M8") {
+    this.note(message, milestone);
+  }
+
+  onAction(action: Action) {
+    this.trace?.({ type: "action", action });
   }
 }

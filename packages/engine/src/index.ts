@@ -2,10 +2,11 @@
 export { SCHEMA_VERSION } from "@questforge/schema";
 export { createGame, ProjectErrors, sceneImageIds, type Game, type GameOptions, type ProjectBundle } from "./game.ts";
 export { World, type Drawable, type LoadedImage, type Target, type WorldOptions } from "./world.ts";
-export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type SceneAssets, type SessionStart, type Verb } from "./session.ts";
-export { initialState, cloneState, score, type GameState, type Position } from "./state.ts";
+export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type SceneAssets, type SessionHooks, type SessionStart, type Verb } from "./session.ts";
+export { initialState, cloneState, score, objectVisible, type GameState, type Position } from "./state.ts";
 export { firstMatch, checkCondition, defaultResponse, ruleKey, triggerMatches, type RuleOwner } from "./rules.ts";
 export { Sequence, type SequenceHost } from "./sequence.ts";
+export type { RuleReport, RuleVerdict, Trace, TraceEvent } from "./trace.ts";
 export { layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
 export { PlayerUi, type PointerKind } from "./ui/controller.ts";
 export { computeLayout, unitFor, MIN_HIT_CSS, type Layout } from "./ui/layout.ts";

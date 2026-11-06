@@ -29,8 +29,10 @@ export interface SequenceHost {
   playMusic(music: string | null): void;
   /** `die` / `win_game` (D71). The sequence ends. */
   endGame(ending: { kind: "die"; message: string } | { kind: "win" }): void;
-  /** Something the engine can't do yet (D71). */
-  warn(message: string): void;
+  /** Something the engine can't do yet (D71), with the milestone that owns it. */
+  warn(message: string, milestone?: "M7" | "M8"): void;
+  /** An action is about to run (playtest event log, D129). */
+  onAction?(action: Action): void;
 }
 
 export class Sequence {
@@ -73,6 +75,7 @@ export class Sequence {
   private run(a: Action) {
     const { host } = this;
     const s = host.state;
+    host.onAction?.(a);
     switch (a.type) {
       case "narrate":
         this.block = host.narrate(a.text);
@@ -127,7 +130,7 @@ export class Sequence {
         host.playMusic(null);
         return;
       case "start_dialogue":
-        host.warn(`Dialogue "${a.dialogue}" can't play yet: dialogues arrive in M7.`);
+        host.warn(`Dialogue "${a.dialogue}" can't play yet: dialogues arrive in M7.`, "M7");
         return;
       case "wait":
         this.waitLeft = a.seconds;

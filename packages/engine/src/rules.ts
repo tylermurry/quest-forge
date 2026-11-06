@@ -1,5 +1,6 @@
 import type { AnyRule, Condition, GameFile, SceneFile, Trigger } from "@questforge/schema";
 import { hasItem, objectVisible, type GameState } from "./state.ts";
+import type { RuleReport } from "./trace.ts";
 
 // Rule evaluation (spec 02, D40): a trigger checks its owner's rules top to bottom
 // and the first rule whose conditions all pass is the one that runs. Pure: no
@@ -87,14 +88,27 @@ export interface Match<R extends AnyRule = AnyRule> {
 
 /**
  * The first rule (top to bottom) answering `trigger` whose conditions all pass.
- * A `once` rule that already fired is skipped.
+ * A `once` rule that already fired is skipped. `report` (playtest only, D129) hears
+ * every rule's verdict up to and including the match; conditions stop at the first
+ * that fails, as before.
  */
-export function firstMatch<R extends AnyRule>(rules: readonly R[], owner: RuleOwner, trigger: Trigger, ctx: RuleContext): Match<R> | null {
-  for (const rule of rules) {
-    if (!triggerMatches(rule.when, trigger)) continue;
+export function firstMatch<R extends AnyRule>(rules: readonly R[], owner: RuleOwner, trigger: Trigger, ctx: RuleContext, report?: RuleReport): Match<R> | null {
+  for (const [index, rule] of rules.entries()) {
     const key = ruleKey(owner, rule.id);
-    if (rule.once && hasFired(ctx.state, key)) continue;
-    if (rule.if.every((c) => checkCondition(c, ctx, key))) return { rule, key };
+    if (!triggerMatches(rule.when, trigger)) {
+      report?.(rule, index, key, { kind: "wrong_trigger" });
+      continue;
+    }
+    if (rule.once && hasFired(ctx.state, key)) {
+      report?.(rule, index, key, { kind: "once_fired" });
+      continue;
+    }
+    const failed = rule.if.findIndex((c) => !checkCondition(c, ctx, key));
+    if (failed < 0) {
+      report?.(rule, index, key, { kind: "matched" });
+      return { rule, key };
+    }
+    report?.(rule, index, key, { kind: "condition_failed", index: failed, condition: rule.if[failed]! });
   }
   return null;
 }
