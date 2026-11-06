@@ -182,12 +182,9 @@ function checkAwards(project: Project, blocks: LogicBlock[], out: Report) {
   }
   const game = project.game;
   if (!game) return;
-  // With mismatched points the largest counts toward the total; the mismatch is reported above.
-  const best = new Map<string, number>();
-  for (const { a } of actionsOf(blocks)) if (a.type === "award_points") best.set(a.award, Math.max(best.get(a.award) ?? 0, a.points));
-  const total = [...best.values()].reduce((s, n) => s + n, 0);
+  const { total, awards: count } = awardTotal(project, blocks);
   if (total !== game.data.maxScore) {
-    const awards = best.size === 1 ? "1 award" : `${best.size} awards`;
+    const awards = count === 1 ? "1 award" : `${count} awards`;
     out.warning("award_total_mismatch", "game", game.path, ["maxScore"], `The max score is ${game.data.maxScore}, but the awards add up to ${total} (${awards}).`, []);
   }
 }
@@ -202,4 +199,14 @@ export function checkLogic(project: Project, out: Report) {
   checkDialogueNodes(project, out);
   checkHotspotRules(project, out);
   checkAwards(project, blocks, out);
+}
+
+/**
+ * What all awards add up to, each award ID counted once (spec 07). With mismatched
+ * points for one ID the largest counts; the mismatch is a warning of its own.
+ */
+export function awardTotal(project: Project, blocks = logicBlocks(project)): { total: number; awards: number } {
+  const best = new Map<string, number>();
+  for (const { a } of actionsOf(blocks)) if (a.type === "award_points") best.set(a.award, Math.max(best.get(a.award) ?? 0, a.points));
+  return { total: [...best.values()].reduce((s, n) => s + n, 0), awards: best.size };
 }

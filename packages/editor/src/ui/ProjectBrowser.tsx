@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Gamepad2, Search } from "lucide-react";
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
@@ -327,6 +327,21 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
+        {/* Game-level rules, default responses and score (spec 10). */}
+        {!searching && (
+          <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
+            <div
+              tabIndex={0}
+              className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
+              onClick={() => ws.select({ kind: "game" })}
+              onKeyDown={(e) => e.key === "Enter" && ws.select({ kind: "game" })}
+            >
+              <Gamepad2 className="text-muted-foreground size-3.5" />
+              <span className="flex-1">Game</span>
+              <span className="text-muted-foreground text-[12px]">rules &amp; settings</span>
+            </div>
+          </li>
+        )}
         {trees.map(({ section, title, tree }) => {
           const shown = filterTree(tree, ws.search);
           if (searching && !shown) return null;

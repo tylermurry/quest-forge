@@ -3,6 +3,7 @@ import { entriesInFolder } from "../model/commands.ts";
 import { SECTIONS, isAssetKind, sectionEntries } from "../model/browser.ts";
 import { describeReferences, entryReferences, renameEntry, summarizeReferences } from "../model/commands.ts";
 import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
+import { GameInspector } from "./rules/GameInspector.tsx";
 import { RuleInspector } from "./rules/RuleInspector.tsx";
 import { TextField } from "./TextField.tsx";
 
@@ -38,7 +39,7 @@ export function Inspector({ actions }: { actions: Actions }) {
   }
 
   if (sel.kind === "game") {
-    return <p className="text-muted-foreground">Game rules and default responses arrive with the Game inspector.</p>;
+    return <GameInspector actions={actions} />;
   }
 
   const entry = sectionEntries(p, sel.section).find((e) => e.id === sel.id);
