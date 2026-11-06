@@ -8,7 +8,7 @@ import { ruleProblems } from "../../model/rules/problems.ts";
 import { QUICK_LABEL, QUICK_VERBS, hasQuickFields, quickField, setQuickText } from "../../model/rules/quick.ts";
 import { Button } from "../components/ui/button.tsx";
 import { TextField } from "../TextField.tsx";
-import { RuleCard, type RuleCardProps } from "./RuleCard.tsx";
+import { RuleCard } from "./RuleCard.tsx";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase";
 
@@ -56,7 +56,7 @@ function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef
  * (spec 10): quick fields first where there are verbs, then cards that read like
  * sentences, dragged to reorder (first match wins, D40).
  */
-export function RuleInspector({ actions, owner, pickPoint, picking }: { actions: Actions; owner: RuleOwnerRef } & Pick<RuleCardProps, "pickPoint" | "picking">) {
+export function RuleInspector({ actions, owner }: { actions: Actions; owner: RuleOwnerRef }) {
   const { editor } = actions;
   const own = ownerRules(editor.project, owner);
   const ok = ownerKey(owner);
@@ -86,7 +86,7 @@ export function RuleInspector({ actions, owner, pickPoint, picking }: { actions:
         <SortableContext items={own.rules.map((r) => `${ok}/${r.id}`)} strategy={verticalListSortingStrategy}>
           <ol className="grid gap-2" aria-label="Rule list">
             {own.rules.map((r, i) => (
-              <RuleCard key={r.id} actions={actions} owner={owner} own={own} rule={r} index={i} problems={problems} {...(pickPoint && { pickPoint })} picking={picking ?? null} />
+              <RuleCard key={r.id} actions={actions} owner={owner} own={own} rule={r} index={i} problems={problems} />
             ))}
           </ol>
         </SortableContext>

@@ -3,6 +3,7 @@
 import type { Location, Project } from "@questforge/schema";
 import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
 import type { Jump } from "./locate.ts";
+import type { PointPick } from "./rules/pointPick.ts";
 import { SceneUiStore } from "./scene/sceneUi.ts";
 import { LIST_LAYER, type ThingList } from "./scene/things.ts";
 
@@ -38,6 +39,8 @@ export class WorkspaceState {
   search = "";
   /** A field the Inspector should focus next (e.g. a new hotspot's name, D99); it clears it. */
   focusRequest: string | null = null;
+  /** A rule action's point waiting for a click on its scene's canvas (D124). */
+  pointPick: (PointPick & { restore: Selection }) | null = null;
   /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
   highlight: Highlight | null = null;
   /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
@@ -122,6 +125,26 @@ export class WorkspaceState {
         break;
     }
     this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
+    this.changed();
+  }
+
+  /**
+   * Starts "Pick on canvas": shows the pick's scene (opening its tab if needed) and
+   * remembers the selection, which comes back when the pick ends.
+   */
+  startPointPick(pick: PointPick) {
+    const restore = this.selection;
+    if (this.active !== refKey({ section: "scene", id: pick.scene })) this.open({ section: "scene", id: pick.scene });
+    this.selection = restore;
+    this.pointPick = { ...pick, restore };
+    this.changed();
+  }
+
+  /** Ends a pick (placed or cancelled) and brings back the Inspector it started from. */
+  endPointPick() {
+    if (!this.pointPick) return;
+    this.selection = this.pointPick.restore;
+    this.pointPick = null;
     this.changed();
   }
 

@@ -23,6 +23,7 @@ import {
 } from "../../model/rules/commands.ts";
 import { ownerKey, ownerTriggers, type OwnerRules, type RuleOwnerRef, type TriggerType } from "../../model/rules/owner.ts";
 import { createAndUse } from "../../model/rules/pickers.ts";
+import { pointPickScene } from "../../model/rules/pointPick.ts";
 import { locateInRules, partKey, type RulePart, type RuleProblems } from "../../model/rules/problems.ts";
 import {
   ACTION_GROUPS,
@@ -78,14 +79,10 @@ export interface RuleCardProps {
   rule: AnyRule;
   index: number;
   problems: RuleProblems;
-  /** Which action's point waits for a canvas click (D124), as `do/<index>`. */
-  picking?: string | null;
-  /** Starts "Pick on canvas" for an action's point; absent when there's no scene to pick on. */
-  pickPoint?(ruleId: string, index: number): void;
 }
 
 /** One rule as a sentence of dropdowns, pickers and text (spec 10). */
-export function RuleCard({ actions, owner, own, rule, index, problems, picking, pickPoint }: RuleCardProps) {
+export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCardProps) {
   const { editor, ws } = actions;
   const p: Project = editor.project;
   const ok = ownerKey(owner);
@@ -116,6 +113,16 @@ export function RuleCard({ actions, owner, own, rule, index, problems, picking, 
     blur,
     create: (pick: PickKind, name: string, key: string) => run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => apply({ [key]: id })(r))),
   });
+
+  // "Pick on canvas" for an action's point (D124).
+  const activeScene = ws.active?.startsWith("scene:") ? ws.active.slice("scene:".length) : null;
+  const pickHandlers = (i: number): Pick<PartHandlers, "pickPoint" | "picking" | "pickDisabled"> => {
+    const scene = pointPickScene(owner, rule.do[i]!, activeScene);
+    const pk = ws.pointPick;
+    const picking = !!pk && ownerKey(pk.owner) === ok && pk.ruleId === rule.id && pk.index === i;
+    if (!scene) return { pickDisabled: "Open a scene tab to pick a point on it" };
+    return { picking, pickPoint: () => (picking ? ws.endPointPick() : ws.startPointPick({ owner, ruleId: rule.id, index: i, scene })) };
+  };
 
   const triggers = ownerTriggers(owner);
   const ruleProblems = problems.byRule.get(rule.id);
@@ -253,7 +260,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems, picking, 
                 h={{
                   ...handlers(`do/${i}`, (patch) => (q) => setActionFields(q, owner, rule.id, i, patch)),
                   animTarget: (t) => run("Change animation target", (q) => setAnimationTarget(q, owner, rule.id, i, t)),
-                  ...(pickPoint && { pickPoint: () => pickPoint(rule.id, i), picking: picking === `${rule.id}/do/${i}` }),
+                  ...pickHandlers(i),
                 }}
               />
               <span className="ml-auto flex">

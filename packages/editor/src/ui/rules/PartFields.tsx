@@ -23,6 +23,8 @@ export interface PartHandlers {
   pickPoint?(): void;
   /** True while this point is waiting for a canvas click. */
   picking?: boolean;
+  /** Why "Pick on canvas" can't be used right now (D124). */
+  pickDisabled?: string;
 }
 
 function SmallSelect(props: { label: string; value: string; options: { value: string; label: string }[]; onChange(v: string): void; invalid?: boolean }) {
@@ -110,13 +112,14 @@ function FieldInput({ project, field, value, h, invalid }: { project: Project; f
         <span className="inline-flex items-end gap-1">
           <NumberField compact className="w-14" label="X" integer min={0} max={640} value={Number(value.x)} onChange={(n) => h.patch({ x: n }, "x")} onBlur={h.blur} />
           <NumberField compact className="w-14" label="Y" integer min={0} max={400} value={Number(value.y)} onChange={(n) => h.patch({ y: n }, "y")} onBlur={h.blur} />
-          {h.pickPoint && (
+          {(h.pickPoint || h.pickDisabled) && (
             <Button
               variant={h.picking ? "default" : "outline"}
               size="sm"
               className="h-7 px-2 text-[12px]"
-              aria-pressed={h.picking}
-              title={h.picking ? "Click the scene to place the point (Escape cancels)" : "Pick on canvas"}
+              aria-pressed={!!h.picking}
+              disabled={!h.pickPoint}
+              title={h.pickDisabled ?? (h.picking ? "Click the scene to place the point (Escape cancels)" : "Pick on canvas")}
               onClick={h.pickPoint}
             >
               <Crosshair className="size-3.5" />

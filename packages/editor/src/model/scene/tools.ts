@@ -29,6 +29,7 @@ import { IMAGE_EXTENSIONS, importFiles, type ImportFile } from "../importing.ts"
 import { GHOST, SceneController, type PointerInput } from "./controller.ts";
 import type { Frame } from "./frame.ts";
 import { hitTest, VERTEX_PX, type Hit } from "./hit.ts";
+import { applyPointPick } from "../rules/pointPick.ts";
 import { snapPoint } from "./snap.ts";
 import { drawOrderWithBaselines, LIST_LAYER, type ThingRef } from "./things.ts";
 import { snapPixel, toScene } from "./view.ts";
@@ -88,6 +89,7 @@ export class SceneTools extends SceneController {
   /** One line of help for the toolbar. */
   get hint(): string {
     const ui = this.ui;
+    if (this.host.ws.pointPick?.scene === this.sceneId) return "Click the scene to place the action's point · Esc cancels";
     if (ui.tool === "polygon" || ui.tool === "rect") {
       const target = this.drawTarget();
       if (typeof target === "string") return target;
@@ -113,7 +115,7 @@ export class SceneTools extends SceneController {
   }
 
   override get cursor(): string {
-    if (this.ui.tool !== "select") return "crosshair";
+    if (this.ui.tool !== "select" || this.host.ws.pointPick?.scene === this.sceneId) return "crosshair";
     if (this.move) return "grabbing";
     const h = this.hoverHit;
     if (!h) return "default";
@@ -175,6 +177,7 @@ export class SceneTools extends SceneController {
   }
 
   override cancel() {
+    if (this.host.ws.pointPick) return this.host.ws.endPointPick();
     if (!this.abort()) super.cancel();
   }
 
@@ -289,6 +292,13 @@ export class SceneTools extends SceneController {
   protected override toolDown(e: PointerInput) {
     if (e.button !== 0) return;
     const p = toScene(this.transform, e.screen);
+    // "Pick on canvas" takes the click before any tool (D124).
+    const pick = this.host.ws.pointPick;
+    if (pick && pick.scene === this.sceneId) {
+      this.editor.apply("Pick point on canvas", (q) => applyPointPick(q, pick, snapPixel(p)));
+      this.host.ws.endPointPick();
+      return;
+    }
     switch (this.ui.tool) {
       case "select":
         return this.selectDown(p, e);
