@@ -1,7 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The editor window: core APIs and native folder dialogs.",
-  "windows": ["main"],
-  "permissions": ["core:default", "dialog:default"]
+  "description": "The editor window: core APIs, native folder dialogs, and dragging the window by its title bar.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "dialog:default"
+  ]
 }

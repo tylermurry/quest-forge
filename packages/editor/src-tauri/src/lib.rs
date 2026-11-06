@@ -265,6 +265,15 @@ fn recent_save(app: tauri::AppHandle, json: String) -> Res<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // A second launch focuses the window that's already open (D92). Must be the first plugin.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
+        // Remembers the window's size and position between launches (D92).
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(Watches::default())
         .invoke_handler(tauri::generate_handler![
