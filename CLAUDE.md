@@ -118,6 +118,17 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   controller. `editor-dev-alt` (port 5177) runs the editor when 5175 is taken; `tauri dev --config
   '{"build":{"devUrl":"http://localhost:5177","beforeDevCommand":""}}'` points the app at it. The app is
   single-instance: a second launch hands over to a running one and exits.
+- Sprites & animation (M4b, spec 05, D111–D115): object animations live on the scene object (`animation` loops,
+  `animations` are named one-shots; each names its own image). The engine passes an `ObjectPose` through
+  `sceneDrawables`; `World` owns the loop clock and one-shots (never `GameState`, D112). `play_animation`
+  refers to an `animation` (scope `<scene>/<object>`, `animationScope`) or a character `slot`; rename one-shots
+  with `renameObjectAnimation`. Editor logic: `model/sprites.ts` (slicing, origin, cell hit-test, `fitZoom`,
+  frames as text), `model/animations.ts` (slot commands, `slotView`/`slotLabel` via the engine's `resolveAnim`,
+  frame picking), `model/scene/objectAnimations.ts`. UI in `ui/sprites/`: `ImageEditor.tsx` (the image tab;
+  images open in tabs through `opensTab`), `CharacterAnimations.tsx`, `ObjectAnimations.tsx` (in the object
+  Inspector), `AnimCanvas.tsx` (live preview), `draw.ts` (sheet grid; frames go through engine `drawSprites`).
+  The scene canvas sets `controller.clock` each frame and keeps redrawing only while `animating` (D113); tests
+  leave the clock at 0. `test/support/sheet.ts` makes an 8×4 walk sheet (the dev page can import it too).
 - Tauri app: needs Rust (rustup). `corepack pnpm --filter @questforge/editor tauri dev` runs the
   editor in a native window (it starts the Vite dev server itself); `tauri build` makes the bundle.
   Rust unit tests: `cargo test --manifest-path packages/editor/src-tauri/Cargo.toml`; this also
