@@ -158,6 +158,8 @@ export class Playtest {
       trace: (e: TraceEvent) => {
         if (this._run !== run) return;
         this.events.push(e);
+        // The log shows the last 500 lines (D132); keep plenty of events for them.
+        if (this.events.length > 5000) this.events.splice(0, 1000);
         this.changed();
       },
       restart: () => {

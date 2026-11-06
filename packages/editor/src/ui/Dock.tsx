@@ -3,7 +3,9 @@ import { useState } from "react";
 import type { Actions } from "../model/actions.ts";
 import type { Playtest } from "../model/playtest/playtest.ts";
 import { PlaytestPanel } from "./playtest/PlaytestPanel.tsx";
+import { EventLog } from "./playtest/EventLog.tsx";
 import { PresetSection } from "./playtest/Presets.tsx";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./components/ui/resizable.tsx";
 import { StatePanel } from "./playtest/StatePanel.tsx";
 import { locate } from "../model/locate.ts";
 import { ALL_SEVERITIES, problemCounts, visibleProblems, type SeverityFilter } from "../model/problemList.ts";
@@ -44,7 +46,20 @@ export function Dock({ actions, playtest }: { actions: Actions; playtest: Playte
       </TabsList>
       {/* Kept mounted so the game keeps running while Problems is shown. */}
       <TabsContent value="playtest" forceMount className="min-h-0 data-[state=inactive]:hidden">
-        <PlaytestPanel playtest={playtest} side={<StatePanel playtest={playtest} project={editor.project} footer={<PresetSection playtest={playtest} />} />} />
+        <PlaytestPanel
+          playtest={playtest}
+          side={
+            <ResizablePanelGroup orientation="horizontal" id="questforge.playtest.side">
+              <ResizablePanel id="state" defaultSize="45%" minSize="20%">
+                <StatePanel playtest={playtest} project={editor.project} footer={<PresetSection playtest={playtest} />} />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel id="log" minSize="20%">
+                <EventLog playtest={playtest} project={editor.project} ws={ws} />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          }
+        />
       </TabsContent>
       <TabsContent value="problems" className="min-h-0 overflow-auto px-1 py-1">
         {problems.length === 0 && <p className="text-ok px-2 py-1">No problems.</p>}
