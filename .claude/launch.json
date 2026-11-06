@@ -24,6 +24,17 @@
         "5176"
       ],
       "port": 5176
+    },
+    {
+      "name": "editor-dev",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@questforge/editor",
+        "dev"
+      ],
+      "port": 5175
     }
   ]
 }
