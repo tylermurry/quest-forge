@@ -12,3 +12,4 @@ export * from "./serialize.ts";
 export * from "./migrate.ts";
 export * from "./problems.ts";
 export * from "./project.ts";
+export * from "./references.ts";
