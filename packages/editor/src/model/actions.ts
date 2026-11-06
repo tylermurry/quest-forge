@@ -107,7 +107,8 @@ export class Actions {
     }
     const name = item.path.split("/").pop()!;
     const to = folder ? `${folder}/${name}` : name;
-    if (to === item.path) return false;
+    // Dropping a folder on itself or inside itself does nothing (like Finder), quietly.
+    if (to === item.path || folder === item.path || folder.startsWith(`${item.path}/`)) return false;
     const ok = this.editor.apply("Move folder", (p) => relocateFolder(p, section, item.path, to));
     if (ok) {
       this.ws.reveal(section, to);

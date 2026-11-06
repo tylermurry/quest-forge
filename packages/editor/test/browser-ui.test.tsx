@@ -28,18 +28,21 @@ async function mount() {
   return actions;
 }
 
-/** A DataTransfer stand-in jsdom lacks. */
-function dataTransfer() {
-  const data = new Map<string, string>();
-  return {
-    setData: (t: string, v: string) => data.set(t, v),
-    getData: (t: string) => data.get(t) ?? "",
-    get types() {
-      return [...data.keys()];
-    },
-    files: [] as File[],
-    effectAllowed: "move",
-  };
+/** jsdom has no layout: give a row a box so dnd-kit can hit-test the pointer against it. */
+function placeAt(el: Element, top: number) {
+  const rect = { x: 0, y: top, top, left: 0, right: 200, bottom: top + 20, width: 200, height: 20, toJSON() {} };
+  Object.defineProperty(el, "getBoundingClientRect", { value: () => rect, configurable: true });
+}
+
+/** Presses on one row, moves past the 4 px threshold, and releases over another. */
+async function dragRow(from: Element, to: Element) {
+  placeAt(from, 0);
+  placeAt(to, 100);
+  const opts = (y: number) => ({ bubbles: true, isPrimary: true, button: 0, buttons: 1, pointerId: 1, clientX: 10, clientY: y });
+  await act(async () => void from.dispatchEvent(new PointerEvent("pointerdown", opts(10))));
+  await act(async () => void document.dispatchEvent(new PointerEvent("pointermove", opts(20))));
+  await act(async () => void document.dispatchEvent(new PointerEvent("pointermove", opts(110))));
+  await act(async () => void document.dispatchEvent(new PointerEvent("pointerup", opts(110))));
 }
 
 describe("project browser UI", () => {
@@ -70,14 +73,10 @@ describe("project browser UI", () => {
     expect(a.editor.project.folders).toContain("scenes/act1");
   });
 
-  it("drags a scene onto a folder", async () => {
+  it("drags a scene onto a folder (dnd-kit)", async () => {
     const a = await mount();
     act(() => void a.newFolder("scene", ""));
-    const dt = dataTransfer();
-    fireEvent.dragStart(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!, { dataTransfer: dt });
-    const folder = screen.getByRole("treeitem", { name: "Folder New folder" }).firstElementChild!;
-    fireEvent.dragOver(folder, { dataTransfer: dt });
-    fireEvent.drop(folder, { dataTransfer: dt });
+    await dragRow(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!, screen.getByRole("treeitem", { name: "Folder New folder" }).firstElementChild!);
     expect(sectionEntries(a.editor.project, "scene").find((e) => e.id === "garden")?.folder).toBe("New folder");
   });
 
@@ -122,5 +121,13 @@ describe("project browser UI", () => {
     expect(within(tree).queryByRole("treeitem", { name: "Items" })).toBeNull();
     expect(within(tree).getByRole("treeitem", { name: "scene Garden" })).toBeTruthy();
     expect(within(tree).getByRole("treeitem", { name: "image garden_bg" })).toBeTruthy();
+  });
+});
+
+describe("dragging across sections", () => {
+  it("ignores a drop on another section", async () => {
+    const a = await mount();
+    await dragRow(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!, screen.getByRole("treeitem", { name: "Scenes" }).firstElementChild!);
+    expect(a.editor.history.canUndo).toBe(false);
   });
 });

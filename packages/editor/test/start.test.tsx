@@ -45,7 +45,7 @@ describe("start screen (spec 08)", () => {
     fireEvent.change(screen.getByLabelText("Game title"), { target: { value: "Cave Story" } });
     fireEvent.click(screen.getByRole("button", { name: "Create blank project" }));
     await waitFor(() => expect(screen.getByText("Cave Story")).toBeTruthy());
-    expect(screen.getByRole("status").textContent).toBe("Saved");
+    expect(screen.getByRole("status", { name: "Save status" }).textContent).toBe("Saved");
     expect(await platform.disks.get("/games/Cave Story")!.list()).toContain("game.yaml");
     expect(saveRecent).toHaveBeenLastCalledWith([expect.objectContaining({ root: "/games/Cave Story", title: "Cave Story" })]);
 
