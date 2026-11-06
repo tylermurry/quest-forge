@@ -5,6 +5,7 @@ import {
   hasBlockingErrors,
   validateProject,
   type CharacterFile,
+  type ImageAsset,
   type Problem,
   type Project,
   type SceneFile,
@@ -67,8 +68,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const debug: DebugFlags = { overlay: false, ...options.debug };
 
   let session: Session | null = null;
-  let images = new Map<string, LoadedImage>();
-  let progress = 0;
+  const images = new ImageCache(project, characters, bundle.assetUrl);
   let viewport = fitViewport(canvas.width, canvas.height);
   let destroyed = false;
   let raf = 0;
@@ -113,18 +113,21 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const frame = (now: number) => {
     if (destroyed) return;
     loop.advance(now);
-    if (session) drawSession(backCtx, session, images.get(session.scene.background)?.el, debug);
-    else drawLoading(backCtx, progress);
+    const loading = session ? session.loading : scene;
+    if (session && !loading) drawSession(backCtx, session, images.loaded.get(session.scene.background)?.el, debug);
+    else drawLoading(backCtx, loading ? images.progress(loading) : 0);
     present(screen, back, viewport);
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame);
 
-  // M2 T4: every scene's images up front; T5 loads per scene with prefetch.
-  const ready = Promise.all(project.scenes.map((s) => loadSceneImages(project, s.data, characters, bundle.assetUrl, (p) => (progress = p)))).then((maps) => {
+  // The first scene (and every item icon) before play starts; later scenes load on
+  // change_scene and are prefetched on entry (D75).
+  const itemIcons = project.items.map((i) => i.data.icon);
+  const ready = Promise.all([images.loadScene(scene), images.load(itemIcons)]).then(() => {
     if (destroyed) return;
-    images = new Map(maps.flatMap((m) => [...m]));
-    session = new Session(project, (id) => images.get(id), { ...(options.scene ? { scene: options.scene } : {}), ...(options.spawn ? { spawn: options.spawn } : {}) });
+    const start = { ...(options.scene ? { scene: options.scene } : {}), ...(options.spawn ? { spawn: options.spawn } : {}) };
+    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch });
   });
 
   return {
@@ -155,29 +158,59 @@ export function sceneImageIds(scene: SceneFile, characters: Map<string, Characte
   return [...ids];
 }
 
-/** Preloads a scene's images (spec 03), reporting progress from 0 to 1. */
-async function loadSceneImages(
-  project: Project,
-  scene: SceneFile,
-  characters: Map<string, CharacterFile>,
-  assetUrl: (path: string) => string,
-  onProgress: (p: number) => void,
-): Promise<Map<string, LoadedImage>> {
-  const assets = new Map(project.assets!.data.images.map((a) => [a.id, a]));
-  const ids = sceneImageIds(scene, characters, project.game!.data.player);
-  const out = new Map<string, LoadedImage>();
-  let done = 0;
-  await Promise.all(
-    ids.map(async (id) => {
-      const asset = assets.get(id)!;
-      const el = new Image();
-      el.src = assetUrl(asset.path);
-      await el.decode();
-      const size = { w: el.naturalWidth, h: el.naturalHeight };
-      if (!sheetFits(asset, size)) console.warn(`Image ${id}: its sheet is larger than the ${size.w}×${size.h} image.`);
-      out.set(id, { asset, size, el });
-      onProgress(++done / ids.length);
-    }),
-  );
-  return out;
+/**
+ * Loads images by ID once and keeps them (spec 03). A scene is ready when all its
+ * images are; `prefetch` starts loading in the background (D75).
+ */
+class ImageCache {
+  readonly loaded = new Map<string, LoadedImage>();
+  private readonly started = new Set<string>();
+  private readonly assets: Map<string, ImageAsset>;
+
+  constructor(
+    private readonly project: Project,
+    private readonly characters: Map<string, CharacterFile>,
+    private readonly assetUrl: (path: string) => string,
+  ) {
+    this.assets = new Map(project.assets!.data.images.map((a) => [a.id, a]));
+  }
+
+  private idsFor(scene: SceneFile) {
+    return sceneImageIds(scene, this.characters, this.project.game!.data.player);
+  }
+
+  /** Share of the scene's images that are loaded, 0–1. */
+  progress(scene: SceneFile): number {
+    const ids = this.idsFor(scene);
+    return ids.length === 0 ? 1 : ids.filter((id) => this.loaded.has(id)).length / ids.length;
+  }
+
+  ready = (scene: SceneFile) => this.progress(scene) === 1;
+
+  prefetch = (scene: SceneFile) => {
+    void this.load(this.idsFor(scene));
+  };
+
+  /** Loads images (skipping ones already loaded or loading); resolves when all are. */
+  async load(ids: string[]): Promise<void> {
+    await Promise.all(
+      ids.map(async (id) => {
+        if (this.started.has(id)) return;
+        this.started.add(id);
+        const asset = this.assets.get(id)!;
+        const el = new Image();
+        el.src = this.assetUrl(asset.path);
+        await el.decode();
+        const size = { w: el.naturalWidth, h: el.naturalHeight };
+        if (!sheetFits(asset, size)) console.warn(`Image ${id}: its sheet is larger than the ${size.w}×${size.h} image.`);
+        this.loaded.set(id, { asset, size, el });
+      }),
+    );
+  }
+
+  /** Load a scene and wait until every image it needs is in. */
+  async loadScene(scene: SceneFile): Promise<void> {
+    await this.load(this.idsFor(scene));
+    while (!this.ready(scene)) await new Promise((r) => setTimeout(r, 16));
+  }
 }

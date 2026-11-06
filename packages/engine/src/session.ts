@@ -1,4 +1,4 @@
-import type { Action, AnyRule, CharacterFile, Facing, GameFile, ItemFile, Project, SceneFile, Trigger } from "@questforge/schema";
+import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
 import { defaultResponse, firstMatch, type RuleContext, type RuleOwner } from "./rules.ts";
 import { Sequence, type Done, type SequenceHost } from "./sequence.ts";
 import {
@@ -29,6 +29,36 @@ export interface SessionStart {
   spawn?: string;
 }
 
+/** Scene asset loading, owned by the host (spec 03). Headless sessions use `ALWAYS_READY`. */
+export interface SceneAssets {
+  /** Every image the scene needs is loaded. */
+  ready(scene: SceneFile): boolean;
+  /** Start loading a scene's images in the background (no-op if loaded or loading). */
+  prefetch(scene: SceneFile): void;
+}
+export const ALWAYS_READY: SceneAssets = { ready: () => true, prefetch: () => {} };
+
+/** A scene change in progress (D72): the old scene's exit rule, then loading. */
+interface SceneChange {
+  scene: SceneFile;
+  spawn: string;
+  phase: "exit" | "load";
+}
+
+/** Every scene a scene's rules can `change_scene` to (D75 prefetch). */
+export function linkedScenes(scene: SceneFile): string[] {
+  const lists = [
+    scene.rules,
+    ...scene.hotspots.map((h) => h.rules),
+    ...scene.objects.map((o) => o.rules),
+    ...scene.characters.map((c) => c.rules),
+    ...scene.regions.map((r) => r.rules),
+  ];
+  const out = new Set<string>();
+  for (const rules of lists) for (const r of rules) for (const a of r.do) if (a.type === "change_scene" && a.scene !== scene.id) out.add(a.scene);
+  return [...out];
+}
+
 const MAX_LOG = 100;
 
 export class Session implements SequenceHost {
@@ -43,6 +73,9 @@ export class Session implements SequenceHost {
   readonly log: string[] = [];
   readonly game: GameFile;
   private sequence: Sequence | null = null;
+  private change: SceneChange | null = null;
+  /** Regions the player's feet are in, so `enter_region` fires on crossing in (D72). */
+  private inside = new Set<string>();
   private readonly scenes: Map<string, SceneFile>;
   private readonly characters: Map<string, CharacterFile>;
   private readonly items: Map<string, ItemFile>;
@@ -52,6 +85,7 @@ export class Session implements SequenceHost {
     private readonly project: Project,
     private readonly images: ImageLookup,
     private readonly start: SessionStart = {},
+    private readonly assets: SceneAssets = ALWAYS_READY,
   ) {
     this.game = project.game!.data;
     this.scenes = new Map(project.scenes.map((s) => [s.data.id, s.data]));
@@ -61,9 +95,14 @@ export class Session implements SequenceHost {
     this.restart();
   }
 
-  /** Input is locked (D72): a sequence is running or the game has ended. */
+  /** Input is locked (D72): a sequence or scene change is running, or the game has ended. */
   get busy(): boolean {
-    return this.sequence !== null || this.ending !== null;
+    return this.sequence !== null || this.change !== null || this.ending !== null;
+  }
+
+  /** The scene being loaded, while its images aren't ready yet. */
+  get loading(): SceneFile | null {
+    return this.change?.phase === "load" && !this.assets.ready(this.change.scene) ? this.change.scene : null;
   }
 
   get scene(): SceneFile {
@@ -78,6 +117,7 @@ export class Session implements SequenceHost {
   restart() {
     this.sequence?.stop();
     this.sequence = null;
+    this.change = null;
     const sceneId = this.start.scene ?? this.game.startScene;
     const scene = this.scenes.get(sceneId);
     if (!scene) throw new Error(`Scene ${sceneId} doesn't exist`);
@@ -102,7 +142,7 @@ export class Session implements SequenceHost {
       this.closeText();
       return;
     }
-    if (this.sequence) return;
+    if (this.busy) return;
     const target = this.world.hitTest(p);
     switch (this.verb) {
       case "walk": {
@@ -168,6 +208,7 @@ export class Session implements SequenceHost {
 
   tick(dt: number) {
     this.world.tick(dt);
+    this.checkRegions();
     if (this.text) {
       this.text.timeLeft -= dt;
       if (this.text.timeLeft <= 0) this.closeText();
@@ -176,6 +217,7 @@ export class Session implements SequenceHost {
       this.sequence.tick(dt);
       if (this.sequence?.done) this.sequence = null;
     }
+    this.advanceChange();
     const { player } = this.world;
     this.state.player = { x: player.pos[0], y: player.pos[1], facing: player.facing };
     // A taken item can't stay selected.
@@ -196,14 +238,62 @@ export class Session implements SequenceHost {
       objectVisible: (id) => s.objects[`${scene.id}/${id}`] ?? scene.objects.find((o) => o.id === id)!.visible,
       characterPosition: (id) => s.characters[`${scene.id}/${id}`],
     });
+    // Characters moved here by set_character_position from elsewhere.
+    for (const [key, p] of Object.entries(s.characters)) {
+      const [sceneId, id] = key.split("/") as [string, string];
+      if (sceneId === scene.id && !this.world.actorById(id)) this.world.placeCharacter(id, p);
+    }
+    this.inside = this.regionsAt();
     markVisited(s, scene.id);
+    for (const id of linkedScenes(scene)) {
+      const next = this.scenes.get(id);
+      if (next) this.assets.prefetch(next);
+    }
     this.fire({ kind: "scene", scene: scene.id }, scene.rules, { type: "scene_enter" });
+  }
+
+  /** Step a scene change along: after the exit rule, wait for assets, then enter (D72). */
+  private advanceChange() {
+    const c = this.change;
+    if (!c) return;
+    if (c.phase === "exit") {
+      if (this.sequence) return;
+      c.phase = "load";
+      this.assets.prefetch(c.scene);
+    }
+    if (!this.assets.ready(c.scene)) return;
+    this.change = null;
+    const spawn = c.scene.spawns[c.spawn]!;
+    this.state.player = { x: spawn.x, y: spawn.y, facing: spawn.facing };
+    this.text = null;
+    this.enterScene(c.scene);
+  }
+
+  private regionsAt(): Set<string> {
+    const p = this.world.player.pos;
+    return new Set(this.scene.regions.filter((r) => pointInPolygon(p, r.shape)).map((r) => r.id));
+  }
+
+  /** `enter_region` fires when a player-started walk crosses into a region (D72, D81). */
+  private checkRegions() {
+    if (this.scene.regions.length === 0) return;
+    const now = this.regionsAt();
+    const entered = this.scene.regions.filter((r) => now.has(r.id) && !this.inside.has(r.id));
+    this.inside = now;
+    if (this.busy) return;
+    for (const r of entered) {
+      if (this.fire({ kind: "region", scene: this.scene.id, id: r.id }, r.rules, { type: "enter_region" })) {
+        this.world.stop();
+        return;
+      }
+    }
   }
 
   /** Walk to the target (D74), face it, then fire the verb. A new click cancels the walk. */
   private approachThen(target: Target, p: Vec, trigger: Trigger) {
     const a = this.world.approach(target, p);
     this.world.walkTo(a.dest, () => {
+      if (this.busy) return;
       if (a.facing) this.world.face(a.facing);
       else this.world.faceToward(a.toward);
       this.fireAt(target, trigger);
@@ -216,15 +306,17 @@ export class Session implements SequenceHost {
   }
 
   /** First match runs (D40); otherwise the verb's default response, if it has one. */
-  private fire(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger) {
+  /** Returns whether a rule matched. */
+  private fire(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): boolean {
     const m = firstMatch(rules, owner, trigger, this.ctx);
     if (m) {
       markFired(this.state, m.key);
       this.run(m.rule.do);
-      return;
+      return true;
     }
     const fallback = defaultResponse(this.game, trigger);
     if (fallback) this.run([{ type: "narrate", text: fallback }]);
+    return false;
   }
 
   private run(actions: readonly Action[]) {
@@ -290,8 +382,22 @@ export class Session implements SequenceHost {
     this.world.face(facing);
   }
 
+  /** D72: the old scene's exit rule, then load, place at the spawn, mark visited, enter rule. */
   changeScene(scene: string, spawn: string) {
-    this.note(`Can't change to scene ${scene} (${spawn}) yet.`);
+    if (this.change) {
+      this.note(`Ignored a scene change to ${scene} while leaving ${this.scene.id}.`);
+      return;
+    }
+    const next = this.scenes.get(scene);
+    if (!next || !next.spawns[spawn]) {
+      this.note(`Scene ${scene} has no spawn point ${spawn}.`);
+      return;
+    }
+    this.world.stop();
+    this.change = { scene: next, spawn, phase: "exit" };
+    this.assets.prefetch(next);
+    this.fire({ kind: "scene", scene: this.scene.id }, this.scene.rules, { type: "scene_exit" });
+    this.advanceChange();
   }
 
   setObjectVisible(scene: string, object: string, visible: boolean) {
