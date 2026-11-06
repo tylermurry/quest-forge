@@ -1,0 +1,5 @@
+schemaVersion: 1
+id: stick
+name: stick
+description: A straight, springy stick.
+icon: stick_icon

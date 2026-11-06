@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Questforge engine — M1</title>
+    <title>Questforge engine — M2</title>
     <style>
       html, body { margin: 0; height: 100%; background: #111; color: #ddd; font: 13px system-ui, sans-serif; }
       body { display: flex; flex-direction: column; }
@@ -14,17 +14,21 @@
       #game { flex: 1; width: 100%; min-height: 0; display: block; }
       #errors { white-space: pre-wrap; color: #f88; padding: 12px; }
       .hint { color: #888; }
+      #state { padding: 4px 12px; background: #161616; border-bottom: 1px solid #333; color: #aaa; font: 12px ui-monospace, monospace; white-space: pre-wrap; }
+      /* Phones in landscape: the game gets the whole screen. */
+      @media (max-height: 500px) { header, #state { display: none; } }
     </style>
   </head>
   <body>
     <header>
-      <strong>M1 engine fixture</strong>
-      <label>Scene <select id="scene"><option value="garden">Garden</option><option value="stress">Stress (15 objects, 3 characters)</option></select></label>
+      <strong>Engine fixture (M2)</strong>
+      <label>Scene <select id="scene"><option value="garden">Garden</option><option value="shed">Shed</option><option value="stress">Stress (15 objects, 3 characters)</option></select></label>
       <label><input type="checkbox" id="debug" /> Debug overlay</label>
       <button id="boulder">Hide boulder</button>
-      <span class="hint">Left-click: use verb · Right-click: switch Walk/Look</span>
+      <span class="hint">Click: use verb · Right-click: next verb · Mouse at the top: icon bar · Touch: tap the tab</span>
       <span id="stats"></span>
     </header>
+    <div id="state"></div>
     <div id="errors" hidden></div>
     <canvas id="game"></canvas>
     <script type="module" src="./main.ts"></script>

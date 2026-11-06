@@ -5,11 +5,26 @@ version: 1
 startScene: garden
 startSpawn: default
 player: hero
-maxScore: 0
+maxScore: 25
 defaultResponses:
   look: You see nothing special.
   hand: You can't do that.
   talk: Nobody answers.
   use_item: That doesn't work.
   combine: Those don't go together.
-rules: []
+rules:
+  - when:
+      type: combine
+      item: stick
+      with: string
+    if: []
+    do:
+      - type: take_item
+        item: stick
+      - type: take_item
+        item: string
+      - type: give_item
+        item: rod
+      - type: narrate
+        text: You tie the string to the stick. A fishing rod!
+    once: false

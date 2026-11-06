@@ -1,0 +1,5 @@
+schemaVersion: 1
+id: fish
+name: fish
+description: A small, wriggling fish.
+icon: fish_icon

@@ -83,7 +83,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     const rect = canvas.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
-    viewport = fitViewport(canvas.width, canvas.height);
+    viewport = fitViewport(canvas.width, canvas.height, dpr);
     // CSS px per scene px, for the 44 CSS px minimum (D76).
     ui?.setScale(viewport.scale / dpr);
   };
@@ -99,7 +99,15 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const onPointerDown = (e: PointerEvent) => {
     if (!ui) return;
     e.preventDefault();
-    if (e.pointerType !== "mouse") canvas.setPointerCapture(e.pointerId);
+    // Keep the moves and the release of a touch even if it leaves the canvas.
+    // Capture can fail (e.g. the pointer already ended); input must not depend on it.
+    if (e.pointerType !== "mouse") {
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch {
+        // Ignore: without capture we still get the events over the canvas.
+      }
+    }
     ui.pointerDown(scenePoint(e), kindOf(e), e.button);
   };
   const onPointerMove = (e: PointerEvent) => ui?.pointerMove(scenePoint(e), kindOf(e));

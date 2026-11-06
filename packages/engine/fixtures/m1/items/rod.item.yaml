@@ -1,0 +1,5 @@
+schemaVersion: 1
+id: rod
+name: fishing rod
+description: A stick with a string tied to it. Crude, but it might work.
+icon: rod_icon

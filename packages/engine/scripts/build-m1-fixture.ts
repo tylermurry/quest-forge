@@ -1,6 +1,11 @@
-// Builds the hand-written M1 engine fixture (spec 15 note, D68): the project files in
+// Builds the hand-written engine fixture (spec 15 note, D68): the project files in
 // canonical form plus procedurally drawn placeholder PNGs. Internal test data only;
 // not a user path (D13). Run: `corepack pnpm --filter @questforge/engine fixture`.
+//
+// M2 puzzle chain (exercises spec 02): Hand the flowerpot → stick. Walk east into
+// the shed (region exit), take the string. Combine stick + string → fishing rod.
+// Use the rod on the pond → fish. Talk to the gardener while holding the fish
+// (gated rule) → a sequence that rolls the boulder away and opens the ledge.
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
@@ -9,6 +14,7 @@ import {
   CharacterFile,
   FlagsFile,
   GameFile,
+  ItemFile,
   SceneFile,
   pointInPolygon,
   serialize,
@@ -178,9 +184,87 @@ function figureSheet(tunic: RGBA, hat: RGBA | null, rows: number, cols: number):
   return b;
 }
 
+const SHED_WALKABLE: Polygon = [[20, 395], [620, 395], [560, 250], [80, 250]];
+
+function shedBackground(): Bitmap {
+  const b = new Bitmap(640, 400);
+  for (let y = 0; y < 400; y++) {
+    for (let x = 0; x < 640; x++) {
+      // Plank walls above, floorboards below.
+      const plank = y < 250 ? (x % 48 < 2 ? 0.7 : 1) : (y % 18 < 2 ? 0.75 : 1);
+      const base: RGBA = y < 250 ? [120, 85, 55, 255] : [150, 110, 70, 255];
+      b.set(x, y, shade(base, plank * (0.92 + noise(x, y) * 0.12)));
+    }
+  }
+  // A window with daylight.
+  b.rect(260, 60, 120, 80, [90, 70, 50, 255]);
+  b.rect(266, 66, 108, 68, [170, 210, 240, 255]);
+  b.rect(318, 66, 4, 68, [90, 70, 50, 255]);
+  // The door on the left wall.
+  b.rect(10, 150, 60, 110, [80, 55, 35, 255]);
+  b.rect(16, 156, 48, 98, [100, 70, 45, 255]);
+  return b;
+}
+
+function flowerpot(): Bitmap {
+  const b = new Bitmap(30, 30);
+  b.polygon([[3, 8], [27, 8], [23, 30], [7, 30]], (x, y) => shade([190, 95, 55, 255], 1 - (x - 3) / 60 - (y < 12 ? 0.1 : 0)));
+  b.rect(1, 6, 28, 4, [210, 110, 65, 255]);
+  b.ellipse(15, 6, 10, 3, [80, 55, 35, 255]);
+  b.ellipse(12, 2, 3, 3, [60, 150, 60, 255]);
+  b.ellipse(18, 3, 3, 2.5, [70, 160, 70, 255]);
+  return b;
+}
+
+function workbench(): Bitmap {
+  const b = new Bitmap(160, 70);
+  b.rect(0, 0, 160, 12, [110, 75, 45, 255]);
+  b.rect(0, 10, 160, 3, [80, 55, 35, 255]);
+  for (const x of [6, 146]) b.rect(x, 12, 8, 58, [90, 60, 38, 255]);
+  b.rect(10, 50, 140, 5, [90, 60, 38, 255]);
+  return b;
+}
+
+/** A coil of string (also its item icon, smaller). */
+function stringCoil(size: number): Bitmap {
+  const b = new Bitmap(size, size);
+  const c = size / 2;
+  for (let r = size * 0.42; r > size * 0.12; r -= Math.max(1.5, size / 12)) {
+    for (let a = 0; a < Math.PI * 2; a += 0.02) b.set(c + Math.cos(a) * r, c + Math.sin(a) * r * 0.7, [235, 225, 190, 255]);
+  }
+  return b;
+}
+
+function iconStick(): Bitmap {
+  const b = new Bitmap(24, 24);
+  for (let t = 0; t < 1; t += 0.01) b.ellipse(3 + t * 18, 21 - t * 18, 1.6, 1.6, [130, 85, 45, 255]);
+  b.ellipse(14, 12, 2, 1, [80, 140, 60, 255]);
+  return b;
+}
+
+function iconRod(): Bitmap {
+  const b = new Bitmap(24, 24);
+  for (let t = 0; t < 1; t += 0.01) b.ellipse(2 + t * 16, 22 - t * 18, 1.3, 1.3, [130, 85, 45, 255]);
+  for (let y = 4; y < 20; y++) b.set(19 + Math.sin(y / 3), y, [235, 225, 190, 255]);
+  b.ellipse(19, 20, 1.5, 1.5, [200, 60, 60, 255]);
+  return b;
+}
+
+function iconFish(): Bitmap {
+  const b = new Bitmap(24, 24);
+  b.ellipse(10, 12, 8, 5, (dx, dy) => shade([120, 160, 200, 255], 1.1 - dy * 0.3 + dx * 0.05));
+  b.polygon([[17, 12], [23, 6], [23, 18]], [100, 140, 180, 255]);
+  b.set(6, 11, [20, 20, 30, 255]);
+  return b;
+}
+
 // ── Project data ────────────────────────────────────────────────────────────
 
 const look = (text: string) => ({ when: { type: "look" as const }, if: [], do: [{ type: "narrate" as const, text }], once: false });
+type Raw = Record<string, unknown>;
+const rule = (when: Raw, actions: Raw[], cond: Raw[] = [], once = false) => ({ when, if: cond, do: actions, once });
+const narrate = (text: string) => ({ type: "narrate", text });
+const say = (character: string, text: string) => ({ type: "say", character, text });
 const anim = (image: string, frames: number[], fps = 8) => ({ image, frames, fps, loop: true });
 
 const game = GameFile.parse({
@@ -191,7 +275,7 @@ const game = GameFile.parse({
   startScene: "garden",
   startSpawn: "default",
   player: "hero",
-  maxScore: 0,
+  maxScore: 25,
   defaultResponses: {
     look: "You see nothing special.",
     hand: "You can't do that.",
@@ -199,10 +283,25 @@ const game = GameFile.parse({
     use_item: "That doesn't work.",
     combine: "Those don't go together.",
   },
-  rules: [],
+  rules: [
+    rule({ type: "combine", item: "stick", with: "string" }, [
+      { type: "take_item", item: "stick" },
+      { type: "take_item", item: "string" },
+      { type: "give_item", item: "rod" },
+      narrate("You tie the string to the stick. A fishing rod!"),
+    ]),
+  ],
 });
 
-const flags = FlagsFile.parse({ schemaVersion: 1, flags: [] });
+const flags = FlagsFile.parse({ schemaVersion: 1, flags: [{ id: "path_open", type: "bool", initial: false }] });
+
+const item = (id: string, name: string, description: string) => ItemFile.parse({ schemaVersion: 1, id, name, description, icon: `${id}_icon` });
+const items = [
+  item("stick", "stick", "A straight, springy stick."),
+  item("string", "string", "A coil of garden string."),
+  item("rod", "fishing rod", "A stick with a string tied to it. Crude, but it might work."),
+  item("fish", "fish", "A small, wriggling fish."),
+];
 
 const sheet = (columns: number, rows: number) => ({ columns, rows, cellWidth: 32, cellHeight: 48 });
 const assets = AssetsFile.parse({
@@ -214,6 +313,11 @@ const assets = AssetsFile.parse({
     { id: "boulder_img", path: "assets/images/boulder.png" },
     { id: "hero_sheet", path: "assets/images/characters/hero_sheet.png", sheet: sheet(4, 3), origin: [16, 47] },
     { id: "gardener_sheet", path: "assets/images/characters/gardener_sheet.png", sheet: sheet(4, 1) },
+    { id: "shed_bg", path: "assets/images/shed_bg.png" },
+    { id: "flowerpot_img", path: "assets/images/flowerpot.png" },
+    { id: "workbench_img", path: "assets/images/workbench.png" },
+    { id: "string_img", path: "assets/images/string.png" },
+    ...items.map((i) => ({ id: i.icon, path: `assets/images/items/${i.id}.png` })),
   ],
   audio: [],
 });
@@ -254,19 +358,107 @@ const garden = SceneFile.parse({
   background: "garden_bg",
   depth: { far: { y: 150, scale: 0.35 }, near: { y: 395, scale: 1 } },
   walkable: { outer: WALKABLE, holes: [POND] },
-  spawns: { default: { x: 200, y: 380, facing: "up" } },
+  spawns: { default: { x: 200, y: 380, facing: "up" }, from_shed: { x: 555, y: 370, facing: "left" } },
   objects: [
     { id: "boulder", name: "boulder", image: "boulder_img", x: 288, y: 186, baseline: 248, visible: true, obstacle: BOULDER_OBSTACLE, rules: [look("A huge boulder blocks the narrow path.")] },
+    {
+      id: "flowerpot",
+      name: "flowerpot",
+      image: "flowerpot_img",
+      x: 140,
+      y: 290,
+      baseline: 318,
+      visible: true,
+      obstacle: [[142, 312], [168, 312], [168, 319], [142, 319]],
+      rules: [
+        rule({ type: "hand" }, [narrate("You tip the pot. Underneath is a straight, springy stick."), { type: "give_item", item: "stick" }, { type: "award_points", points: 5, award: "found_stick" }], [], true),
+        rule({ type: "hand" }, [narrate("Nothing else under there.")]),
+        look("A terracotta flowerpot with a sprig of something green."),
+      ],
+    },
     { id: "rock", name: "rock", image: "rock_img", x: 440, y: 262, baseline: 296, visible: true, obstacle: ROCK_OBSTACLE, rules: [look("A mossy rock.")] },
     { id: "palm", name: "palm tree", image: "palm_img", x: 20, y: 40, baseline: 362, visible: true, obstacle: PALM_OBSTACLE, rules: [look("A palm tree, swaying gently.")] },
   ],
-  characters: [{ character: "gardener", x: 560, y: 360, facing: "left", visible: true, rules: [look("The gardener is busy pulling weeds.")] }],
+  characters: [
+    {
+      character: "gardener",
+      x: 560,
+      y: 330,
+      facing: "left",
+      visible: true,
+      rules: [
+        look("The gardener is busy pulling weeds."),
+        // Gated on the fish: the M2 end-to-end sequence.
+        rule({ type: "talk" }, [
+          say("gardener", "A fish! For my supper? You're too kind."),
+          { type: "take_item", item: "fish" },
+          { type: "award_points", points: 10, award: "fed_gardener" },
+          say("gardener", "Let me get that boulder out of your way."),
+          { type: "walk_player_to", x: 250, y: 370 },
+          { type: "face", facing: "up" },
+          { type: "set_character_position", character: "gardener", scene: "garden", x: 372, y: 262, facing: "left" },
+          { type: "wait", seconds: 1 },
+          { type: "hide_object", scene: "garden", object: "boulder" },
+          { type: "set_flag", flag: "path_open", value: true },
+          narrate("With a grunt, the gardener rolls the boulder aside. The path to the ledge is open."),
+        ], [{ type: "has_item", item: "fish" }]),
+        rule({ type: "talk" }, [say("gardener", "I'm too busy to talk. Unless you've got something for my supper?")], [{ type: "first_time" }]),
+        rule({ type: "use_item", item: "fish" }, [say("gardener", "Don't wave it at me. Just tell me about it!")]),
+        rule({ type: "talk" }, [say("gardener", "Still no fish? The pond is full of them.")], [{ type: "flag_is", flag: "path_open", value: false }]),
+        rule({ type: "talk" }, [say("gardener", "Enjoy the view from the ledge!")]),
+      ],
+    },
+  ],
   hotspots: [
-    { id: "pond", name: "pond", shape: POND, walkTo: { x: 300, y: 372, facing: "up" }, rules: [look("A still pond. Tiny fish dart about.")] },
+    {
+      id: "pond",
+      name: "pond",
+      shape: POND,
+      walkTo: { x: 300, y: 372, facing: "up" },
+      rules: [
+        look("A still pond. Tiny fish dart about."),
+        rule({ type: "use_item", item: "rod" }, [narrate("You dangle the string in the water. Something bites! You pull out a small fish."), { type: "give_item", item: "fish" }, { type: "award_points", points: 5, award: "caught_fish" }], [], true),
+        rule({ type: "use_item", item: "rod" }, [narrate("One fish is plenty.")]),
+        rule({ type: "hand" }, [narrate("The fish are far too quick for your hands.")]),
+      ],
+    },
     { id: "sky", name: "sky", shape: [[0, 0], [640, 0], [640, 120], [0, 120]], rules: [] },
   ],
-  regions: [],
+  regions: [
+    { id: "exit_shed", shape: [[590, 330], [640, 330], [640, 400], [590, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])] },
+    { id: "ledge", shape: [[190, 150], [470, 150], [470, 176], [190, 176]], rules: [rule({ type: "enter_region" }, [narrate("From the ledge you can see the whole valley."), { type: "award_points", points: 5, award: "saw_view" }], [], true)] },
+  ],
   rules: [],
+});
+
+const shed = SceneFile.parse({
+  schemaVersion: 1,
+  id: "shed",
+  name: "Garden shed",
+  background: "shed_bg",
+  depth: { far: { y: 250, scale: 0.8 }, near: { y: 395, scale: 1.1 } },
+  walkable: { outer: SHED_WALKABLE, holes: [] },
+  spawns: { door: { x: 100, y: 370, facing: "right" } },
+  objects: [
+    { id: "workbench", name: "workbench", image: "workbench_img", x: 400, y: 200, baseline: 268, visible: true, obstacle: [[400, 256], [560, 256], [560, 268], [400, 268]], rules: [look("A sturdy workbench, covered in sawdust.")] },
+    {
+      id: "string",
+      name: "string",
+      image: "string_img",
+      x: 470,
+      y: 184,
+      baseline: 269,
+      visible: true,
+      rules: [
+        look("A coil of garden string."),
+        rule({ type: "hand" }, [{ type: "hide_object", scene: "shed", object: "string" }, { type: "give_item", item: "string" }, narrate("You take the string.")]),
+      ],
+    },
+  ],
+  characters: [],
+  hotspots: [{ id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] }],
+  regions: [{ id: "exit_garden", shape: [[0, 320], [55, 320], [55, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])] }],
+  rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
 });
 
 // 15 objects and 3 characters for the spec 03 frame-rate check.
@@ -295,6 +487,7 @@ const stress = SceneFile.parse({
     { character: "visitor", x: 140, y: 300, facing: "right", visible: true, rules: [] },
   ],
   hotspots: [],
+  regions: [],
 });
 
 const files: Record<string, string | Buffer> = {
@@ -306,6 +499,16 @@ const files: Record<string, string | Buffer> = {
   "characters/visitor.character.yaml": serialize(npc("visitor", "Visitor")),
   "scenes/garden.scene.yaml": serialize(garden),
   "scenes/stress.scene.yaml": serialize(stress),
+  "scenes/shed.scene.yaml": serialize(shed),
+  ...Object.fromEntries(items.map((i) => [`items/${i.id}.item.yaml`, serialize(i)])),
+  "assets/images/shed_bg.png": shedBackground().png(),
+  "assets/images/flowerpot.png": flowerpot().png(),
+  "assets/images/workbench.png": workbench().png(),
+  "assets/images/string.png": stringCoil(22).png(),
+  "assets/images/items/stick.png": iconStick().png(),
+  "assets/images/items/string.png": stringCoil(24).png(),
+  "assets/images/items/rod.png": iconRod().png(),
+  "assets/images/items/fish.png": iconFish().png(),
   "assets/images/garden_bg.png": gardenBackground().png(),
   "assets/images/palm.png": palm().png(),
   "assets/images/rock.png": stone(70, 40, [130, 135, 125, 255]).png(),

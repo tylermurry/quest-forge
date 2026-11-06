@@ -1,0 +1,117 @@
+schemaVersion: 1
+id: shed
+name: Garden shed
+background: shed_bg
+depth:
+  far:
+    y: 250
+    scale: 0.8
+  near:
+    y: 395
+    scale: 1.1
+walkable:
+  outer:
+    - [20, 395]
+    - [620, 395]
+    - [560, 250]
+    - [80, 250]
+  holes: []
+spawns:
+  door:
+    x: 100
+    y: 370
+    facing: right
+objects:
+  - id: workbench
+    name: workbench
+    image: workbench_img
+    x: 400
+    y: 200
+    baseline: 268
+    visible: true
+    obstacle:
+      - [400, 256]
+      - [560, 256]
+      - [560, 268]
+      - [400, 268]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A sturdy workbench, covered in sawdust.
+        once: false
+  - id: string
+    name: string
+    image: string_img
+    x: 470
+    y: 184
+    baseline: 269
+    visible: true
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A coil of garden string.
+        once: false
+      - when:
+          type: hand
+        if: []
+        do:
+          - type: hide_object
+            scene: shed
+            object: string
+          - type: give_item
+            item: string
+          - type: narrate
+            text: You take the string.
+        once: false
+characters: []
+hotspots:
+  - id: window
+    name: window
+    shape:
+      - [260, 60]
+      - [380, 60]
+      - [380, 140]
+      - [260, 140]
+    walkTo:
+      x: 320
+      y: 270
+      facing: up
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: Sunlight and cobwebs.
+        once: false
+regions:
+  - id: exit_garden
+    shape:
+      - [0, 320]
+      - [55, 320]
+      - [55, 400]
+      - [0, 400]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: change_scene
+            scene: garden
+            spawn: from_shed
+        once: false
+rules:
+  - when:
+      type: scene_enter
+    if:
+      - type: first_time
+    do:
+      - type: narrate
+        text: A cramped garden shed. It smells of soil and oil.
+    once: false

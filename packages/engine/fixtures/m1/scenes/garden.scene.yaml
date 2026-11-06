@@ -34,6 +34,10 @@ spawns:
     x: 200
     y: 380
     facing: up
+  from_shed:
+    x: 555
+    y: 370
+    facing: left
 objects:
   - id: boulder
     name: boulder
@@ -54,6 +58,45 @@ objects:
         do:
           - type: narrate
             text: A huge boulder blocks the narrow path.
+        once: false
+  - id: flowerpot
+    name: flowerpot
+    image: flowerpot_img
+    x: 140
+    y: 290
+    baseline: 318
+    visible: true
+    obstacle:
+      - [142, 312]
+      - [168, 312]
+      - [168, 319]
+      - [142, 319]
+    rules:
+      - when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: You tip the pot. Underneath is a straight, springy stick.
+          - type: give_item
+            item: stick
+          - type: award_points
+            points: 5
+            award: found_stick
+        once: true
+      - when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: Nothing else under there.
+        once: false
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A terracotta flowerpot with a sprig of something green.
         once: false
   - id: rock
     name: rock
@@ -98,7 +141,7 @@ objects:
 characters:
   - character: gardener
     x: 560
-    y: 360
+    y: 330
     facing: left
     visible: true
     rules:
@@ -108,6 +151,82 @@ characters:
         do:
           - type: narrate
             text: The gardener is busy pulling weeds.
+        once: false
+      - when:
+          type: talk
+        if:
+          - type: has_item
+            item: fish
+        do:
+          - type: say
+            character: gardener
+            text: A fish! For my supper? You're too kind.
+          - type: take_item
+            item: fish
+          - type: award_points
+            points: 10
+            award: fed_gardener
+          - type: say
+            character: gardener
+            text: Let me get that boulder out of your way.
+          - type: walk_player_to
+            x: 250
+            y: 370
+          - type: face
+            facing: up
+          - type: set_character_position
+            character: gardener
+            scene: garden
+            x: 372
+            y: 262
+            facing: left
+          - type: wait
+            seconds: 1
+          - type: hide_object
+            scene: garden
+            object: boulder
+          - type: set_flag
+            flag: path_open
+            value: true
+          - type: narrate
+            text: With a grunt, the gardener rolls the boulder aside. The path to the ledge is open.
+        once: false
+      - when:
+          type: talk
+        if:
+          - type: first_time
+        do:
+          - type: say
+            character: gardener
+            text: I'm too busy to talk. Unless you've got something for my supper?
+        once: false
+      - when:
+          type: use_item
+          item: fish
+        if: []
+        do:
+          - type: say
+            character: gardener
+            text: Don't wave it at me. Just tell me about it!
+        once: false
+      - when:
+          type: talk
+        if:
+          - type: flag_is
+            flag: path_open
+            value: false
+        do:
+          - type: say
+            character: gardener
+            text: Still no fish? The pond is full of them.
+        once: false
+      - when:
+          type: talk
+        if: []
+        do:
+          - type: say
+            character: gardener
+            text: Enjoy the view from the ledge!
         once: false
 hotspots:
   - id: pond
@@ -130,6 +249,34 @@ hotspots:
           - type: narrate
             text: A still pond. Tiny fish dart about.
         once: false
+      - when:
+          type: use_item
+          item: rod
+        if: []
+        do:
+          - type: narrate
+            text: You dangle the string in the water. Something bites! You pull out a small fish.
+          - type: give_item
+            item: fish
+          - type: award_points
+            points: 5
+            award: caught_fish
+        once: true
+      - when:
+          type: use_item
+          item: rod
+        if: []
+        do:
+          - type: narrate
+            text: One fish is plenty.
+        once: false
+      - when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: The fish are far too quick for your hands.
+        once: false
   - id: sky
     name: sky
     shape:
@@ -138,5 +285,37 @@ hotspots:
       - [640, 120]
       - [0, 120]
     rules: []
-regions: []
+regions:
+  - id: exit_shed
+    shape:
+      - [590, 330]
+      - [640, 330]
+      - [640, 400]
+      - [590, 400]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: change_scene
+            scene: shed
+            spawn: door
+        once: false
+  - id: ledge
+    shape:
+      - [190, 150]
+      - [470, 150]
+      - [470, 176]
+      - [190, 176]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: narrate
+            text: From the ledge you can see the whole valley.
+          - type: award_points
+            points: 5
+            award: saw_view
+        once: true
 rules: []

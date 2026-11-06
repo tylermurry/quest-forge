@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
-// Dev page (D68): plays the hand-written M1 fixture with the real engine.
+// Dev page (D68): plays the hand-written engine fixture with the real engine.
 import { MemoryFs, formatProblem, loadProject } from "@questforge/schema";
-import { ProjectErrors, createGame, type Game } from "../src/index.ts";
+import { ProjectErrors, createGame, score, type Game } from "../src/index.ts";
 
 const PREFIX = "../fixtures/m1/";
 const yaml = import.meta.glob<string>("../fixtures/m1/**/*.yaml", { query: "?raw", import: "default", eager: true });
@@ -20,6 +20,7 @@ const debugBox = document.querySelector<HTMLInputElement>("#debug")!;
 const boulderBtn = document.querySelector<HTMLButtonElement>("#boulder")!;
 const stats = document.querySelector<HTMLSpanElement>("#stats")!;
 const errors = document.querySelector<HTMLDivElement>("#errors")!;
+const stateBox = document.querySelector<HTMLDivElement>("#state")!;
 
 const { project, problems } = await loadProject(new MemoryFs(files));
 let game: Game | null = null;
@@ -46,12 +47,29 @@ function syncBoulder() {
   boulderBtn.textContent = w && has && !w.isObjectVisible("boulder") ? "Show boulder" : "Hide boulder";
 }
 
+/** One-line readout of the game state (the M6 state panel does this properly). */
+function showState() {
+  const s = game?.session;
+  if (s) {
+    const st = s.state;
+    const flags = Object.entries(st.flags).map(([k, v]) => `${k}=${v}`);
+    stateBox.textContent =
+      `scene ${st.scene} · verb ${s.verb}${s.item ? ` (${s.item})` : ""} · inventory [${st.inventory.join(", ")}] · ` +
+      `${flags.join(" ")} · score ${score(st)}/${s.game.maxScore} · visited [${st.visited.join(", ")}]` +
+      (s.log.length ? `\nlast note: ${s.log.at(-1)}` : "");
+    syncBoulder();
+  }
+  setTimeout(showState, 250);
+}
+showState();
+
 sceneSelect.addEventListener("change", () => start(sceneSelect.value));
 debugBox.addEventListener("change", () => game && (game.debug.overlay = debugBox.checked));
 boulderBtn.addEventListener("click", () => {
-  const w = game?.world;
-  if (!w) return;
-  w.setObjectVisible("boulder", !w.isObjectVisible("boulder"));
+  const s = game?.session;
+  if (!s) return;
+  // Through the session so game state stays in step with the world.
+  s.setObjectVisible(s.scene.id, "boulder", !s.world.isObjectVisible("boulder"));
   syncBoulder();
 });
 

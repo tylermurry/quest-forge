@@ -23,4 +23,20 @@ images:
       rows: 1
       cellWidth: 32
       cellHeight: 48
+  - id: shed_bg
+    path: assets/images/shed_bg.png
+  - id: flowerpot_img
+    path: assets/images/flowerpot.png
+  - id: workbench_img
+    path: assets/images/workbench.png
+  - id: string_img
+    path: assets/images/string.png
+  - id: stick_icon
+    path: assets/images/items/stick.png
+  - id: string_icon
+    path: assets/images/items/string.png
+  - id: rod_icon
+    path: assets/images/items/rod.png
+  - id: fish_icon
+    path: assets/images/items/fish.png
 audio: []

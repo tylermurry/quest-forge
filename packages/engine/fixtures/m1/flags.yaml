@@ -1,2 +1,5 @@
 schemaVersion: 1
-flags: []
+flags:
+  - id: path_open
+    type: bool
+    initial: false

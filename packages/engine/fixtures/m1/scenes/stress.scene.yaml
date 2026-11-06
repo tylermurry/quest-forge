@@ -29,6 +29,10 @@ spawns:
     x: 200
     y: 380
     facing: up
+  from_shed:
+    x: 555
+    y: 370
+    facing: left
 objects:
   - id: rock_0
     name: rock
