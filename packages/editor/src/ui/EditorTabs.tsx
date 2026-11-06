@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { Label } from "./components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select.tsx";
 import { SceneEditor } from "./scene/SceneEditor.tsx";
+import { CharacterAnimations } from "./sprites/CharacterAnimations.tsx";
 import { ImageEditor } from "./sprites/ImageEditor.tsx";
 import { TextField } from "./TextField.tsx";
 import { cn } from "./lib/utils.ts";
@@ -74,13 +75,14 @@ function TabContent({ actions, entry }: { actions: Actions; entry: EntryRef }) {
     />
   );
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className={cn("flex flex-col gap-4", entry.section !== "character" && "max-w-2xl")}>
       <h2 className="text-lg font-semibold">
         {(data as { name: string }).name} <span className="text-muted-foreground ml-1 text-[13px] font-normal">{NOUN[entry.section]} · {entry.id}</span>
       </h2>
       {nameField}
       {entry.section === "item" && <ItemForm actions={actions} item={data as ItemFile} />}
       {entry.section === "character" && <CharacterSummary character={data as CharacterFile} />}
+      {entry.section === "character" && <CharacterAnimations actions={actions} character={data as CharacterFile} />}
       {entry.section === "dialogue" && (
         <p className="text-muted-foreground">
           {(data as DialogueFile).nodes.length} nodes. The dialogue graph arrives in M7.
@@ -124,11 +126,9 @@ function ItemForm({ actions, item }: { actions: Actions; item: ItemFile }) {
 }
 
 function CharacterSummary({ character }: { character: CharacterFile }) {
-  const slots = Object.entries(character.animations).filter(([, a]) => a);
   return (
     <p className="text-muted-foreground">
-      Text color <span style={{ color: character.textColor }}>■</span> {character.textColor} · walk speed {character.walkSpeed} · {slots.length} animation
-      {slots.length === 1 ? "" : "s"}. Animation editing arrives in M4b (D94).
+      Text color <span style={{ color: character.textColor }}>■</span> {character.textColor} · walk speed {character.walkSpeed}
     </p>
   );
 }

@@ -72,6 +72,14 @@ describe("what a slot shows (engine fallbacks)", () => {
     expect(slotLabel(v, "walk_left")).toBe("Mirrors walk_right");
   });
 
+  it("says a left slot's own animation is unused while left mirrors right", () => {
+    const withLeft = { ...c, animations: { ...c.animations, walk_left: anim([9]) } };
+    expect(slotLabel(slotView(withLeft, "walk_left"), "walk_left")).toBe("Mirrors walk_right");
+    expect(slotLabel(slotView({ ...withLeft, mirrorLeft: false }, "walk_left"), "walk_left")).toBe("1 frame · 8 fps");
+    const noRight = { mirrorLeft: true, animations: { walk_down: anim([0]), walk_left: anim([9]) } };
+    expect(slotLabel(slotView(noRight, "walk_left"), "walk_left")).toBe("Not used: left mirrors right");
+  });
+
   it("explains the talk → idle → walk fallback and facing-down fallback (D70)", () => {
     expect(slotLabel(slotView(c, "talk_down"), "talk_down")).toBe("Empty: uses idle_down");
     expect(slotLabel(slotView(c, "idle_right"), "idle_right")).toBe("Empty: uses first frame of walk_right");

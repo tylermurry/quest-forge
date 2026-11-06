@@ -99,10 +99,12 @@ export function slotView(c: Pick<CharacterFile, "animations" | "mirrorLeft">, sl
 
 /** A short line for a slot card, e.g. "4 frames · 8 fps" or "Mirrors walk_right". */
 export function slotLabel(view: SlotView, slot: AnimationSlot): string {
+  const mirrored = view.shown?.mirror && view.shown.from === slot.replace(/_left$/, "_right");
+  if (view.own && view.shown?.from !== slot) return mirrored ? `Mirrors ${view.shown!.from}` : "Not used: left mirrors right";
   if (view.own) return `${view.own.frames.length} frame${view.own.frames.length === 1 ? "" : "s"} · ${view.own.fps} fps${view.own.loop ? "" : " · once"}`;
   if (!view.shown) return "Empty";
   const { from, mirror, still } = view.shown;
-  if (mirror && from === slot.replace(/_left$/, "_right")) return `Mirrors ${from}`;
+  if (mirrored) return `Mirrors ${from}`;
   return `Empty: uses ${still ? `first frame of ${from}` : from}${mirror ? " (mirrored)" : ""}`;
 }
 
