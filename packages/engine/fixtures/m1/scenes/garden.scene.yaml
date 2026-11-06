@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: garden
 name: Garden
 background: garden_bg
@@ -52,7 +52,8 @@ objects:
       - [366, 248]
       - [294, 248]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -72,7 +73,8 @@ objects:
       - [168, 319]
       - [142, 319]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: hand
         if: []
         do:
@@ -84,14 +86,16 @@ objects:
             points: 5
             award: found_stick
         once: true
-      - when:
+      - id: rule_2
+        when:
           type: hand
         if: []
         do:
           - type: narrate
             text: Nothing else under there.
         once: false
-      - when:
+      - id: rule_3
+        when:
           type: look
         if: []
         do:
@@ -111,7 +115,8 @@ objects:
       - [504, 300]
       - [446, 300]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -131,7 +136,8 @@ objects:
       - [84, 366]
       - [58, 366]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -145,14 +151,16 @@ characters:
     facing: left
     visible: true
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
           - type: narrate
             text: The gardener is busy pulling weeds.
         once: false
-      - when:
+      - id: rule_2
+        when:
           type: talk
         if:
           - type: has_item
@@ -191,7 +199,8 @@ characters:
           - type: narrate
             text: With a grunt, the gardener rolls the boulder aside. The path to the ledge is open.
         once: false
-      - when:
+      - id: rule_3
+        when:
           type: talk
         if:
           - type: first_time
@@ -200,7 +209,8 @@ characters:
             character: gardener
             text: I'm too busy to talk. Unless you've got something for my supper?
         once: false
-      - when:
+      - id: rule_4
+        when:
           type: use_item
           item: fish
         if: []
@@ -209,7 +219,8 @@ characters:
             character: gardener
             text: Don't wave it at me. Just tell me about it!
         once: false
-      - when:
+      - id: rule_5
+        when:
           type: talk
         if:
           - type: flag_is
@@ -220,7 +231,8 @@ characters:
             character: gardener
             text: Still no fish? The pond is full of them.
         once: false
-      - when:
+      - id: rule_6
+        when:
           type: talk
         if: []
         do:
@@ -242,14 +254,16 @@ hotspots:
       y: 372
       facing: up
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
           - type: narrate
             text: A still pond. Tiny fish dart about.
         once: false
-      - when:
+      - id: rule_2
+        when:
           type: use_item
           item: rod
         if: []
@@ -262,7 +276,8 @@ hotspots:
             points: 5
             award: caught_fish
         once: true
-      - when:
+      - id: rule_3
+        when:
           type: use_item
           item: rod
         if: []
@@ -270,7 +285,8 @@ hotspots:
           - type: narrate
             text: One fish is plenty.
         once: false
-      - when:
+      - id: rule_4
+        when:
           type: hand
         if: []
         do:
@@ -293,7 +309,8 @@ regions:
       - [640, 400]
       - [590, 400]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:
@@ -308,7 +325,8 @@ regions:
       - [470, 176]
       - [190, 176]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:

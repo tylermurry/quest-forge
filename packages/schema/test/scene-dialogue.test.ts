@@ -4,7 +4,7 @@ import { DialogueFile, SceneFile } from "../src/index.ts";
 
 // The spec 01 example scene, filled in, with D55 (asset IDs) and D60 (placed characters).
 const beachYaml = `
-schemaVersion: 1
+schemaVersion: 2
 id: beach
 name: Sunny Beach
 background: beach_bg
@@ -26,7 +26,7 @@ objects:
     visible: true
     obstacle: [[300, 300], [360, 300], [360, 340]]
     rules:
-      - { when: { type: look }, if: [], do: [{ type: narrate, text: "A big rock." }], once: false }
+      - { id: rule_1, when: { type: look }, if: [], do: [{ type: narrate, text: "A big rock." }], once: false }
 characters:
   - { character: fisherman, x: 100, y: 330, facing: right, visible: true, rules: [] }
 hotspots:
@@ -35,25 +35,26 @@ hotspots:
     shape: [[200, 350], [220, 350], [220, 365], [200, 365]]
     walkTo: { x: 210, y: 375, facing: up }
     rules:
-      - when: { type: hand }
+      - id: rule_1
+        when: { type: hand }
         if: [{ type: first_time }]
         do:
           - { type: narrate, text: "Under the shell you find a coin!" }
           - { type: give_item, item: coin }
           - { type: award_points, points: 2, award: found_coin }
         once: true
-      - { when: { type: look }, if: [], do: [{ type: narrate, text: "A pretty seashell." }], once: false }
+      - { id: rule_2, when: { type: look }, if: [], do: [{ type: narrate, text: "A pretty seashell." }], once: false }
 regions:
   - id: exit_north
     shape: [[580, 250], [640, 250], [640, 290], [580, 290]]
     rules:
-      - { when: { type: enter_region }, if: [], do: [{ type: change_scene, scene: path, spawn: from_beach }], once: false }
+      - { id: rule_1, when: { type: enter_region }, if: [], do: [{ type: change_scene, scene: path, spawn: from_beach }], once: false }
 rules:
-  - { when: { type: scene_enter }, if: [], do: [{ type: play_music, music: beach_theme }], once: false }
+  - { id: rule_1, when: { type: scene_enter }, if: [], do: [{ type: play_music, music: beach_theme }], once: false }
 `;
 
 const shopDialogueYaml = `
-schemaVersion: 1
+schemaVersion: 2
 id: shopkeeper_chat
 name: Shopkeeper
 nodes:

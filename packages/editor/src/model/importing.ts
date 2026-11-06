@@ -1,6 +1,6 @@
 // Importing files from the OS into assets/ (spec 08, D88). The bytes wait in
 // pendingFiles until the next save, so an import is one undoable step.
-import { SECTION_ROOTS, definedIds, type Project } from "@questforge/schema";
+import { SCHEMA_VERSION, SECTION_ROOTS, definedIds, type Project } from "@questforge/schema";
 import { slugify, uniqueId } from "./commands.ts";
 import type { Section } from "./browser.ts";
 
@@ -35,7 +35,7 @@ function safeFileName(name: string): string {
 export function importFiles(p: Project, files: ImportFile[], section: Section, folder: string): ImportResult {
   const imported: ImportResult["imported"] = [];
   const refused: string[] = [];
-  const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: 1 as const, images: [], audio: [] } };
+  const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: SCHEMA_VERSION, images: [], audio: [] } };
   const data = { ...assets.data, images: [...assets.data.images], audio: [...assets.data.audio] };
   const pending = { ...p.pendingFiles };
   const takenPaths = new Set([...p.files, ...data.images.map((i) => i.path), ...data.audio.map((a) => a.path), ...Object.keys(pending)]);

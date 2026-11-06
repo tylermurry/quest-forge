@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: shed
 name: Garden shed
 background: shed_bg
@@ -35,7 +35,8 @@ objects:
       - [560, 268]
       - [400, 268]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -50,14 +51,16 @@ objects:
     baseline: 269
     visible: true
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
           - type: narrate
             text: A coil of garden string.
         once: false
-      - when:
+      - id: rule_2
+        when:
           type: hand
         if: []
         do:
@@ -83,7 +86,8 @@ hotspots:
       y: 270
       facing: up
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -98,7 +102,8 @@ regions:
       - [55, 400]
       - [0, 400]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:
@@ -107,7 +112,8 @@ regions:
             spawn: from_shed
         once: false
 rules:
-  - when:
+  - id: rule_1
+    when:
       type: scene_enter
     if:
       - type: first_time

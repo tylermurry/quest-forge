@@ -6,7 +6,7 @@ import { award, giveItem, initialState, markFired, markVisited, setObjectVisible
 // Spec 02 evaluation (D40): first match, `once`, conditions, default fallbacks.
 
 const game = GameFile.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: "t",
   title: "T",
   version: 1,
@@ -18,7 +18,7 @@ const game = GameFile.parse({
   rules: [],
 });
 const yard = SceneFile.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: "yard",
   name: "Yard",
   background: "bg",
@@ -33,20 +33,30 @@ const yard = SceneFile.parse({
 });
 
 const ctx = (): RuleContext => ({
-  state: initialState({ schemaVersion: 1, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 2 }] }, "yard", { x: 0, y: 0, facing: "up" }),
+  state: initialState({ schemaVersion: 2, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 2 }] }, "yard", { x: 0, y: 0, facing: "up" }),
   scene: (id) => (id === "yard" ? yard : undefined),
 });
 const say = (text: string) => [{ type: "narrate", text }];
-const rule = (when: Trigger, cond: Condition[], text: string, once = false) => InteractRule.parse({ when, if: cond, do: say(text), once });
+let nextId = 0;
+const rule = (when: Trigger, cond: Condition[], text: string, once = false) => InteractRule.parse({ id: `rule_${++nextId}`, when, if: cond, do: say(text), once });
 const owner: RuleOwner = { kind: "hotspot", scene: "yard", id: "door" };
 const look: Trigger = { type: "look" };
 const text = (m: { rule: { do: unknown[] } } | null) => (m ? (m.rule.do[0] as { text: string }).text : null);
 
-describe("rule keys (D73)", () => {
-  it("name the rule by where it lives", () => {
-    expect(ruleKey(owner, 2)).toBe("yard/hotspot:door/2");
-    expect(ruleKey({ kind: "scene", scene: "yard" }, 0)).toBe("yard/scene/0");
-    expect(ruleKey({ kind: "game" }, 1)).toBe("game/1");
+describe("rule keys (D117)", () => {
+  it("name the rule by its owner and stable ID", () => {
+    expect(ruleKey(owner, "rule_2")).toBe("yard/hotspot:door/rule_2");
+    expect(ruleKey({ kind: "scene", scene: "yard" }, "rule_1")).toBe("yard/scene/rule_1");
+    expect(ruleKey({ kind: "game" }, "rule_1")).toBe("game/rule_1");
+  });
+
+  it("survive reordering: a fired once-rule stays fired after it moves", () => {
+    const a = rule(look, [], "a", true);
+    const b = rule(look, [], "b");
+    const c = ctx();
+    markFired(c.state, firstMatch([a, b], owner, look, c)!.key);
+    expect(text(firstMatch([b, a], owner, look, c))).toBe("b");
+    expect(text(firstMatch([a, b], owner, look, c))).toBe("b");
   });
 });
 
@@ -63,7 +73,7 @@ describe("first match (D40)", () => {
     c.state.flags.open = true;
     const m = firstMatch(rules, owner, look, c);
     expect(text(m)).toBe("open");
-    expect(m?.key).toBe("yard/hotspot:door/1");
+    expect(m?.key).toBe(`yard/hotspot:door/${rules[1]!.id}`);
   });
 
   it("returns null when nothing matches, and the default response fills in", () => {
@@ -87,14 +97,14 @@ describe("first match (D40)", () => {
     markFired(c.state, m.key);
     expect(text(firstMatch(rules, owner, look, c))).toBe("later");
     // A non-once rule keeps matching after it fired.
-    markFired(c.state, "yard/hotspot:door/1");
+    markFired(c.state, ruleKey(owner, rules[1]!.id));
     expect(text(firstMatch(rules, owner, look, c))).toBe("later");
   });
 
-  it("`once` applies per owner: the same index elsewhere is a different rule", () => {
+  it("`once` applies per owner: the same rule ID elsewhere is a different rule", () => {
     const rules = [rule(look, [], "first", true)];
     const c = ctx();
-    markFired(c.state, ruleKey(owner, 0));
+    markFired(c.state, ruleKey(owner, rules[0]!.id));
     expect(firstMatch(rules, owner, look, c)).toBe(null);
     expect(text(firstMatch(rules, { kind: "object", scene: "yard", id: "door" }, look, c))).toBe("first");
   });
@@ -103,7 +113,7 @@ describe("first match (D40)", () => {
     const rules = [rule(look, [{ type: "first_time" }], "new"), rule(look, [], "again")];
     const c = ctx();
     expect(text(firstMatch(rules, owner, look, c))).toBe("new");
-    markFired(c.state, ruleKey(owner, 0));
+    markFired(c.state, ruleKey(owner, rules[0]!.id));
     expect(text(firstMatch(rules, owner, look, c))).toBe("again");
   });
 
@@ -125,7 +135,7 @@ describe("triggers", () => {
   });
 
   it("combine matches in either order (D80)", () => {
-    const rules = [GameRule.parse({ when: { type: "combine", item: "stick", with: "string" }, if: [], do: say("rod"), once: false })];
+    const rules = [GameRule.parse({ id: "rule_1", when: { type: "combine", item: "stick", with: "string" }, if: [], do: say("rod"), once: false })];
     const c = ctx();
     expect(text(firstMatch(rules, { kind: "game" }, { type: "combine", item: "string", with: "stick" }, c))).toBe("rod");
     expect(text(firstMatch(rules, { kind: "game" }, { type: "combine", item: "stick", with: "string" }, c))).toBe("rod");

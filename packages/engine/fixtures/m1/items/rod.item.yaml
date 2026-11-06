@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: rod
 name: fishing rod
 description: A stick with a string tied to it. Crude, but it might work.

@@ -200,6 +200,14 @@ function checkDuplicates(project: Project, out: Collector) {
       out.error("duplicate_id", "scene", path, ["characters", i, "character"], `places ${c.character} in this scene twice.`, ["characters", i]);
     });
   }
+  // Rule IDs are unique within their list, so fired keys stay unique (D117).
+  if (project.game) inList("game", project.game.path, ["rules"], project.game.data.rules, "rule in this list");
+  for (const { path, data } of project.scenes) {
+    inList("scene", path, ["rules"], data.rules, "rule in this list");
+    for (const list of ["objects", "characters", "hotspots", "regions"] as const) {
+      data[list].forEach((t, i) => inList("scene", path, [list, i, "rules"], t.rules, "rule in this list"));
+    }
+  }
   for (const { path, data } of project.dialogues) {
     inList("dialogue", path, ["nodes"], data.nodes, "node in this dialogue");
     const options = data.nodes.flatMap((n, i) => (n.type === "choices" ? n.options.map((o, j) => ({ id: o.id, at: [i, j] as const })) : []));

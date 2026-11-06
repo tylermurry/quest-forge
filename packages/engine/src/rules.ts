@@ -5,21 +5,21 @@ import { hasItem, objectVisible, type GameState } from "./state.ts";
 // and the first rule whose conditions all pass is the one that runs. Pure: no
 // side effects here; the sequence runner marks the rule fired and runs its actions.
 
-/** Where a rule list lives. Its location is the rule's identity (D73). */
+/** Where a rule list lives. With the rule's ID it makes the fired key (D117). */
 export type RuleOwner =
   | { kind: "hotspot" | "object" | "character" | "region"; scene: string; id: string }
   | { kind: "scene"; scene: string }
   | { kind: "game" };
 
-/** Location key of a rule (D73), e.g. `garden/hotspot:pond/2`, `garden/scene/0`, `game/1`. */
-export function ruleKey(owner: RuleOwner, index: number): string {
+/** Fired key of a rule (D117): its owner plus its stable ID, e.g. `garden/hotspot:pond/rule_2`, `game/rule_1`. */
+export function ruleKey(owner: RuleOwner, ruleId: string): string {
   switch (owner.kind) {
     case "game":
-      return `game/${index}`;
+      return `game/${ruleId}`;
     case "scene":
-      return `${owner.scene}/scene/${index}`;
+      return `${owner.scene}/scene/${ruleId}`;
     default:
-      return `${owner.scene}/${owner.kind}:${owner.id}/${index}`;
+      return `${owner.scene}/${owner.kind}:${owner.id}/${ruleId}`;
   }
 }
 
@@ -90,9 +90,9 @@ export interface Match<R extends AnyRule = AnyRule> {
  * A `once` rule that already fired is skipped.
  */
 export function firstMatch<R extends AnyRule>(rules: readonly R[], owner: RuleOwner, trigger: Trigger, ctx: RuleContext): Match<R> | null {
-  for (const [i, rule] of rules.entries()) {
+  for (const rule of rules) {
     if (!triggerMatches(rule.when, trigger)) continue;
-    const key = ruleKey(owner, i);
+    const key = ruleKey(owner, rule.id);
     if (rule.once && hasFired(ctx.state, key)) continue;
     if (rule.if.every((c) => checkCondition(c, ctx, key))) return { rule, key };
   }

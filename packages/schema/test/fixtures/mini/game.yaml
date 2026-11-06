@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: the_lantern
 title: The Lantern
 version: 1
@@ -13,7 +13,8 @@ defaultResponses:
   use_item: That doesn't work.
   combine: Those don't go together.
 rules:
-  - when:
+  - id: rule_1
+    when:
       type: combine
       item: lantern
       with: matches

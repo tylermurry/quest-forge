@@ -6,6 +6,7 @@ import {
   DialogueFile,
   ID_PATTERN,
   ItemFile,
+  SCHEMA_VERSION,
   SECTION_ROOTS,
   SceneFile,
   assetPath,
@@ -81,7 +82,7 @@ export function updateDoc<T>(p: Project, kind: AssetKind, id: string, f: (data: 
 }
 
 function setFlags(p: Project, f: (data: FlagsFile) => FlagsFile): Project {
-  const flags = p.flags ?? { path: "flags.yaml", data: { schemaVersion: 1 as const, flags: [] } };
+  const flags = p.flags ?? { path: "flags.yaml", data: { schemaVersion: SCHEMA_VERSION, flags: [] } };
   const { folders, ...rest } = f(flags.data);
   // `folders` is omitted when empty, so a project without flag folders keeps its file unchanged.
   const data: FlagsFile = folders?.length ? { ...rest, folders: [...new Set(folders)].sort() } : rest;
@@ -89,7 +90,7 @@ function setFlags(p: Project, f: (data: FlagsFile) => FlagsFile): Project {
 }
 
 function setAssets(p: Project, f: (data: AssetsFile) => AssetsFile): Project {
-  const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: 1 as const, images: [], audio: [] } };
+  const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: SCHEMA_VERSION, images: [], audio: [] } };
   return { ...p, assets: { ...assets, data: f(assets.data) } };
 }
 
@@ -109,7 +110,7 @@ export function newAssetData(p: Project, kind: AssetKind, id: string, name: stri
     case "scene":
       // An empty scene: no background, no walkable area yet, a default spawn (D97).
       return SceneFile.parse({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         id,
         name,
         depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
@@ -122,12 +123,12 @@ export function newAssetData(p: Project, kind: AssetKind, id: string, name: stri
         rules: [],
       });
     case "item":
-      return ItemFile.parse({ schemaVersion: 1, id, name, description: `It's a ${name.toLowerCase()}.`, icon: defaultImage(p, /icon/) });
+      return ItemFile.parse({ schemaVersion: SCHEMA_VERSION, id, name, description: `It's a ${name.toLowerCase()}.`, icon: defaultImage(p, /icon/) });
     case "character":
-      return CharacterFile.parse({ schemaVersion: 1, id, name, textColor: "#ffffff", walkSpeed: 80, mirrorLeft: true, animations: {} });
+      return CharacterFile.parse({ schemaVersion: SCHEMA_VERSION, id, name, textColor: "#ffffff", walkSpeed: 80, mirrorLeft: true, animations: {} });
     case "dialogue":
       return DialogueFile.parse({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         id,
         name,
         nodes: [

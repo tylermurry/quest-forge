@@ -18,7 +18,7 @@ import {
 // Runtime game state (spec 07, D75).
 
 const flags = FlagsFile.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   flags: [
     { id: "door_open", type: "bool", initial: false },
     { id: "lit", type: "bool", initial: true },
@@ -26,7 +26,7 @@ const flags = FlagsFile.parse({
   ],
 });
 const scene = SceneFile.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: "yard",
   name: "Yard",
   background: "bg",

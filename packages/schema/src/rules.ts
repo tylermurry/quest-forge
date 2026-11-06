@@ -87,9 +87,13 @@ export type Action = z.infer<typeof Action>;
 
 // ── Rules ───────────────────────────────────────────────────────────────────
 
-/** `WHEN <trigger> [IF <all conditions>] DO <actions>` plus `once` (spec 02). */
+/**
+ * `WHEN <trigger> [IF <all conditions>] DO <actions>` plus `once` (spec 02). `id` is
+ * stable, unique within its rule list and never shown; fired keys use it (D117).
+ */
 export const makeRule = <T extends z.ZodType>(trigger: T) =>
   z.strictObject({
+    id: Id,
     when: trigger,
     if: z.array(Condition),
     do: z.array(Action),

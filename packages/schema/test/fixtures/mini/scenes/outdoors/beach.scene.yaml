@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: beach
 name: Sunny Beach
 background: beach_bg
@@ -52,7 +52,8 @@ hotspots:
       y: 380
       facing: up
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: hand
         if:
           - type: first_time
@@ -67,7 +68,8 @@ hotspots:
             points: 2
             award: found_coin
         once: true
-      - when:
+      - id: rule_2
+        when:
           type: look
         if: []
         do:
@@ -82,7 +84,8 @@ hotspots:
       - [640, 200]
       - [0, 200]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -99,7 +102,8 @@ regions:
       - [640, 300]
       - [610, 300]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:

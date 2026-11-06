@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: stress
 name: Stress test
 background: garden_bg

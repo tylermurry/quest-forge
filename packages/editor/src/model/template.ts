@@ -5,6 +5,7 @@ import {
   CharacterFile,
   FlagsFile,
   GameFile,
+  SCHEMA_VERSION,
   SceneFile,
   emptyProject,
   saveProject,
@@ -54,7 +55,7 @@ export function blankProject(title: string): Project {
   p.game = {
     path: "game.yaml",
     data: GameFile.parse({
-      schemaVersion: 1,
+      schemaVersion: SCHEMA_VERSION,
       id,
       title: title.trim() || "Untitled game",
       version: 1,
@@ -72,11 +73,11 @@ export function blankProject(title: string): Project {
       rules: [],
     }),
   };
-  p.flags = { path: "flags.yaml", data: FlagsFile.parse({ schemaVersion: 1, flags: [] }) };
+  p.flags = { path: "flags.yaml", data: FlagsFile.parse({ schemaVersion: SCHEMA_VERSION, flags: [] }) };
   p.assets = {
     path: "assets.yaml",
     data: AssetsFile.parse({
-      schemaVersion: 1,
+      schemaVersion: SCHEMA_VERSION,
       images: [
         { id: "first_scene_bg", path: "assets/images/first_scene_bg.png" },
         { id: "player_sprite", path: "assets/images/player_sprite.png" },
@@ -89,7 +90,7 @@ export function blankProject(title: string): Project {
     {
       path: "scenes/first_scene.scene.yaml",
       data: SceneFile.parse({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         id: "first_scene",
         name: "First Scene",
         background: "first_scene_bg",
@@ -108,7 +109,7 @@ export function blankProject(title: string): Project {
     {
       path: "characters/player.character.yaml",
       data: CharacterFile.parse({
-        schemaVersion: 1,
+        schemaVersion: SCHEMA_VERSION,
         id: "player",
         name: "Player",
         textColor: "#ffffff",

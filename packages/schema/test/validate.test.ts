@@ -172,11 +172,13 @@ describe("spec 14 errors", () => {
       scene(p, "beach").hotspots[1]!.id = "shell";
       const menu = p.dialogues[0]!.data.nodes[2]!;
       if (menu.type === "choices") menu.options[2]!.id = "buy";
+      scene(p, "beach").hotspots[0]!.rules[1]!.id = "rule_1";
     });
     expect(summary(problems)).toEqual([
       { code: "duplicate_id", file: "items/old/coin.item.yaml", path: "id", text: 'Item "gold coin": uses the ID coin, which items/coin.item.yaml already uses. IDs must be unique.' },
       { code: "duplicate_id", file: "flags.yaml", path: "flags.2.id", text: 'Flags › Flag "shop_visits": uses the ID shop_visits, which another flag or counter already uses. IDs must be unique.' },
       { code: "duplicate_id", file: "scenes/outdoors/beach.scene.yaml", path: "hotspots.1.id", text: 'Sunny Beach › Hotspot "shell": uses the ID shell, which another hotspot in this scene already uses. IDs must be unique.' },
+      { code: "duplicate_id", file: "scenes/outdoors/beach.scene.yaml", path: "hotspots.0.rules.1.id", text: 'Sunny Beach › Hotspot "shell" › Rule 2: uses the ID rule_1, which another rule in this list already uses. IDs must be unique.' },
       { code: "duplicate_id", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.options.2.id", text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "buy": uses the ID buy, which another choice in this dialogue already uses. IDs must be unique.' },
     ]);
   });

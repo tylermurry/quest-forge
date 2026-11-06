@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: path
 name: Village Path
 background: path_bg
@@ -40,7 +40,8 @@ objects:
       - [350, 190]
       - [290, 190]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: look
         if: []
         do:
@@ -54,7 +55,8 @@ characters:
     facing: left
     visible: true
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: talk
         if:
           - type: flag_is
@@ -74,7 +76,8 @@ characters:
             points: 2
             award: boulder_moved
         once: false
-      - when:
+      - id: rule_2
+        when:
           type: talk
         if: []
         do:
@@ -91,7 +94,8 @@ hotspots:
       - [115, 340]
       - [100, 340]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: hand
         if: []
         do:
@@ -106,7 +110,8 @@ regions:
       - [20, 400]
       - [0, 400]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:
@@ -121,7 +126,8 @@ regions:
       - [340, 170]
       - [300, 170]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if:
           - type: object_visible
@@ -134,7 +140,8 @@ regions:
             spawn: default
         once: false
 rules:
-  - when:
+  - id: rule_1
+    when:
       type: scene_enter
     if: []
     do:

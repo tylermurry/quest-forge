@@ -15,8 +15,10 @@ import {
   FlagsFile,
   GameFile,
   ItemFile,
+  SCHEMA_VERSION,
   SceneFile,
   pointInPolygon,
+  withRuleIds,
   serialize,
   type Polygon,
 } from "@questforge/schema";
@@ -267,8 +269,8 @@ const narrate = (text: string) => ({ type: "narrate", text });
 const say = (character: string, text: string) => ({ type: "say", character, text });
 const anim = (image: string, frames: number[], fps = 8) => ({ image, frames, fps, loop: true });
 
-const game = GameFile.parse({
-  schemaVersion: 1,
+const game = GameFile.parse(withRuleIds({
+  schemaVersion: SCHEMA_VERSION,
   id: "m1_fixture",
   title: "M1 Engine Fixture",
   version: 1,
@@ -291,11 +293,11 @@ const game = GameFile.parse({
       narrate("You tie the string to the stick. A fishing rod!"),
     ]),
   ],
-});
+}));
 
-const flags = FlagsFile.parse({ schemaVersion: 1, flags: [{ id: "path_open", type: "bool", initial: false }] });
+const flags = FlagsFile.parse({ schemaVersion: SCHEMA_VERSION, flags: [{ id: "path_open", type: "bool", initial: false }] });
 
-const item = (id: string, name: string, description: string) => ItemFile.parse({ schemaVersion: 1, id, name, description, icon: `${id}_icon` });
+const item = (id: string, name: string, description: string) => ItemFile.parse({ schemaVersion: SCHEMA_VERSION, id, name, description, icon: `${id}_icon` });
 const items = [
   item("stick", "stick", "A straight, springy stick."),
   item("string", "string", "A coil of garden string."),
@@ -305,7 +307,7 @@ const items = [
 
 const sheet = (columns: number, rows: number) => ({ columns, rows, cellWidth: 32, cellHeight: 48 });
 const assets = AssetsFile.parse({
-  schemaVersion: 1,
+  schemaVersion: SCHEMA_VERSION,
   images: [
     { id: "garden_bg", path: "assets/images/garden_bg.png" },
     { id: "palm_img", path: "assets/images/palm.png" },
@@ -323,7 +325,7 @@ const assets = AssetsFile.parse({
 });
 
 const hero = CharacterFile.parse({
-  schemaVersion: 1,
+  schemaVersion: SCHEMA_VERSION,
   id: "hero",
   name: "Hero",
   textColor: "#ffffff",
@@ -341,7 +343,7 @@ const hero = CharacterFile.parse({
 
 const npc = (id: string, name: string) =>
   CharacterFile.parse({
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     id,
     name,
     textColor: "#88cc88",
@@ -351,8 +353,8 @@ const npc = (id: string, name: string) =>
     animations: { idle_down: anim("gardener_sheet", [0, 0, 0, 1], 2) },
   });
 
-const garden = SceneFile.parse({
-  schemaVersion: 1,
+const garden = SceneFile.parse(withRuleIds({
+  schemaVersion: SCHEMA_VERSION,
   id: "garden",
   name: "Garden",
   background: "garden_bg",
@@ -429,10 +431,10 @@ const garden = SceneFile.parse({
     { id: "ledge", shape: [[190, 150], [470, 150], [470, 176], [190, 176]], rules: [rule({ type: "enter_region" }, [narrate("From the ledge you can see the whole valley."), { type: "award_points", points: 5, award: "saw_view" }], [], true)] },
   ],
   rules: [],
-});
+}));
 
-const shed = SceneFile.parse({
-  schemaVersion: 1,
+const shed = SceneFile.parse(withRuleIds({
+  schemaVersion: SCHEMA_VERSION,
   id: "shed",
   name: "Garden shed",
   background: "shed_bg",
@@ -459,7 +461,7 @@ const shed = SceneFile.parse({
   hotspots: [{ id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] }],
   regions: [{ id: "exit_garden", shape: [[0, 320], [55, 320], [55, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])] }],
   rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
-});
+}));
 
 // 15 objects and 3 characters for the spec 03 frame-rate check.
 const stressObjects = Array.from({ length: 15 }, (_, i) => {
@@ -476,7 +478,7 @@ const stressObjects = Array.from({ length: 15 }, (_, i) => {
     rules: [],
   };
 });
-const stress = SceneFile.parse({
+const stress = SceneFile.parse(withRuleIds({
   ...garden,
   id: "stress",
   name: "Stress test",
@@ -488,7 +490,7 @@ const stress = SceneFile.parse({
   ],
   hotspots: [],
   regions: [],
-});
+}));
 
 const files: Record<string, string | Buffer> = {
   "game.yaml": serialize(game),

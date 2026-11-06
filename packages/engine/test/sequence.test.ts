@@ -11,7 +11,7 @@ function fakeHost() {
   let walking = 0;
   let animLeft = 0;
   const host: SequenceHost & { log: string[]; dismiss(): void; arrive(): void; advanceAnim(): void } = {
-    state: initialState({ schemaVersion: 1, flags: [{ id: "n", type: "counter", initial: 1 }] }, "yard", { x: 0, y: 0, facing: "up" }),
+    state: initialState({ schemaVersion: 2, flags: [{ id: "n", type: "counter", initial: 1 }] }, "yard", { x: 0, y: 0, facing: "up" }),
     log,
     narrate(text) {
       log.push(`narrate ${text}`);

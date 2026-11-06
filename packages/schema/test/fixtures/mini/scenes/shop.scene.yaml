@@ -1,4 +1,4 @@
-schemaVersion: 1
+schemaVersion: 2
 id: shop
 name: The Shop
 background: shop_bg
@@ -29,7 +29,8 @@ characters:
     facing: down
     visible: true
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: talk
         if: []
         do:
@@ -45,7 +46,8 @@ regions:
       - [360, 395]
       - [280, 395]
     rules:
-      - when:
+      - id: rule_1
+        when:
           type: enter_region
         if: []
         do:
@@ -54,7 +56,8 @@ regions:
             spawn: from_shop
         once: false
 rules:
-  - when:
+  - id: rule_1
+    when:
       type: scene_enter
     if: []
     do:

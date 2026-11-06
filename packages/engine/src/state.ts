@@ -26,7 +26,7 @@ export interface GameState {
   characters: Record<string, Position>;
   /** Scene IDs entered at least once, in order. */
   visited: string[];
-  /** Keys of rules that have run (D73), for `once` and `first_time`. */
+  /** Keys of rules that have run (D117), for `once` and `first_time`. */
   fired: string[];
   /** Dialogue `once` choices already taken (M7). */
   dialogueChoices: string[];

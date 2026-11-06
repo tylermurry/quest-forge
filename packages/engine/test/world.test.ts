@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CharacterFile, SceneFile, type ImageAsset } from "@questforge/schema";
+import { CharacterFile, SceneFile, withRuleIds, type ImageAsset } from "@questforge/schema";
 import { World, type LoadedImage } from "../src/world.ts";
 import type { Vec } from "../src/vec.ts";
 
@@ -7,7 +7,7 @@ import type { Vec } from "../src/vec.ts";
 
 const anim = (frames: number[]) => ({ image: "hero_sheet", frames, fps: 8, loop: true });
 const hero = CharacterFile.parse({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: "hero",
   name: "Hero",
   textColor: "#ffffff",
@@ -23,8 +23,8 @@ const gardener = CharacterFile.parse({
 });
 
 const look = (text: string) => ({ when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
-const scene = SceneFile.parse({
-  schemaVersion: 1,
+const scene = SceneFile.parse(withRuleIds({
+  schemaVersion: 2,
   id: "yard",
   name: "Yard",
   background: "bg",
@@ -55,7 +55,7 @@ const scene = SceneFile.parse({
   ],
   regions: [],
   rules: [],
-});
+}));
 
 const img = (asset: ImageAsset, w: number, h: number): LoadedImage => ({ asset, size: { w, h } });
 const images = new Map<string, LoadedImage>([

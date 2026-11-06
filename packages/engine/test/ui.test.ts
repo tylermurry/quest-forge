@@ -204,14 +204,15 @@ describe("settings and endings (D71, D80)", () => {
   });
 
   it("an ending only answers its Restart button", () => {
-    const { s, ui } = make({ yard: { rules: [rule({ type: "scene_enter" }, [{ type: "die", message: "Oops." }], [{ type: "first_time" }])] } });
+    const enter = rule({ type: "scene_enter" }, [{ type: "die", message: "Oops." }], [{ type: "first_time" }]);
+    const { s, ui } = make({ yard: { rules: [enter] } });
     expect(s.ending?.kind).toBe("die");
     tap(ui, [100, 380]);
     expect(s.ending?.kind).toBe("die");
     tap(ui, center(ui.layout.ending.restart));
     // Restart resets fired rules too, so the first-time enter rule runs again.
     expect(s.ending?.kind).toBe("die");
-    expect(s.state.fired).toEqual(["yard/scene/0"]);
+    expect(s.state.fired).toEqual([`yard/scene/${enter.id}`]);
   });
 });
 

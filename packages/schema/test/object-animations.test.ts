@@ -26,7 +26,7 @@ const fixture = async () => {
 };
 const path = (p: Project) => p.scenes.find((s) => s.data.id === "path")!.data;
 const boulder = (p: Project) => path(p).objects.find((o) => o.id === "boulder")!;
-const play = (p: Project, action: Action) => path(p).rules.push({ when: { type: "scene_enter" }, if: [], do: [action], once: false });
+const play = (p: Project, action: Action) => path(p).rules.push({ id: `play_${path(p).rules.length}`, when: { type: "scene_enter" }, if: [], do: [action], once: false });
 const onBoulder = (animation: string): Action => ({ type: "play_animation", target: { kind: "object", scene: "path", object: "boulder" }, animation });
 const onHero = (animation: string): Action => ({ type: "play_animation", target: { kind: "character", character: "hero" }, animation });
 const report = (p: Project) => validateProject(p).map((x) => [x.code, x.location.path.join("."), formatProblem(x)]);

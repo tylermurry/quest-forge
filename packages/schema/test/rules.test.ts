@@ -70,7 +70,7 @@ const actions: Record<string, Case> = {
   win_game: { good: { type: "win_game" }, bad: { type: "win_game", message: "yay" } },
 };
 
-const rule = (when: unknown, extra: Record<string, unknown> = {}) => ({ when, if: [], do: [], once: false, ...extra });
+const rule = (when: unknown, extra: Record<string, unknown> = {}) => ({ id: "rule_1", when, if: [], do: [], once: false, ...extra });
 
 describe("rule vocabulary covers spec 02 exactly", () => {
   it("has a test case for every type, and nothing more", () => {
@@ -121,21 +121,23 @@ describe("rules", () => {
     expect(r.do.map((a) => a.type)).toEqual(["take_item", "give_item", "award_points"]);
   });
 
-  it("requires when/if/do/once to be present (one canonical form)", () => {
-    expect(InteractRule.safeParse({ when: { type: "look" }, do: [], once: false }).success).toBe(false);
-    expect(InteractRule.safeParse({ when: { type: "look" }, if: [], do: [] }).success).toBe(false);
+  it("requires id/when/if/do/once to be present (one canonical form, D117)", () => {
+    expect(InteractRule.safeParse({ id: "rule_1", when: { type: "look" }, do: [], once: false }).success).toBe(false);
+    expect(InteractRule.safeParse({ id: "rule_1", when: { type: "look" }, if: [], do: [] }).success).toBe(false);
+    expect(InteractRule.safeParse({ when: { type: "look" }, if: [], do: [], once: false }).success).toBe(false);
+    expect(InteractRule.safeParse({ id: "Rule 1", when: { type: "look" }, if: [], do: [], once: false }).success).toBe(false);
   });
 
   it("serializes keys in schema order", () => {
-    const parsed = InteractRule.parse({ once: false, do: [{ text: "Hi", type: "narrate" }], if: [], when: { type: "look" } });
-    expect(Object.keys(parsed)).toEqual(["when", "if", "do", "once"]);
+    const parsed = InteractRule.parse({ once: false, do: [{ text: "Hi", type: "narrate" }], if: [], when: { type: "look" }, id: "rule_1" });
+    expect(Object.keys(parsed)).toEqual(["id", "when", "if", "do", "once"]);
     expect(Object.keys(parsed.do[0]!)).toEqual(["type", "text"]);
   });
 });
 
 describe("game.yaml", () => {
   const game = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: "the_lantern",
     title: "The Lantern",
     version: 1,

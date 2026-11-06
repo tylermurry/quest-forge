@@ -70,7 +70,7 @@ describe("round-trip (spec 01 acceptance)", () => {
 
   it("normalizes a non-canonical file once, then is stable", async () => {
     const original = await readFile(join(FIXTURE, "items/coin.item.yaml"), "utf8");
-    const messy = `# hand-edited\nicon: coin_icon\nid:   coin\nschemaVersion: 1\nname: "gold coin"\ndescription: 'A shiny gold coin.'\n`;
+    const messy = `# hand-edited\nicon: coin_icon\nid:   coin\nschemaVersion: 2\nname: "gold coin"\ndescription: 'A shiny gold coin.'\n`;
     const fs = new MemoryFs({ "items/coin.item.yaml": messy });
     const first = await saveProject(fs, (await loadProject(fs)).project);
     expect(first.plan.writes.map((w) => w.path)).toEqual(["items/coin.item.yaml"]);
@@ -98,7 +98,7 @@ describe("round-trip (spec 01 acceptance)", () => {
     const fs = new MemoryFs();
     const project: Project = {
       ...(await loadProject(fs)).project,
-      items: [{ path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 1 } }],
+      items: [{ path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 2 } }],
     };
     await saveProject(fs, project);
     expect(fs.files.get("items/coin.item.yaml")).toBe(await readFile(join(FIXTURE, "items/coin.item.yaml"), "utf8"));
@@ -146,7 +146,7 @@ describe("load problems", () => {
   };
 
   it("reports YAML syntax errors with a line number and keeps the file out of the save", async () => {
-    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 1\nid: [coin\n" });
+    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 2\nid: [coin\n" });
     const { project, problems } = await loadProject(fs);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatchObject({ code: "yaml_syntax", location: { file: "items/coin.item.yaml" } });
@@ -158,8 +158,8 @@ describe("load problems", () => {
   it("reports unknown keys and missing fields in plain English", async () => {
     const fs = new MemoryFs({
       ...(await base()),
-      "items/coin.item.yaml": "schemaVersion: 1\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolour: gold\n",
-      "items/key.item.yaml": "schemaVersion: 1\nid: key\nname: key\nicon: key_icon\n",
+      "items/coin.item.yaml": "schemaVersion: 2\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolour: gold\n",
+      "items/key.item.yaml": "schemaVersion: 2\nid: key\nname: key\nicon: key_icon\n",
     });
     const { problems } = await loadProject(fs);
     expect(problems.map((p) => [p.location.file, p.code, p.breadcrumb, p.message])).toEqual([
@@ -184,8 +184,20 @@ describe("load problems", () => {
     ]);
   });
 
+  it("opens a v1 project: rules get IDs, and the next save writes v2 (D117)", async () => {
+    const files = await base();
+    const v1 = files["game.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 1").replace(/^  - id: rule_\d+\n    when:/gm, "  - when:");
+    expect(v1).not.toContain("id: rule_");
+    const fs = new MemoryFs({ ...files, "game.yaml": v1 });
+    const { project, problems } = await loadProject(fs);
+    expect(problems).toEqual([]);
+    expect(project.game!.data.schemaVersion).toBe(2);
+    expect(project.game!.data.rules.map((r) => r.id)).toEqual(["rule_1"]);
+    expect(planSave(project).writes.map((w) => [w.path, w.content])).toEqual([["game.yaml", files["game.yaml"]]]);
+  });
+
   it("refuses files from a newer schemaVersion", async () => {
-    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 2\nid: coin\n" });
+    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 3\nid: coin\n" });
     const { problems } = await loadProject(fs);
     expect(problems[0]?.code).toBe("unsupported_version");
   });
@@ -193,8 +205,35 @@ describe("load problems", () => {
 
 describe("migrations", () => {
   it("is a no-op for current files", () => {
-    expect(migrate({ schemaVersion: 1, id: "x" })).toEqual({ ok: true, value: { schemaVersion: 1, id: "x" } });
-    expect(MIGRATIONS).toEqual({});
+    expect(migrate({ schemaVersion: 2, id: "x" })).toEqual({ ok: true, value: { schemaVersion: 2, id: "x" } });
+  });
+
+  it("v2 gives every rule an ID in list order and keeps existing ones (D117)", () => {
+    const r = (text: string, id?: string) => ({ ...(id ? { id } : {}), when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
+    const v1 = {
+      schemaVersion: 1,
+      id: "yard",
+      objects: [{ id: "rock", rules: [r("a"), r("b")] }],
+      characters: [{ character: "cat", rules: [r("c", "kept")] }],
+      hotspots: [{ id: "door", rules: [] }],
+      regions: [{ id: "exit", rules: [r("d")] }],
+      rules: [r("e"), r("f")],
+    };
+    const out = migrate(v1);
+    expect(out).toEqual({
+      ok: true,
+      value: {
+        schemaVersion: 2,
+        id: "yard",
+        objects: [{ id: "rock", rules: [r("a", "rule_1"), r("b", "rule_2")] }],
+        characters: [{ character: "cat", rules: [r("c", "kept")] }],
+        hotspots: [{ id: "door", rules: [] }],
+        regions: [{ id: "exit", rules: [r("d", "rule_1")] }],
+        rules: [r("e", "rule_1"), r("f", "rule_2")],
+      },
+    });
+    expect(migrate({ schemaVersion: 1, id: "coin", name: "coin" })).toEqual({ ok: true, value: { schemaVersion: 2, id: "coin", name: "coin" } });
+    expect(Object.keys(MIGRATIONS)).toEqual(["1"]);
   });
 
   it("chains steps from old versions up to current", () => {

@@ -167,14 +167,13 @@ describe("items (D80)", () => {
 
 describe("rules through the session", () => {
   it("first match, once and first_time, with awards counted once", () => {
-    const s = make({
-      yard: potRules([
-        rule({ type: "hand" }, [narrate("A key!"), { type: "give_item", item: "key" }, { type: "award_points", points: 5, award: "key" }], [], true),
-        rule({ type: "hand" }, [narrate("Empty now."), { type: "award_points", points: 5, award: "key" }]),
-        rule({ type: "look" }, [narrate("A new pot.")], [{ type: "first_time" }]),
-        rule({ type: "look" }, [narrate("The same pot.")]),
-      ]),
-    });
+    const rules = [
+      rule({ type: "hand" }, [narrate("A key!"), { type: "give_item", item: "key" }, { type: "award_points", points: 5, award: "key" }], [], true),
+      rule({ type: "hand" }, [narrate("Empty now."), { type: "award_points", points: 5, award: "key" }]),
+      rule({ type: "look" }, [narrate("A new pot.")], [{ type: "first_time" }]),
+      rule({ type: "look" }, [narrate("The same pot.")]),
+    ];
+    const s = make({ yard: potRules(rules) });
     s.selectVerb("hand");
     s.primaryClick(POT);
     arrive(s);
@@ -194,7 +193,7 @@ describe("rules through the session", () => {
     run(s, 0.1);
     s.primaryClick(POT);
     expect(s.text?.text).toBe("The same pot.");
-    expect(s.state.fired).toEqual(["yard/hotspot:pot/0", "yard/hotspot:pot/1", "yard/hotspot:pot/2", "yard/hotspot:pot/3"]);
+    expect(s.state.fired).toEqual(rules.map((r) => `yard/hotspot:pot/${r.id}`));
   });
 
   it("runs the scene_enter rule on start and marks the scene visited", () => {
