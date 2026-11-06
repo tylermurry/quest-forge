@@ -52,6 +52,8 @@ export class Actions {
   constructor(
     readonly editor: Editor,
     readonly ws: WorkspaceState,
+    /** URL for showing a project file, when the host can serve one. */
+    readonly assetUrl?: (path: string) => string,
   ) {
     // Undo, redo and reloads can remove what tabs show. During an action the
     // action itself updates the workspace first (e.g. a tab follows Change ID).

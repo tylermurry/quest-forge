@@ -3,8 +3,11 @@ import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
 import { WorkspaceState } from "../model/workspace.ts";
+import { Dock } from "./Dock.tsx";
+import { EditorTabs } from "./EditorTabs.tsx";
+import { Inspector } from "./Inspector.tsx";
 import { ProjectBrowser } from "./ProjectBrowser.tsx";
-import { useEditor } from "./hooks.ts";
+import { useEditor, usePlatform } from "./hooks.ts";
 
 interface Props {
   root: string;
@@ -15,9 +18,10 @@ interface Props {
 const STATUS_TEXT = { saved: "Saved", unsaved: "Unsaved changes", saving: "Saving…" } as const;
 
 /** Main layout (spec 08): browser · tabs · inspector · dock. */
-export function Workspace({ editor, onClose }: Props) {
+export function Workspace({ root, editor, onClose }: Props) {
   const ed = useEditor(editor);
-  const [actions] = useState(() => new Actions(editor, new WorkspaceState()));
+  const platform = usePlatform();
+  const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
   const ws = actions.ws;
   useSyncExternalStore(ws.subscribe, () => ws.version);
   const status = ed.status;
@@ -75,9 +79,15 @@ export function Workspace({ editor, onClose }: Props) {
       <aside className="browser">
         <ProjectBrowser actions={actions} />
       </aside>
-      <main className="tabs">Editor</main>
-      <aside className="inspector">Inspector</aside>
-      <footer className="dock">Problems</footer>
+      <main className="tabs">
+        <EditorTabs actions={actions} />
+      </main>
+      <aside className="inspector" aria-label="Inspector">
+        <Inspector actions={actions} />
+      </aside>
+      <footer className="dock">
+        <Dock actions={actions} />
+      </footer>
     </div>
   );
 }
