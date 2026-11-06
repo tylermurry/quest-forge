@@ -3,3 +3,5 @@ export * from "./assets.ts";
 export * from "./flags.ts";
 export * from "./item.ts";
 export * from "./character.ts";
+export * from "./rules.ts";
+export * from "./game.ts";
