@@ -22,6 +22,8 @@ export interface Platform {
   saveRecent(list: RecentProject[]): Promise<void>;
   /** Dev page only: the project folders it can open (in place of a native dialog). */
   listProjects?(): Promise<string[]>;
+  /** A project folder to open at startup (the app's command-line argument), if any. */
+  launchProject?(): Promise<string | null>;
   /** How a folder path is shown to the user. */
   displayPath(root: string): string;
 }

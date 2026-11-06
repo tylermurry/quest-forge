@@ -58,4 +58,33 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `.claude/launch.json`; `engine-dev-alt` uses another port when 5174 is taken). `window.game` exposes
   the running game (`game.session`, `game.ui`) for debugging. Browser-tool clicks are mouse events:
   test touch by dispatching `PointerEvent`s with `pointerType: "touch"` on the canvas.
+- Schema project model (M3): `Project` splits content (docs, `folders`, `pendingFiles`) from disk state
+  (`files`, `saved`, `savedFolders`, `trash`). Undo swaps content and keeps disk state (`withDiskState`).
+  `planSave` also creates/removes section folders (empty ones get a `.keep`, D83) and moves image/audio
+  files to follow `assets.yaml` (moves, `.editor/trash`, pending imports, D88). `ProjectFs` has folder and
+  binary operations (`listFolders`, `writeBytes`, `move`, `makeFolder`, `removeFolder`, `removeTree`).
+- Editor package map (`packages/editor/src`): `model/` is DOM-free and holds all logic: `browser.ts`
+  (section trees, search), `commands.ts` (pure Project → Project browser commands, reference summaries),
+  `history.ts` (undo snapshots, merge keys, 500 steps), `editor.ts` (`Editor`: project + history +
+  autosave + save errors + outside-change reload), `workspace.ts` (tabs, selection, expanded folders; UI
+  state, never undone), `actions.ts` (UI intents → one labelled undo step each), `importing.ts`,
+  `template.ts` (blank project) + `png.ts`, `locate.ts` (jump-to), `recent.ts`. `platform/` adapts the
+  host: `platform.ts` (interface), `browser.ts` (dev page, HTTP to the sandbox), `tauri.ts` (Rust
+  commands). `ui/` is thin React that only calls `Actions`/`Editor`. Rust lives in `src-tauri/` and does
+  only file I/O confined to the project folder, watching, recent projects and dialogs (D90).
+- Run every editor change as `editor.apply(label, p => command(p), mergeKey?)`; commands throw
+  `CommandError` with a plain-English message, which becomes a notice. Typing fields pass a merge key
+  and call `history.breakMerge()` on blur (D84).
+- Editor tests: model tests in Node with `test/support/fixtures.ts` (`m1Project()`, `m1Copy()`); thin
+  component tests are `.tsx` files starting with `// @vitest-environment jsdom`. Never write to
+  `packages/engine/fixtures/m1` from the editor; use a copy.
+- Editor dev page: `corepack pnpm --filter @questforge/editor dev` (Vite with `--configLoader runner`,
+  port 5175, `editor-dev` in `.claude/launch.json`). It edits real folders in the gitignored
+  `packages/editor/.sandbox/` through `dev/sandbox.ts`, seeded with a copy of the m1 fixture
+  (`garden-m1`); delete a sandbox folder to reset it. `window.editor` exposes the open `Editor`.
+  Browser-tool drags don't start HTML5 drag-and-drop: dispatch `dragstart`/`dragover`/`drop`
+  `DragEvent`s with a shared `DataTransfer` on the tree rows instead.
+- Tauri app: needs Rust (rustup). `corepack pnpm --filter @questforge/editor tauri dev` runs the
+  editor in a native window (it starts the Vite dev server itself); `tauri build` makes the bundle.
+  Rust unit tests: `cargo test --manifest-path packages/editor/src-tauri/Cargo.toml`.
 - One ticket ≈ one commit, with tests. Commit messages are imperative and explain why.

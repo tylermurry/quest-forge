@@ -1,0 +1,21 @@
+[package]
+name = "questforge-editor"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The Rust side does only file I/O, folder watching and native dialogs (spec 08, D90).
+
+[lib]
+name = "questforge_editor_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2"
+notify = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

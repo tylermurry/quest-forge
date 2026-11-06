@@ -14,7 +14,18 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void platform.loadRecent().then(setRecent);
+    let live = true;
+    void (async () => {
+      const list = await platform.loadRecent();
+      if (!live) return;
+      setRecent(list);
+      const launch = await platform.launchProject?.();
+      if (live && launch) void open(launch, list);
+    })();
+    return () => {
+      live = false;
+    };
+    // Runs once per platform; `open` is recreated every render.
   }, [platform]);
 
   const remember = (list: RecentProject[]) => {
@@ -22,12 +33,12 @@ export function App() {
     void platform.saveRecent(list);
   };
 
-  const open = async (root: string) => {
+  const open = async (root: string, known = recent) => {
     setError(null);
     try {
       const ed = await Editor.open(platform.host(root));
       (window as unknown as { editor: Editor }).editor = ed;
-      remember(addRecent(recent, { root, title: projectTitle(ed.project), openedAt: Date.now() }));
+      remember(addRecent(known, { root, title: projectTitle(ed.project), openedAt: Date.now() }));
       setEditor({ root, editor: ed });
     } catch (e) {
       setError(`Couldn't open ${platform.displayPath(root)}: ${e instanceof Error ? e.message : String(e)}`);

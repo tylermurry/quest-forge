@@ -67,3 +67,19 @@ describe("start screen (spec 08)", () => {
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Couldn't create the project"));
   });
 });
+
+describe("launching with a folder", () => {
+  it("opens the project passed on the command line", async () => {
+    const platform = memoryPlatform();
+    const { createBlankProject } = await import("../src/model/template.ts");
+    platform.disks.set("/games/Cli", new MemoryFs());
+    await createBlankProject(platform.disks.get("/games/Cli")!, "From the CLI");
+    platform.launchProject = async () => "/games/Cli";
+    render(
+      <PlatformContext.Provider value={platform}>
+        <App />
+      </PlatformContext.Provider>,
+    );
+    await waitFor(() => expect(screen.getByText("From the CLI")).toBeTruthy());
+  });
+});
