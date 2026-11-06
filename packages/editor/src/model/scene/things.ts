@@ -52,11 +52,16 @@ const points = (n: number) => `${n} point${n === 1 ? "" : "s"}`;
  * An object whose image isn't loaded yet sorts by its top edge.
  */
 export function drawOrder(scene: SceneFile, images: ImageLookup): ThingRef[] {
+  return drawOrderWithBaselines(scene, images).map((x) => x.ref);
+}
+
+/** `drawOrder` with each thing's sort line. */
+export function drawOrderWithBaselines(scene: SceneFile, images: ImageLookup): { ref: ThingRef; baseline: number }[] {
   const items = [
     ...scene.objects.map((o) => ({ ref: { list: "objects" as const, key: o.id }, baseline: objectBaseline(o, images(o.image)?.size.h ?? 0) })),
     ...scene.characters.map((c) => ({ ref: { list: "characters" as const, key: c.character }, baseline: c.y })),
   ];
-  return sortByBaseline(items).map((x) => x.ref);
+  return sortByBaseline(items);
 }
 
 /** The rows under each layer in the Layers panel, top of the stack first. */

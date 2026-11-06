@@ -14,6 +14,9 @@ import {
   movePolygon,
   moveSpawn,
   moveVertex,
+  placeCharacter,
+  placeImage,
+  reorderObject,
   sceneOf,
   setBaseline,
   setDepthY,
@@ -24,7 +27,7 @@ import { SceneController, type PointerInput } from "./controller.ts";
 import type { Frame } from "./frame.ts";
 import { hitTest, VERTEX_PX, type Hit } from "./hit.ts";
 import { snapPoint } from "./snap.ts";
-import { LIST_LAYER, type ThingRef } from "./things.ts";
+import { drawOrderWithBaselines, LIST_LAYER, type ThingRef } from "./things.ts";
 import { snapPixel, toScene } from "./view.ts";
 
 /** A Select/Move drag in progress. */
@@ -170,6 +173,46 @@ export class SceneTools extends SceneController {
 
   override cancel() {
     if (!this.abort()) super.cancel();
+  }
+
+  // ── Objects layer (spec 09, D95, D106) ──────────────────────────────────────
+
+  /** An image or character dragged from the browser and dropped at a screen point. */
+  dropEntry(item: { section: string; id: string }, screen: Vec): boolean {
+    const at = snapPixel(toScene(this.transform, screen));
+    const id = this.sceneId;
+    if (this.ui.locked.includes("objects")) {
+      this.editor.showNotice({ kind: "error", text: "The Objects layer is locked." });
+      return false;
+    }
+    if (item.section === "image") {
+      const size = this.host.images(item.id)?.size;
+      const made = this.editor.applyWith("Place object", (p) => placeImage(p, id, item.id, at, size));
+      if (!made) return false;
+      this.selectThing({ list: "objects", key: made.id });
+      return true;
+    }
+    if (item.section === "character") {
+      if (!this.editor.apply("Place character", (p) => placeCharacter(p, id, item.id, at))) return false;
+      this.selectThing({ list: "characters", key: item.id });
+      return true;
+    }
+    this.editor.showNotice({ kind: "error", text: "Only images and characters can be placed in a scene." });
+    return false;
+  }
+
+  /**
+   * Moves an object in the Objects list, which shows draw order front first (D95).
+   * `frontIndex` is its new place in that list.
+   */
+  reorder(objectId: string, frontIndex: number): boolean {
+    const scene = this.savedScene;
+    if (!scene) return false;
+    const order = drawOrderWithBaselines(scene, this.host.images);
+    const n = order.length - 1; // without the moved object
+    const backIndex = n - Math.max(0, Math.min(n, frontIndex));
+    const id = this.sceneId;
+    return this.editor.apply("Reorder object", (p) => reorderObject(p, id, objectId, order, backIndex));
   }
 
   /** Files dropped from the OS onto the canvas (D98). */

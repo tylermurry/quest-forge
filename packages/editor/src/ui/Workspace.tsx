@@ -1,3 +1,4 @@
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from "@dnd-kit/core";
 import { CircleAlert, CircleCheck, LoaderCircle, PanelBottom, PanelLeft, PanelRight, Redo2, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDefaultLayout, type PanelImperativeHandle } from "react-resizable-panels";
@@ -74,6 +75,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
   const ws = actions.ws;
   useSyncExternalStore(ws.subscribe, () => ws.version);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const storage = layoutStorage();
   const columns = useDefaultLayout({ id: "questforge.columns", storage });
   const rows = useDefaultLayout({ id: "questforge.rows", storage });
@@ -133,6 +135,8 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
 
   return (
     <TooltipProvider delayDuration={500}>
+    {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases (D92). */}
+    <DndContext sensors={sensors} collisionDetection={pointerWithin}>
     <div className="flex h-full flex-col">
       <TitleBar>
         <span className="truncate text-[13px] font-semibold">{projectTitle(ed.project)}</span>
@@ -192,6 +196,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
+    </DndContext>
     </TooltipProvider>
   );
 }

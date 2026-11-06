@@ -300,3 +300,75 @@ export function setSpawn(p: Project, sceneId: string, id: string, at: Placement)
     return { ...s, spawns: { ...s.spawns, [id]: { x: clampX(at.x), y: clampY(at.y), facing: at.facing } } };
   });
 }
+
+// ── Objects layer (spec 09, D95, D106) ───────────────────────────────────────
+
+/** An object ID from its image's ID: `palm_img` → `palm`. */
+export const objectIdFor = (imageId: string) => imageId.replace(/_(img|image|sprite|png)$/, "") || imageId;
+
+/**
+ * Places an image as a new object with its bottom-centre at the drop point (where
+ * its feet would be), or its top-left there if the image's size isn't known yet.
+ */
+export function placeImage(p: Project, sceneId: string, imageId: string, at: Point, size?: { w: number; h: number }): { project: Project; id: string } {
+  if (!p.assets?.data.images.some((i) => i.id === imageId)) throw new CommandError(`There's no image with ID ${imageId}.`);
+  let id = "";
+  const project = updateScene(p, sceneId, (s) => {
+    id = uniqueId(objectIdFor(imageId), listIds(s, "objects"));
+    const x = size ? Math.round(at[0] - size.w / 2) : at[0];
+    const y = size ? Math.round(at[1] - size.h) : at[1];
+    const object = {
+      id,
+      image: imageId,
+      x: Math.max(-SCENE_WIDTH, Math.min(SCENE_WIDTH * 2, x)),
+      y: Math.max(-SCENE_HEIGHT, Math.min(SCENE_HEIGHT * 2, y)),
+      visible: true,
+      rules: [],
+    };
+    return { ...s, objects: [...s.objects, object] };
+  });
+  return { project, id };
+}
+
+/** Places a character with its feet at the drop point. The player and repeats are refused (D106). */
+export function placeCharacter(p: Project, sceneId: string, character: string, at: Point): Project {
+  if (!p.characters.some((c) => c.data.id === character)) throw new CommandError(`There's no character with ID ${character}.`);
+  if (p.game?.data.player === character) throw new CommandError("The player appears at spawn points, so they aren't placed in scenes. Add a spawn point instead.");
+  return updateScene(p, sceneId, (s) => {
+    if (s.characters.some((c) => c.character === character)) throw new CommandError(`${character} is already in this scene. Move them instead.`);
+    return { ...s, characters: [...s.characters, { character, x: clampX(at[0]), y: clampY(at[1]), facing: "down", visible: true, rules: [] }] };
+  });
+}
+
+/**
+ * Moves an object in the Objects list (D95). The list is draw order, so this sets
+ * the object's baseline between its new neighbours; with no room between them it
+ * takes the one behind's baseline and moves after it in file order (ties keep file
+ * order). `order` is back to front, as `drawOrder` returns; `index` is the object's
+ * new place in it (after removing it).
+ */
+export function reorderObject(p: Project, sceneId: string, id: string, order: readonly { ref: ThingRef; baseline: number }[], index: number): Project {
+  return updateScene(p, sceneId, (s) => {
+    const o = s.objects.find((x) => x.id === id);
+    if (!o) throw gone();
+    const rest = order.filter((x) => !(x.ref.list === "objects" && x.ref.key === id));
+    const behind = rest[index - 1];
+    const front = rest[index];
+    let baseline: number;
+    let after: string | null = null;
+    if (behind && front) {
+      if (front.baseline - behind.baseline >= 2) baseline = Math.round((behind.baseline + front.baseline) / 2);
+      else {
+        baseline = behind.baseline;
+        if (behind.ref.list === "objects") after = behind.ref.key;
+      }
+    } else if (behind) baseline = behind.baseline + 1;
+    else if (front) baseline = front.baseline - 1;
+    else return s;
+    const moved = { ...o, baseline: clampY(baseline) };
+    let objects = s.objects.filter((x) => x.id !== id);
+    const at = after ? objects.findIndex((x) => x.id === after) + 1 : objects.length;
+    objects = after ? [...objects.slice(0, at), moved, ...objects.slice(at)] : s.objects.map((x) => (x.id === id ? moved : x));
+    return { ...s, objects };
+  });
+}

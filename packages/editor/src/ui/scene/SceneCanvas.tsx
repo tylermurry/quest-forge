@@ -12,12 +12,15 @@ export function SceneCanvas({
   redraw,
   onDropFiles,
   dropRef,
+  highlight,
 }: {
   controller: SceneController;
   /** Subscribes to other things that change the picture (decoded images). */
   redraw?: (listener: () => void) => () => void;
   onDropFiles?(files: File[], screen: [number, number]): void;
   dropRef?: (el: HTMLElement | null) => void;
+  /** Something droppable is over the canvas. */
+  highlight?: boolean;
 }) {
   const wrap = useRef<HTMLDivElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
@@ -161,6 +164,7 @@ export function SceneCanvas({
         onContextMenu={(e) => e.preventDefault()}
         onAuxClick={(e) => e.preventDefault()}
       />
+      {highlight && <div className="ring-primary pointer-events-none absolute inset-0 ring-2 ring-inset" />}
     </div>
   );
 }

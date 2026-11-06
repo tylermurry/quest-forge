@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Search } from "lucide-react";
-import { DndContext, DragOverlay, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
+import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
 import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
@@ -73,7 +73,11 @@ function MenuRow({
 }
 
 /** Drop target data: a folder (`""` = the section root). */
+/** Browser rows carry their DragItem; other draggables (Objects rows) carry other data. */
+const isDragItem = (x: unknown): x is DragItem => !!x && typeof x === "object" && "section" in x && ((x as DragItem).kind === "entry" || (x as DragItem).kind === "folder");
+
 interface DropTarget {
+  kind: "browserFolder";
   section: Section;
   folder: string;
 }
@@ -179,15 +183,18 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
   };
 
   // ── Drag and drop: moves inside a section (D83, D92); files from the OS (D88) ──
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  // The DndContext is the Workspace's (rows can also be dropped on a scene canvas); listen to it here.
   const [dragging, setDragging] = useState<DragItem | null>(null);
-  const onDragStart = (e: DragStartEvent) => setDragging((e.active.data.current as DragItem | undefined) ?? null);
-  const onDragEnd = (e: DragEndEvent) => {
-    setDragging(null);
-    const item = e.active.data.current as DragItem | undefined;
-    const target = e.over?.data.current as DropTarget | undefined;
-    if (item && target) actions.drop(item, target.section, target.folder);
-  };
+  useDndMonitor({
+    onDragStart: (e: DragStartEvent) => setDragging(isDragItem(e.active.data.current) ? e.active.data.current : null),
+    onDragEnd: (e: DragEndEvent) => {
+      setDragging(null);
+      const item = e.active.data.current;
+      const target = e.over?.data.current as DropTarget | undefined;
+      if (isDragItem(item) && target?.kind === "browserFolder") actions.drop(item, target.section, target.folder);
+    },
+    onDragCancel: () => setDragging(null),
+  });
   const filesInto = (section: Section, folder: string) => (files: File[]) => onImport(section, folder, files);
   const draggingLabel =
     dragging &&
@@ -242,7 +249,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 style={indent(depth)}
                 aria-selected={selected}
                 drag={isEditing ? undefined : { section: f.section, kind: "folder", path: f.path }}
-                drop={{ section: f.section, folder: f.path }}
+                drop={{ kind: "browserFolder", section: f.section, folder: f.path }}
                 onFiles={filesInto(f.section, f.path)}
                 onClick={() => ws.select({ kind: "folder", section: f.section, path: f.path })}
                 onDoubleClick={() => ws.toggleFolder(f.section, f.path)}
@@ -319,7 +326,6 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2" />
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
-      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
         {trees.map(({ section, title, tree }) => {
           const shown = filterTree(tree, ws.search);
@@ -331,7 +337,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
                 className={cn("text-muted-foreground text-[11px] font-semibold tracking-wider uppercase", rowClass(false))}
-                drop={{ section, folder: "" }}
+                drop={{ kind: "browserFolder", section, folder: "" }}
                 onFiles={filesInto(section, "")}
                 onClick={() => ws.toggleFolder(section, "")}
               >
@@ -354,7 +360,6 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           </div>
         )}
       </DragOverlay>
-      </DndContext>
       {popup?.kind === "delete" && (
         <ConfirmDelete
           warning={popup.warning}

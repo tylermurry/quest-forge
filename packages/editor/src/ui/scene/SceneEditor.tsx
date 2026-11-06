@@ -1,10 +1,11 @@
 import { Eye, EyeOff, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, Pentagon, Route, Scan, Square, Trash2, ZoomIn, ZoomOut } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useDndMonitor, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Actions, DeleteWarning } from "../../model/actions.ts";
 import type { CommandId } from "../../model/appCommands.ts";
 import { SceneTools } from "../../model/scene/tools.ts";
 import { LAYERS, LAYER_LABEL, LAYER_TOOLS, TOOL_LABEL, type Aids, type Layer, type Tool } from "../../model/scene/sceneUi.ts";
-import { LIST_LAYER, layerRows, sameThing, type ThingRef } from "../../model/scene/things.ts";
+import { LIST_LAYER, layerRows, sameThing, type LayerRow, type ThingRef } from "../../model/scene/things.ts";
 import { zoomLabel } from "../../model/scene/view.ts";
 import { Button } from "../components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip.tsx";
@@ -102,6 +103,28 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c, registry, ws]);
 
+  // Browser rows dropped on the canvas place objects and characters (spec 09); Objects rows reorder (D95).
+  const canvasDrop = useDroppable({ id: `scene-canvas:${sceneId}`, data: { kind: "sceneCanvas" } });
+  const canvasEl = useRef<HTMLElement | null>(null);
+  useDndMonitor({
+    onDragEnd: (e: DragEndEvent) => {
+      const target = e.over?.data.current as { kind?: string; index?: number } | undefined;
+      const item = e.active.data.current as { kind?: string; section?: string; id?: string } | undefined;
+      if (!target || !item) return;
+      if (target.kind === "sceneCanvas" && item.kind === "entry" && item.section && item.id) {
+        const start = e.activatorEvent as PointerEvent | MouseEvent | null;
+        const r = canvasEl.current?.getBoundingClientRect();
+        if (!start || !r) return;
+        c.dropEntry({ section: item.section, id: item.id }, [start.clientX + e.delta.x - r.left, start.clientY + e.delta.y - r.top]);
+      }
+      if (target.kind === "objectSlot" && item.kind === "layerObject" && item.id && target.index !== undefined) c.reorder(item.id, target.index);
+    },
+  });
+  const draggingEntry = (() => {
+    const a = canvasDrop.active?.data.current as { kind?: string; section?: string } | undefined;
+    return a?.kind === "entry" && (a.section === "image" || a.section === "character");
+  })();
+
   const scene = c.scene;
   if (!scene) return null;
   const ui = c.ui;
@@ -147,7 +170,16 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
       </div>
       <div className="flex min-h-0 flex-1">
         <LayersPanel c={c} onDelete={remove} />
-        <SceneCanvas controller={c} redraw={images.subscribe} onDropFiles={(files, at) => c.dropFiles?.(files, at)} />
+        <SceneCanvas
+          controller={c}
+          redraw={images.subscribe}
+          onDropFiles={(files, at) => c.dropFiles?.(files, at)}
+          dropRef={(el) => {
+            canvasEl.current = el;
+            canvasDrop.setNodeRef(el);
+          }}
+          highlight={draggingEntry && canvasDrop.isOver}
+        />
       </div>
       {confirm && (
         <ConfirmDelete
@@ -160,6 +192,30 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
         />
       )}
     </div>
+  );
+}
+
+/**
+ * A row in the Layers panel. Object rows can be dragged onto another row of the
+ * Objects list to change draw order (D95); every Objects row is a drop slot.
+ */
+function LayerRowItem({ row, index, className, label, children }: { row: LayerRow; index: number; className: string; label: string; children: React.ReactNode }) {
+  const isObjects = LIST_LAYER[row.ref.list] === "objects";
+  const drag = useDraggable({ id: `layer-row:${row.ref.list}:${row.ref.key}`, data: { kind: "layerObject", id: row.ref.key }, disabled: !row.draggable });
+  const drop = useDroppable({ id: `object-slot:${row.ref.list}:${row.ref.key}`, data: { kind: "objectSlot", index }, disabled: !isObjects });
+  const over = drop.isOver && (drop.active?.data.current as { kind?: string } | undefined)?.kind === "layerObject";
+  return (
+    <li
+      ref={(el) => {
+        drag.setNodeRef(el);
+        drop.setNodeRef(el);
+      }}
+      className={cn(className, drag.isDragging && "opacity-40", over && "shadow-[inset_0_2px_0_var(--color-primary)]")}
+      aria-label={label}
+      {...(row.draggable ? { ...drag.attributes, ...drag.listeners, tabIndex: undefined, role: undefined } : {})}
+    >
+      {children}
+    </li>
   );
 }
 
@@ -201,10 +257,10 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
               <span className="text-muted-foreground pr-1">{rows[layer].length || ""}</span>
             </div>
             <ul>
-              {rows[layer].map((row) => {
+              {rows[layer].map((row, index) => {
                 const selected = sameThing(sel, row.ref);
                 return (
-                  <li key={`${row.ref.list}:${row.ref.key}`} className={cn("group/row hover:bg-muted flex h-6 items-center gap-1 pr-1 pl-8", selected && "bg-selection hover:bg-selection")} aria-label={`${LAYER_LABEL[layer]}: ${row.title}`}>
+                  <LayerRowItem key={`${row.ref.list}:${row.ref.key}`} row={row} index={index} className={cn("group/row hover:bg-muted flex h-6 items-center gap-1 pr-1 pl-8", selected && "bg-selection hover:bg-selection")} label={`${LAYER_LABEL[layer]}: ${row.title}`}>
                     <button
                       className={cn("min-w-0 flex-1 truncate text-left", (hidden || locked) && "text-muted-foreground")}
                       aria-selected={selected}
@@ -220,7 +276,7 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                         <Trash2 />
                       </Button>
                     )}
-                  </li>
+                  </LayerRowItem>
                 );
               })}
             </ul>

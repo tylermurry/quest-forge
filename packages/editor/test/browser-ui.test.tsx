@@ -10,6 +10,7 @@ import { WorkspaceState } from "../src/model/workspace.ts";
 import { ProjectBrowser } from "../src/ui/ProjectBrowser.tsx";
 import { useEditor } from "../src/ui/hooks.ts";
 import { useSyncExternalStore } from "react";
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from "@dnd-kit/core";
 import { m1Project } from "./support/fixtures.ts";
 
 afterEach(cleanup);
@@ -17,7 +18,12 @@ afterEach(cleanup);
 function Harness({ actions }: { actions: Actions }) {
   useEditor(actions.editor);
   useSyncExternalStore(actions.ws.subscribe, () => actions.ws.version);
-  return <ProjectBrowser actions={actions} />;
+  // The Workspace owns the drag context (rows also drop on scene canvases).
+  return (
+    <DndContext sensors={useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))} collisionDetection={pointerWithin}>
+      <ProjectBrowser actions={actions} />
+    </DndContext>
+  );
 }
 
 async function mount() {
