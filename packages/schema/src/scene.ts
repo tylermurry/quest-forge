@@ -8,12 +8,29 @@ export const DepthLine = z.strictObject({ y: SceneY, scale: z.number().positive(
 /** One outer polygon plus holes (D34). */
 export const Walkable = z.strictObject({ outer: Polygon, holes: z.array(Polygon) });
 
+/** An object's animation (D111): cells of `image`'s sheet (D66) at `fps`. */
+const objectAnimationFields = {
+  image: Id,
+  frames: z.array(z.int().min(0)).min(1),
+  fps: z.number().positive().max(60),
+};
+/** The looping animation an object plays at rest while visible (D111, D112). */
+export const ObjectAnimation = z.strictObject(objectAnimationFields);
+export type ObjectAnimation = z.infer<typeof ObjectAnimation>;
+/** A one-shot for `play_animation`; IDs are unique within the object (D111). */
+export const NamedObjectAnimation = z.strictObject({ id: Id, ...objectAnimationFields });
+export type NamedObjectAnimation = z.infer<typeof NamedObjectAnimation>;
+
 /** A layered image. Position is the image's top-left and may sit partly off-scene. */
 export const SceneObject = z.strictObject({
   id: Id,
   /** Hover label; set when the object is interactive. */
   name: Text.optional(),
   image: Id,
+  /** Loops while visible; absent: the object shows frame 0 of `image` (D112). */
+  animation: ObjectAnimation.optional(),
+  /** One-shots played by `play_animation`, then back to rest (D111, D112). */
+  animations: z.array(NamedObjectAnimation).optional(),
   x: z.int().min(-SCENE_WIDTH).max(SCENE_WIDTH * 2),
   y: z.int().min(-SCENE_HEIGHT).max(SCENE_HEIGHT * 2),
   /** Occlusion sort line; defaults to the image's bottom edge at runtime (spec 04). */

@@ -1,7 +1,8 @@
 import { inWalkable, polygonIssue, polygonWithin, type PolygonIssue } from "./geometry.ts";
 import { describePath, type DataPath, type FileKind, type Problem, type ProblemCode } from "./problems.ts";
 import { allDocs, filesAfterSave, type Doc, type Project } from "./project.ts";
-import { collectReferences, type RefKind, type Reference } from "./references.ts";
+import { animationScope, collectReferences, type RefKind, type Reference } from "./references.ts";
+import type { CharacterFile } from "./character.ts";
 import type { Polygon } from "./common.ts";
 import type { SceneFile } from "./scene.ts";
 import type { DialogueFile } from "./dialogue.ts";
@@ -21,6 +22,8 @@ const KIND_NOUN: Record<RefKind, string> = {
   spawn: "spawn point",
   object: "object",
   node: "node",
+  animation: "animation",
+  slot: "animation",
 };
 
 export function levenshtein(a: string, b: string): number {
@@ -82,7 +85,7 @@ const didYouMean = (s: string | undefined) => (s ? ` Did you mean ${s}?` : "");
 function checkReferences(project: Project, out: Collector) {
   const ids = (docs: Doc<{ id: string }>[]) => new Set(docs.map((d) => d.data.id));
   const flags = project.flags?.data.flags ?? [];
-  const known: Record<Exclude<RefKind, "spawn" | "object" | "node">, Set<string>> = {
+  const known: Record<Exclude<RefKind, "spawn" | "object" | "node" | "animation" | "slot">, Set<string>> = {
     scene: ids(project.scenes),
     item: ids(project.items),
     character: ids(project.characters),
@@ -94,6 +97,8 @@ function checkReferences(project: Project, out: Collector) {
   };
   const sceneById = new Map(project.scenes.map((s) => [s.data.id, s.data]));
   const dialogueById = new Map(project.dialogues.map((d) => [d.data.id, d.data]));
+  const characterById = new Map(project.characters.map((c) => [c.data.id, c.data]));
+  const objectByScope = new Map(project.scenes.flatMap((s) => s.data.objects.map((o) => [animationScope(s.data.id, o.id), o] as const)));
 
   const scopedIds = (ref: Reference): Set<string> | null => {
     if (ref.kind === "spawn" || ref.kind === "object") {
@@ -104,6 +109,14 @@ function checkReferences(project: Project, out: Collector) {
     if (ref.kind === "node") {
       const d = dialogueById.get(ref.scope!);
       return d ? new Set(d.nodes.map((n) => n.id)) : null;
+    }
+    if (ref.kind === "animation") {
+      const o = objectByScope.get(ref.scope!);
+      return o ? new Set((o.animations ?? []).map((a) => a.id)) : null; // a missing object is reported itself
+    }
+    if (ref.kind === "slot") {
+      const c = characterById.get(ref.scope!);
+      return c ? playableSlots(c) : null;
     }
     return known[ref.kind];
   };
@@ -130,6 +143,12 @@ function checkReferences(project: Project, out: Collector) {
       message = `uses object ${ref.id} in ${sceneName}, which doesn't exist.${didYouMean(suggest(ref.id, pool))}`;
     } else if (ref.kind === "node") {
       message = `connects to node ${ref.id}, which doesn't exist.`;
+    } else if (ref.kind === "animation") {
+      const objectId = ref.scope!.slice(ref.scope!.indexOf("/") + 1);
+      message = `plays animation ${ref.id} on object ${objectId}, which has no animation with that ID.${didYouMean(suggest(ref.id, pool))}`;
+    } else if (ref.kind === "slot") {
+      const name = characterById.get(ref.scope!)?.name ?? ref.scope;
+      message = `plays animation ${ref.id} on ${name}, who has no animation in that slot.${didYouMean(suggest(ref.id, pool))}`;
     } else {
       message = `uses ${noun} ${ref.id}, which doesn't exist.${didYouMean(suggest(ref.id, pool))}`;
     }
@@ -176,6 +195,7 @@ function checkDuplicates(project: Project, out: Collector) {
     inList("scene", path, ["objects"], data.objects, "object in this scene");
     inList("scene", path, ["hotspots"], data.hotspots, "hotspot in this scene");
     inList("scene", path, ["regions"], data.regions, "region in this scene");
+    data.objects.forEach((o, i) => inList("scene", path, ["objects", i, "animations"], o.animations ?? [], "animation of this object"));
     dupes(data.characters, (c) => c.character, (c, i) => {
       out.error("duplicate_id", "scene", path, ["characters", i, "character"], `places ${c.character} in this scene twice.`, ["characters", i]);
     });
@@ -271,18 +291,26 @@ function checkSprites(project: Project, out: Collector) {
       );
     }
   });
+  const frames = (fileKind: FileKind, file: string, at: DataPath, crumb: DataPath, name: string, anim: { image: string; frames: number[] }) => {
+    const img = images.get(anim.image);
+    if (!img) return; // reported as a missing reference
+    const count = img.sheet ? img.sheet.columns * img.sheet.rows : 1;
+    anim.frames.forEach((f, j) => {
+      if (f < count) return;
+      const has = count === 1 ? "has only 1 frame (it isn't sliced into a sheet)" : `has only ${count} frames (0 to ${count - 1})`;
+      out.error("frame_out_of_range", fileKind, file, [...at, "frames", j], `${name} uses frame ${f}, but image ${img.id} ${has}.`, crumb);
+    });
+  };
   for (const { path, data } of project.characters) {
     for (const [slot, anim] of Object.entries(data.animations)) {
-      if (!anim) continue;
-      const img = images.get(anim.image);
-      if (!img) continue; // reported as a missing reference
-      const count = img.sheet ? img.sheet.columns * img.sheet.rows : 1;
-      anim.frames.forEach((f, j) => {
-        if (f < count) return;
-        const has = count === 1 ? "has only 1 frame (it isn't sliced into a sheet)" : `has only ${count} frames (0 to ${count - 1})`;
-        out.error("frame_out_of_range", "character", path, ["animations", slot, "frames", j], `animation ${slot} uses frame ${f}, but image ${img.id} ${has}.`, []);
-      });
+      if (anim) frames("character", path, ["animations", slot], [], `animation ${slot}`, anim);
     }
+  }
+  for (const { path, data } of project.scenes) {
+    data.objects.forEach((o, i) => {
+      if (o.animation) frames("scene", path, ["objects", i, "animation"], ["objects", i], "its looping animation", o.animation);
+      o.animations?.forEach((a, j) => frames("scene", path, ["objects", i, "animations", j], ["objects", i], `animation ${a.id}`, a));
+    });
   }
 }
 
@@ -319,3 +347,10 @@ export function validateProject(project: Project): Problem[] {
 
 /** True if any problem blocks playtest/export (D38). */
 export const hasBlockingErrors = (problems: Problem[]) => problems.some((p) => p.severity === "error");
+
+/** Slots `play_animation` can play on a character: filled ones, plus mirrored lefts (D39). */
+function playableSlots(c: CharacterFile): Set<string> {
+  const slots = new Set(Object.entries(c.animations).flatMap(([slot, a]) => (a ? [slot] : [])));
+  if (c.mirrorLeft) for (const s of [...slots]) if (s.endsWith("_right")) slots.add(s.replace(/_right$/, "_left"));
+  return slots;
+}

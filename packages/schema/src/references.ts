@@ -8,7 +8,11 @@ import { ASSET_LAYOUT, allDocs, assetPath, folderOf, type AssetKind, type Doc, t
 import type { Action, AnyRule, Condition, Trigger } from "./rules.ts";
 import type { SceneFile } from "./scene.ts";
 
-/** What an ID points at. `spawn` and `object` IDs are scoped to a scene; `node` to a dialogue. */
+/**
+ * What an ID points at. `spawn` and `object` IDs are scoped to a scene; `node` to a dialogue;
+ * `animation` (an object's one-shot, D111) to `<scene>/<object>`; `slot` (a character's
+ * animation slot played by `play_animation`) to the character.
+ */
 export type RefKind =
   | "scene"
   | "item"
@@ -20,16 +24,21 @@ export type RefKind =
   | "audio"
   | "spawn"
   | "object"
-  | "node";
+  | "node"
+  | "animation"
+  | "slot";
 
 export interface Reference {
   kind: RefKind;
   id: string;
-  /** Scene ID for spawn/object refs, dialogue ID for node refs. */
+  /** Scene ID for spawn/object refs, dialogue ID for node refs, `<scene>/<object>` for animation refs, character ID for slot refs. */
   scope?: string;
   fileKind: FileKind;
   location: Location;
 }
+
+/** The scope of an object's one-shot animation IDs (D111). */
+export const animationScope = (scene: string, object: string) => `${scene}/${object}`;
 
 type Push = (kind: RefKind, id: string, path: DataPath, scope?: string) => void;
 
@@ -79,9 +88,13 @@ function actionRefs(a: Action, at: DataPath, push: Push) {
       push("scene", a.scene, [...at, "scene"]);
       return push("object", a.object, [...at, "object"], a.scene);
     case "play_animation":
-      if (a.target.kind === "character") return push("character", a.target.character, [...at, "target", "character"]);
+      if (a.target.kind === "character") {
+        push("character", a.target.character, [...at, "target", "character"]);
+        return push("slot", a.animation, [...at, "animation"], a.target.character);
+      }
       push("scene", a.target.scene, [...at, "target", "scene"]);
-      return push("object", a.target.object, [...at, "target", "object"], a.target.scene);
+      push("object", a.target.object, [...at, "target", "object"], a.target.scene);
+      return push("animation", a.animation, [...at, "animation"], animationScope(a.target.scene, a.target.object));
     case "set_character_position":
       push("character", a.character, [...at, "character"]);
       return push("scene", a.scene, [...at, "scene"]);
@@ -112,6 +125,8 @@ function sceneRefs(s: SceneFile, push: Push) {
   if (s.music !== undefined) push("audio", s.music, ["music"]);
   s.objects.forEach((o, i) => {
     push("image", o.image, ["objects", i, "image"]);
+    if (o.animation) push("image", o.animation.image, ["objects", i, "animation", "image"]);
+    o.animations?.forEach((a, j) => push("image", a.image, ["objects", i, "animations", j, "image"]));
     rulesRefs(o.rules, ["objects", i, "rules"], push);
   });
   s.characters.forEach((c, i) => {
@@ -315,6 +330,45 @@ export function renameSceneId(project: Project, sceneId: string, kind: SceneIdKi
       list.forEach((x) => x.id === from && (x.id = to));
     }
   };
+  const next: Project = { ...project };
+  next.game = project.game && edit(project.game);
+  next.scenes = project.scenes.map((d) => edit(d, d.data.id === sceneId ? define : undefined));
+  next.dialogues = project.dialogues.map((d) => edit(d));
+  next.items = project.items.map((d) => edit(d));
+  next.characters = project.characters.map((d) => edit(d));
+  return next;
+}
+
+/**
+ * Changes the ID of one of an object's one-shot animations (D111) and every
+ * `play_animation` that plays it.
+ */
+export function renameObjectAnimation(project: Project, sceneId: string, objectId: string, from: string, to: string): Project {
+  if (!Id.safeParse(to).success) throw new RenameError(`"${to}" isn't a valid ID`);
+  const doc = project.scenes.find((s) => s.data.id === sceneId);
+  const object = doc?.data.objects.find((o) => o.id === objectId);
+  if (!doc || !object) throw new RenameError(`No object ${objectId} in scene ${sceneId}`);
+  const ids = (object.animations ?? []).map((a) => a.id);
+  if (!ids.includes(from)) throw new RenameError(`No animation with ID ${from}`);
+  if (from === to) return project;
+  if (ids.includes(to)) throw new RenameError(`This object already has an animation with ID ${to}`);
+
+  const scope = animationScope(sceneId, objectId);
+  const byFile = new Map<string, DataPath[]>();
+  for (const ref of collectReferences(project)) {
+    if (ref.kind !== "animation" || ref.scope !== scope || ref.id !== from) continue;
+    byFile.set(ref.location.file, [...(byFile.get(ref.location.file) ?? []), ref.location.path]);
+  }
+  const edit = <T>(d: Doc<T>, extra?: (data: T) => void): Doc<T> => {
+    const paths = byFile.get(d.path);
+    if (!paths && !extra) return d;
+    const data = structuredClone(d.data);
+    for (const p of paths ?? []) setAt(data, p, to);
+    extra?.(data);
+    return { ...d, data };
+  };
+  const define = (data: SceneFile) =>
+    data.objects.find((o) => o.id === objectId)!.animations!.forEach((a) => a.id === from && (a.id = to));
   const next: Project = { ...project };
   next.game = project.game && edit(project.game);
   next.scenes = project.scenes.map((d) => edit(d, d.data.id === sceneId ? define : undefined));
