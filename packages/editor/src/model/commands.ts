@@ -150,12 +150,22 @@ const NEW_NAME: Record<AssetKind | "flag", string> = {
 /** Creates a new asset or flag in a folder. Returns the project and the new ID. */
 export function createEntry(p: Project, section: Section, folder: string): { project: Project; id: string } {
   if (section === "image" || section === "audio") throw new CommandError("Images and sounds are added by importing files.");
-  if (section === "flag") {
-    const id = uniqueId(NEW_NAME.flag, definedIds(p, "flag"));
-    const project = setFlags(p, (d) => ({ ...d, flags: [...d.flags, { id, type: "bool", initial: false, ...(folder && { folder }) }] }));
-    return { project, id };
-  }
-  const name = NEW_NAME[section];
+  if (section === "flag") return createFlag(p, NEW_NAME.flag, "bool", folder);
+  return createNamedEntry(p, section, NEW_NAME[section], folder);
+}
+
+/** A new flag or counter whose ID comes from `name` (made unique). */
+export function createFlag(p: Project, name: string, type: "bool" | "counter", folder = ""): { project: Project; id: string } {
+  const id = uniqueId(slugify(name, "flag"), definedIds(p, "flag"));
+  const flag = type === "bool" ? ({ id, type, initial: false } as const) : ({ id, type, initial: 0 } as const);
+  const project = setFlags(p, (d) => ({ ...d, flags: [...d.flags, { ...flag, ...(folder && { folder }) }] }));
+  return { project, id };
+}
+
+/** A new asset called `name`, its ID made from the name (D123: "+ Create new…" in a picker). */
+export function createNamedEntry(p: Project, section: AssetKind, name: string, folder = ""): { project: Project; id: string } {
+  if (!name.trim()) throw new CommandError("Type a name first.");
+  name = name.trim();
   const id = uniqueId(slugify(name), definedIds(p, section));
   const data = newAssetData(p, section, id, name);
   const withDir = folder ? withFolder(p, `${SECTION_ROOTS[section]}/${folder}`) : p;
