@@ -84,11 +84,9 @@ export function Menu({ x, y, items, onClose }: { x: number; y: number; items: Me
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("mousedown", close);
     window.addEventListener("keydown", onKey);
-    window.addEventListener("blur", close);
     return () => {
       window.removeEventListener("mousedown", close);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("blur", close);
     };
   }, [onClose]);
   return (
