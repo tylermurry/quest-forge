@@ -76,5 +76,6 @@ const img = (asset: ImageAsset, w: number, h: number): LoadedImage => ({ asset, 
 const images = new Map<string, LoadedImage>([
   ["hero_sheet", img({ id: "hero_sheet", path: "assets/h.png", sheet: { columns: 4, rows: 2, cellWidth: 32, cellHeight: 48 } }, 128, 96)],
   ["rock_img", img({ id: "rock_img", path: "assets/r.png" }, 60, 40)],
+  ["torch_sheet", img({ id: "torch_sheet", path: "assets/t.png", sheet: { columns: 4, rows: 2, cellWidth: 16, cellHeight: 24 } }, 64, 48)],
 ]);
 export const testImages = (id: string) => images.get(id);

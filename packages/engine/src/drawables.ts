@@ -1,4 +1,4 @@
-import type { Animation, CharacterFile, Facing, ImageAsset, SceneFile } from "@questforge/schema";
+import type { Animation, CharacterFile, Facing, ImageAsset, ObjectAnimation, SceneFile } from "@questforge/schema";
 import { objectBaseline, scaleAt, sortByBaseline } from "./depth.ts";
 import { frameAt, frameRect, frameSize, originOf, resolveAnim, spriteRect, type AnimKind, type Rect, type Size } from "./sprite.ts";
 import type { Vec } from "./vec.ts";
@@ -45,11 +45,39 @@ export interface ActorPose {
   special?: { anim: Animation; mirror: boolean; time: number } | null;
 }
 
-/** A placed object's sprite, or null if its image isn't known. Objects draw their whole image (D66, D94). */
-export function objectDrawable(o: SceneFile["objects"][number], images: ImageLookup): Drawable | null {
+type SceneObject = SceneFile["objects"][number];
+
+/** Where an object's animations are (D111, D112). */
+export interface ObjectPose {
+  /** Seconds the object's looping animation has run. */
+  time: number;
+  /** A one-shot from `play_animation`, shown until it ends. */
+  oneShot?: { anim: ObjectAnimation; time: number } | null;
+}
+
+/** Size of an object's rest frame: frame 0 of its image (the whole image when unsliced, D112). */
+export function objectFrameSize(o: SceneObject, images: ImageLookup): Size | null {
   const image = images(o.image);
+  return image ? frameSize(image.asset, image.size) : null;
+}
+
+/**
+ * A placed object's sprite, or null if the image to show isn't known. It plays a
+ * one-shot if one is running, else its looping animation, else shows frame 0 of its
+ * image (D112). Objects stand at their top-left and never scale (D110). The default
+ * baseline is the rest frame's bottom edge, so it doesn't jump while animating.
+ */
+export function objectDrawable(o: SceneObject, images: ImageLookup, pose: ObjectPose = { time: 0 }): Drawable | null {
+  const rest = objectFrameSize(o, images);
+  if (!rest) return null;
+  const playing = pose.oneShot
+    ? { image: pose.oneShot.anim.image, frame: frameAt({ ...pose.oneShot.anim, loop: false }, pose.oneShot.time) }
+    : o.animation
+      ? { image: o.animation.image, frame: frameAt({ ...o.animation, loop: true }, pose.time) }
+      : { image: o.image, frame: 0 };
+  const image = images(playing.image);
   if (!image) return null;
-  const src = { x: 0, y: 0, w: image.size.w, h: image.size.h };
+  const src = frameRect(image.asset, image.size, playing.frame);
   return {
     kind: "object",
     id: o.id,
@@ -58,7 +86,7 @@ export function objectDrawable(o: SceneFile["objects"][number], images: ImageLoo
     src,
     dest: { x: o.x, y: o.y, w: src.w, h: src.h },
     mirror: false,
-    baseline: objectBaseline(o, image.size.h),
+    baseline: objectBaseline(o, rest.h),
   };
 }
 
@@ -86,13 +114,20 @@ export function actorDrawable(a: ActorPose, depth: SceneFile["depth"], images: I
 
 /**
  * Every visible sprite, back to front: the scene's visible objects, then `actors`
- * (characters), sorted by baseline. Ties keep that order (spec 04).
+ * (characters), sorted by baseline. Ties keep that order (spec 04). `objectPose` says
+ * where each object's animations are; absent, objects show their first frame.
  */
-export function sceneDrawables(scene: SceneFile, images: ImageLookup, objectVisible: (id: string) => boolean, actors: readonly ActorPose[]): Drawable[] {
+export function sceneDrawables(
+  scene: SceneFile,
+  images: ImageLookup,
+  objectVisible: (id: string) => boolean,
+  actors: readonly ActorPose[],
+  objectPose?: (id: string) => ObjectPose,
+): Drawable[] {
   const out: Drawable[] = [];
   for (const o of scene.objects) {
     if (!objectVisible(o.id)) continue;
-    const d = objectDrawable(o, images);
+    const d = objectDrawable(o, images, objectPose?.(o.id));
     if (d) out.push(d);
   }
   for (const a of actors) {

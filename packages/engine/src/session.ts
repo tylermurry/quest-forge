@@ -412,8 +412,15 @@ export class Session implements SequenceHost {
 
   playAnimation(target: Extract<Action, { type: "play_animation" }>["target"], animation: string): Done | null {
     if (target.kind === "object") {
-      this.note(`Object animations aren't supported yet (${target.object}: ${animation}).`);
-      return null;
+      // Objects in other scenes or hidden ones don't animate (D112).
+      const length = target.scene === this.scene.id ? this.world.playObjectAnimation(target.object, animation) : null;
+      if (length === null) {
+        const why = target.scene !== this.scene.id ? "isn't in this scene" : !this.world.isObjectVisible(target.object) ? "is hidden" : `has no animation ${animation}`;
+        this.note(`Object ${target.object} ${why}, so it can't play ${animation}.`);
+        return null;
+      }
+      const playing = this.world.objectOneShot(target.object);
+      return () => this.world.objectOneShot(target.object) !== playing;
     }
     const actor = this.world.actorById(target.character);
     const length = actor ? this.world.playSlot(target.character, animation) : null;

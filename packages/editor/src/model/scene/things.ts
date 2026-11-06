@@ -1,6 +1,6 @@
 // What's in a scene, by layer (spec 09, D15, D103): the rows of the Layers panel,
 // what a selection refers to, and which layer each thing lives on. DOM-free.
-import { objectBaseline, sortByBaseline, type ImageLookup } from "@questforge/engine";
+import { objectBaseline, objectFrameSize, sortByBaseline, type ImageLookup } from "@questforge/engine";
 import type { SceneFile } from "@questforge/schema";
 import type { Layer } from "./sceneUi.ts";
 
@@ -58,7 +58,7 @@ export function drawOrder(scene: SceneFile, images: ImageLookup): ThingRef[] {
 /** `drawOrder` with each thing's sort line. */
 export function drawOrderWithBaselines(scene: SceneFile, images: ImageLookup): { ref: ThingRef; baseline: number }[] {
   const items = [
-    ...scene.objects.map((o) => ({ ref: { list: "objects" as const, key: o.id }, baseline: objectBaseline(o, images(o.image)?.size.h ?? 0) })),
+    ...scene.objects.map((o) => ({ ref: { list: "objects" as const, key: o.id }, baseline: objectBaseline(o, objectFrameSize(o, images)?.h ?? 0) })),
     ...scene.characters.map((c) => ({ ref: { list: "characters" as const, key: c.character }, baseline: c.y })),
   ];
   return sortByBaseline(items);

@@ -9,7 +9,7 @@ export { Sequence, type SequenceHost } from "./sequence.ts";
 export { layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
 export { PlayerUi, type PointerKind } from "./ui/controller.ts";
 export { computeLayout, unitFor, MIN_HIT_CSS, type Layout } from "./ui/layout.ts";
-export { sceneDrawables, objectDrawable, actorDrawable, type ActorPose, type ImageLookup } from "./drawables.ts";
+export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";
 export { drawSprites } from "./render.ts";
 export { resolveAnim, facingFor, frameSize, frameRect, originOf, spriteRect } from "./sprite.ts";
 export { NavMesh, sceneNav, pathLength } from "./nav.ts";

@@ -1,6 +1,6 @@
-import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type SceneFile } from "@questforge/schema";
+import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type ObjectAnimation, type SceneFile } from "@questforge/schema";
 import { scaleAt, walkSpeedAt } from "./depth.ts";
-import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage } from "./drawables.ts";
+import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage, type ObjectPose } from "./drawables.ts";
 import { NavMesh, sceneNav } from "./nav.ts";
 import { facingFor, type AnimKind } from "./sprite.ts";
 import type { Position } from "./state.ts";
@@ -56,6 +56,10 @@ export class World {
   readonly player: Actor;
   readonly npcs: Actor[];
   private readonly objectVisible: Map<string, boolean>;
+  /** Seconds since the scene started: the clock of objects' looping animations (D112). */
+  private clock = 0;
+  /** One-shots playing on objects (D111); each ends back at rest. */
+  private readonly oneShots = new Map<string, { anim: ObjectAnimation; time: number }>();
   private navMesh: NavMesh;
   private path: Vec[] = [];
   private onArrive: (() => void) | null = null;
@@ -186,6 +190,28 @@ export class World {
     return anim.loop ? 0 : anim.frames.length / anim.fps;
   }
 
+  /**
+   * Play one of an object's one-shot animations (D111). Returns its length in seconds,
+   * or null if the object is hidden or has no such animation. Replaces a one-shot
+   * already playing on it.
+   */
+  playObjectAnimation(id: string, name: string): number | null {
+    const anim = this.scene.objects.find((o) => o.id === id)?.animations?.find((a) => a.id === name);
+    if (!anim || !this.isObjectVisible(id)) return null;
+    this.oneShots.set(id, { anim, time: 0 });
+    return anim.frames.length / anim.fps;
+  }
+
+  /** The one-shot playing on an object (an identity to wait on), or null at rest. */
+  objectOneShot(id: string): object | null {
+    return this.oneShots.get(id) ?? null;
+  }
+
+  /** Where an object's animations are, for drawing. */
+  objectPose(id: string): ObjectPose {
+    return { time: this.clock, oneShot: this.oneShots.get(id) ?? null };
+  }
+
   /** Characters have no walk-to point: stand beside them, on the side the player is on. */
   private besideCharacter(id: string): Vec {
     const npc = this.npcs.find((a) => a.id === id)!;
@@ -198,6 +224,11 @@ export class World {
 
   /** Advance one logic tick (spec 03: fixed 60 Hz). */
   tick(dt: number) {
+    this.clock += dt;
+    for (const [id, shot] of this.oneShots) {
+      shot.time += dt;
+      if (shot.time >= shot.anim.frames.length / shot.anim.fps) this.oneShots.delete(id);
+    }
     for (const a of [this.player, ...this.npcs]) {
       a.animTime += dt;
       if (a.special) {
@@ -228,7 +259,7 @@ export class World {
   /** Every visible sprite, back to front (spec 04 baseline sort). */
   drawList(): Drawable[] {
     const actors = [...this.npcs, this.player].filter((a) => a.visible);
-    return sceneDrawables(this.scene, this.images, (id) => this.isObjectVisible(id), actors);
+    return sceneDrawables(this.scene, this.images, (id) => this.isObjectVisible(id), actors, (id) => this.objectPose(id));
   }
 
   /** What's under a scene point (D69): hotspots first, then named sprites, topmost first. */

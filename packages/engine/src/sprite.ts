@@ -42,8 +42,8 @@ export function spriteRect(feet: Vec, origin: Vec, frame: Size, scale: number, m
   return { x: feet[0] - ox * scale, y: feet[1] - origin[1] * scale, w: frame.w * scale, h: frame.h * scale };
 }
 
-/** The frame index to show `elapsed` seconds into an animation. */
-export function frameAt(anim: Animation, elapsed: number): number {
+/** The frame index to show `elapsed` seconds into an animation (objects' loops pass `loop: true`, D111). */
+export function frameAt(anim: Pick<Animation, "frames" | "fps" | "loop">, elapsed: number): number {
   const n = anim.frames.length;
   const step = Math.floor(Math.max(0, elapsed) * anim.fps + 1e-9);
   return anim.frames[anim.loop ? step % n : Math.min(step, n - 1)]!;
