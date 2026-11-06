@@ -24,6 +24,7 @@ import {
   type SceneList,
 } from "./commands.ts";
 import type { Editor } from "./editor.ts";
+import { importFiles, type ImportFile } from "./importing.ts";
 import type { WorkspaceState } from "./workspace.ts";
 
 export const NOUN: Record<Section, string> = {
@@ -181,6 +182,33 @@ export class Actions {
 
   deleteFolder(section: Section, path: string): boolean {
     return this.editor.apply("Delete folder", (p) => deleteFolder(p, section, path));
+  }
+
+  /** Imports files dropped from the OS (D88) as one undo step. Refused files get a notice. */
+  importFiles(section: Section, folder: string, files: ImportFile[]): number {
+    let refused: string[] = [];
+    let count = 0;
+    let last: { section: Section; id: string } | null = null;
+    this.editor.apply(`Import ${files.length === 1 ? "file" : "files"}`, (p) => {
+      const r = importFiles(p, files, section, folder);
+      refused = r.refused;
+      count = r.imported.length;
+      const first = r.imported[0];
+      if (first) last = { section: first.section, id: first.id };
+      return r.project;
+    });
+    if (last) {
+      const target: { section: Section; id: string } = last;
+      this.ws.reveal(target.section, folder);
+      this.ws.select({ kind: "entry", ...target });
+    }
+    if (refused.length) {
+      this.editor.showNotice({
+        kind: "error",
+        text: `Not imported: ${refused.join(", ")}. Questforge imports images (PNG, JPG, WebP) and sounds (MP3, OGG, WAV).`,
+      });
+    }
+    return count;
   }
 
   // ── Scene outline (D89) ────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { useMemo, useState, type DragEvent, type MouseEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, type DragEvent, type MouseEvent, type ReactNode } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
 import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, type Entry, type FolderNode, type Section } from "../model/browser.ts";
 import { ConfirmDelete, Menu, Prompt, type MenuItem } from "./Dialogs.tsx";
@@ -15,12 +15,19 @@ type Editing = { section: Section; kind: "entry"; id: string; value: string } | 
 
 interface Props {
   actions: Actions;
-  /** Files dropped from the OS onto a folder (D88). */
-  onImport?(section: Section, folder: string, files: File[]): void;
+}
+
+/** Reads dropped or picked files and imports them (D88). */
+async function importInto(actions: Actions, section: Section, folder: string, files: File[]) {
+  const read = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
+  actions.importFiles(section, folder, read);
 }
 
 /** The project browser (spec 08). Thin: every change goes through Actions. */
-export function ProjectBrowser({ actions, onImport }: Props) {
+export function ProjectBrowser({ actions }: Props) {
+  const onImport = (section: Section, folder: string, files: File[]) => void importInto(actions, section, folder, files);
+  const picker = useRef<HTMLInputElement>(null);
+  const [pickTarget, setPickTarget] = useState<{ section: Section; folder: string } | null>(null);
   const { editor, ws } = actions;
   const project = editor.project;
   const [popup, setPopup] = useState<Popup>(null);
@@ -48,6 +55,17 @@ export function ProjectBrowser({ actions, onImport }: Props) {
   const folderMenu = (section: Section, path: string): MenuItem[] => [
     { label: "New folder", onSelect: () => actions.newFolder(section, path) },
     ...(section !== "image" && section !== "audio" ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
+    ...(section === "image" || section === "audio"
+      ? [
+          {
+            label: "Import files…",
+            onSelect: () => {
+              setPickTarget({ section, folder: path });
+              picker.current?.click();
+            },
+          },
+        ]
+      : []),
     ...(path
       ? [
           { label: "Rename folder", onSelect: () => setEditing({ section, kind: "folder", path, value: path.split("/").pop()! }) },
@@ -67,7 +85,7 @@ export function ProjectBrowser({ actions, onImport }: Props) {
     return {
       onDragOver: (e: DragEvent) => {
         const types = [...e.dataTransfer.types];
-        if (!types.includes(DRAG_TYPE) && !(types.includes("Files") && onImport)) return;
+        if (!types.includes(DRAG_TYPE) && !types.includes("Files")) return;
         e.preventDefault();
         e.stopPropagation();
         setDropTarget(key);
@@ -79,7 +97,7 @@ export function ProjectBrowser({ actions, onImport }: Props) {
         setDropTarget(null);
         const raw = e.dataTransfer.getData(DRAG_TYPE);
         if (raw) actions.drop(JSON.parse(raw) as DragItem, section, folder);
-        else if (e.dataTransfer.files.length && onImport) onImport(section, folder, [...e.dataTransfer.files]);
+        else if (e.dataTransfer.files.length) onImport(section, folder, [...e.dataTransfer.files]);
       },
       "data-drop": dropTarget === key ? "true" : undefined,
     };
@@ -188,6 +206,19 @@ export function ProjectBrowser({ actions, onImport }: Props) {
   const searching = ws.search.trim() !== "";
   return (
     <div className="project-browser">
+      <input
+        ref={picker}
+        type="file"
+        multiple
+        hidden
+        aria-label="Import files"
+        accept=".png,.jpg,.jpeg,.webp,.mp3,.ogg,.wav"
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = "";
+          if (pickTarget && files.length) onImport(pickTarget.section, pickTarget.folder, files);
+        }}
+      />
       <input className="search" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       <ul role="tree" aria-label="Project">
         {trees.map(({ section, title, tree }) => {
