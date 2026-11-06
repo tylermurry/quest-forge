@@ -21,11 +21,14 @@ export function Picker(props: {
   createNoun?: string;
   onCreate?(name: string): void;
   invalid?: boolean;
+  /** Shown while `value` is "" (an "add" picker with nothing chosen), instead of "(missing)". */
+  placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState<string | null>(null);
   const current = props.options.find((o) => o.id === props.value);
-  const missing = !current;
+  const empty = props.value === "" && props.placeholder !== undefined;
+  const missing = !current && !empty;
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -39,7 +42,7 @@ export function Picker(props: {
             aria-invalid={missing || props.invalid || undefined}
             className={cn("h-7 max-w-full min-w-0 justify-between gap-1 px-2 text-[13px] font-normal", (missing || props.invalid) && "border-err text-err")}
           >
-            <span className="truncate">{current ? current.label : `${props.value} (missing)`}</span>
+            <span className={cn("truncate", empty && "text-muted-foreground")}>{current ? current.label : empty ? props.placeholder : `${props.value} (missing)`}</span>
             <ChevronsUpDown className="size-3 shrink-0 opacity-60" />
           </Button>
         </PopoverTrigger>

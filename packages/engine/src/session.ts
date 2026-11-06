@@ -130,6 +130,10 @@ export class Session implements SequenceHost {
     return this.world.scene;
   }
 
+  sceneFile(id: string): SceneFile | undefined {
+    return this.scenes.get(id);
+  }
+
   itemFile(id: string): ItemFile | undefined {
     return this.items.get(id);
   }
