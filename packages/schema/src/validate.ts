@@ -59,8 +59,16 @@ class Collector {
 
   /** `crumbPath` is where the breadcrumb stops; defaults to the parent of `path`. */
   error(code: ProblemCode, fileKind: FileKind, file: string, path: DataPath, message: string, crumbPath = path.slice(0, -1)) {
+    this.push("error", code, fileKind, file, path, message, crumbPath);
+  }
+
+  warning(code: ProblemCode, fileKind: FileKind, file: string, path: DataPath, message: string, crumbPath = path.slice(0, -1)) {
+    this.push("warning", code, fileKind, file, path, message, crumbPath);
+  }
+
+  private push(severity: Problem["severity"], code: ProblemCode, fileKind: FileKind, file: string, path: DataPath, message: string, crumbPath: DataPath) {
     this.problems.push({
-      severity: "error",
+      severity,
       code,
       breadcrumb: describePath(fileKind, file, this.dataOf(file), crumbPath),
       message,
@@ -272,6 +280,24 @@ function checkSprites(project: Project, out: Collector) {
   }
 }
 
+/** A flag's folder must be listed in `flags.yaml`, with its parents (D83). Doesn't block play. */
+function checkFlagFolders(project: Project, out: Collector) {
+  const flags = project.flags;
+  if (!flags) return;
+  const folders = new Set(flags.data.folders ?? []);
+  (flags.data.folders ?? []).forEach((f, i) => {
+    const parent = f.split("/").slice(0, -1).join("/");
+    if (parent && !folders.has(parent)) {
+      out.warning("missing_folder", "flags", flags.path, ["folders", i], `lists folder ${f} without its parent folder ${parent}.`, []);
+    }
+  });
+  flags.data.flags.forEach((flag, i) => {
+    if (flag.folder !== undefined && !folders.has(flag.folder)) {
+      out.warning("missing_folder", "flags", flags.path, ["flags", i, "folder"], `is in folder ${flag.folder}, which isn't in the folder list.`);
+    }
+  });
+}
+
 /** Errors in a loaded project (spec 14). Load problems come from `loadProject`. */
 export function validateProject(project: Project): Problem[] {
   const out = new Collector(project);
@@ -281,6 +307,7 @@ export function validateProject(project: Project): Problem[] {
   project.dialogues.forEach((d) => checkDialogue(d, out));
   checkImageFiles(project, out);
   checkSprites(project, out);
+  checkFlagFolders(project, out);
   return out.problems;
 }
 

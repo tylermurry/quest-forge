@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MemoryFs, loadProject, moveAsset, planSave, saveProject, sectionOfFolder, withFolder, type ProjectFs } from "../src/index.ts";
+import { MemoryFs, loadProject, moveAsset, planSave, saveProject, sectionOfFolder, validateProject, withFolder, type ProjectFs } from "../src/index.ts";
 import { fixtureCopy } from "./helpers.ts";
 
 async function adapters(): Promise<[string, ProjectFs][]> {
@@ -98,5 +98,50 @@ describe("browser folders on disk (D83)", () => {
     const p = { folders: [] } as never;
     expect(() => withFolder(p, "scenes/../x")).toThrow();
     expect(() => withFolder(p, "scenes/.hidden")).toThrow();
+  });
+});
+
+describe("flag folders (D83)", () => {
+  const flagsYaml = [
+    "schemaVersion: 1",
+    "folders:",
+    "  - puzzles",
+    "  - puzzles/cave",
+    "  - empty",
+    "flags:",
+    "  - id: door_open",
+    "    type: bool",
+    "    initial: false",
+    "    folder: puzzles/cave",
+    "  - id: visits",
+    "    type: counter",
+    "    initial: 0",
+    "",
+  ].join("\n");
+
+  it("round-trips flags in folders, including empty folders", async () => {
+    const fs = new MemoryFs({ "flags.yaml": flagsYaml });
+    const { project } = await loadProject(fs);
+    expect(project.flags?.data.folders).toEqual(["puzzles", "puzzles/cave", "empty"]);
+    expect(project.flags?.data.flags[0]?.folder).toBe("puzzles/cave");
+    expect(planSave(project).writes).toEqual([]);
+  });
+
+  it("warns (without blocking) about a flag in an unlisted folder", async () => {
+    const fs = new MemoryFs({ "flags.yaml": flagsYaml.replace("  - puzzles\n", "").replace("folder: puzzles/cave", "folder: nowhere") });
+    const { project } = await loadProject(fs);
+    const problems = validateProject(project).filter((p) => p.code === "missing_folder");
+    expect(problems.map((p) => [p.severity, p.message, p.location.path])).toEqual([
+      ["warning", "lists folder puzzles/cave without its parent folder puzzles.", ["folders", 0]],
+      ["warning", "is in folder nowhere, which isn't in the folder list.", ["flags", 0, "folder"]],
+    ]);
+    expect(problems[1]?.breadcrumb).toBe('Flags › Flag "door_open"');
+  });
+
+  it("rejects folder paths that escape or hide", async () => {
+    for (const bad of ["../x", ".git", "a//b", "a/"]) {
+      const { problems } = await loadProject(new MemoryFs({ "flags.yaml": `schemaVersion: 1\nfolders:\n  - "${bad}"\nflags: []\n` }));
+      expect(problems.some((p) => p.code === "invalid_data"), bad).toBe(true);
+    }
   });
 });

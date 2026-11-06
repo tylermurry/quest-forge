@@ -27,7 +27,9 @@ export type ProblemCode =
   | "missing_image_file"
   // Sprites (D66)
   | "frame_out_of_range"
-  | "origin_outside_frame";
+  | "origin_outside_frame"
+  // Browser folders (D83)
+  | "missing_folder";
 
 export interface Problem {
   severity: Severity;
