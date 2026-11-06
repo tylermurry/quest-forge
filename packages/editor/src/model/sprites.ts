@@ -71,12 +71,14 @@ const imageEntry = (img: ImageAsset, sheet: SpriteSheet | undefined, origin: Ima
 
 /**
  * Slices an image into a sheet, or makes it one frame again (`null`). An origin that
- * would fall outside the new frame is cleared (D115).
+ * would fall outside the new frame is cleared (D115). `keep` is the origin to keep if
+ * it fits (default: the current one), so typing "1" on the way to "16" doesn't lose it.
  */
-export function sliceImage(p: Project, id: string, size: Size, sheet: SpriteSheet | null): Project {
+export function sliceImage(p: Project, id: string, size: Size, sheet: SpriteSheet | null, keep?: ImageAsset["origin"] | null): Project {
   return updateImage(p, id, (img) => {
     const frame = sheet ? { w: sheet.cellWidth, h: sheet.cellHeight } : size;
-    const origin = img.origin && inFrame(img.origin, frame) ? img.origin : undefined;
+    const wanted = keep === undefined ? img.origin : (keep ?? undefined);
+    const origin = wanted && inFrame(wanted, frame) ? wanted : undefined;
     return imageEntry(img, sheet ?? undefined, origin);
   });
 }
@@ -101,4 +103,24 @@ export function setOrigin(p: Project, id: string, size: Size, origin: [number, n
 export function originAt(local: readonly [number, number], frame: Size): [number, number] {
   const clamp = (n: number, max: number) => Math.min(max, Math.max(0, Math.round(n)));
   return [clamp(local[0], frame.w), clamp(local[1], frame.h)];
+}
+
+/** The sheet cell under a point in image pixels, or null outside every cell. */
+export function cellAt(img: ImageAsset, size: Size, local: readonly [number, number]): number | null {
+  const [x, y] = local;
+  if (x < 0 || y < 0) return null;
+  if (!img.sheet) return x < size.w && y < size.h ? 0 : null;
+  const { columns, rows, cellWidth, cellHeight } = img.sheet;
+  const col = Math.floor(x / cellWidth);
+  const row = Math.floor(y / cellHeight);
+  return col < columns && row < rows ? row * columns + col : null;
+}
+
+/**
+ * The zoom that fits `content` in `box`: a whole multiple from 1× up to `max` so
+ * pixels stay square, or the fraction that fits when it's bigger than the box.
+ */
+export function fitZoom(content: Size, box: Size, max = 8): number {
+  const fit = Math.min(box.w / content.w, box.h / content.h);
+  return fit < 1 ? fit : Math.min(max, Math.floor(fit));
 }

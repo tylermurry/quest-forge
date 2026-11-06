@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { Label } from "./components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select.tsx";
 import { SceneEditor } from "./scene/SceneEditor.tsx";
+import { ImageEditor } from "./sprites/ImageEditor.tsx";
 import { TextField } from "./TextField.tsx";
 import { cn } from "./lib/utils.ts";
 
@@ -50,8 +51,9 @@ export function EditorTabs({ actions }: { actions: Actions }) {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 py-5" role="tabpanel">
-          {!active && <p className="text-muted-foreground mt-16 text-center">Double-click a scene, item, character or dialogue to open it here.</p>}
-          {active && <TabContent key={refKey(active)} actions={actions} entry={active} />}
+          {!active && <p className="text-muted-foreground mt-16 text-center">Double-click a scene, item, character, dialogue or image to open it here.</p>}
+          {active?.section === "image" && <ImageEditor key={refKey(active)} actions={actions} imageId={active.id} />}
+          {active && active.section !== "image" && <TabContent key={refKey(active)} actions={actions} entry={active} />}
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import { MemoryFs, saveProject, serialize, validateProject, type Project } from 
 import { describe, expect, it } from "vitest";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { effectiveOrigin, frameCountOf, originAt, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
+import { cellAt, effectiveOrigin, fitZoom, frameCountOf, originAt, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
 import { m1Project } from "./support/fixtures.ts";
 
 // Spritesheet slicing and origins (spec 05, D66, D114, D115).
@@ -47,6 +47,16 @@ describe("slicing", () => {
     expect(validateProject(next).filter((x) => x.code === "origin_outside_frame")).toEqual([]);
   });
 
+  it("keeps a given origin when it fits again, e.g. after typing through a small size", async () => {
+    const p = await m1Project();
+    const size = { w: 128, h: 144 };
+    const tiny = sliceImage(p, "hero_sheet", size, sheetFromCells(size, 1, 48));
+    expect(img(tiny, "hero_sheet").origin).toBeUndefined();
+    const back = sliceImage(tiny, "hero_sheet", size, sheetFromCells(size, 16, 48), [16, 47]);
+    expect(img(back, "hero_sheet").origin).toEqual([16, 47]);
+    expect(img(sliceImage(tiny, "hero_sheet", size, sheetFromCells(size, 8, 48), [16, 47]), "hero_sheet").origin).toBeUndefined();
+  });
+
   it("makes an image a single frame again", async () => {
     const p = await m1Project();
     const next = sliceImage(p, "hero_sheet", { w: 128, h: 96 }, null);
@@ -88,5 +98,22 @@ describe("origin", () => {
     expect(img(editor.project, "hero_sheet").origin).toEqual([12, 40]);
     editor.undo();
     expect(img(editor.project, "hero_sheet").origin).toEqual([16, 47]);
+  });
+});
+
+describe("sheet layout helpers", () => {
+  it("finds the cell under a point, row by row", async () => {
+    const hero = img(await m1Project(), "hero_sheet"); // 4 × 2 cells of 32×48
+    const size = { w: 128, h: 96 };
+    expect(cellAt(hero, size, [0, 0])).toBe(0);
+    expect(cellAt(hero, size, [33, 50])).toBe(5);
+    expect(cellAt(hero, size, [128, 0])).toBe(null);
+    expect(cellAt({ ...hero, sheet: undefined }, size, [100, 90])).toBe(0);
+  });
+
+  it("zooms by whole multiples, or shrinks to fit", () => {
+    expect(fitZoom({ w: 32, h: 48 }, { w: 200, h: 200 })).toBe(4);
+    expect(fitZoom({ w: 32, h: 48 }, { w: 1000, h: 1000 })).toBe(8);
+    expect(fitZoom({ w: 1280, h: 400 }, { w: 640, h: 640 })).toBe(0.5);
   });
 });

@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Search } from 
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
-import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
+import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
@@ -147,7 +147,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
   const askDelete = (warning: DeleteWarning | null, run: () => void) => (warning ? setPopup({ kind: "delete", warning, run }) : run());
 
   const entryMenu = (e: Entry): MenuItem[] => [
-    ...(isAssetKind(e.section) ? [{ label: "Open", onSelect: () => ws.open({ section: e.section, id: e.id }) }] : []),
+    ...(opensTab(e.section) ? [{ label: "Open", onSelect: () => ws.open({ section: e.section, id: e.id }) }] : []),
     { label: "Rename", onSelect: () => setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name }) },
     ...(isAssetKind(e.section) ? [{ label: "Change ID…", onSelect: () => setPopup({ kind: "changeId", section: e.section, id: e.id }) }] : []),
     ...(e.section !== "image" && e.section !== "audio" ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
@@ -283,10 +283,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                   tabIndex={0}
                   drag={isEditing ? undefined : { section: e.section, kind: "entry", id: e.id }}
                   onClick={() => ws.select({ kind: "entry", section: e.section, id: e.id })}
-                  onDoubleClick={() => isAssetKind(e.section) && ws.open({ section: e.section, id: e.id })}
+                  onDoubleClick={() => opensTab(e.section) && ws.open({ section: e.section, id: e.id })}
                   onKeyDown={(ev) => {
                     if (ev.key === "F2") setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name });
-                    if (ev.key === "Enter" && isAssetKind(e.section)) ws.open({ section: e.section, id: e.id });
+                    if (ev.key === "Enter" && opensTab(e.section)) ws.open({ section: e.section, id: e.id });
                     if (ev.key === "Delete" || ev.key === "Backspace") askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id));
                   }}
                 >

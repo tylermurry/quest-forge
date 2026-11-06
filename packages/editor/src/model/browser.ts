@@ -16,6 +16,8 @@ export const SECTIONS: { section: Section; title: string }[] = [
 ];
 
 export const isAssetKind = (s: Section): s is AssetKind => s in ASSET_LAYOUT;
+/** Sections whose entries open in a tab: assets, and images for slicing (D114). */
+export const opensTab = (s: Section) => isAssetKind(s) || s === "image";
 
 /** One thing in the browser. `folder` is relative to the section root (`""` = root). */
 export interface Entry {
