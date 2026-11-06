@@ -2,13 +2,13 @@
 // pointer and key input in, zoom/pan, selection, tool gestures and editor commands
 // out. The canvas component forwards events and draws `frame()`.
 import { sceneDrawables, type ActorPose, type ImageLookup, type Vec } from "@questforge/engine";
-import type { CharacterFile, SceneFile } from "@questforge/schema";
+import type { CharacterFile, Project, SceneFile } from "@questforge/schema";
 import type { Editor } from "../editor.ts";
 import type { WorkspaceState } from "../workspace.ts";
 import type { Frame, Sprite } from "./frame.ts";
 import type { Layer, SceneUi, Tool } from "./sceneUi.ts";
 import type { DeleteWarning } from "../actions.ts";
-import { describeReferences, sceneThingReferences, summarizeReferences } from "../commands.ts";
+import { CommandError, describeReferences, sceneThingReferences, summarizeReferences } from "../commands.ts";
 import { deleteThing, thingNoun } from "./commands.ts";
 import { sameThing, type ThingRef } from "./things.ts";
 import { panBy, toScene, transformFor, zoomByWheel, zoomStep, zoomTo, type Size, type Transform } from "./view.ts";
@@ -85,7 +85,43 @@ export class SceneController {
   }
   /** The scene as drawn: including a drag that isn't committed yet. */
   get scene(): SceneFile | undefined {
+    if (this.draft) return this.draft.project.scenes.find((s) => s.data.id === this.host.scene)?.data;
     return this.savedScene;
+  }
+
+  // ── Drafts: a gesture in progress, committed as one undo step on release (D84) ──
+
+  private draft: { label: string; run: (p: Project) => Project; project: Project } | null = null;
+
+  /** Shows the result of `run` without recording it. A refused command keeps the last preview. */
+  protected preview(label: string, run: (p: Project) => Project) {
+    try {
+      this.draft = { label, run, project: run(this.editor.project) };
+    } catch (e) {
+      if (!(e instanceof CommandError)) throw e;
+    }
+  }
+
+  /** Records the previewed change as one step, if it changed anything. */
+  protected commit() {
+    const d = this.draft;
+    this.draft = null;
+    if (!d) return;
+    const before = JSON.stringify(this.savedScene);
+    const after = JSON.stringify(d.project.scenes.find((s) => s.data.id === this.host.scene)?.data);
+    if (before !== after) this.editor.apply(d.label, d.run);
+    this.changed();
+  }
+
+  /** Drops the previewed change. */
+  protected discard() {
+    if (!this.draft) return;
+    this.draft = null;
+    this.changed();
+  }
+
+  get dragging() {
+    return this.draft !== null;
   }
   get selection(): ThingRef | null {
     const s = this.host.ws.selection;
