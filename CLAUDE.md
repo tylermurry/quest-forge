@@ -68,10 +68,22 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `history.ts` (undo snapshots, merge keys, 500 steps), `editor.ts` (`Editor`: project + history +
   autosave + save errors + outside-change reload), `workspace.ts` (tabs, selection, expanded folders; UI
   state, never undone), `actions.ts` (UI intents → one labelled undo step each), `importing.ts`,
-  `template.ts` (blank project) + `png.ts`, `locate.ts` (jump-to), `recent.ts`. `platform/` adapts the
-  host: `platform.ts` (interface), `browser.ts` (dev page, HTTP to the sandbox), `tauri.ts` (Rust
-  commands). `ui/` is thin React that only calls `Actions`/`Editor`. Rust lives in `src-tauri/` and does
-  only file I/O confined to the project folder, watching, recent projects and dialogs (D90).
+  `template.ts` (blank project) + `png.ts`, `locate.ts` (jump-to), `recent.ts`, `appCommands.ts`
+  (File/Edit/View command registry + shortcuts). `platform/` adapts the host: `platform.ts`
+  (interface), `browser.ts` (dev page, HTTP to the sandbox), `tauri.ts` (typed Rust commands + native
+  menu), `bindings.ts` (generated). `ui/` is thin React that only calls `Actions`/`Editor`/the registry.
+  Rust lives in `src-tauri/` and does only file I/O confined to the project folder, watching, recent
+  projects and dialogs (D90).
+- Editor UI stack (D92): Tailwind v4 (tokens in `ui/styles.css`, dark only), shadcn/ui components copied
+  into `ui/components/ui` (add more with `corepack pnpm dlx shadcn@latest add <name>` from
+  `packages/editor`, with a `pnpm` shim on PATH; then fix any `from "cn"` import to `@/ui/lib/utils`),
+  lucide icons, react-resizable-panels, dnd-kit for in-app drags. Prefer shadcn/Radix over hand-rolled
+  menus or dialogs. Radix menus are portaled but React still bubbles their events to the trigger's
+  ancestors: stop propagation on menu content. Use `cn()` for class merging and `@/` imports only in
+  shadcn files.
+- App commands: add to `COMMANDS` in `model/appCommands.ts` and register a handler where the state
+  lives (`App` for File, `Workspace` for Edit/View). The app's native menu and the dev page's
+  shortcuts both run the registry; never add a separate keydown handler.
 - Run every editor change as `editor.apply(label, p => command(p), mergeKey?)`; commands throw
   `CommandError` with a plain-English message, which becomes a notice. Typing fields pass a merge key
   and call `history.breakMerge()` on blur (D84).
@@ -82,9 +94,12 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   port 5175, `editor-dev` in `.claude/launch.json`). It edits real folders in the gitignored
   `packages/editor/.sandbox/` through `dev/sandbox.ts`, seeded with a copy of the m1 fixture
   (`garden-m1`); delete a sandbox folder to reset it. `window.editor` exposes the open `Editor`.
-  Browser-tool drags don't start HTML5 drag-and-drop: dispatch `dragstart`/`dragover`/`drop`
-  `DragEvent`s with a shared `DataTransfer` on the tree rows instead.
+  In-app drags use dnd-kit, so the browser tool's `left_click_drag` works on tree rows. Component tests
+  drag with pointer events after giving rows a `getBoundingClientRect` (see `browser-ui.test.tsx`);
+  Radix menus need `@testing-library/user-event`. jsdom polyfills live in `test/support/setup.ts`.
 - Tauri app: needs Rust (rustup). `corepack pnpm --filter @questforge/editor tauri dev` runs the
   editor in a native window (it starts the Vite dev server itself); `tauri build` makes the bundle.
-  Rust unit tests: `cargo test --manifest-path packages/editor/src-tauri/Cargo.toml`.
+  Rust unit tests: `cargo test --manifest-path packages/editor/src-tauri/Cargo.toml`; this also
+  regenerates `src/platform/bindings.ts` (tauri-specta), so commit it after changing a command.
+  New commands need `#[specta::specta]` and an entry in `specta_builder()`.
 - One ticket ≈ one commit, with tests. Commit messages are imperative and explain why.
