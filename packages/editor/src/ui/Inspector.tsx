@@ -1,8 +1,9 @@
-import type { SceneFile } from "@questforge/schema";
 import { NOUN, type Actions } from "../model/actions.ts";
 import { entriesInFolder } from "../model/commands.ts";
 import { SECTIONS, isAssetKind, sectionEntries } from "../model/browser.ts";
-import { describeReferences, entryReferences, sceneThingReferences, summarizeReferences } from "../model/commands.ts";
+import { describeReferences, entryReferences, renameEntry, summarizeReferences } from "../model/commands.ts";
+import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
+import { TextField } from "./TextField.tsx";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase first-of-type:mt-0";
 
@@ -32,32 +33,7 @@ export function Inspector({ actions }: { actions: Actions }) {
   }
 
   if (sel.kind === "sceneThing") {
-    const scene = p.scenes.find((s) => s.data.id === sel.scene)?.data as SceneFile | undefined;
-    if (!scene) return null;
-    const thing =
-      sel.list === "spawns"
-        ? scene.spawns[sel.key]
-        : sel.list === "characters"
-          ? scene.characters.find((c) => c.character === sel.key)
-          : sel.list === "objects" || sel.list === "hotspots" || sel.list === "regions"
-            ? (scene[sel.list] as { id: string; rules: unknown[] }[]).find((x) => x.id === sel.key)
-            : undefined;
-    const refKind = sel.list === "spawns" ? "spawn" : sel.list === "objects" ? "object" : null;
-    const refs = refKind ? sceneThingReferences(p, scene.id, refKind, sel.key) : [];
-    return (
-      <dl className="grid gap-0.5">
-        <h3 className="mb-2 text-[15px] font-semibold">{sel.key.split("#")[0]}</h3>
-        <dt className={DT}>In scene</dt>
-        <dd>{scene.name}</dd>
-        {thing && "rules" in thing && (
-          <>
-            <dt className={DT}>Rules</dt>
-            <dd>{thing.rules.length} (the rule inspector arrives in M5)</dd>
-          </>
-        )}
-        <References summary={summarizeReferences(refs)} lines={describeReferences(p, refs)} />
-      </dl>
-    );
+    return <SceneThingInspector key={`${sel.scene}:${sel.list}:${sel.key}`} actions={actions} sceneId={sel.scene} thing={{ list: sel.list, key: sel.key }} />;
   }
 
   const entry = sectionEntries(p, sel.section).find((e) => e.id === sel.id);
@@ -70,6 +46,17 @@ export function Inspector({ actions }: { actions: Actions }) {
       <h3 className="mb-2 text-[15px] font-semibold">{entry.name}</h3>
       <dt className={DT}>Kind</dt>
       <dd>{NOUN[sel.section]}</dd>
+      {sel.section === "scene" && (
+        <dd className="mt-2 grid gap-2">
+          <TextField
+            label="Name"
+            value={entry.name}
+            onChange={(v) => editor.apply("Rename scene", (q) => renameEntry(q, "scene", sel.id, v), `scene:${sel.id}:name`)}
+            onBlur={() => editor.history.breakMerge()}
+          />
+          <SceneSettings actions={actions} sceneId={sel.id} />
+        </dd>
+      )}
       {isAssetKind(sel.section) && (
         <>
           <dt className={DT}>Name</dt>
@@ -115,7 +102,7 @@ function ImagePreview({ path, actions }: { path: string; actions: Actions }) {
   );
 }
 
-function References({ summary, lines }: { summary: string | null; lines: string[] }) {
+export function References({ summary, lines }: { summary: string | null; lines: string[] }) {
   return (
     <>
       <dt className={DT}>Used by</dt>

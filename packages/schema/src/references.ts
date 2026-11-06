@@ -272,3 +272,54 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
   }
   return next;
 }
+
+/** Things whose IDs live inside one scene. Objects and spawns can be referenced (D61). */
+export type SceneIdKind = "object" | "spawn" | "hotspot" | "region";
+
+/**
+ * Changes the ID of an object, spawn point, hotspot or region in one scene, and every
+ * reference to it (`{ scene, object }` and `{ scene, spawn }` pairs anywhere).
+ */
+export function renameSceneId(project: Project, sceneId: string, kind: SceneIdKind, from: string, to: string): Project {
+  if (!Id.safeParse(to).success) throw new RenameError(`"${to}" isn't a valid ID`);
+  const doc = project.scenes.find((s) => s.data.id === sceneId);
+  if (!doc) throw new RenameError(`No scene with ID ${sceneId}`);
+  const s = doc.data;
+  const ids =
+    kind === "spawn" ? Object.keys(s.spawns) : kind === "object" ? s.objects.map((o) => o.id) : kind === "hotspot" ? s.hotspots.map((h) => h.id) : s.regions.map((r) => r.id);
+  if (!ids.includes(from)) throw new RenameError(`No ${kind} with ID ${from}`);
+  if (from === to) return project;
+  if (ids.includes(to)) throw new RenameError(`This scene already has a ${kind} with ID ${to}`);
+
+  const byFile = new Map<string, DataPath[]>();
+  if (kind === "object" || kind === "spawn") {
+    for (const ref of collectReferences(project)) {
+      if (ref.kind !== kind || ref.scope !== sceneId || ref.id !== from) continue;
+      byFile.set(ref.location.file, [...(byFile.get(ref.location.file) ?? []), ref.location.path]);
+    }
+  }
+  const edit = <T>(d: Doc<T>, extra?: (data: T) => void): Doc<T> => {
+    const paths = byFile.get(d.path);
+    if (!paths && !extra) return d;
+    const data = structuredClone(d.data);
+    for (const p of paths ?? []) setAt(data, p, to);
+    extra?.(data);
+    return { ...d, data };
+  };
+  const define = (data: SceneFile) => {
+    if (kind === "spawn") {
+      // Keep the spawn's place in key order.
+      data.spawns = Object.fromEntries(Object.entries(data.spawns).map(([k, v]) => [k === from ? to : k, v]));
+    } else {
+      const list = (kind === "object" ? data.objects : kind === "hotspot" ? data.hotspots : data.regions) as { id: string }[];
+      list.forEach((x) => x.id === from && (x.id = to));
+    }
+  };
+  const next: Project = { ...project };
+  next.game = project.game && edit(project.game);
+  next.scenes = project.scenes.map((d) => edit(d, d.data.id === sceneId ? define : undefined));
+  next.dialogues = project.dialogues.map((d) => edit(d));
+  next.items = project.items.map((d) => edit(d));
+  next.characters = project.characters.map((d) => edit(d));
+  return next;
+}

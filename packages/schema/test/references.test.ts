@@ -7,7 +7,9 @@ import {
   loadProject,
   planSave,
   renameId,
+  renameSceneId,
   saveProject,
+  validateProject,
 } from "../src/index.ts";
 import { NodeFs } from "../src/node.ts";
 import { FIXTURE, fixtureCopy } from "./helpers.ts";
@@ -111,5 +113,34 @@ describe("rename (spec 01 acceptance)", () => {
     expect(() => renameId(project, "item", "coin", "lantern")).toThrow(/already exists/);
     expect(() => renameId(project, "flag", "shop_visits", "talked_to_villager")).toThrow(/already exists/);
     expect(renameId(project, "item", "coin", "coin")).toBe(project);
+  });
+});
+
+describe("renameSceneId (M4 Inspector)", () => {
+  it("renames an object and every { scene, object } reference to it", async () => {
+    const project = await load();
+    const before = collectReferences(project).filter((r) => r.kind === "object" && r.id === "boulder").length;
+    expect(before).toBeGreaterThan(0);
+    const next = renameSceneId(project, "path", "object", "boulder", "big_rock");
+    expect(collectReferences(next).filter((r) => r.kind === "object" && r.id === "boulder")).toEqual([]);
+    expect(collectReferences(next).filter((r) => r.kind === "object" && r.id === "big_rock").length).toBe(before);
+    expect(next.scenes.find((s) => s.data.id === "path")!.data.objects.some((o) => o.id === "big_rock")).toBe(true);
+    expect(validateProject(next)).toEqual([]);
+  });
+
+  it("renames a spawn in place, keeping its key order, and updates change_scene references", async () => {
+    const project = await load();
+    const keys = Object.keys(project.scenes.find((s) => s.data.id === "path")!.data.spawns);
+    const next = renameSceneId(project, "path", "spawn", "from_beach", "shore");
+    expect(Object.keys(next.scenes.find((s) => s.data.id === "path")!.data.spawns)).toEqual(keys.map((k) => (k === "from_beach" ? "shore" : k)));
+    expect(validateProject(next)).toEqual([]);
+  });
+
+  it("refuses duplicates and invalid IDs", async () => {
+    const project = await load();
+    expect(() => renameSceneId(project, "path", "object", "boulder", "Big Rock")).toThrow(RenameError);
+    const path = project.scenes.find((s) => s.data.id === "path")!.data;
+    const other = Object.keys(path.spawns).find((k) => k !== "from_beach")!;
+    expect(() => renameSceneId(project, "path", "spawn", "from_beach", other)).toThrow(/already has/);
   });
 });

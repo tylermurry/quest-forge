@@ -74,3 +74,30 @@ export function inWalkable(p: P, outer: Polygon, holes: Polygon[]): boolean {
   if (!pointInPolygon(p, outer)) return false;
   return !holes.some((h) => pointInPolygon(p, h) && !h.some((q, i) => onSegment(p, q, h[(i + 1) % h.length]!)));
 }
+
+/** True if segments a–b and c–d cross at a point inside both (touching doesn't count). */
+export function segmentsCross(a: P, b: P, c: P, d: P): boolean {
+  const d1 = Math.sign(cross(c, d, a));
+  const d2 = Math.sign(cross(c, d, b));
+  const d3 = Math.sign(cross(a, b, c));
+  const d4 = Math.sign(cross(a, b, d));
+  return d1 * d2 < 0 && d3 * d4 < 0;
+}
+
+/**
+ * True if `inner` lies within `outer` (touching its edges is fine): every vertex is
+ * inside or on the outline and no edges cross. Both must be simple polygons.
+ */
+export function polygonWithin(inner: Polygon, outer: Polygon): boolean {
+  if (!inner.every((p) => pointInPolygon(p, outer))) return false;
+  for (let i = 0; i < inner.length; i++) {
+    const a = inner[i]!;
+    const b = inner[(i + 1) % inner.length]!;
+    for (let j = 0; j < outer.length; j++) {
+      if (segmentsCross(a, b, outer[j]!, outer[(j + 1) % outer.length]!)) return false;
+    }
+    // A concave outline can have an edge pass outside between two inside vertices.
+    if (!pointInPolygon([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], outer)) return false;
+  }
+  return true;
+}

@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/toolti
 import { ConfirmDelete } from "../Dialogs.tsx";
 import { useCommands } from "../hooks.ts";
 import { cn } from "../lib/utils.ts";
-import { CanvasImages } from "./images.ts";
+import { useCanvasImages } from "./images.ts";
 import { SceneCanvas } from "./SceneCanvas.tsx";
 
 const TOOL_ICON: Record<Tool, React.ReactNode> = {
@@ -50,19 +50,16 @@ function ToolButton({ label, pressed, disabled, onClick, children }: { label: st
 export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: string }) {
   const { ws, editor } = actions;
   const registry = useCommands();
-  const [images] = useState(() => new CanvasImages((path) => actions.assetUrl?.(path)));
+  const images = useCanvasImages(editor.project);
   const [c] = useState(() => new SceneTools({ editor, ws, scene: sceneId, images: images.lookup }));
   useSyncExternalStore(ws.sceneUi.subscribe, () => ws.sceneUi.version);
-  useSyncExternalStore(images.subscribe, () => images.version);
   useSyncExternalStore(c.subscribe, () => c.version);
   const [confirm, setConfirm] = useState<{ warning: DeleteWarning; run(): void } | null>(null);
 
-  useEffect(() => images.sync(editor.project), [images, editor.project]);
   // Debugging aid like window.editor: the open scene's controller and images.
   useEffect(() => {
     Object.assign(window, { scene: c, sceneImages: images });
   }, [c, images]);
-  useEffect(() => () => images.dispose(), [images]);
 
   const remove = (ref: ThingRef) => {
     const warning = c.deleteWarning(ref);

@@ -1,5 +1,6 @@
 import type { LoadedImage } from "@questforge/engine";
 import type { ImageAsset, Project } from "@questforge/schema";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
 // Decoded images for the scene canvas. A file imported this session that isn't on
 // disk yet is shown from its bytes in memory (`pendingFiles`), so a dropped
@@ -79,4 +80,16 @@ export class CanvasImages {
     for (const url of this.blobs.values()) URL.revokeObjectURL(url);
     this.blobs.clear();
   }
+}
+
+/** One image store per open project (Workspace), shared by scene canvases and the Inspector. */
+export const CanvasImagesContext = createContext<CanvasImages | null>(null);
+
+/** The workspace's decoded images, kept in step with the project; re-renders as they load. */
+export function useCanvasImages(project: Project): CanvasImages {
+  const images = useContext(CanvasImagesContext);
+  if (!images) throw new Error("No image store");
+  useEffect(() => images.sync(project), [images, project]);
+  useSyncExternalStore(images.subscribe, () => images.version);
+  return images;
 }

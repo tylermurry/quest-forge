@@ -1,4 +1,4 @@
-import { inWalkable, polygonIssue, type PolygonIssue } from "./geometry.ts";
+import { inWalkable, polygonIssue, polygonWithin, type PolygonIssue } from "./geometry.ts";
 import { describePath, type DataPath, type FileKind, type Problem, type ProblemCode } from "./problems.ts";
 import { allDocs, filesAfterSave, type Doc, type Project } from "./project.ts";
 import { collectReferences, type RefKind, type Reference } from "./references.ts";
@@ -210,7 +210,13 @@ function checkScene(doc: Doc<SceneFile>, out: Collector) {
   } else {
     outerOk = polygon(data.walkable.outer, ["walkable", "outer"], "The walkable area's outline", ["walkable"]);
   }
-  data.walkable.holes.forEach((h, i) => polygon(h, ["walkable", "holes", i], "This hole", ["walkable", "holes", i]));
+  data.walkable.holes.forEach((h, i) => {
+    const ok = polygon(h, ["walkable", "holes", i], "This hole", ["walkable", "holes", i]);
+    // A hole must sit inside the outline (D100), or walking around it makes no sense.
+    if (ok && outerOk && !polygonWithin(h, data.walkable.outer)) {
+      out.error("invalid_polygon", "scene", file, ["walkable", "holes", i], "This hole sticks out of the walkable area. Move its points inside the outline.", ["walkable", "holes", i]);
+    }
+  });
   data.objects.forEach((o, i) => {
     if (o.obstacle) polygon(o.obstacle, ["objects", i, "obstacle"], "The obstacle", ["objects", i, "obstacle"]);
   });

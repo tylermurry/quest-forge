@@ -1,6 +1,6 @@
 // Scene-editing commands (spec 09): pure Project → Project functions, each run as
 // one undo step through Editor.apply (D84). Geometry stays integer (spec 01).
-import { SCENE_HEIGHT, SCENE_WIDTH, type Placement, type Point, type Polygon, type Project, type SceneFile } from "@questforge/schema";
+import { RenameError, SCENE_HEIGHT, SCENE_WIDTH, renameSceneId, type Facing, type Placement, type Point, type Polygon, type Project, type SceneFile } from "@questforge/schema";
 import { CommandError, uniqueId, updateDoc } from "../commands.ts";
 import { getPolygon, withPolygon, type PolyRef } from "./shapes.ts";
 import { holeIndex, holeKey, type ThingRef } from "./things.ts";
@@ -381,5 +381,92 @@ export function setBackground(p: Project, sceneId: string, imageId: string | und
   return updateScene(p, sceneId, (s) => {
     const { background: _old, ...rest } = s;
     return imageId === undefined ? rest : { ...rest, background: imageId };
+  });
+}
+
+// ── Inspector fields (D99) ───────────────────────────────────────────────────
+
+/** Changes the ID of an object, spawn, hotspot or region and everything that refers to it. */
+export function changeThingId(p: Project, sceneId: string, ref: ThingRef, to: string): Project {
+  const kind = ({ objects: "object", spawns: "spawn", hotspots: "hotspot", regions: "region" } as const)[ref.list as "objects"];
+  if (!kind) throw new CommandError("That can't have its ID changed.");
+  try {
+    return renameSceneId(p, sceneId, kind, ref.key, to);
+  } catch (e) {
+    if (e instanceof RenameError) throw new CommandError(`${e.message}.`);
+    throw e;
+  }
+}
+
+/** Sets a hotspot's name (shown to the player), or an object's (empty = not clickable, D69). */
+export function setThingName(p: Project, sceneId: string, ref: ThingRef, name: string): Project {
+  return updateScene(p, sceneId, (s) => {
+    if (ref.list === "hotspots") {
+      if (!name.trim()) throw new CommandError("A hotspot needs a name; it's what the player sees.");
+      return { ...s, hotspots: s.hotspots.map((h) => (h.id === ref.key ? { ...h, name } : h)) };
+    }
+    if (ref.list === "objects") {
+      return {
+        ...s,
+        objects: s.objects.map((o) => {
+          if (o.id !== ref.key) return o;
+          const { name: _old, ...rest } = o;
+          // The serializer writes keys in schema order (D54), so where `name` goes here doesn't matter.
+          return name.trim() ? { ...rest, name } : rest;
+        }),
+      };
+    }
+    throw new CommandError("That has no name.");
+  });
+}
+
+type ObjectFields = Partial<Pick<SceneFile["objects"][number], "image" | "x" | "y" | "visible">>;
+
+/** Edits an object's image, position or initial visibility. */
+export function setObjectFields(p: Project, sceneId: string, id: string, f: ObjectFields): Project {
+  if (f.image !== undefined && !p.assets?.data.images.some((i) => i.id === f.image)) throw new CommandError(`There's no image with ID ${f.image}.`);
+  return updateScene(p, sceneId, (s) => {
+    if (!s.objects.some((o) => o.id === id)) throw gone();
+    const x = f.x === undefined ? {} : { x: Math.max(-SCENE_WIDTH, Math.min(SCENE_WIDTH * 2, Math.round(f.x))) };
+    const y = f.y === undefined ? {} : { y: Math.max(-SCENE_HEIGHT, Math.min(SCENE_HEIGHT * 2, Math.round(f.y))) };
+    return { ...s, objects: s.objects.map((o) => (o.id === id ? { ...o, ...f, ...x, ...y } : o)) };
+  });
+}
+
+/**
+ * Gives an object a starting obstacle (D42): a strip along its baseline as wide as
+ * its image, which the user then shapes. `size` is the image's size.
+ */
+export function addObstacle(p: Project, sceneId: string, id: string, size: { w: number; h: number }): Project {
+  return updateScene(p, sceneId, (s) => {
+    const o = s.objects.find((x) => x.id === id);
+    if (!o) throw gone();
+    const base = clampY(o.baseline ?? o.y + size.h);
+    const top = clampY(base - Math.max(4, Math.round(size.h / 6)));
+    const x0 = clampX(o.x);
+    const x1 = clampX(o.x + size.w);
+    if (x1 - x0 < 1 || base - top < 1) throw new CommandError("This object is outside the scene, so it can't block walking here.");
+    return { ...s, objects: s.objects.map((x) => (x === o ? { ...o, obstacle: [[x0, top], [x1, top], [x1, base], [x0, base]] } : x)) };
+  });
+}
+
+export function removeObstacle(p: Project, sceneId: string, id: string): Project {
+  return updateScene(p, sceneId, (s) => ({
+    ...s,
+    objects: s.objects.map((o) => {
+      if (o.id !== id) return o;
+      const { obstacle: _old, ...rest } = o;
+      return rest;
+    }),
+  }));
+}
+
+/** Edits a placed character (D60). */
+export function setPlacement(p: Project, sceneId: string, character: string, f: Partial<{ x: number; y: number; facing: Facing; visible: boolean }>): Project {
+  return updateScene(p, sceneId, (s) => {
+    if (!s.characters.some((c) => c.character === character)) throw gone();
+    const x = f.x === undefined ? {} : { x: clampX(f.x) };
+    const y = f.y === undefined ? {} : { y: clampY(f.y) };
+    return { ...s, characters: s.characters.map((c) => (c.character === character ? { ...c, ...f, ...x, ...y } : c)) };
   });
 }

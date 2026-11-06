@@ -2,7 +2,7 @@
 // pointer and key input in, zoom/pan, selection, tool gestures and editor commands
 // out. The canvas component forwards events and draws `frame()`.
 import { sceneDrawables, type ActorPose, type ImageLookup, type Vec } from "@questforge/engine";
-import type { CharacterFile, Project, SceneFile } from "@questforge/schema";
+import type { CharacterFile, Problem, Project, SceneFile } from "@questforge/schema";
 import type { Editor } from "../editor.ts";
 import type { WorkspaceState } from "../workspace.ts";
 import type { Frame, Sprite } from "./frame.ts";
@@ -10,6 +10,7 @@ import type { Layer, SceneUi, Tool } from "./sceneUi.ts";
 import type { DeleteWarning } from "../actions.ts";
 import { CommandError, describeReferences, sceneThingReferences, summarizeReferences } from "../commands.ts";
 import { deleteThing, thingNoun } from "./commands.ts";
+import { sceneProblems, thingKey } from "./problems.ts";
 import { sameThing, type ThingRef } from "./things.ts";
 import { panBy, toScene, transformFor, zoomByWheel, zoomStep, zoomTo, type Size, type Transform } from "./view.ts";
 
@@ -307,6 +308,22 @@ export class SceneController {
     });
   }
 
+  /** Validation problems in this scene by thing (D100); "" holds scene-wide ones. */
+  get problems(): Map<string, Problem[]> {
+    const doc = this.editor.project.scenes.find((s) => s.data.id === this.host.scene);
+    const all = this.editor.problems;
+    if (!doc) return new Map();
+    if (this.problemCache?.all !== all || this.problemCache.scene !== doc.data) {
+      this.problemCache = { all, scene: doc.data, map: sceneProblems(all, doc.path, doc.data) };
+    }
+    return this.problemCache.map;
+  }
+  private problemCache: { all: Problem[]; scene: SceneFile; map: Map<string, Problem[]> } | null = null;
+
+  problemsFor(ref: ThingRef | null): Problem[] {
+    return this.problems.get(ref ? thingKey(ref) : "") ?? [];
+  }
+
   frame(): Frame | null {
     const scene = this.scene;
     if (!scene) return null;
@@ -317,7 +334,7 @@ export class SceneController {
       images: this.host.images,
       sprites: this.sprites(scene),
       selection: this.selection,
-      invalid: new Set(),
+      invalid: new Set([...this.problems.keys()].filter((k) => k !== "")),
       drawing: null,
       snap: null,
       crosshair: null,

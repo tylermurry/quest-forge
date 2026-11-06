@@ -15,6 +15,7 @@ import { EditorTabs } from "./EditorTabs.tsx";
 import { Inspector } from "./Inspector.tsx";
 import { ProjectBrowser } from "./ProjectBrowser.tsx";
 import { TitleBar } from "./TitleBar.tsx";
+import { CanvasImages, CanvasImagesContext } from "./scene/images.ts";
 import { useCommands, useEditor, usePlatform } from "./hooks.ts";
 import { cn } from "./lib/utils.ts";
 
@@ -75,6 +76,8 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
   const ws = actions.ws;
   useSyncExternalStore(ws.subscribe, () => ws.version);
+  const [images] = useState(() => new CanvasImages((path) => platform.assetUrl(root, path)));
+  useEffect(() => () => images.dispose(), [images]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const storage = layoutStorage();
   const columns = useDefaultLayout({ id: "questforge.columns", storage });
@@ -136,6 +139,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
   return (
     <TooltipProvider delayDuration={500}>
     {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases (D92). */}
+    <CanvasImagesContext.Provider value={images}>
     <DndContext sensors={sensors} collisionDetection={pointerWithin}>
     <div className="flex h-full flex-col">
       <TitleBar>
@@ -197,6 +201,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
       </ResizablePanelGroup>
     </div>
     </DndContext>
+    </CanvasImagesContext.Provider>
     </TooltipProvider>
   );
 }

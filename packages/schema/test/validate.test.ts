@@ -146,6 +146,25 @@ describe("spec 14 errors", () => {
     ]);
   });
 
+  it("invalid polygon: a hole that sticks out of the walkable outline (D100)", async () => {
+    const out = await problemsAfter((p) => {
+      scene(p, "beach").walkable.holes[0] = [[300, 200], [360, 200], [360, 340], [300, 340]];
+    });
+    expect(summary(out)).toEqual([
+      {
+        code: "invalid_polygon",
+        file: "scenes/outdoors/beach.scene.yaml",
+        path: "walkable.holes.0",
+        text: "Sunny Beach › Walkable area › Hole 1: This hole sticks out of the walkable area. Move its points inside the outline.",
+      },
+    ]);
+    // Touching the outline from inside is fine.
+    const touching = await problemsAfter((p) => {
+      scene(p, "beach").walkable.holes[0] = [[300, 240], [360, 240], [360, 340], [300, 340]];
+    });
+    expect(touching).toEqual([]);
+  });
+
   it("duplicate IDs: across asset files and within lists", async () => {
     const problems = await problemsAfter((p) => {
       p.items.push({ path: "items/old/coin.item.yaml", data: structuredClone(p.items[0]!.data) });
