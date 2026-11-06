@@ -29,7 +29,7 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   a jump-to `location` (`file` + data `path`).
 - Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas),
   `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
-  `renameId`), `validate.ts` + `geometry.ts` (spec 14 errors). The test fixture project is
+  `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (spec 14 errors). The test fixture project is
   `packages/schema/test/fixtures/mini`. It must stay canonical and problem-free.
 - Engine package map (`packages/engine/src`): `nav.ts` (visibility graph + A*, obstacles), `depth.ts`
   (scale lerp, baseline sort), `sprite.ts` (sheet slicing, origin, mirroring, slot fallback),
@@ -93,10 +93,31 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
 - Editor dev page: `corepack pnpm --filter @questforge/editor dev` (Vite with `--configLoader runner`,
   port 5175, `editor-dev` in `.claude/launch.json`). It edits real folders in the gitignored
   `packages/editor/.sandbox/` through `dev/sandbox.ts`, seeded with a copy of the m1 fixture
-  (`garden-m1`); delete a sandbox folder to reset it. `window.editor` exposes the open `Editor`.
+  (`garden-m1`); delete a sandbox folder to reset it. Read `specs/DECISIONS.md` D93–D109 before touching the scene editor. `window.editor` exposes the open `Editor`.
   In-app drags use dnd-kit, so the browser tool's `left_click_drag` works on tree rows. Component tests
   drag with pointer events after giving rows a `getBoundingClientRect` (see `browser-ui.test.tsx`);
   Radix menus need `@testing-library/user-event`. jsdom polyfills live in `test/support/setup.ts`.
+- Scene editor (M4, spec 09): DOM-free logic in `packages/editor/src/model/scene/`: `view.ts` (zoom/pan
+  transform, pixel snap, grid threshold), `sceneUi.ts` (per-scene layer/tool/snap/aids/zoom state in
+  `ws.sceneUi`, saved to `.editor/view.json`, never undone, D101), `things.ts` (`ThingRef` = `{ list, key }`
+  selection keys, Layers panel rows, draw order), `shapes.ts` (every polygon as a `PolyRef`), `snap.ts`,
+  `hit.ts` (click order, D108), `commands.ts` (pure scene commands), `problems.ts` (validation problems
+  by thing), `frame.ts` (what one canvas frame shows), `controller.ts` (`SceneController`: zoom/pan,
+  drafts, delete, frame) and `tools.ts` (`SceneTools`: Select/Move, Polygon, Rectangle, Spawn, Walk-to,
+  drops, reorder, ghost/path aids). Drags call `preview(label, run)` and `commit()` on release, so a drag is
+  one undo step and an unclosed polygon never enters history (D84).
+  UI in `ui/scene/`: `SceneEditor.tsx` (toolbar, Layers panel, registry handlers), `SceneCanvas.tsx`
+  (forwards pointer/wheel/space input, counts clicks itself), `draw.ts` (the only canvas drawing: engine
+  `drawSprites` for the scene, screen-px overlays, D93), `images.ts` (one `CanvasImages` per workspace via
+  `CanvasImagesContext`), `SceneInspector.tsx`. The engine's `sceneDrawables`/`drawSprites`/`sceneNav`/
+  `scaleAt` are reused, never re-implemented; preview-only actors use IDs starting `ghost:`.
+- Scene editor tests drive `SceneTools` in Node with `test/support/scene.ts` (`sceneEditor(project, sceneId,
+  sizes)` gives `click`/`drag`/`at` in scene coordinates at 2×; image sizes are given since there is no DOM).
+  The dnd-kit `DndContext` lives in `Workspace`; components listen with `useDndMonitor` and tag drop data
+  with a `kind` (`browserFolder`, `sceneCanvas`, `objectSlot`). Dev page: `window.scene` is the open scene's
+  controller. `editor-dev-alt` (port 5177) runs the editor when 5175 is taken; `tauri dev --config
+  '{"build":{"devUrl":"http://localhost:5177","beforeDevCommand":""}}'` points the app at it. The app is
+  single-instance: a second launch hands over to a running one and exits.
 - Tauri app: needs Rust (rustup). `corepack pnpm --filter @questforge/editor tauri dev` runs the
   editor in a native window (it starts the Vite dev server itself); `tauri build` makes the bundle.
   Rust unit tests: `cargo test --manifest-path packages/editor/src-tauri/Cargo.toml`; this also
