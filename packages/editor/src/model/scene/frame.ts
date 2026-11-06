@@ -31,4 +31,6 @@ export interface Frame {
   crosshair: Vec | null;
   /** Path preview from the default spawn (spec 09). */
   path: Vec[] | null;
+  /** The ghost when the player has no usable animation: a box at the right scale (D96). */
+  ghostBox: { x: number; y: number; w: number; h: number } | null;
 }

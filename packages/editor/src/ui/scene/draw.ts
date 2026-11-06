@@ -54,12 +54,17 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
     ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
     ctx.drawImage(bg, 0, 0);
   } else checkerboard(ctx);
-  if (shown("objects")) {
-    for (const s of f.sprites) {
-      ctx.globalAlpha = s.alpha;
-      drawSprites(ctx, [s.d]);
-    }
-    ctx.globalAlpha = 1;
+  // Sprites in the engine's order; the ghost shows even with the Objects layer hidden.
+  for (const s of f.sprites) {
+    if (!s.ghost && !shown("objects")) continue;
+    ctx.globalAlpha = s.alpha;
+    drawSprites(ctx, [s.d]);
+  }
+  ctx.globalAlpha = 1;
+  if (f.ghostBox) {
+    const b = f.ghostBox;
+    ctx.fillStyle = "rgba(250,204,21,0.45)";
+    ctx.fillRect(b.x, b.y, b.w, b.h);
   }
   ctx.restore();
 

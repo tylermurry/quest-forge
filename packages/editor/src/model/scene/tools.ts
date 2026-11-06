@@ -1,7 +1,7 @@
 // Tool gestures on the scene canvas (spec 09): Select/Move, Polygon, Rectangle,
 // Spawn point, Walk-to point. DOM-free; tested in Node by feeding pointer input.
-import { facingFor, type Vec } from "@questforge/engine";
-import { polygonIssue, type Facing, type Point } from "@questforge/schema";
+import { facingFor, scaleAt, sceneNav, type NavMesh, type Vec } from "@questforge/engine";
+import { polygonIssue, type CharacterFile, type Facing, type Point, type SceneFile } from "@questforge/schema";
 import {
   addSpawn,
   createShape,
@@ -26,7 +26,7 @@ import {
 } from "./commands.ts";
 import { imageSize } from "../imageSize.ts";
 import { IMAGE_EXTENSIONS, importFiles, type ImportFile } from "../importing.ts";
-import { SceneController, type PointerInput } from "./controller.ts";
+import { GHOST, SceneController, type PointerInput } from "./controller.ts";
 import type { Frame } from "./frame.ts";
 import { hitTest, VERTEX_PX, type Hit } from "./hit.ts";
 import { snapPoint } from "./snap.ts";
@@ -499,9 +499,69 @@ export class SceneTools extends SceneController {
     }
   }
 
+  // ── Live aids (spec 09, D96, D105) ──────────────────────────────────────────
+
+  private navCache: { scene: SceneFile; nav: NavMesh | null } | null = null;
+
+  /** The scene's walkable area with initially visible obstacles (D42, D105); null if it can't be walked. */
+  nav(scene: SceneFile): NavMesh | null {
+    if (this.navCache?.scene === scene) return this.navCache.nav;
+    const { outer, holes } = scene.walkable;
+    const usable = outer.length >= 3 && polygonIssue(outer) === null && holes.every((h) => polygonIssue(h) === null);
+    const nav = usable ? sceneNav(scene, (id) => scene.objects.find((o) => o.id === id)?.visible ?? false) : null;
+    this.navCache = { scene, nav };
+    return nav;
+  }
+
+  /** Where the path preview starts: the `default` spawn, else the first one. */
+  private pathStart(scene: SceneFile): Vec | null {
+    const s = scene.spawns.default ?? Object.values(scene.spawns)[0];
+    return s ? [s.x, s.y] : null;
+  }
+
+  /**
+   * The aids at the cursor: the path from the default spawn, and the ghost of the
+   * player standing where that walk would end, at that point's depth scale (D105).
+   */
+  aidsAt(scene: SceneFile, cursor: Vec): { path: Vec[] | null; feet: Vec } {
+    const nav = this.nav(scene);
+    const start = this.pathStart(scene);
+    if (!nav) return { path: null, feet: cursor };
+    if (!start) return { path: null, feet: nav.nearestWalkable(cursor) };
+    const path = nav.findPath(start, cursor);
+    return { path, feet: path[path.length - 1] ?? cursor };
+  }
+
+  /** The player's character, for the ghost. */
+  private playerCharacter(): CharacterFile | undefined {
+    const id = this.editor.project.game?.data.player;
+    return this.editor.project.characters.find((c) => c.data.id === id)?.data;
+  }
+
+  /** Placeholder ghost size at scale 1 when the player has no usable slot (D96). */
+  static readonly GHOST_BOX = { w: 24, h: 56 };
+
   override frame(): Frame | null {
     const f = super.frame();
     if (!f) return null;
+    const ui = this.ui;
+    const showAids = this.hover && !this.drawing && !this.rect && (ui.aids.ghost || ui.aids.path);
+    if (showAids) {
+      const { path, feet } = this.aidsAt(f.scene, this.hover!);
+      if (ui.aids.path && path && path.length > 1) f.path = path;
+      if (ui.aids.ghost) {
+        const character = this.playerCharacter();
+        const ghost = character ? { id: `${GHOST}${character.id}`, character, pos: feet, facing: "down" as const, kind: "idle" as const, animTime: 0 } : null;
+        const sprites = ghost ? this.sprites(f.scene, [ghost]) : f.sprites;
+        if (ghost && sprites.some((s) => s.ghost)) f.sprites = sprites;
+        else {
+          const k = scaleAt(f.scene.depth, feet[1]);
+          const { w, h } = SceneTools.GHOST_BOX;
+          f.ghostBox = { x: feet[0] - (w * k) / 2, y: feet[1] - h * k, w: w * k, h: h * k };
+        }
+        if (Math.hypot(feet[0] - this.hover![0], feet[1] - this.hover![1]) > 0.5) f.crosshair = this.hover;
+      }
+    }
     f.snap = this.snapMark;
     if (this.drawing) {
       const { points } = this.drawing;

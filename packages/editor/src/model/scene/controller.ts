@@ -339,6 +339,7 @@ export class SceneController {
       snap: null,
       crosshair: null,
       path: null,
+      ghostBox: null,
     };
   }
 }
