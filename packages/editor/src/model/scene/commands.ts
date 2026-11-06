@@ -66,8 +66,10 @@ export function deleteThing(p: Project, sceneId: string, ref: ThingRef): Project
       }
       case "depth":
         throw new CommandError("Depth lines can't be deleted; drag them instead.");
-      case "background":
-        throw new CommandError("Choose a different background in the Inspector.");
+      case "background": {
+        const { background: _old, ...rest } = s;
+        return rest;
+      }
     }
   });
 }
@@ -370,5 +372,14 @@ export function reorderObject(p: Project, sceneId: string, id: string, order: re
     const at = after ? objects.findIndex((x) => x.id === after) + 1 : objects.length;
     objects = after ? [...objects.slice(0, at), moved, ...objects.slice(at)] : s.objects.map((x) => (x.id === id ? moved : x));
     return { ...s, objects };
+  });
+}
+
+/** Sets or removes a scene's background image (D97). */
+export function setBackground(p: Project, sceneId: string, imageId: string | undefined): Project {
+  if (imageId !== undefined && !p.assets?.data.images.some((i) => i.id === imageId)) throw new CommandError(`There's no image with ID ${imageId}.`);
+  return updateScene(p, sceneId, (s) => {
+    const { background: _old, ...rest } = s;
+    return imageId === undefined ? rest : { ...rest, background: imageId };
   });
 }

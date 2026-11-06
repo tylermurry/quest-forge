@@ -60,7 +60,10 @@ describe("spec 08 acceptance", () => {
     expect(sceneFolders(a)).toEqual(before.scenes);
     expect(before.scenes).toEqual({ first_scene: "act1", [second]: "act1/caves", [third]: "act1/caves/deep" });
     expect(await readdir(join(dir, "scenes/New folder"))).toEqual([".keep"]);
-    expect(validateProject(a.editor.project)).toEqual([]);
+    // New scenes start empty (D97): their only problem is the walkable area still to draw.
+    const codes = validateProject(a.editor.project).map((x) => x.code);
+    expect(codes.length).toBeGreaterThan(0);
+    expect(new Set(codes)).toEqual(new Set(["no_walkable_area"]));
     expect(a.editor.history.canUndo).toBe(false); // history is per session
   });
 

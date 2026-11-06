@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, Pentagon, Route, Scan, Square, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { Eye, EyeOff, Image as ImageIcon, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, Pentagon, Route, Scan, Square, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { useDndMonitor, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Actions, DeleteWarning } from "../../model/actions.ts";
@@ -8,6 +8,7 @@ import { LAYERS, LAYER_LABEL, LAYER_TOOLS, TOOL_LABEL, type Aids, type Layer, ty
 import { LIST_LAYER, layerRows, sameThing, type LayerRow, type ThingRef } from "../../model/scene/things.ts";
 import { zoomLabel } from "../../model/scene/view.ts";
 import { Button } from "../components/ui/button.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip.tsx";
 import { ConfirmDelete } from "../Dialogs.tsx";
 import { useCommands } from "../hooks.ts";
@@ -173,13 +174,15 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
         <SceneCanvas
           controller={c}
           redraw={images.subscribe}
-          onDropFiles={(files, at) => c.dropFiles?.(files, at)}
+          onDropFiles={(files, at) => void readFiles(files).then((read) => c.dropFiles(read, at))}
           dropRef={(el) => {
             canvasEl.current = el;
             canvasDrop.setNodeRef(el);
           }}
           highlight={draggingEntry && canvasDrop.isOver}
-        />
+        >
+          {!scene.background && !ui.hidden.includes("background") && <EmptyBackground c={c} />}
+        </SceneCanvas>
       </div>
       {confirm && (
         <ConfirmDelete
@@ -191,6 +194,48 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
           }}
         />
       )}
+    </div>
+  );
+}
+
+const readFiles = (files: File[]) => Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
+
+/** The prompt on a scene with no background (D97): drop an image, pick one, or import one. */
+function EmptyBackground({ c }: { c: SceneTools }) {
+  const picker = useRef<HTMLInputElement | null>(null);
+  const images = c.editor.project.assets?.data.images ?? [];
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
+      <div className="bg-popover/95 pointer-events-auto flex items-center gap-2 rounded-md border px-3 py-2 text-[12px] shadow-md" role="group" aria-label="Background">
+        <span className="text-muted-foreground">Drop an image or choose a background</span>
+        <Select onValueChange={(v) => c.chooseBackground(v)}>
+          <SelectTrigger size="sm" aria-label="Choose background" className="h-7 w-40 text-[12px]">
+            <SelectValue placeholder="Choose…" />
+          </SelectTrigger>
+          <SelectContent onPointerDown={(e) => e.stopPropagation()}>
+            {images.map((i) => (
+              <SelectItem key={i.id} value={i.id}>
+                {i.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="xs" variant="secondary" onClick={() => picker.current?.click()}>
+          <ImageIcon /> Import image…
+        </Button>
+        <input
+          ref={picker}
+          type="file"
+          hidden
+          aria-label="Import background image"
+          accept=".png,.jpg,.jpeg,.webp"
+          onChange={(e) => {
+            const files = [...(e.target.files ?? [])];
+            e.target.value = "";
+            if (files.length) void readFiles(files).then((read) => c.dropFiles(read, null));
+          }}
+        />
+      </div>
     </div>
   );
 }

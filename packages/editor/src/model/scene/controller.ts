@@ -270,7 +270,7 @@ export class SceneController {
   }
 
   canDelete(ref: ThingRef | null = this.selection): boolean {
-    return !!ref && ref.list !== "depth" && ref.list !== "background";
+    return !!ref && ref.list !== "depth";
   }
 
   /** Deletes a thing as one undo step; the selection moves to the scene. */

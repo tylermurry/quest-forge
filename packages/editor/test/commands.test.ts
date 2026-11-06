@@ -112,15 +112,19 @@ describe("folders", () => {
 });
 
 describe("entries", () => {
-  it("creates new assets that start out valid", async () => {
+  it("creates new assets that start out valid, except a new scene's empty walkable area (D97)", async () => {
     let p = await m1Project();
     for (const kind of ["scene", "item", "character", "dialogue", "flag"] as const) {
       const made = createEntry(p, kind, "");
       expect(made.id).toMatch(/^new_/);
       p = made.project;
     }
-    expect(p.scenes.find((s) => s.data.id === "new_scene")?.data.background).toBe("garden_bg");
-    expect(validateProject(p)).toEqual([]);
+    const scene = p.scenes.find((s) => s.data.id === "new_scene")!.data;
+    expect(scene.background).toBeUndefined();
+    expect(scene.walkable).toEqual({ outer: [], holes: [] });
+    expect(scene.spawns).toEqual({ default: { x: 320, y: 360, facing: "down" } });
+    // The only problem is the one the user fixes by drawing on the canvas.
+    expect(validateProject(p).map((x) => [x.code, x.location.file])).toEqual([["no_walkable_area", "scenes/new_scene.scene.yaml"]]);
     expect(createEntry(p, "scene", "").id).toBe("new_scene_2");
     expect(() => createEntry(p, "image", "")).toThrow(/importing/);
   });

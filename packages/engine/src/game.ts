@@ -136,7 +136,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     if (destroyed) return;
     loop.advance(now);
     const loading = session ? session.loading : scene;
-    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, images.loaded.get(session.scene.background)?.el, debug);
+    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0);
     present(screen, back, viewport);
     raf = requestAnimationFrame(frame);
@@ -177,7 +177,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
 
 /** Image IDs a scene needs: background, objects, and every character placed in it (plus the player). */
 export function sceneImageIds(scene: SceneFile, characters: Map<string, CharacterFile>, player: string): string[] {
-  const ids = new Set([scene.background, ...scene.objects.map((o) => o.image)]);
+  const ids = new Set([...(scene.background === undefined ? [] : [scene.background]), ...scene.objects.map((o) => o.image)]);
   for (const id of [player, ...scene.characters.map((c) => c.character)]) {
     for (const anim of Object.values(characters.get(id)?.animations ?? {})) if (anim) ids.add(anim.image);
   }

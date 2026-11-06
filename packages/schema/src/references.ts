@@ -108,7 +108,7 @@ function rulesRefs(rules: AnyRule[], at: DataPath, push: Push) {
 }
 
 function sceneRefs(s: SceneFile, push: Push) {
-  push("image", s.background, ["background"]);
+  if (s.background !== undefined) push("image", s.background, ["background"]);
   if (s.music !== undefined) push("audio", s.music, ["music"]);
   s.objects.forEach((o, i) => {
     push("image", o.image, ["objects", i, "image"]);

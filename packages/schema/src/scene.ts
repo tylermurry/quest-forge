@@ -55,8 +55,8 @@ export const SceneFile = z.strictObject({
   schemaVersion,
   id: Id,
   name: Text,
-  /** Image asset ID (D55). */
-  background: Id,
+  /** Image asset ID (D55). Optional: a new scene starts without one and draws black (D97). */
+  background: Id.optional(),
   /** Audio asset ID. */
   music: Id.optional(),
   depth: z.strictObject({ far: DepthLine, near: DepthLine }),

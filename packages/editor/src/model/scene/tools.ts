@@ -18,11 +18,14 @@ import {
   placeImage,
   reorderObject,
   sceneOf,
+  setBackground,
   setBaseline,
   setDepthY,
   setWalkTo,
   thingNoun,
 } from "./commands.ts";
+import { imageSize } from "../imageSize.ts";
+import { IMAGE_EXTENSIONS, importFiles, type ImportFile } from "../importing.ts";
 import { SceneController, type PointerInput } from "./controller.ts";
 import type { Frame } from "./frame.ts";
 import { hitTest, VERTEX_PX, type Hit } from "./hit.ts";
@@ -215,8 +218,56 @@ export class SceneTools extends SceneController {
     return this.editor.apply("Reorder object", (p) => reorderObject(p, id, objectId, order, backIndex));
   }
 
-  /** Files dropped from the OS onto the canvas (D98). */
-  dropFiles?(files: File[], screen: [number, number]): void;
+  /**
+   * Files dropped from the OS onto the canvas (D98), or picked with "Import
+   * background…" (`screen` null). They're imported (D88); the first image becomes
+   * the background when the Background layer is active or the scene has none,
+   * else it's placed as an object at the drop point. One undo step.
+   */
+  dropFiles(files: ImportFile[], screen: Vec | null): boolean {
+    const id = this.sceneId;
+    const scene = this.savedScene;
+    if (!scene) return false;
+    const asBackground = screen === null || this.ui.layer === "background" || scene.background === undefined;
+    const at = screen ? snapPixel(toScene(this.transform, screen)) : null;
+    let refused: string[] = [];
+    let outcome: { kind: "background" | "object" | "imported"; id?: string; sounds: number } = { kind: "imported", sounds: 0 };
+    const first = files.find((f) => IMAGE_EXTENSIONS.includes(f.name.split(".").pop()?.toLowerCase() ?? ""));
+    const label = !first ? "Import files" : asBackground ? "Import background" : "Import and place object";
+    if (!asBackground && this.ui.locked.includes("objects") && first) {
+      this.editor.showNotice({ kind: "error", text: "The Objects layer is locked." });
+      return false;
+    }
+    const ok = this.editor.apply(label, (p) => {
+      const r = importFiles(p, files, "image", "");
+      refused = r.refused;
+      const img = r.imported.find((i) => i.section === "image");
+      outcome = { kind: "imported", sounds: r.imported.filter((i) => i.section === "audio").length };
+      if (!img) return r.project;
+      if (asBackground) {
+        outcome = { ...outcome, kind: "background" };
+        return setBackground(r.project, id, img.id);
+      }
+      const size = first ? imageSize(first.bytes) ?? undefined : undefined;
+      const placed = placeImage(r.project, id, img.id, at!, size);
+      outcome = { ...outcome, kind: "object", id: placed.id };
+      return placed.project;
+    });
+    const o = outcome as { kind: "background" | "object" | "imported"; id?: string; sounds: number };
+    if (o.kind === "background") this.selectThing({ list: "background", key: "background" });
+    if (o.kind === "object" && o.id) this.selectThing({ list: "objects", key: o.id });
+    const notes: string[] = [];
+    if (o.sounds) notes.push(`Imported ${o.sounds === 1 ? "a sound" : `${o.sounds} sounds`}; find ${o.sounds === 1 ? "it" : "them"} under Audio.`);
+    if (refused.length) notes.push(`Only PNG, JPG and WebP images and MP3, OGG and WAV sounds can be imported, so ${refused.join(", ")} ${refused.length === 1 ? "was" : "were"} skipped.`);
+    if (notes.length) this.editor.showNotice({ kind: refused.length ? "error" : "info", text: notes.join(" ") });
+    return ok;
+  }
+
+  /** Picks an existing image as the background (Inspector / empty-scene prompt). */
+  chooseBackground(imageId: string | undefined) {
+    const id = this.sceneId;
+    this.editor.apply(imageId ? "Set background" : "Remove background", (p) => setBackground(p, id, imageId));
+  }
 
   // ── Hit-testing ─────────────────────────────────────────────────────────────
 

@@ -13,6 +13,7 @@ export function SceneCanvas({
   onDropFiles,
   dropRef,
   highlight,
+  children,
 }: {
   controller: SceneController;
   /** Subscribes to other things that change the picture (decoded images). */
@@ -21,6 +22,8 @@ export function SceneCanvas({
   dropRef?: (el: HTMLElement | null) => void;
   /** Something droppable is over the canvas. */
   highlight?: boolean;
+  /** Overlays drawn above the canvas (prompts). */
+  children?: React.ReactNode;
 }) {
   const wrap = useRef<HTMLDivElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
@@ -165,6 +168,7 @@ export function SceneCanvas({
         onAuxClick={(e) => e.preventDefault()}
       />
       {highlight && <div className="ring-primary pointer-events-none absolute inset-0 ring-2 ring-inset" />}
+      {children}
     </div>
   );
 }

@@ -96,6 +96,6 @@ export function layerRows(scene: SceneFile, images: ImageLookup): Record<Layer, 
       ...holes.map((h, i) => ({ ref: { list: "walkable" as const, key: holeKey(i) }, title: `Hole ${i + 1}`, detail: points(h.length), deletable: true })),
     ],
     objects,
-    background: scene.background ? [{ ref: { list: "background", key: "background" }, title: scene.background, detail: "image", deletable: false }] : [],
+    background: scene.background ? [{ ref: { list: "background", key: "background" }, title: scene.background, detail: "image", deletable: true }] : [],
   };
 }

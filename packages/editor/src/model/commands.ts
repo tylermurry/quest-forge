@@ -103,24 +103,17 @@ function defaultImage(p: Project, hint: RegExp): string {
   return (images.find((i) => hint.test(i.id)) ?? images[0])?.id ?? "image";
 }
 
-const FULL_SCREEN: [number, number][] = [
-  [0, 200],
-  [640, 200],
-  [640, 400],
-  [0, 400],
-];
-
 /** Starting data for a new asset of each kind (dangling picks show as problems until set). */
 export function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
   switch (kind) {
     case "scene":
+      // An empty scene: no background, no walkable area yet, a default spawn (D97).
       return SceneFile.parse({
         schemaVersion: 1,
         id,
         name,
-        background: defaultImage(p, /bg|background/),
         depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
-        walkable: { outer: FULL_SCREEN, holes: [] },
+        walkable: { outer: [], holes: [] },
         spawns: { default: { x: 320, y: 360, facing: "down" } },
         objects: [],
         characters: [],
