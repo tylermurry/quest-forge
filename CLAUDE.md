@@ -27,4 +27,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   must be in canonical form. The round-trip test enforces this.
 - Problems (validation) carry `severity`, `code`, a plain-English `message`, a `breadcrumb`, and
   a jump-to `location` (`file` + data `path`).
+- Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas),
+  `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
+  `renameId`), `validate.ts` + `geometry.ts` (spec 14 errors). The test fixture project is
+  `packages/schema/test/fixtures/mini`. It must stay canonical and problem-free.
 - One ticket ≈ one commit, with tests. Commit messages are imperative and explain why.

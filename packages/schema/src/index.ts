@@ -13,3 +13,5 @@ export * from "./migrate.ts";
 export * from "./problems.ts";
 export * from "./project.ts";
 export * from "./references.ts";
+export * from "./geometry.ts";
+export * from "./validate.ts";

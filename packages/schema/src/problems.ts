@@ -21,6 +21,7 @@ export type ProblemCode =
   | "spawn_outside_walkable"
   | "start_scene_missing"
   | "dialogue_without_start"
+  | "dialogue_multiple_starts"
   | "invalid_polygon"
   | "duplicate_id"
   | "missing_image_file";
