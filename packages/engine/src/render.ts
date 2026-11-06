@@ -4,7 +4,7 @@ import { drawUi, type IconImage } from "./ui/draw.ts";
 import { TEXT_FONT, TEXT_LINE, layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { Viewport } from "./viewport.ts";
 import type { Drawable } from "./drawables.ts";
-import type { World } from "./world.ts";
+import { debugShapes, type DebugFlags, type DebugShape } from "./debug.ts";
 
 // Canvas 2D drawing (spec 03, D30). Everything draws into the 640×400 back buffer,
 // which is then blitted to the screen with nearest-neighbor scaling (D31).
@@ -13,10 +13,6 @@ export type Ctx = CanvasRenderingContext2D;
 
 const FONT = TEXT_FONT;
 
-export interface DebugFlags {
-  /** Walkable outline, holes, obstacles, graph nodes, route, baselines, depth lines. */
-  overlay: boolean;
-}
 
 /** Draws one frame of play into the back buffer, in spec 03 order. */
 export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags) {
@@ -28,7 +24,8 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
   if (background) ctx.drawImage(background, 0, 0);
   drawSprites(ctx, world.drawList());
 
-  if (debug.overlay) drawDebug(ctx, world);
+  const shapes = debugShapes(world, debug);
+  if (shapes.length) drawDebug(ctx, shapes);
   drawUi(ctx, ui, icons, () => session.text && drawTextBox(ctx, session.text));
 }
 
@@ -103,64 +100,47 @@ function drawTextBox(ctx: Ctx, box: TextBox) {
   l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
 }
 
-function drawDebug(ctx: Ctx, world: World) {
-  const poly = (pts: readonly (readonly [number, number])[], stroke: string, fill?: string) => {
-    ctx.beginPath();
-    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5)));
-    ctx.closePath();
-    if (fill) {
-      ctx.fillStyle = fill;
-      ctx.fill();
-    }
-    ctx.strokeStyle = stroke;
-    ctx.stroke();
-  };
-  const { scene } = world;
+function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {
   ctx.lineWidth = 1;
-  poly(scene.walkable.outer, "#0f0", "rgba(0,255,0,0.08)");
-  scene.walkable.holes.forEach((h) => poly(h, "#f00", "rgba(255,0,0,0.2)"));
-  for (const o of scene.objects) {
-    if (o.obstacle && world.isObjectVisible(o.id)) poly(o.obstacle, "#f80", "rgba(255,128,0,0.25)");
-  }
-  scene.hotspots.forEach((h) => poly(h.shape, "#0ff"));
-
-  // Depth lines.
   ctx.font = FONT;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "bottom";
-  for (const [label, line] of [["far", scene.depth.far], ["near", scene.depth.near]] as const) {
-    ctx.strokeStyle = "#f0f";
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(0, line.y + 0.5);
-    ctx.lineTo(SCENE_WIDTH, line.y + 0.5);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#f0f";
-    ctx.fillText(`${label} ×${line.scale}`, 4, line.y - 1);
+  for (const sh of shapes) {
+    switch (sh.kind) {
+      case "poly": {
+        ctx.beginPath();
+        sh.points.forEach(([x, y], i) => (i ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5)));
+        ctx.closePath();
+        if (sh.fill) {
+          ctx.fillStyle = sh.fill;
+          ctx.fill();
+        }
+        ctx.strokeStyle = sh.stroke;
+        ctx.stroke();
+        if (sh.label && sh.points[0]) {
+          ctx.fillStyle = sh.stroke;
+          ctx.textAlign = "left";
+          ctx.textBaseline = "top";
+          ctx.fillText(sh.label, sh.points[0][0] + 2, sh.points[0][1] + 2);
+        }
+        break;
+      }
+      case "line":
+        ctx.strokeStyle = sh.stroke;
+        ctx.setLineDash(sh.dashed ? [4, 4] : []);
+        ctx.beginPath();
+        sh.points.forEach(([x, y], i) => (i ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5)));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        break;
+      case "dots":
+        ctx.fillStyle = sh.color;
+        for (const [x, y] of sh.points) ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3);
+        break;
+      case "text":
+        ctx.fillStyle = sh.color;
+        ctx.textAlign = sh.align;
+        ctx.textBaseline = sh.align === "left" ? "bottom" : "top";
+        ctx.fillText(sh.text, sh.at[0], sh.at[1]);
+        break;
+    }
   }
-
-  // Baselines.
-  for (const d of world.drawList()) {
-    ctx.strokeStyle = d.kind === "character" ? "#ff0" : "#fff";
-    ctx.beginPath();
-    ctx.moveTo(d.dest.x, Math.round(d.baseline) + 0.5);
-    ctx.lineTo(d.dest.x + d.dest.w, Math.round(d.baseline) + 0.5);
-    ctx.stroke();
-  }
-
-  // Graph nodes and the current route.
-  ctx.fillStyle = "#0f0";
-  for (const [x, y] of world.nav.nodes) ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3);
-  const route = [world.player.pos, ...world.route];
-  if (route.length > 1) {
-    ctx.strokeStyle = "#ff0";
-    ctx.beginPath();
-    route.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-    ctx.stroke();
-  }
-  ctx.fillStyle = "#ff0";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "top";
-  ctx.fillText(`scale ${world.playerScale.toFixed(2)}  feet (${world.player.pos.map(Math.round).join(", ")})`, SCENE_WIDTH - 4, 6);
 }

@@ -62,6 +62,7 @@ export class World {
   private readonly oneShots = new Map<string, { anim: ObjectAnimation; time: number }>();
   private navMesh: NavMesh;
   private path: Vec[] = [];
+  private _lastPath: Vec[] = [];
   private onArrive: (() => void) | null = null;
 
   constructor(
@@ -84,6 +85,11 @@ export class World {
 
   get nav(): NavMesh {
     return this.navMesh;
+  }
+
+  /** The player's most recent walk, start to end, kept after arriving (playtest debug, D132). */
+  get lastPath(): readonly Vec[] {
+    return this._lastPath;
   }
 
   /** Remaining waypoints of the player's walk (for the debug overlay). */
@@ -126,7 +132,9 @@ export class World {
   walkTo(p: Vec, onArrive: (() => void) | null = null) {
     this.onArrive = onArrive;
     this.player.special = null;
-    this.path = this.navMesh.findPath(this.player.pos, p).slice(1);
+    const full = this.navMesh.findPath(this.player.pos, p);
+    this.path = full.slice(1);
+    if (full.length > 1) this._lastPath = full;
     if (this.path.length === 0) this.arrive();
   }
 

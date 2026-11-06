@@ -10,8 +10,11 @@ import {
   type Project,
   type SceneFile,
 } from "@questforge/schema";
-import { drawLoading, drawSession, present, type DebugFlags } from "./render.ts";
-import { Session } from "./session.ts";
+import { DEBUG_OFF, type DebugFlags } from "./debug.ts";
+import { drawLoading, drawSession, present } from "./render.ts";
+import { Session, type SessionStart } from "./session.ts";
+import type { GameState } from "./state.ts";
+import type { Trace } from "./trace.ts";
 import { PlayerUi, type PointerKind } from "./ui/controller.ts";
 import { sheetFits } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
@@ -30,6 +33,11 @@ export interface GameOptions {
   /** Start somewhere other than `game.startScene` / `game.startSpawn` (playtest "from here"). */
   scene?: string;
   spawn?: string;
+  /** Start from a saved state (playtest presets and Restart scene, D126, D128). Wins over `scene`/`spawn`. */
+  state?: GameState;
+  /** Playtest event log sink (D129); the exported game passes none. */
+  trace?: Trace;
+  /** Playtest debug layers (D132), changeable while playing through `Game.debug`. */
   debug?: Partial<DebugFlags>;
 }
 
@@ -58,7 +66,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const problems = validateProject(project);
   if (hasBlockingErrors(problems)) throw new ProjectErrors(problems);
   const game = project.game!.data; // present: validation reports a missing game.yaml
-  const sceneId = options.scene ?? game.startScene;
+  const sceneId = options.state?.scene ?? options.scene ?? game.startScene;
   const scene = project.scenes.find((s) => s.data.id === sceneId)?.data;
   if (!scene) throw new Error(`Scene ${sceneId} doesn't exist`);
   const characters = new Map<string, CharacterFile>(project.characters.map((c) => [c.data.id, c.data]));
@@ -68,7 +76,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   back.width = SCENE_WIDTH;
   back.height = SCENE_HEIGHT;
   const backCtx = back.getContext("2d")!;
-  const debug: DebugFlags = { overlay: false, ...options.debug };
+  const debug: DebugFlags = { ...DEBUG_OFF, ...options.debug };
 
   let session: Session | null = null;
   let ui: PlayerUi | null = null;
@@ -148,8 +156,12 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const itemIcons = project.items.map((i) => i.data.icon);
   const ready = Promise.all([images.loadScene(scene), images.load(itemIcons)]).then(() => {
     if (destroyed) return;
-    const start = { ...(options.scene ? { scene: options.scene } : {}), ...(options.spawn ? { spawn: options.spawn } : {}) };
-    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch });
+    const start: SessionStart = {
+      ...(options.scene ? { scene: options.scene } : {}),
+      ...(options.spawn ? { spawn: options.spawn } : {}),
+      ...(options.state ? { state: options.state } : {}),
+    };
+    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, options.trace ? { trace: options.trace } : {});
     ui = new PlayerUi(session);
     resize();
   });

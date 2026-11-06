@@ -12,6 +12,7 @@ export { PlayerUi, type PointerKind } from "./ui/controller.ts";
 export { computeLayout, unitFor, MIN_HIT_CSS, type Layout } from "./ui/layout.ts";
 export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";
 export { drawSprites } from "./render.ts";
+export { debugShapes, DEBUG_ALL, DEBUG_OFF, type DebugFlags, type DebugShape } from "./debug.ts";
 export { resolveAnim, facingFor, frameAt, frameSize, frameRect, originOf, spriteRect, type AnimKind, type ResolvedAnim } from "./sprite.ts";
 export { NavMesh, sceneNav, pathLength } from "./nav.ts";
 export { scaleAt, walkSpeedAt, objectBaseline, sortByBaseline } from "./depth.ts";

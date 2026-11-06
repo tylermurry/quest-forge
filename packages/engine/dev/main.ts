@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 // Dev page (D68): plays the hand-written engine fixture with the real engine.
 import { MemoryFs, formatProblem, loadProject } from "@questforge/schema";
-import { ProjectErrors, createGame, score, type Game } from "../src/index.ts";
+import { DEBUG_ALL, DEBUG_OFF, ProjectErrors, createGame, score, type Game } from "../src/index.ts";
 
 const PREFIX = "../fixtures/m1/";
 const yaml = import.meta.glob<string>("../fixtures/m1/**/*.yaml", { query: "?raw", import: "default", eager: true });
@@ -30,7 +30,7 @@ function start(scene: string) {
   errors.hidden = true;
   try {
     if (problems.length) throw new ProjectErrors(problems);
-    game = createGame({ project, assetUrl: (p) => assetUrls.get(p) ?? p }, canvas, { scene, debug: { overlay: debugBox.checked } });
+    game = createGame({ project, assetUrl: (p) => assetUrls.get(p) ?? p }, canvas, { scene, debug: debugBox.checked ? DEBUG_ALL : DEBUG_OFF });
     (window as unknown as { game: Game }).game = game;
   } catch (e) {
     errors.hidden = false;
@@ -64,7 +64,7 @@ function showState() {
 showState();
 
 sceneSelect.addEventListener("change", () => start(sceneSelect.value));
-debugBox.addEventListener("change", () => game && (game.debug.overlay = debugBox.checked));
+debugBox.addEventListener("change", () => game && Object.assign(game.debug, debugBox.checked ? DEBUG_ALL : DEBUG_OFF));
 boulderBtn.addEventListener("click", () => {
   const s = game?.session;
   if (!s) return;
