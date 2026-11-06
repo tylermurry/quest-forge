@@ -14,13 +14,15 @@ import { EditorTabs } from "./EditorTabs.tsx";
 import { Inspector } from "./Inspector.tsx";
 import { ProjectBrowser } from "./ProjectBrowser.tsx";
 import { TitleBar } from "./TitleBar.tsx";
-import { useEditor, usePlatform } from "./hooks.ts";
+import { useCommands, useEditor, usePlatform } from "./hooks.ts";
 import { cn } from "./lib/utils.ts";
 
 interface Props {
   root: string;
   editor: Editor;
   onClose(): void;
+  /** The app's native menu bar owns Close Project, so the title bar doesn't repeat it. */
+  nativeMenu?: boolean;
 }
 
 /** Panel sizes are a per-user preference, kept in the webview's storage (D92). */
@@ -65,7 +67,8 @@ function IconButton({ label, onClick, disabled, active, children }: { label: str
 }
 
 /** Main layout (spec 08): browser · tabs · inspector · dock, each resizable (D92). */
-export function Workspace({ root, editor, onClose }: Props) {
+export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) {
+  const registry = useCommands();
   const ed = useEditor(editor);
   const platform = usePlatform();
   const [actions] = useState(() => new Actions(editor, new WorkspaceState(), (path) => platform.assetUrl(root, path)));
@@ -96,29 +99,30 @@ export function Workspace({ root, editor, onClose }: Props) {
     ed.dismissNotice();
   }, [ed, ed.notice]);
 
+  // Edit and View menu commands (D92); the registry refreshes menus when the editor changes.
+  const panels = useRef({ browser, inspector, dock, toggle });
+  panels.current = { browser, inspector, dock, toggle };
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
-      const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        if (e.shiftKey) ed.redo();
-        else ed.undo();
-      } else if (mod && e.key.toLowerCase() === "y") {
-        e.preventDefault();
-        ed.redo();
-      }
+    const off = registry.register({
+      "edit.undo": { run: () => ed.undo(), enabled: () => ed.history.canUndo, label: () => (ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo") },
+      "edit.redo": { run: () => ed.redo(), enabled: () => ed.history.canRedo, label: () => (ed.history.redoLabel ? `Redo ${ed.history.redoLabel}` : "Redo") },
+      "view.browser": { run: () => panels.current.toggle(panels.current.browser) },
+      "view.inspector": { run: () => panels.current.toggle(panels.current.inspector) },
+      "view.dock": { run: () => panels.current.toggle(panels.current.dock) },
+    });
+    const unsub = ed.subscribe(() => registry.changed());
+    return () => {
+      unsub();
+      off();
     };
+  }, [ed, registry]);
+
+  useEffect(() => {
     const beforeUnload = (e: BeforeUnloadEvent) => {
       if (ed.hasUnsavedChanges) e.preventDefault();
     };
-    window.addEventListener("keydown", onKey);
     window.addEventListener("beforeunload", beforeUnload);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("beforeunload", beforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [ed]);
 
   return (
@@ -145,9 +149,11 @@ export function Workspace({ root, editor, onClose }: Props) {
           <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
             <PanelRight />
           </IconButton>
-          <Button variant="ghost" size="xs" className="ml-2" onClick={onClose}>
-            Close project
-          </Button>
+          {!nativeMenu && (
+            <Button variant="ghost" size="xs" className="ml-2" onClick={onClose}>
+              Close project
+            </Button>
+          )}
         </div>
       </TitleBar>
       <ResizablePanelGroup orientation="horizontal" id="questforge.columns" defaultLayout={columns.defaultLayout} onLayoutChanged={columns.onLayoutChanged} className="min-h-0 flex-1">

@@ -13,6 +13,9 @@ interface Props {
   recent: RecentProject[];
   onForget(root: string): void;
   error: string | null;
+  titleRef?: React.Ref<HTMLInputElement>;
+  /** Bumped by File › Open Folder… on the dev page, which lists sandbox folders here. */
+  chooserRequest?: number;
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
@@ -20,7 +23,7 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
 );
 
 /** Start screen (spec 08): New project · Open folder · recent projects. */
-export function StartScreen({ onOpen, onCreate, recent, onForget, error }: Props) {
+export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRef, chooserRequest = 0 }: Props) {
   const platform = usePlatform();
   const [title, setTitle] = useState("");
   const [choosing, setChoosing] = useState<string[] | null>(null);
@@ -35,6 +38,10 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error }: Props
       live = false;
     };
   }, [recent, platform]);
+
+  useEffect(() => {
+    if (chooserRequest > 0) void platform.listProjects?.().then(setChoosing);
+  }, [chooserRequest, platform]);
 
   const create = async () => {
     const parent = await platform.chooseParent();
@@ -70,7 +77,7 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error }: Props
               void create();
             }}
           >
-            <Input className="h-8 w-64" aria-label="Game title" placeholder="Game title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input ref={titleRef} className="h-8 w-64" aria-label="Game title" placeholder="Game title" value={title} onChange={(e) => setTitle(e.target.value)} />
             <Button type="submit" size="sm" disabled={!title.trim()}>
               <Plus /> Create blank project
             </Button>

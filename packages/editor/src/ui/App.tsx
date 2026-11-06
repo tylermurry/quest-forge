@@ -1,17 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CommandRegistry } from "../model/appCommands.ts";
 import { Editor, projectTitle } from "../model/editor.ts";
 import { addRecent, removeRecent, type RecentProject } from "../model/recent.ts";
 import { createBlankProject, folderNameFor } from "../model/template.ts";
 import { StartScreen } from "./StartScreen.tsx";
 import { Workspace } from "./Workspace.tsx";
-import { usePlatform } from "./hooks.ts";
+import { CommandsContext, usePlatform, useShortcutKeys } from "./hooks.ts";
 
 // Editor shell (spec 08). Components stay thin: logic lives in src/model.
 export function App() {
   const platform = usePlatform();
+  const [registry] = useState(() => new CommandRegistry());
   const [editor, setEditor] = useState<{ root: string; editor: Editor } | null>(null);
   const [recent, setRecent] = useState<RecentProject[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [chooserRequest, setChooserRequest] = useState(0);
+  const titleInput = useRef<HTMLInputElement>(null);
+  const native = !!platform.installMenu;
 
   useEffect(() => {
     let live = true;
@@ -28,6 +33,19 @@ export function App() {
     // Runs once per platform; `open` is recreated every render.
   }, [platform]);
 
+  // The native menu bar (app) or page shortcuts (dev page) run the same commands (D92).
+  useShortcutKeys(registry, !native);
+  useEffect(() => {
+    if (!platform.installMenu) return;
+    let remove: (() => void) | null = null;
+    let live = true;
+    void platform.installMenu(registry).then((r) => (live ? (remove = r) : r()));
+    return () => {
+      live = false;
+      remove?.();
+    };
+  }, [platform, registry]);
+
   const remember = (list: RecentProject[]) => {
     setRecent(list);
     void platform.saveRecent(list);
@@ -39,7 +57,10 @@ export function App() {
       const ed = await Editor.open(platform.host(root));
       (window as unknown as { editor: Editor }).editor = ed;
       remember(addRecent(known, { root, title: projectTitle(ed.project), openedAt: Date.now() }));
-      setEditor({ root, editor: ed });
+      setEditor((old) => {
+        old?.editor.dispose();
+        return { root, editor: ed };
+      });
     } catch (e) {
       setError(`Couldn't open ${platform.displayPath(root)}: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -65,6 +86,50 @@ export function App() {
     setEditor(null);
   };
 
-  if (editor) return <Workspace key={editor.root} root={editor.root} editor={editor.editor} onClose={() => void close()} />;
-  return <StartScreen onOpen={(r) => void open(r)} onCreate={(t, p) => void create(t, p)} recent={recent} onForget={(r) => remember(removeRecent(recent, r))} error={error} />;
+  // File menu commands.
+  const latest = useRef({ close, open, editor });
+  latest.current = { close, open, editor };
+  useEffect(
+    () =>
+      registry.register({
+        "project.new": {
+          run: async () => {
+            await latest.current.close();
+            setTimeout(() => titleInput.current?.focus(), 0);
+          },
+        },
+        "project.open": {
+          run: async () => {
+            if (platform.listProjects) {
+              await latest.current.close();
+              setChooserRequest((n) => n + 1);
+              return;
+            }
+            const root = await platform.openFolder();
+            if (root) await latest.current.open(root);
+          },
+        },
+        "project.close": { run: () => void latest.current.close(), enabled: () => latest.current.editor !== null },
+      }),
+    [registry, platform],
+  );
+  useEffect(() => registry.changed(), [registry, editor]);
+
+  return (
+    <CommandsContext.Provider value={registry}>
+      {editor ? (
+        <Workspace key={editor.root} root={editor.root} editor={editor.editor} onClose={() => void close()} nativeMenu={native} />
+      ) : (
+        <StartScreen
+          onOpen={(r) => void open(r)}
+          onCreate={(t, p) => void create(t, p)}
+          recent={recent}
+          onForget={(r) => remember(removeRecent(recent, r))}
+          error={error}
+          titleRef={titleInput}
+          chooserRequest={chooserRequest}
+        />
+      )}
+    </CommandsContext.Provider>
+  );
 }

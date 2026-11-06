@@ -1,5 +1,6 @@
 // What the editor needs from where it runs (D90, D91): the Tauri app, or the dev
 // page in a browser. Everything else in the editor is the same code.
+import type { CommandRegistry } from "../model/appCommands.ts";
 import type { ProjectHost } from "../model/editor.ts";
 import type { RecentProject } from "../model/recent.ts";
 
@@ -24,6 +25,11 @@ export interface Platform {
   listProjects?(): Promise<string[]>;
   /** A project folder to open at startup (the app's command-line argument), if any. */
   launchProject?(): Promise<string | null>;
+  /**
+   * Builds the native menu bar from the command registry (the app only). Its
+   * accelerators then own the shortcuts, so the page doesn't handle them too.
+   */
+  installMenu?(registry: CommandRegistry): Promise<() => void>;
   /** How a folder path is shown to the user. */
   displayPath(root: string): string;
 }

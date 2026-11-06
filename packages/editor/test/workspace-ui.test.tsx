@@ -5,7 +5,16 @@ import { MemoryFs, saveProject, type SceneFile } from "@questforge/schema";
 import { Editor } from "../src/model/editor.ts";
 import type { Platform } from "../src/platform/platform.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
-import { PlatformContext } from "../src/ui/hooks.ts";
+import { CommandRegistry } from "../src/model/appCommands.ts";
+import { CommandsContext, PlatformContext, isMac, useShortcutKeys } from "../src/ui/hooks.ts";
+
+/** Cmd on macOS, Ctrl elsewhere, matching the app's shortcut handling. */
+const mod = () => (isMac() ? { metaKey: true } : { ctrlKey: true });
+
+function Shortcuts({ registry }: { registry: CommandRegistry }) {
+  useShortcutKeys(registry);
+  return null;
+}
 import { m1Project } from "./support/fixtures.ts";
 
 afterEach(cleanup);
@@ -15,9 +24,13 @@ async function mount() {
   await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });
   const editor = await Editor.open({ fs });
   const platform = { assetUrl: (_r: string, p: string) => p } as unknown as Platform;
+  const registry = new CommandRegistry();
   render(
     <PlatformContext.Provider value={platform}>
-      <Workspace root="m1" editor={editor} onClose={() => {}} />
+      <CommandsContext.Provider value={registry}>
+        <Shortcuts registry={registry} />
+        <Workspace root="m1" editor={editor} onClose={() => {}} />
+      </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
   return editor;
@@ -38,10 +51,10 @@ describe("workspace (D89)", () => {
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
     expect(within(screen.getByRole("region", { name: "Hotspots" })).queryByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeNull();
 
-    fireEvent.keyDown(window, { key: "z", metaKey: true });
+    fireEvent.keyDown(window, { key: "z", ...mod() });
     expect(garden(ed).hotspots.find((h) => h.id === hotspot.id)).toEqual(hotspot);
     expect(within(screen.getByRole("region", { name: "Hotspots" })).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeTruthy();
-    fireEvent.keyDown(window, { key: "z", metaKey: true, shiftKey: true });
+    fireEvent.keyDown(window, { key: "z", ...mod(), shiftKey: true });
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
 
