@@ -1,0 +1,5 @@
+schemaVersion: 1
+id: lit_lantern
+name: lit lantern
+description: The lantern glows warmly.
+icon: lit_lantern_icon

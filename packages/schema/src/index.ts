@@ -7,3 +7,8 @@ export * from "./rules.ts";
 export * from "./game.ts";
 export * from "./scene.ts";
 export * from "./dialogue.ts";
+export * from "./fs.ts";
+export * from "./serialize.ts";
+export * from "./migrate.ts";
+export * from "./problems.ts";
+export * from "./project.ts";

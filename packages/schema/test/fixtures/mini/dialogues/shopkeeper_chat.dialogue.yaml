@@ -1,0 +1,58 @@
+schemaVersion: 1
+id: shopkeeper_chat
+name: Shopkeeper
+nodes:
+  - id: start
+    type: start
+    pos: [0, 0]
+    next: hello
+  - id: hello
+    type: line
+    pos: [0, 100]
+    character: shopkeeper
+    text: Welcome, traveler!
+    next: menu
+  - id: menu
+    type: choices
+    pos: [0, 200]
+    options:
+      - id: ask_cave
+        text: What's in the cave?
+        if: []
+        once: true
+        next: cave_answer
+      - id: buy
+        text: I'd like the lantern.
+        if:
+          - type: has_item
+            item: coin
+        once: false
+        next: sell
+      - id: bye
+        text: Goodbye.
+        if: []
+        once: false
+        next: done
+  - id: cave_answer
+    type: line
+    pos: [-250, 300]
+    character: shopkeeper
+    text: Darkness. You'll want a light.
+    next: menu
+  - id: sell
+    type: actions
+    pos: [0, 300]
+    do:
+      - type: take_item
+        item: coin
+      - type: give_item
+        item: lantern
+    next: thanks
+  - id: thanks
+    type: line
+    pos: [0, 400]
+    text: The shopkeeper hands you a lantern.
+    next: menu
+  - id: done
+    type: end
+    pos: [250, 300]

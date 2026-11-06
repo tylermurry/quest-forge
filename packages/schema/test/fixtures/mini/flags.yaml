@@ -1,0 +1,8 @@
+schemaVersion: 1
+flags:
+  - id: talked_to_villager
+    type: bool
+    initial: false
+  - id: shop_visits
+    type: counter
+    initial: 0

@@ -1,0 +1,31 @@
+schemaVersion: 1
+images:
+  - id: beach_bg
+    path: assets/images/beach_bg.png
+  - id: path_bg
+    path: assets/images/path_bg.png
+  - id: shop_bg
+    path: assets/images/shop_bg.png
+  - id: palm_img
+    path: assets/images/palm_img.png
+  - id: boulder_img
+    path: assets/images/boulder_img.png
+  - id: coin_icon
+    path: assets/images/items/coin_icon.png
+  - id: lantern_icon
+    path: assets/images/items/lantern_icon.png
+  - id: matches_icon
+    path: assets/images/items/matches_icon.png
+  - id: lit_lantern_icon
+    path: assets/images/items/lit_lantern_icon.png
+  - id: hero_sheet
+    path: assets/images/hero_sheet.png
+  - id: shopkeeper_sheet
+    path: assets/images/shopkeeper_sheet.png
+  - id: villager_sheet
+    path: assets/images/villager_sheet.png
+audio:
+  - id: beach_theme
+    path: assets/audio/beach_theme.mp3
+  - id: coin_clink
+    path: assets/audio/coin_clink.wav

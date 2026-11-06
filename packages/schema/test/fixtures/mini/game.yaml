@@ -1,0 +1,33 @@
+schemaVersion: 1
+id: the_lantern
+title: The Lantern
+version: 1
+startScene: beach
+startSpawn: default
+player: hero
+maxScore: 7
+defaultResponses:
+  look: You see nothing special.
+  hand: You can't do that.
+  talk: Nobody answers.
+  use_item: That doesn't work.
+  combine: Those don't go together.
+rules:
+  - when:
+      type: combine
+      item: lantern
+      with: matches
+    if: []
+    do:
+      - type: take_item
+        item: lantern
+      - type: take_item
+        item: matches
+      - type: give_item
+        item: lit_lantern
+      - type: narrate
+        text: The lantern flickers to life.
+      - type: award_points
+        points: 3
+        award: lit_lantern
+    once: false

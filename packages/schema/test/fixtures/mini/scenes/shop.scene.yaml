@@ -1,0 +1,64 @@
+schemaVersion: 1
+id: shop
+name: The Shop
+background: shop_bg
+depth:
+  far:
+    y: 250
+    scale: 0.8
+  near:
+    y: 390
+    scale: 1
+walkable:
+  outer:
+    - [40, 260]
+    - [600, 260]
+    - [600, 395]
+    - [40, 395]
+  holes: []
+spawns:
+  default:
+    x: 320
+    y: 380
+    facing: up
+objects: []
+characters:
+  - character: shopkeeper
+    x: 320
+    y: 270
+    facing: down
+    visible: true
+    rules:
+      - when:
+          type: talk
+        if: []
+        do:
+          - type: start_dialogue
+            dialogue: shopkeeper_chat
+        once: false
+hotspots: []
+regions:
+  - id: exit
+    shape:
+      - [280, 385]
+      - [360, 385]
+      - [360, 395]
+      - [280, 395]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: change_scene
+            scene: path
+            spawn: from_shop
+        once: false
+rules:
+  - when:
+      type: scene_enter
+    if: []
+    do:
+      - type: add_to_counter
+        counter: shop_visits
+        amount: 1
+    once: false

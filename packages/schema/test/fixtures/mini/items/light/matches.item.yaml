@@ -1,0 +1,5 @@
+schemaVersion: 1
+id: matches
+name: matches
+description: A small box of matches.
+icon: matches_icon

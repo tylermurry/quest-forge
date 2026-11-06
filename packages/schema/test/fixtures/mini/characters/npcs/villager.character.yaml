@@ -1,0 +1,22 @@
+schemaVersion: 1
+id: villager
+name: Villager
+textColor: "#88ccff"
+walkSpeed: 80
+mirrorLeft: true
+animations:
+  idle_down:
+    image: villager_sheet
+    frames: [0]
+    fps: 1
+    loop: true
+  walk_down:
+    image: villager_sheet
+    frames: [0, 1, 2, 3]
+    fps: 8
+    loop: true
+  walk_right:
+    image: villager_sheet
+    frames: [4, 5, 6, 7]
+    fps: 8
+    loop: true

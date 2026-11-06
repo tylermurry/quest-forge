@@ -1,0 +1,142 @@
+schemaVersion: 1
+id: path
+name: Village Path
+background: path_bg
+depth:
+  far:
+    y: 150
+    scale: 0.3
+  near:
+    y: 395
+    scale: 1.1
+walkable:
+  outer:
+    - [0, 300]
+    - [250, 160]
+    - [390, 160]
+    - [640, 300]
+    - [640, 400]
+    - [0, 400]
+  holes: []
+spawns:
+  from_beach:
+    x: 30
+    y: 350
+    facing: right
+  from_shop:
+    x: 320
+    y: 200
+    facing: down
+objects:
+  - id: boulder
+    name: boulder
+    image: boulder_img
+    x: 280
+    y: 140
+    visible: true
+    obstacle:
+      - [290, 165]
+      - [350, 165]
+      - [350, 190]
+      - [290, 190]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A huge boulder blocks the way.
+        once: false
+characters:
+  - character: villager
+    x: 450
+    y: 300
+    facing: left
+    visible: true
+    rules:
+      - when:
+          type: talk
+        if:
+          - type: flag_is
+            flag: talked_to_villager
+            value: false
+        do:
+          - type: say
+            character: villager
+            text: Let me move that for you.
+          - type: hide_object
+            scene: path
+            object: boulder
+          - type: set_flag
+            flag: talked_to_villager
+            value: true
+          - type: award_points
+            points: 2
+            award: boulder_moved
+        once: false
+      - when:
+          type: talk
+        if: []
+        do:
+          - type: say
+            character: villager
+            text: Good luck in the shop!
+        once: false
+hotspots:
+  - id: matches
+    name: box of matches
+    shape:
+      - [100, 330]
+      - [115, 330]
+      - [115, 340]
+      - [100, 340]
+    rules:
+      - when:
+          type: hand
+        if: []
+        do:
+          - type: give_item
+            item: matches
+        once: true
+regions:
+  - id: exit_west
+    shape:
+      - [0, 300]
+      - [20, 300]
+      - [20, 400]
+      - [0, 400]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: change_scene
+            scene: beach
+            spawn: from_path
+        once: false
+  - id: to_shop
+    shape:
+      - [300, 160]
+      - [340, 160]
+      - [340, 170]
+      - [300, 170]
+    rules:
+      - when:
+          type: enter_region
+        if:
+          - type: object_visible
+            scene: path
+            object: boulder
+            visible: false
+        do:
+          - type: change_scene
+            scene: shop
+            spawn: default
+        once: false
+rules:
+  - when:
+      type: scene_enter
+    if: []
+    do:
+      - type: stop_music
+    once: false

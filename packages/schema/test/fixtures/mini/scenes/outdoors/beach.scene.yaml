@@ -1,0 +1,110 @@
+schemaVersion: 1
+id: beach
+name: Sunny Beach
+background: beach_bg
+music: beach_theme
+depth:
+  far:
+    y: 180
+    scale: 0.4
+  near:
+    y: 390
+    scale: 1
+walkable:
+  outer:
+    - [0, 240]
+    - [640, 240]
+    - [640, 400]
+    - [0, 400]
+  holes:
+    - - [300, 300]
+      - [360, 300]
+      - [360, 340]
+      - [300, 340]
+spawns:
+  default:
+    x: 320
+    y: 370
+    facing: down
+  from_path:
+    x: 600
+    y: 260
+    facing: left
+objects:
+  - id: palm
+    image: palm_img
+    x: 20
+    y: 0
+    baseline: 330
+    visible: true
+    rules: []
+characters: []
+hotspots:
+  - id: shell
+    name: seashell
+    shape:
+      - [200, 350]
+      - [220, 350]
+      - [220, 365]
+      - [200, 365]
+    walkTo:
+      x: 210
+      y: 380
+      facing: up
+    rules:
+      - when:
+          type: hand
+        if:
+          - type: first_time
+        do:
+          - type: narrate
+            text: Under the shell you find a coin!
+          - type: give_item
+            item: coin
+          - type: play_sound
+            sound: coin_clink
+          - type: award_points
+            points: 2
+            award: found_coin
+        once: true
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A pretty seashell.
+        once: false
+  - id: sea
+    name: the sea
+    shape:
+      - [0, 0]
+      - [640, 0]
+      - [640, 200]
+      - [0, 200]
+    rules:
+      - when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: |-
+              Waves roll in, endlessly.
+              The horizon is empty.
+        once: false
+regions:
+  - id: exit_east
+    shape:
+      - [610, 240]
+      - [640, 240]
+      - [640, 300]
+      - [610, 300]
+    rules:
+      - when:
+          type: enter_region
+        if: []
+        do:
+          - type: change_scene
+            scene: path
+            spawn: from_beach
+        once: false
+rules: []
