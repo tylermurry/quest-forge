@@ -282,3 +282,21 @@ export function createShape(p: Project, sceneId: string, target: DrawTarget, pol
   });
   return { project, ref };
 }
+
+/** Adds a spawn point. The first one in a scene is `default` (game.startSpawn usually names it). */
+export function addSpawn(p: Project, sceneId: string, at: Placement): { project: Project; id: string } {
+  let id = "default";
+  const project = updateScene(p, sceneId, (s) => {
+    id = "default" in s.spawns ? uniqueId("spawn", Object.keys(s.spawns)) : "default";
+    return { ...s, spawns: { ...s.spawns, [id]: { x: clampX(at.x), y: clampY(at.y), facing: at.facing } } };
+  });
+  return { project, id };
+}
+
+/** Sets a spawn point's facing (Inspector, or a drag with the Spawn tool). */
+export function setSpawn(p: Project, sceneId: string, id: string, at: Placement): Project {
+  return updateScene(p, sceneId, (s) => {
+    if (!s.spawns[id]) throw gone();
+    return { ...s, spawns: { ...s.spawns, [id]: { x: clampX(at.x), y: clampY(at.y), facing: at.facing } } };
+  });
+}

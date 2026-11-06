@@ -1,8 +1,9 @@
 // Tool gestures on the scene canvas (spec 09): Select/Move, Polygon, Rectangle,
 // Spawn point, Walk-to point. DOM-free; tested in Node by feeding pointer input.
-import type { Vec } from "@questforge/engine";
-import { polygonIssue, type Point } from "@questforge/schema";
+import { facingFor, type Vec } from "@questforge/engine";
+import { polygonIssue, type Facing, type Point } from "@questforge/schema";
 import {
+  addSpawn,
   createShape,
   DRAW_LABEL,
   deleteVertex,
@@ -29,6 +30,9 @@ import { snapPixel, toScene } from "./view.ts";
 /** A Select/Move drag in progress. */
 type Move = { hit: Hit; start: Vec };
 
+/** Placing a spawn or walk-to point: press places it, dragging away sets the facing. */
+type Place = { kind: "spawn" | "walkto"; at: Point; hotspot?: string };
+
 /** A polygon being drawn, point by point. Not in history until it closes (D84). */
 type Drawing = { points: Point[]; target: DrawTarget };
 
@@ -40,6 +44,7 @@ export class SceneTools extends SceneController {
   protected snapMark: Point | null = null;
 
   private drawing: Drawing | null = null;
+  private place: Place | null = null;
   /** Rectangle-to-polygon drag in progress (spec 09). */
   private rect: { start: Point; end: Point; target: DrawTarget } | null = null;
   /** Where the next point would go (snapped), for the rubber band. */
@@ -84,6 +89,11 @@ export class SceneTools extends SceneController {
       if (ui.tool === "rect") return `Drag to draw ${what}`;
       if (this.drawing) return `Click to add points · double-click, Enter or click the first point to close · Backspace undoes a point · Esc cancels`;
       return `Click to start ${what}`;
+    }
+    if (ui.tool === "spawn") return "Click to add a spawn point · drag from it to set which way the player faces";
+    if (ui.tool === "walkto") {
+      if (this.selection?.list === "hotspots") return "Click where the player stands to use this hotspot · drag to set the facing";
+      return "Click a hotspot to choose it, then click where the player should stand";
     }
     if (ui.tool === "select") {
       if (this.selection && this.hasVertices(this.selection)) return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
@@ -148,8 +158,9 @@ export class SceneTools extends SceneController {
       this.changed();
       return true;
     }
-    if (this.move) {
+    if (this.move || this.place) {
       this.move = null;
+      this.place = null;
       this.snapMark = null;
       this.discard();
       return true;
@@ -199,12 +210,24 @@ export class SceneTools extends SceneController {
   protected override toolMove(e: PointerInput) {
     const p = toScene(this.transform, e.screen);
     if (this.move) this.moveTo(p);
+    else if (this.place) this.previewPlace(p);
     else if (this.rect) this.rect.end = this.snapDraw(p);
     else if (this.ui.tool === "polygon") this.cursorPoint = this.snapDraw(p);
     else if (this.ui.tool === "select") this.hoverHit = this.hit(p);
   }
 
   protected override toolUp(_e: PointerInput) {
+    if (this.place) {
+      const pl = this.place;
+      this.place = null;
+      const before = new Set(Object.keys(this.savedScene?.spawns ?? {}));
+      this.commit();
+      if (pl.kind === "spawn") {
+        const added = Object.keys(this.savedScene?.spawns ?? {}).find((k) => !before.has(k));
+        if (added) this.select({ list: "spawns", key: added });
+      }
+      return;
+    }
     if (this.move) {
       this.move = null;
       this.snapMark = null;
@@ -264,8 +287,51 @@ export class SceneTools extends SceneController {
     this.rect = { start: pt, end: pt, target };
   }
 
-  /** Spawn and walk-to tools (T6). */
-  protected pointToolDown(_p: Vec) {}
+  /** Spawn point and Walk-to point tools (spec 09). An existing point is dragged as with Select. */
+  protected pointToolDown(p: Vec) {
+    const tool = this.ui.tool;
+    const hit = this.hit(p);
+    if (hit && ((tool === "spawn" && hit.kind === "spawn") || (tool === "walkto" && hit.kind === "walkto"))) {
+      this.selectThing(hit.ref);
+      this.move = { hit, start: p };
+      return;
+    }
+    const layer = tool === "spawn" ? "guides" : "hotspots";
+    if (this.ui.locked.includes(layer) || this.ui.hidden.includes(layer)) {
+      this.editor.showNotice({ kind: "error", text: `The ${layer} layer is ${this.ui.locked.includes(layer) ? "locked" : "hidden"}.` });
+      return;
+    }
+    const at = snapPixel(p);
+    if (tool === "spawn") {
+      this.place = { kind: "spawn", at };
+    } else {
+      const sel = this.selection;
+      if (sel?.list !== "hotspots") {
+        if (hit?.kind === "shape" && hit.ref.list === "hotspots") this.selectThing(hit.ref);
+        else this.editor.showNotice({ kind: "error", text: "Select a hotspot first, then click where the player should stand to use it." });
+        return;
+      }
+      this.place = { kind: "walkto", at, hotspot: sel.key };
+    }
+    this.previewPlace(at);
+  }
+
+  /** Facing from the drag direction (spec 05's dominant-axis rule); a plain click faces down, toward the player. */
+  private placeFacing(at: Point, to: Vec): Facing {
+    const dx = to[0] - at[0];
+    const dy = to[1] - at[1];
+    if (Math.hypot(dx, dy) * this.transform.scale < 8) return this.place?.kind === "walkto" ? "up" : "down";
+    return facingFor([dx, dy], "down");
+  }
+
+  private previewPlace(to: Vec) {
+    const pl = this.place!;
+    const facing = this.placeFacing(pl.at, to);
+    const id = this.sceneId;
+    const placement = { x: pl.at[0], y: pl.at[1], facing };
+    if (pl.kind === "spawn") this.preview("Add spawn point", (p) => addSpawn(p, id, placement).project);
+    else this.preview("Set walk-to point", (p) => setWalkTo(p, id, pl.hotspot!, placement));
+  }
 
   private selectDown(p: Vec, e: PointerInput) {
     const hit = this.hit(p);
