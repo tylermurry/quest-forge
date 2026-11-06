@@ -2,7 +2,7 @@ import { MemoryFs, saveProject, serialize, validateProject, type Project } from 
 import { describe, expect, it } from "vitest";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { cellAt, effectiveOrigin, fitZoom, frameCountOf, originAt, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
+import { cellAt, effectiveOrigin, fitZoom, formatFrames, frameCountOf, originAt, parseFrames, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
 import { m1Project } from "./support/fixtures.ts";
 
 // Spritesheet slicing and origins (spec 05, D66, D114, D115).
@@ -115,5 +115,25 @@ describe("sheet layout helpers", () => {
     expect(fitZoom({ w: 32, h: 48 }, { w: 200, h: 200 })).toBe(4);
     expect(fitZoom({ w: 32, h: 48 }, { w: 1000, h: 1000 })).toBe(8);
     expect(fitZoom({ w: 1280, h: 400 }, { w: 640, h: 640 })).toBe(0.5);
+  });
+});
+
+describe("frames as text", () => {
+  it("parses lists and runs either way, within the frame count", () => {
+    expect(parseFrames("0-3, 6", 8)).toEqual([0, 1, 2, 3, 6]);
+    expect(parseFrames("3-1", 8)).toEqual([3, 2, 1]);
+    expect(parseFrames(" 5 ", 8)).toEqual([5]);
+    expect(parseFrames("8", 8)).toBe(null);
+    expect(parseFrames("", 8)).toBe(null);
+    expect(parseFrames("1,,2", 8)).toBe(null);
+    expect(parseFrames("a", 8)).toBe(null);
+  });
+
+  it("formats runs of three or more as ranges, round-tripping", () => {
+    expect(formatFrames([0, 1, 2, 3, 6])).toBe("0-3, 6");
+    expect(formatFrames([4, 5])).toBe("4, 5");
+    expect(formatFrames([3, 2, 1, 0])).toBe("3-0");
+    expect(formatFrames([1, 1, 1])).toBe("1, 1, 1");
+    for (const f of [[0, 1, 2, 3, 6], [4, 5], [3, 2, 1, 0], [7]]) expect(parseFrames(formatFrames(f), 8)).toEqual(f);
   });
 });

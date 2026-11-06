@@ -1,7 +1,7 @@
 // The scene canvas's input logic (spec 09), DOM-free like the engine's world.ts:
 // pointer and key input in, zoom/pan, selection, tool gestures and editor commands
 // out. The canvas component forwards events and draws `frame()`.
-import { sceneDrawables, type ActorPose, type ImageLookup, type Vec } from "@questforge/engine";
+import { resolveAnim, sceneDrawables, type ActorPose, type ImageLookup, type Vec } from "@questforge/engine";
 import type { CharacterFile, Problem, Project, SceneFile } from "@questforge/schema";
 import type { Editor } from "../editor.ts";
 import type { WorkspaceState } from "../workspace.ts";
@@ -283,6 +283,22 @@ export class SceneController {
 
   // ── Frame ───────────────────────────────────────────────────────────────────
 
+  /** Seconds of animation the canvas shows (D113); the canvas advances it while `animating`. 0 in tests. */
+  clock = 0;
+
+  /** True when something in the scene moves: an object loop or a placed character's idle with several frames. */
+  get animating(): boolean {
+    const scene = this.scene;
+    if (!scene) return false;
+    if (scene.objects.some((o) => (o.animation?.frames.length ?? 0) > 1)) return true;
+    const chars = this.characters();
+    return scene.characters.some((c) => {
+      const character = chars.get(c.character);
+      const r = character && resolveAnim(character, "idle", c.facing);
+      return !!r && !r.still && r.anim.frames.length > 1;
+    });
+  }
+
   protected characters(): Map<string, CharacterFile> {
     return new Map(this.editor.project.characters.map((c) => [c.data.id, c.data]));
   }
@@ -292,7 +308,7 @@ export class SceneController {
     const chars = this.characters();
     return scene.characters.flatMap((c) => {
       const character = chars.get(c.character);
-      return character ? [{ id: c.character, character, pos: [c.x, c.y] as Vec, facing: c.facing, kind: "idle" as const, animTime: 0 }] : [];
+      return character ? [{ id: c.character, character, pos: [c.x, c.y] as Vec, facing: c.facing, kind: "idle" as const, animTime: this.clock }] : [];
     });
   }
 
@@ -300,7 +316,8 @@ export class SceneController {
   protected sprites(scene: SceneFile, ghosts: ActorPose[] = []): Sprite[] {
     const hiddenChars = new Set(scene.characters.filter((c) => !c.visible).map((c) => c.character));
     const hiddenObjects = new Set(scene.objects.filter((o) => !o.visible).map((o) => o.id));
-    const list = sceneDrawables(scene, this.host.images, () => true, [...this.placedActors(scene), ...ghosts]);
+    const time = this.clock;
+    const list = sceneDrawables(scene, this.host.images, () => true, [...this.placedActors(scene), ...ghosts], () => ({ time }));
     return list.map((d) => {
       const ghost = d.kind === "character" && d.id.startsWith(GHOST);
       const hidden = d.kind === "object" ? hiddenObjects.has(d.id) : hiddenChars.has(d.id);

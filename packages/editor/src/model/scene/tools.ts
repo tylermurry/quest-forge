@@ -551,7 +551,7 @@ export class SceneTools extends SceneController {
       if (ui.aids.path && path && path.length > 1) f.path = path;
       if (ui.aids.ghost) {
         const character = this.playerCharacter();
-        const ghost = character ? { id: `${GHOST}${character.id}`, character, pos: feet, facing: "down" as const, kind: "idle" as const, animTime: 0 } : null;
+        const ghost = character ? { id: `${GHOST}${character.id}`, character, pos: feet, facing: "down" as const, kind: "idle" as const, animTime: this.clock } : null;
         const sprites = ghost ? this.sprites(f.scene, [ghost]) : f.sprites;
         if (ghost && sprites.some((s) => s.ghost)) f.sprites = sprites;
         else {

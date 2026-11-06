@@ -47,9 +47,11 @@ export function SceneCanvas({
   // Redraw on any change: the controller's own, the editor's, the scene UI's.
   useEffect(() => {
     let raf = 0;
+    const start = performance.now();
     const draw = () => {
       raf = 0;
       const el = canvas.current;
+      c.clock = (performance.now() - start) / 1000;
       const f = c.frame();
       if (!el || !f) return;
       const dpr = window.devicePixelRatio || 1;
@@ -62,6 +64,8 @@ export function SceneCanvas({
       }
       const ctx = el.getContext("2d");
       if (ctx) drawFrame(ctx, f, dpr, { w, h });
+      // Object loops and idle animations play live (D113); a still scene doesn't redraw.
+      if (c.animating) request();
     };
     const request = () => {
       if (!raf) raf = requestAnimationFrame(draw);

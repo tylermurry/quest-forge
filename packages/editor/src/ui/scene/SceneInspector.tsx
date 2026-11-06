@@ -28,6 +28,8 @@ import { References } from "../Inspector.tsx";
 import { NumberField } from "../NumberField.tsx";
 import { TextField } from "../TextField.tsx";
 import { useCanvasImages } from "./images.ts";
+import { ObjectAnimations } from "../sprites/ObjectAnimations.tsx";
+import { objectFrameSize } from "@questforge/engine";
 
 // The Inspector for things on a scene canvas (spec 09, D99). Every change is one
 // labelled undo step through Editor.apply; typing merges per field until blur (D84).
@@ -212,7 +214,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
     case "objects": {
       const o = scene.objects.find((x) => x.id === thing.key);
       if (!o) return null;
-      const size = images.lookup(o.image)?.size;
+      const size = objectFrameSize(o, images.lookup) ?? undefined;
       const autoBaseline = size ? o.y + size.h : undefined;
       body = (
         <>
@@ -225,6 +227,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
           />
           <Section title="ID">{idRow}</Section>
           <ImageSelect actions={actions} label="Image" value={o.image} onChange={(v) => v && run("Change object image", (q) => setObjectFields(q, sceneId, o.id, { image: v }))} />
+          <ObjectAnimations actions={actions} sceneId={sceneId} object={o} />
           <Section title="Position (top-left)">
             <div className="grid grid-cols-2 gap-2">
               {num("X", o.x, (x) => run("Move object", (q) => setObjectFields(q, sceneId, o.id, { x }), "x"), { integer: true, min: -640, max: 1280 })}

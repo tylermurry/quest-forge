@@ -1,16 +1,17 @@
-import { frameAt, type LoadedImage } from "@questforge/engine";
+import type { LoadedImage } from "@questforge/engine";
 import type { Animation, AnimationSlot, CharacterFile } from "@questforge/schema";
 import { useEffect, useRef, useState } from "react";
 import type { Actions } from "../../model/actions.ts";
 import { SLOT_DIRS, SLOT_KINDS, defaultSlotImage, patchSlot, pickFrames, rowFrames, setMirrorLeft, setSlot, slotLabel, slotOf, slotView, splitSlot } from "../../model/animations.ts";
-import { cellAt, effectiveOrigin, fitZoom, frameSizeOf } from "../../model/sprites.ts";
+import { cellAt, fitZoom } from "../../model/sprites.ts";
 import { Button } from "../components/ui/button.tsx";
 import { Label } from "../components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { cn } from "../lib/utils.ts";
 import { NumberField } from "../NumberField.tsx";
 import { useCanvasImages, type CanvasImages } from "../scene/images.ts";
-import { drawSheet, drawSpriteFrame, prepare } from "./draw.ts";
+import { AnimCanvas } from "./AnimCanvas.tsx";
+import { drawSheet, prepare } from "./draw.ts";
 
 // The character tab's animation editor (spec 05, D39): a grid of the twelve
 // idle/walk/talk × direction slots, each previewed as the engine plays it, and an
@@ -209,39 +210,4 @@ function FramePicker({ image, frames, onPick }: { image: LoadedImage; frames: nu
       }}
     />
   );
-}
-
-/**
- * A slot playing as the engine plays it (frameAt, mirrored around the origin, D39),
- * with its feet on a fixed point and the origin marked. Redraws every frame while shown.
- */
-function AnimCanvas({ images, shown, box }: { images: CanvasImages; shown: ReturnType<typeof slotView>["shown"]; box: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const image = shown ? images.lookup(shown.anim.image) : undefined;
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    if (!shown || !image) {
-      prepare(canvas, box, box);
-      return;
-    }
-    const f = frameSizeOf(image.asset, image.size);
-    const pad = box >= 100 ? 12 : 3;
-    const zoom = fitZoom(f, { w: box - 2 * pad, h: box - 2 * pad }, 12);
-    const origin = effectiveOrigin(image.asset, image.size);
-    // Feet where an unmirrored frame would sit centred, so mirroring visibly keeps them put.
-    const feet: [number, number] = [(box - f.w * zoom) / 2 + origin[0] * zoom, (box - f.h * zoom) / 2 + origin[1] * zoom];
-    const start = performance.now();
-    let raf = 0;
-    const draw = () => {
-      const ctx = prepare(canvas, box, box);
-      if (!ctx) return; // no 2D canvas (tests)
-      const frame = shown.still ? shown.anim.frames[0]! : frameAt(shown.anim, (performance.now() - start) / 1000);
-      drawSpriteFrame(ctx, image, frame, zoom, feet, shown.mirror);
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => cancelAnimationFrame(raf);
-  }, [shown?.anim, shown?.mirror, shown?.still, image, box]);
-  return <canvas ref={ref} aria-hidden className="shrink-0 rounded-sm" />;
 }

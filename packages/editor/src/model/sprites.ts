@@ -124,3 +124,35 @@ export function fitZoom(content: Size, box: Size, max = 8): number {
   const fit = Math.min(box.w / content.w, box.h / content.h);
   return fit < 1 ? fit : Math.min(max, Math.floor(fit));
 }
+
+/**
+ * Frames typed as text, e.g. "0-3, 6" or "3-0" (a run backwards). Null if it isn't
+ * a list of whole frame numbers below `count`.
+ */
+export function parseFrames(text: string, count: number): number[] | null {
+  const out: number[] = [];
+  for (const part of text.split(",").map((s) => s.trim())) {
+    const m = /^(\d+)(?:\s*-\s*(\d+))?$/.exec(part);
+    if (!m) return null;
+    const a = Number(m[1]);
+    const b = m[2] === undefined ? a : Number(m[2]);
+    if (a >= count || b >= count) return null;
+    const step = b >= a ? 1 : -1;
+    for (let f = a; f !== b + step; f += step) out.push(f);
+  }
+  return out.length ? out : null;
+}
+
+/** Frames as text, with runs of three or more shortened: [0, 1, 2, 3, 6] → "0-3, 6". */
+export function formatFrames(frames: readonly number[]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < frames.length; ) {
+    let j = i;
+    const step = frames[i + 1] !== undefined && Math.abs(frames[i + 1]! - frames[i]!) === 1 ? frames[i + 1]! - frames[i]! : 0;
+    while (step && frames[j + 1] === frames[j]! + step) j++;
+    parts.push(j - i >= 2 ? `${frames[i]}-${frames[j]}` : String(frames[i]));
+    if (j - i === 1) parts.push(String(frames[j]));
+    i = j + 1;
+  }
+  return parts.join(", ");
+}
