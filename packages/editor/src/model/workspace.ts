@@ -27,6 +27,8 @@ export class WorkspaceState {
   expanded = new Set<string>();
   collapsedSections = new Set<Section>();
   search = "";
+  /** A field the Inspector should focus next (e.g. a new hotspot's name, D99); it clears it. */
+  focusRequest: string | null = null;
   /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
   readonly sceneUi = new SceneUiStore();
 
@@ -67,6 +69,17 @@ export class WorkspaceState {
     this.active = refKey(ref);
     this.selection = { kind: "entry", ...ref };
     this.changed();
+  }
+
+  requestFocus(field: string) {
+    this.focusRequest = field;
+    this.changed();
+  }
+
+  takeFocusRequest(): string | null {
+    const f = this.focusRequest;
+    this.focusRequest = null;
+    return f;
   }
 
   select(selection: Selection) {

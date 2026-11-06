@@ -130,12 +130,12 @@ export class SceneController {
 
   setLayer(layer: Layer) {
     if (layer === this.ui.layer) return;
-    this.cancel();
+    this.abort();
     this.host.ws.sceneUi.setLayer(this.host.scene, layer);
   }
 
   setTool(tool: Tool) {
-    if (tool !== this.ui.tool) this.cancel();
+    if (tool !== this.ui.tool) this.abort();
     this.host.ws.sceneUi.setTool(this.host.scene, tool);
   }
 
@@ -143,8 +143,15 @@ export class SceneController {
     this.host.ws.sceneUi.update(this.host.scene, (u) => ({ ...u, snap: !u.snap }));
   }
 
-  /** Ends whatever's in progress (Escape); with nothing in progress, clears the selection. */
-  cancel() {}
+  /** Drops a gesture in progress (switching tools or layers). */
+  abort(): boolean {
+    return false;
+  }
+
+  /** Escape: drops a gesture in progress; with nothing in progress, clears the selection. */
+  cancel() {
+    if (this.selection) this.select(null);
+  }
 
   setSize(size: Size) {
     if (size.w === this.size.w && size.h === this.size.h) return;

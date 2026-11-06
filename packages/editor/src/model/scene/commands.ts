@@ -1,9 +1,9 @@
 // Scene-editing commands (spec 09): pure Project → Project functions, each run as
 // one undo step through Editor.apply (D84). Geometry stays integer (spec 01).
 import { SCENE_HEIGHT, SCENE_WIDTH, type Placement, type Point, type Polygon, type Project, type SceneFile } from "@questforge/schema";
-import { CommandError, updateDoc } from "../commands.ts";
+import { CommandError, uniqueId, updateDoc } from "../commands.ts";
 import { getPolygon, withPolygon, type PolyRef } from "./shapes.ts";
-import { holeIndex, type ThingRef } from "./things.ts";
+import { holeIndex, holeKey, type ThingRef } from "./things.ts";
 
 /** Replaces one scene's data. */
 export const updateScene = (p: Project, sceneId: string, f: (s: SceneFile) => SceneFile): Project => updateDoc<SceneFile>(p, "scene", sceneId, f);
@@ -221,4 +221,64 @@ export function setBaseline(p: Project, sceneId: string, id: string, y: number |
       }),
     };
   });
+}
+
+// ── New shapes (D104) ────────────────────────────────────────────────────────
+
+/** What a closed polygon becomes, decided by the active layer (D104). */
+export type DrawTarget =
+  | { kind: "outline" }
+  | { kind: "hole" }
+  | { kind: "hotspot" }
+  | { kind: "region" }
+  | { kind: "obstacle"; object: string };
+
+export const DRAW_LABEL: Record<DrawTarget["kind"], string> = {
+  outline: "Draw walkable area",
+  hole: "Draw hole",
+  hotspot: "Draw hotspot",
+  region: "Draw region",
+  obstacle: "Draw obstacle",
+};
+
+/** IDs used inside a scene by objects, hotspots and regions (each list must be unique). */
+const listIds = (s: SceneFile, list: "hotspots" | "regions" | "objects") => (s[list] as { id: string }[]).map((x) => x.id);
+
+/** "Hotspot", "Hotspot 2", … matching `hotspot`, `hotspot_2`, … (D99). */
+const defaultName = (base: string, id: string) => {
+  const n = id.slice(base.length + 1);
+  const word = base[0]!.toUpperCase() + base.slice(1);
+  return n ? `${word} ${n}` : word;
+};
+
+/** Adds a closed polygon as the target says; returns what it made, for selecting. */
+export function createShape(p: Project, sceneId: string, target: DrawTarget, poly: Polygon): { project: Project; ref: ThingRef } {
+  const clean: Polygon = poly.map(([x, y]) => [clampX(x), clampY(y)]);
+  if (clean.length < 3) throw new CommandError("A shape needs at least 3 points.");
+  let ref: ThingRef = { list: "walkable", key: "outer" };
+  const project = updateScene(p, sceneId, (s) => {
+    switch (target.kind) {
+      case "outline":
+        if (s.walkable.outer.length) throw new CommandError("This scene already has a walkable outline. Delete it first to draw a new one.");
+        return { ...s, walkable: { ...s.walkable, outer: clean } };
+      case "hole":
+        ref = { list: "walkable", key: holeKey(s.walkable.holes.length) };
+        return { ...s, walkable: { ...s.walkable, holes: [...s.walkable.holes, clean] } };
+      case "hotspot": {
+        const id = uniqueId("hotspot", listIds(s, "hotspots"));
+        ref = { list: "hotspots", key: id };
+        return { ...s, hotspots: [...s.hotspots, { id, name: defaultName("hotspot", id), shape: clean, rules: [] }] };
+      }
+      case "region": {
+        const id = uniqueId("region", listIds(s, "regions"));
+        ref = { list: "regions", key: id };
+        return { ...s, regions: [...s.regions, { id, shape: clean, rules: [] }] };
+      }
+      case "obstacle":
+        if (!s.objects.some((o) => o.id === target.object)) throw gone();
+        ref = { list: "objects", key: target.object };
+        return { ...s, objects: s.objects.map((o) => (o.id === target.object ? { ...o, obstacle: clean } : o)) };
+    }
+  });
+  return { project, ref };
 }

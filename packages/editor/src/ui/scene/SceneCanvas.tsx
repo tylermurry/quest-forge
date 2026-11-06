@@ -108,16 +108,18 @@ export function SceneCanvas({
     return () => el.removeEventListener("wheel", onWheel);
   }, [c]);
 
-  const input = (e: React.PointerEvent | React.MouseEvent) => {
+  // Pointer events don't carry a reliable click count, so count presses here.
+  const lastDown = useRef<{ t: number; x: number; y: number; n: number } | null>(null);
+  const input = (e: React.PointerEvent, down = false) => {
     const r = canvas.current!.getBoundingClientRect();
-    return {
-      screen: [e.clientX - r.left, e.clientY - r.top] as [number, number],
-      button: e.button,
-      alt: e.altKey,
-      shift: e.shiftKey,
-      mod: isMac() ? e.metaKey : e.ctrlKey,
-      clicks: e.detail,
-    };
+    const screen: [number, number] = [e.clientX - r.left, e.clientY - r.top];
+    let clicks = lastDown.current?.n ?? 1;
+    if (down) {
+      const l = lastDown.current;
+      clicks = l && e.timeStamp - l.t < 400 && Math.hypot(screen[0] - l.x, screen[1] - l.y) < 4 ? l.n + 1 : 1;
+      lastDown.current = { t: e.timeStamp, x: screen[0], y: screen[1], n: clicks };
+    }
+    return { screen, button: e.button, alt: e.altKey, shift: e.shiftKey, mod: isMac() ? e.metaKey : e.ctrlKey, clicks };
   };
 
   return (
@@ -150,7 +152,7 @@ export function SceneCanvas({
         onPointerDown={(e) => {
           e.currentTarget.focus();
           e.currentTarget.setPointerCapture(e.pointerId);
-          c.pointerDown(input(e));
+          c.pointerDown(input(e, true));
         }}
         onPointerMove={(e) => c.pointerMove(input(e))}
         onPointerUp={(e) => c.pointerUp(input(e))}

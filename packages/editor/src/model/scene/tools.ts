@@ -1,9 +1,12 @@
 // Tool gestures on the scene canvas (spec 09): Select/Move, Polygon, Rectangle,
 // Spawn point, Walk-to point. DOM-free; tested in Node by feeding pointer input.
 import type { Vec } from "@questforge/engine";
-import type { Point } from "@questforge/schema";
+import { polygonIssue, type Point } from "@questforge/schema";
 import {
+  createShape,
+  DRAW_LABEL,
   deleteVertex,
+  type DrawTarget,
   insertVertex,
   moveCharacter,
   moveObject,
@@ -18,13 +21,16 @@ import {
 } from "./commands.ts";
 import { SceneController, type PointerInput } from "./controller.ts";
 import type { Frame } from "./frame.ts";
-import { hitTest, type Hit } from "./hit.ts";
+import { hitTest, VERTEX_PX, type Hit } from "./hit.ts";
 import { snapPoint } from "./snap.ts";
 import { LIST_LAYER, type ThingRef } from "./things.ts";
 import { snapPixel, toScene } from "./view.ts";
 
 /** A Select/Move drag in progress. */
 type Move = { hit: Hit; start: Vec };
+
+/** A polygon being drawn, point by point. Not in history until it closes (D84). */
+type Drawing = { points: Point[]; target: DrawTarget };
 
 export class SceneTools extends SceneController {
   private move: Move | null = null;
@@ -33,14 +39,52 @@ export class SceneTools extends SceneController {
   /** Where the last point snapped to a vertex or edge, for the snap ring (D102). */
   protected snapMark: Point | null = null;
 
+  private drawing: Drawing | null = null;
+  /** Rectangle-to-polygon drag in progress (spec 09). */
+  private rect: { start: Point; end: Point; target: DrawTarget } | null = null;
+  /** Where the next point would go (snapped), for the rubber band. */
+  private cursorPoint: Point | null = null;
+
   /** A polygon is being drawn (not in history until it closes, D84). */
   get isDrawing(): boolean {
-    return false;
+    return this.drawing !== null || this.rect !== null;
+  }
+
+  /** What a polygon drawn now would become (D104), or why nothing can be drawn. */
+  drawTarget(): DrawTarget | string {
+    const scene = this.scene;
+    if (!scene) return "There's no scene.";
+    const layer = this.ui.layer;
+    if (this.ui.locked.includes(layer)) return `The ${layer} layer is locked.`;
+    if (this.ui.hidden.includes(layer)) return `The ${layer} layer is hidden.`;
+    switch (layer) {
+      case "walkable":
+        return scene.walkable.outer.length ? { kind: "hole" } : { kind: "outline" };
+      case "hotspots":
+        return { kind: "hotspot" };
+      case "regions":
+        return { kind: "region" };
+      case "objects": {
+        const sel = this.selection;
+        if (sel?.list === "objects") return { kind: "obstacle", object: sel.key };
+        return "Select an object first, then draw its obstacle.";
+      }
+      default:
+        return "Shapes can't be drawn on this layer.";
+    }
   }
 
   /** One line of help for the toolbar. */
   get hint(): string {
     const ui = this.ui;
+    if (ui.tool === "polygon" || ui.tool === "rect") {
+      const target = this.drawTarget();
+      if (typeof target === "string") return target;
+      const what = { outline: "the walkable outline", hole: "a hole", hotspot: "a new hotspot", region: "a new region", obstacle: "the obstacle" }[target.kind];
+      if (ui.tool === "rect") return `Drag to draw ${what}`;
+      if (this.drawing) return `Click to add points · double-click, Enter or click the first point to close · Backspace undoes a point · Esc cancels`;
+      return `Click to start ${what}`;
+    }
     if (ui.tool === "select") {
       if (this.selection && this.hasVertices(this.selection)) return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
       return "Click to select · drag to move";
@@ -64,16 +108,57 @@ export class SceneTools extends SceneController {
   }
 
   /** Enter / double-click: close the polygon being drawn. */
-  finish() {}
+  finish() {
+    const d = this.drawing;
+    if (!d) return;
+    if (d.points.length < 3) {
+      this.editor.showNotice({ kind: "error", text: "A shape needs at least 3 points." });
+      return;
+    }
+    this.drawing = null;
+    this.cursorPoint = null;
+    this.create(d.target, d.points);
+  }
+
+  private create(target: DrawTarget, points: Point[]) {
+    const id = this.sceneId;
+    const made = this.editor.applyWith(DRAW_LABEL[target.kind], (p) => createShape(p, id, target, points));
+    if (made) {
+      this.select(made.ref);
+      // New hotspots and regions get their name typed right away (D99).
+      if (target.kind === "hotspot" || target.kind === "region") this.host.ws.requestFocus("name");
+    }
+    this.changed();
+  }
 
   /** Backspace while drawing: remove the last point. */
-  removeLastPoint() {}
+  removeLastPoint() {
+    const d = this.drawing;
+    if (!d) return;
+    d.points = d.points.slice(0, -1);
+    if (d.points.length === 0) this.drawing = null;
+    this.changed();
+  }
 
-  override cancel() {
+  override abort(): boolean {
+    if (this.drawing || this.rect) {
+      this.drawing = null;
+      this.rect = null;
+      this.cursorPoint = null;
+      this.changed();
+      return true;
+    }
     if (this.move) {
       this.move = null;
+      this.snapMark = null;
       this.discard();
-    } else if (this.selection) this.select(null);
+      return true;
+    }
+    return false;
+  }
+
+  override cancel() {
+    if (!this.abort()) super.cancel();
   }
 
   /** Files dropped from the OS onto the canvas (D98). */
@@ -99,12 +184,23 @@ export class SceneTools extends SceneController {
   protected override toolDown(e: PointerInput) {
     if (e.button !== 0) return;
     const p = toScene(this.transform, e.screen);
-    if (this.ui.tool === "select") this.selectDown(p, e);
+    switch (this.ui.tool) {
+      case "select":
+        return this.selectDown(p, e);
+      case "polygon":
+        return this.polygonDown(p, e);
+      case "rect":
+        return this.rectDown(p);
+      default:
+        return this.pointToolDown(p);
+    }
   }
 
   protected override toolMove(e: PointerInput) {
     const p = toScene(this.transform, e.screen);
     if (this.move) this.moveTo(p);
+    else if (this.rect) this.rect.end = this.snapDraw(p);
+    else if (this.ui.tool === "polygon") this.cursorPoint = this.snapDraw(p);
     else if (this.ui.tool === "select") this.hoverHit = this.hit(p);
   }
 
@@ -113,8 +209,63 @@ export class SceneTools extends SceneController {
       this.move = null;
       this.snapMark = null;
       this.commit();
+    } else if (this.rect) {
+      const { start, end, target } = this.rect;
+      this.rect = null;
+      this.snapMark = null;
+      if (start[0] !== end[0] && start[1] !== end[1]) {
+        this.create(target, [start, [end[0], start[1]], end, [start[0], end[1]]]);
+      }
     }
   }
+
+  override pointerLeave() {
+    this.cursorPoint = null;
+    super.pointerLeave();
+  }
+
+  /** A drawing point: whole pixels, snapped to vertices/edges (and the shape's own points) when Snap is on. */
+  private snapDraw(p: Vec): Point {
+    const s = snapPoint(p, this.scene!, this.ui, this.transform.scale, { extra: this.drawing?.points ?? [] });
+    this.snapMark = s.kind === "pixel" ? null : s.point;
+    return s.point;
+  }
+
+  private polygonDown(p: Vec, e: PointerInput) {
+    // The second click of a double-click closes the shape (spec 09).
+    if (this.drawing && (e.clicks ?? 1) >= 2) return this.finish();
+    const target = this.drawing?.target ?? this.drawTarget();
+    if (typeof target === "string") {
+      this.editor.showNotice({ kind: "error", text: target });
+      return;
+    }
+    const pt = this.snapDraw(p);
+    const d = this.drawing;
+    if (d) {
+      // Clicking the first point closes the shape.
+      const first = d.points[0]!;
+      if (d.points.length >= 3 && Math.hypot(p[0] - first[0], p[1] - first[1]) <= VERTEX_PX / this.transform.scale) return this.finish();
+      const last = d.points[d.points.length - 1]!;
+      if (last[0] === pt[0] && last[1] === pt[1]) return;
+      d.points = [...d.points, pt];
+    } else {
+      this.drawing = { points: [pt], target };
+    }
+    this.changed();
+  }
+
+  private rectDown(p: Vec) {
+    const target = this.drawTarget();
+    if (typeof target === "string") {
+      this.editor.showNotice({ kind: "error", text: target });
+      return;
+    }
+    const pt = this.snapDraw(p);
+    this.rect = { start: pt, end: pt, target };
+  }
+
+  /** Spawn and walk-to tools (T6). */
+  protected pointToolDown(_p: Vec) {}
 
   private selectDown(p: Vec, e: PointerInput) {
     const hit = this.hit(p);
@@ -192,6 +343,15 @@ export class SceneTools extends SceneController {
     const f = super.frame();
     if (!f) return null;
     f.snap = this.snapMark;
+    if (this.drawing) {
+      const { points } = this.drawing;
+      const cursor = this.cursorPoint;
+      const closing = cursor ? [...points, cursor] : points;
+      f.drawing = { points, cursor, closeInvalid: closing.length >= 3 && polygonIssue(closing) !== null };
+    } else if (this.rect) {
+      const { start: a, end: b } = this.rect;
+      f.drawing = { points: [a, [b[0], a[1]], b, [a[0], b[1]]], cursor: a, closeInvalid: false };
+    }
     return f;
   }
 
