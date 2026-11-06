@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { MemoryFs, loadProject, planSave, saveProject, validateProject } from "@questforge/schema";
+import { MemoryFs, loadProject, planSave, saveProject } from "@questforge/schema";
 import { Actions } from "../src/model/actions.ts";
 import { Editor } from "../src/model/editor.ts";
 import { importFiles } from "../src/model/importing.ts";
 import { WorkspaceState } from "../src/model/workspace.ts";
-import { m1Project } from "./support/fixtures.ts";
+import { errorsIn, m1Project } from "./support/fixtures.ts";
 
 const f = (name: string) => ({ name, bytes: new Uint8Array([1, 2, 3]) });
 
@@ -18,7 +18,7 @@ describe("importing files (D88)", () => {
     ]);
     expect(r.refused).toEqual(["notes.txt"]);
     expect(Object.keys(r.project.pendingFiles)).toEqual(["assets/images/items/Sea Shell.png", "assets/audio/waves.ogg"]);
-    expect(validateProject(r.project)).toEqual([]);
+    expect(errorsIn(r.project)).toEqual([]);
   });
 
   it("makes IDs from file names and avoids clashes", async () => {

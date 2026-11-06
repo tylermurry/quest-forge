@@ -22,6 +22,8 @@ async function problemsAfter(edit: (p: Project) => void): Promise<Problem[]> {
   edit(project);
   return validateProject(project);
 }
+/** Only the blocking errors: the spec 14 error tests ignore warnings, which have their own tests. */
+const errorsAfter = async (edit: (p: Project) => void) => (await problemsAfter(edit)).filter((p) => p.severity === "error");
 const scene = (p: Project, id: string) => p.scenes.find((s) => s.data.id === id)!.data;
 const summary = (ps: Problem[]) => ps.map((p) => ({ code: p.code, file: p.location.file, path: p.location.path.join("."), text: formatProblem(p) }));
 
@@ -33,7 +35,7 @@ describe("the fixture project", () => {
 
 describe("spec 14 errors", () => {
   it("missing reference, with a did-you-mean (spec 14 message style)", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       p.items.find((i) => i.data.id === "lantern")!.data.id = "golden_key";
       scene(p, "beach").hotspots[0]!.rules[1]!.when = { type: "use_item", item: "gold_key" };
     });
@@ -59,12 +61,12 @@ describe("spec 14 errors", () => {
     ["object", (p: Project) => (scene(p, "path").characters[0]!.rules[0]!.do[1] = { type: "hide_object", scene: "path", object: "bouldr" }), "uses object bouldr in Village Path, which doesn't exist. Did you mean boulder?"],
     ["flag used as counter", (p: Project) => (scene(p, "shop").rules[0]!.do[0] = { type: "add_to_counter", counter: "talked_to_villager", amount: 1 }), "uses talked_to_villager as a counter, but it's a flag."],
   ])("missing reference: %s", async (_kind, edit, message) => {
-    const problems = await problemsAfter(edit);
+    const problems = await errorsAfter(edit);
     expect(problems.map((x) => [x.code, x.message])).toEqual([["missing_reference", message]]);
   });
 
   it("missing reference: dialogue node", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       const sell = p.dialogues[0]!.data.nodes.find((n) => n.id === "sell")!;
       if (sell.type === "actions") sell.next = "thank_you";
     });
@@ -74,7 +76,7 @@ describe("spec 14 errors", () => {
   });
 
   it("scene with no walkable area", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       scene(p, "shop").walkable.outer = [];
     });
     expect(summary(problems)).toEqual([
@@ -83,7 +85,7 @@ describe("spec 14 errors", () => {
   });
 
   it("spawn outside walkable (outside the outline, or inside a hole)", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       scene(p, "beach").spawns.default = { x: 330, y: 320, facing: "down" }; // inside the rock hole
       scene(p, "shop").spawns.default = { x: 10, y: 10, facing: "up" };
     });
@@ -94,7 +96,7 @@ describe("spec 14 errors", () => {
   });
 
   it("start scene missing", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       p.game!.data.startScene = "beech";
     });
     expect(summary(problems)).toEqual([
@@ -103,13 +105,13 @@ describe("spec 14 errors", () => {
   });
 
   it("dialogue without Start (and more than one Start)", async () => {
-    const none = await problemsAfter((p) => {
+    const none = await errorsAfter((p) => {
       p.dialogues[0]!.data.nodes = p.dialogues[0]!.data.nodes.filter((n) => n.type !== "start");
     });
     expect(summary(none)).toEqual([
       { code: "dialogue_without_start", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes", text: 'Dialogue "Shopkeeper": has no Start node, so it can never begin.' },
     ]);
-    const two = await problemsAfter((p) => {
+    const two = await errorsAfter((p) => {
       p.dialogues[0]!.data.nodes.push({ id: "start2", type: "start", pos: [0, 0], next: null });
     });
     expect(two.map((x) => x.code)).toEqual(["dialogue_multiple_starts"]);
@@ -122,7 +124,7 @@ describe("spec 14 errors", () => {
     ["a repeated vertex", [[0, 0], [10, 0], [10, 0], [10, 10]], "crosses itself."],
     ["no area", [[0, 0], [5, 5], [10, 10]], "is flat (it has no area)."],
   ])("invalid polygon: %s", async (_name, shape, message) => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       scene(p, "beach").hotspots[1]!.shape = shape;
     });
     expect(summary(problems)).toEqual([
@@ -132,7 +134,7 @@ describe("spec 14 errors", () => {
 
   it("invalid polygon: walkable outline, holes, obstacles and regions are all checked", async () => {
     const bowtie: Point[] = [[0, 0], [10, 10], [10, 0], [0, 10]];
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       scene(p, "beach").walkable.holes[0] = bowtie;
       scene(p, "path").objects[0]!.obstacle = bowtie;
       scene(p, "path").regions[0]!.shape = bowtie;
@@ -147,7 +149,7 @@ describe("spec 14 errors", () => {
   });
 
   it("invalid polygon: a hole that sticks out of the walkable outline (D100)", async () => {
-    const out = await problemsAfter((p) => {
+    const out = await errorsAfter((p) => {
       scene(p, "beach").walkable.holes[0] = [[300, 200], [360, 200], [360, 340], [300, 340]];
     });
     expect(summary(out)).toEqual([
@@ -159,14 +161,14 @@ describe("spec 14 errors", () => {
       },
     ]);
     // Touching the outline from inside is fine.
-    const touching = await problemsAfter((p) => {
+    const touching = await errorsAfter((p) => {
       scene(p, "beach").walkable.holes[0] = [[300, 240], [360, 240], [360, 340], [300, 340]];
     });
     expect(touching).toEqual([]);
   });
 
   it("duplicate IDs: across asset files and within lists", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       p.items.push({ path: "items/old/coin.item.yaml", data: structuredClone(p.items[0]!.data) });
       p.flags!.data.flags.push({ id: "shop_visits", type: "bool", initial: false });
       scene(p, "beach").hotspots[1]!.id = "shell";
@@ -184,7 +186,7 @@ describe("spec 14 errors", () => {
   });
 
   it("missing image file", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       p.files = p.files.filter((f) => f !== "assets/images/palm_img.png");
     });
     expect(summary(problems)).toEqual([
@@ -193,7 +195,7 @@ describe("spec 14 errors", () => {
   });
 
   it("all of them are blocking errors", async () => {
-    const problems = await problemsAfter((p) => {
+    const problems = await errorsAfter((p) => {
       p.game!.data.startScene = "nowhere";
     });
     expect(hasBlockingErrors(problems)).toBe(true);

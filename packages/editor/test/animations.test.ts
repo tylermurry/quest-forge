@@ -1,7 +1,7 @@
-import { serialize, validateProject, type CharacterFile, type Project } from "@questforge/schema";
+import { serialize, type CharacterFile, type Project } from "@questforge/schema";
 import { describe, expect, it } from "vitest";
 import { defaultSlotImage, patchSlot, pickFrames, rowFrames, setMirrorLeft, setSlot, slotLabel, slotView } from "../src/model/animations.ts";
-import { m1Project } from "./support/fixtures.ts";
+import { errorsIn, m1Project } from "./support/fixtures.ts";
 
 // Character animation slots (spec 05, D39, D70, D115).
 
@@ -14,7 +14,7 @@ describe("slot commands", () => {
     expect(char(p, "hero").animations.talk_up).toBeUndefined();
     const next = patchSlot(p, "hero", "talk_up", { frames: [3, 4] });
     expect(char(next, "hero").animations.talk_up).toEqual({ image: "hero_sheet", frames: [3, 4], fps: 8, loop: true });
-    expect(validateProject(next)).toEqual([]);
+    expect(errorsIn(next)).toEqual([]);
   });
 
   it("writes slots in slot order, whatever order they were filled in", async () => {
@@ -32,7 +32,7 @@ describe("slot commands", () => {
     expect(char(next, "hero").animations.walk_down).toMatchObject({ fps: 12, loop: false });
     next = patchSlot(next, "hero", "walk_down", { image: "rock_img" });
     expect(char(next, "hero").animations.walk_down).toMatchObject({ image: "rock_img", frames: [0] });
-    expect(validateProject(next)).toEqual([]);
+    expect(errorsIn(next)).toEqual([]);
   });
 
   it("refuses an invalid fps or no frames, in plain English", async () => {

@@ -29,7 +29,20 @@ export type ProblemCode =
   | "frame_out_of_range"
   | "origin_outside_frame"
   // Browser folders (D83)
-  | "missing_folder";
+  | "missing_folder"
+  // Rule text (D119)
+  | "empty_text"
+  // Spec 14 warnings (D122)
+  | "scene_unreachable"
+  | "scene_no_background"
+  | "item_never_given"
+  | "flag_unused"
+  | "flag_never_read"
+  | "flag_never_set"
+  | "dialogue_node_unreachable"
+  | "hotspot_no_rules"
+  | "award_total_mismatch"
+  | "award_points_inconsistent";
 
 export interface Problem {
   severity: Severity;

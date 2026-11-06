@@ -424,7 +424,7 @@ const garden = SceneFile.parse(withRuleIds({
         rule({ type: "hand" }, [narrate("The fish are far too quick for your hands.")]),
       ],
     },
-    { id: "sky", name: "sky", shape: [[0, 0], [640, 0], [640, 120], [0, 120]], rules: [] },
+    { id: "sky", name: "sky", shape: [[0, 0], [640, 0], [640, 120], [0, 120]], rules: [look("A clear blue sky.")] },
   ],
   regions: [
     { id: "exit_shed", shape: [[590, 330], [640, 330], [640, 400], [590, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])] },

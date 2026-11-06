@@ -22,7 +22,7 @@ import {
   uniqueFolderName,
   uniqueId,
 } from "../src/model/commands.ts";
-import { m1Project } from "./support/fixtures.ts";
+import { errorsIn, m1Project } from "./support/fixtures.ts";
 
 const folderOfScene = (p: Awaited<ReturnType<typeof m1Project>>, id: string) => sectionEntries(p, "scene").find((e) => e.id === id)?.folder;
 
@@ -55,7 +55,7 @@ describe("folders", () => {
     expect(p.scenes.find((s) => s.data.id === "garden")?.path).toBe("scenes/act1/garden.scene.yaml");
     // Only the path changed (D22): the moved file's content is identical.
     expect(planSave(p).writes).toEqual([{ path: "scenes/act1/garden.scene.yaml", content: (await m1Project()).saved["scenes/garden.scene.yaml"] }]);
-    expect(validateProject(p)).toEqual([]);
+    expect(errorsIn(p)).toEqual([]);
   });
 
   it("refuses duplicate and invalid folder names", async () => {
@@ -124,7 +124,7 @@ describe("entries", () => {
     expect(scene.walkable).toEqual({ outer: [], holes: [] });
     expect(scene.spawns).toEqual({ default: { x: 320, y: 360, facing: "down" } });
     // The only problem is the one the user fixes by drawing on the canvas.
-    expect(validateProject(p).map((x) => [x.code, x.location.file])).toEqual([["no_walkable_area", "scenes/new_scene.scene.yaml"]]);
+    expect(errorsIn(p).map((x) => [x.code, x.location.file])).toEqual([["no_walkable_area", "scenes/new_scene.scene.yaml"]]);
     expect(createEntry(p, "scene", "").id).toBe("new_scene_2");
     expect(() => createEntry(p, "image", "")).toThrow(/importing/);
   });
@@ -145,7 +145,7 @@ describe("entries", () => {
     expect(entryReferences(p, "item", "long_stick")).toHaveLength(3);
     expect(() => changeId(p, "item", "long_stick", "Bad ID")).toThrow(/can't be an ID/);
     expect(() => changeId(p, "item", "long_stick", "rod")).toThrow(/already exists/);
-    expect(validateProject(p)).toEqual([]);
+    expect(errorsIn(p)).toEqual([]);
   });
 
   it("renaming a flag changes its ID", async () => {
@@ -153,7 +153,7 @@ describe("entries", () => {
     const flag = p.flags!.data.flags[0]!.id;
     const next = renameEntry(p, "flag", flag, "renamed_flag");
     expect(next.flags?.data.flags[0]?.id).toBe("renamed_flag");
-    expect(validateProject(next)).toEqual([]);
+    expect(errorsIn(next)).toEqual([]);
   });
 
   it("duplicates a scene, retargeting its references to itself", async () => {
@@ -166,7 +166,7 @@ describe("entries", () => {
     expect(text).not.toContain('"scene":"garden"');
     expect(text).toContain('"scene":"garden_copy"');
     expect(text).toContain('"scene":"shed"'); // other scenes untouched
-    expect(validateProject(p)).toEqual([]);
+    expect(errorsIn(p)).toEqual([]);
     expect(duplicateEntry(p, "scene", "garden").id).toBe("garden_copy_2");
   });
 

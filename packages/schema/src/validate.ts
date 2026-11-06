@@ -6,9 +6,10 @@ import type { CharacterFile } from "./character.ts";
 import type { Polygon } from "./common.ts";
 import type { SceneFile } from "./scene.ts";
 import type { DialogueFile } from "./dialogue.ts";
+import { checkLogic } from "./warnings.ts";
 
-// Validation core (spec 14, D38, D57): the errors that block playtest and export.
-// Warnings arrive with the Problems panel in M5.
+// Validation (spec 14, D38, D57): the errors that block playtest and export, plus
+// the warnings and empty-text errors in warnings.ts (D119, D122).
 
 const KIND_NOUN: Record<RefKind, string> = {
   scene: "scene",
@@ -340,7 +341,7 @@ function checkFlagFolders(project: Project, out: Collector) {
   });
 }
 
-/** Errors in a loaded project (spec 14). Load problems come from `loadProject`. */
+/** Errors and warnings in a loaded project (spec 14). Load problems come from `loadProject`. */
 export function validateProject(project: Project): Problem[] {
   const out = new Collector(project);
   checkDuplicates(project, out);
@@ -350,6 +351,7 @@ export function validateProject(project: Project): Problem[] {
   checkImageFiles(project, out);
   checkSprites(project, out);
   checkFlagFolders(project, out);
+  checkLogic(project, out);
   return out.problems;
 }
 

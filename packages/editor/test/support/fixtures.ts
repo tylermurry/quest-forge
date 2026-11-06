@@ -1,7 +1,7 @@
 import { cp, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadProject } from "@questforge/schema";
+import { loadProject, validateProject, type Project } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { afterEach } from "vitest";
 
@@ -27,3 +27,6 @@ export async function m1Project() {
   if (problems.length) throw new Error(`m1 fixture has problems: ${problems.map((p) => p.message).join("; ")}`);
   return project;
 }
+
+/** Blocking problems only: "valid" means nothing stops playtest or export (D38); warnings are checked on their own. */
+export const errorsIn = (p: Project) => validateProject(p).filter((x) => x.severity === "error");

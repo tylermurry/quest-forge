@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Facing, Id, SceneX, SceneY, Text } from "./common.ts";
+import { Facing, Id, SceneX, SceneY } from "./common.ts";
 
 // Rule vocabulary (spec 02, D37). Every trigger, condition and action is a map
 // tagged by `type` (D63). This closed set is everything a designer can express.
@@ -47,15 +47,18 @@ export type Condition = z.infer<typeof Condition>;
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
+/** Text a rule shows. Unlike `Text` it may be `""` while authoring: an error, not a parse failure (D119). */
+export const RuleText = z.string();
+
 export const AnimationTarget = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("character"), character: Id }),
   z.strictObject({ kind: z.literal("object"), ...objectRef }),
 ]);
 
 export const Action = z.discriminatedUnion("type", [
-  // Text
-  tag("narrate", { text: Text }),
-  tag("say", { character: Id, text: Text }),
+  // Text. May be empty while authoring; validation reports it (D119).
+  tag("narrate", { text: RuleText }),
+  tag("say", { character: Id, text: RuleText }),
   // Movement
   tag("walk_player_to", { x: SceneX, y: SceneY }),
   tag("face", { facing: Facing }),
@@ -80,7 +83,7 @@ export const Action = z.discriminatedUnion("type", [
   // Flow
   tag("start_dialogue", { dialogue: Id }),
   tag("wait", { seconds: z.number().positive().max(60) }),
-  tag("die", { message: Text }),
+  tag("die", { message: RuleText }),
   tag("win_game", {}),
 ]);
 export type Action = z.infer<typeof Action>;

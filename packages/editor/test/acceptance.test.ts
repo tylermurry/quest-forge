@@ -4,14 +4,14 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { validateProject, type SceneFile } from "@questforge/schema";
+import { type SceneFile } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { Actions } from "../src/model/actions.ts";
 import { sectionEntries, sectionFolders } from "../src/model/browser.ts";
 import { Editor } from "../src/model/editor.ts";
 import { createBlankProject } from "../src/model/template.ts";
 import { WorkspaceState } from "../src/model/workspace.ts";
-import { m1Copy } from "./support/fixtures.ts";
+import { errorsIn, m1Copy } from "./support/fixtures.ts";
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -61,7 +61,7 @@ describe("spec 08 acceptance", () => {
     expect(before.scenes).toEqual({ first_scene: "act1", [second]: "act1/caves", [third]: "act1/caves/deep" });
     expect(await readdir(join(dir, "scenes/New folder"))).toEqual([".keep"]);
     // New scenes start empty (D97): their only problem is the walkable area still to draw.
-    const codes = validateProject(a.editor.project).map((x) => x.code);
+    const codes = errorsIn(a.editor.project).map((x) => x.code);
     expect(codes.length).toBeGreaterThan(0);
     expect(new Set(codes)).toEqual(new Set(["no_walkable_area"]));
     expect(a.editor.history.canUndo).toBe(false); // history is per session

@@ -49,7 +49,8 @@ describe("the M1 fixture", () => {
   it("loads with no problems and is in canonical form", async () => {
     const { project, problems } = await load();
     expect(problems).toEqual([]);
-    expect(validateProject(project)).toEqual([]);
+    // The stress scene is only opened from the dev page, so nothing in the game leads to it (D122).
+    expect(validateProject(project).map((p) => [p.code, p.location.file])).toEqual([["scene_unreachable", "scenes/stress.scene.yaml"]]);
     expect(planSave(project)).toSatisfy(isEmptyPlan);
   });
 

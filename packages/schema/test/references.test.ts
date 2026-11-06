@@ -100,7 +100,7 @@ describe("rename (spec 01 acceptance)", () => {
     p = renameId(p, "audio", "beach_theme", "waves");
     expect(p.flags?.data.flags.map((f) => f.id)).toEqual(["villager_helped", "visits"]);
     expect(findReferences(p, "flag", "villager_helped")).toHaveLength(2);
-    expect(findReferences(p, "counter", "visits")).toHaveLength(1);
+    expect(findReferences(p, "counter", "visits")).toHaveLength(3);
     expect(p.items.find((i) => i.data.id === "coin")?.data.icon).toBe("coin_img");
     expect(p.scenes[0]?.data.music).toBe("waves");
     expect(planSave(p).deletes).toEqual([]);

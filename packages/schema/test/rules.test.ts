@@ -41,7 +41,7 @@ const conditions: Record<string, Case> = {
 };
 
 const actions: Record<string, Case> = {
-  narrate: { good: { type: "narrate", text: "A sturdy oak door." }, bad: { type: "narrate", text: "" } },
+  narrate: { good: { type: "narrate", text: "A sturdy oak door." }, bad: { type: "narrate" } },
   say: { good: { type: "say", character: "shopkeeper", text: "Hello!" }, bad: { type: "say", text: "Hello!" } },
   walk_player_to: { good: { type: "walk_player_to", x: 100, y: 300 }, bad: { type: "walk_player_to", x: 100, y: 999 } },
   face: { good: { type: "face", facing: "up" }, bad: { type: "face", facing: "north" } },
@@ -88,6 +88,14 @@ describe.each(Object.entries(triggers))("trigger %s", (_name, c) => {
 describe.each(Object.entries(conditions))("condition %s", (_name, c) => {
   it("parses", () => expect(Condition.safeParse(c.good).success).toBe(true));
   it("rejects bad parameters", () => expect(Condition.safeParse(c.bad).success).toBe(false));
+});
+
+describe("rule text (D119)", () => {
+  it("may be empty while authoring; validation reports it instead", () => {
+    expect(Action.safeParse({ type: "narrate", text: "" }).success).toBe(true);
+    expect(Action.safeParse({ type: "say", character: "hero", text: "" }).success).toBe(true);
+    expect(Action.safeParse({ type: "die", message: "" }).success).toBe(true);
+  });
 });
 
 describe.each(Object.entries(actions))("action %s", (_name, c) => {

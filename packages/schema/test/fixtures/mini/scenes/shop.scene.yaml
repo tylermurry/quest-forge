@@ -56,6 +56,22 @@ regions:
             spawn: from_shop
         once: false
 rules:
+  - id: rule_2
+    when:
+      type: scene_enter
+    if:
+      - type: counter
+        counter: shop_visits
+        op: gt
+        value: 2
+    do:
+      - type: say
+        character: shopkeeper
+        text: You again! Welcome back.
+      - type: add_to_counter
+        counter: shop_visits
+        amount: 1
+    once: false
   - id: rule_1
     when:
       type: scene_enter

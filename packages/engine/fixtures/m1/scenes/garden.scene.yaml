@@ -300,7 +300,15 @@ hotspots:
       - [640, 0]
       - [640, 120]
       - [0, 120]
-    rules: []
+    rules:
+      - id: rule_1
+        when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A clear blue sky.
+        once: false
 regions:
   - id: exit_shed
     shape:

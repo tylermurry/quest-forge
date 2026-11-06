@@ -7,7 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { scaleAt, type LoadedImage } from "@questforge/engine";
-import { validateProject, type SceneFile } from "@questforge/schema";
+import type { SceneFile } from "@questforge/schema";
+import { errorsIn } from "./support/fixtures.ts";
 import { NodeFs } from "@questforge/schema/node";
 import { Actions } from "../src/model/actions.ts";
 import { Editor } from "../src/model/editor.ts";
@@ -105,7 +106,7 @@ describe("spec 09 acceptance", () => {
     expect(order.indexOf("ghost")).toBeLessThan(order.indexOf("palm")); // behind the palm (baseline 390)
 
     // The default spawn now stands in the walkable area, so the scene is valid.
-    expect(validateProject(editor.project)).toEqual([]);
+    expect(errorsIn(editor.project)).toEqual([]);
 
     // Autosave reaches "Saved", and a fresh load from disk has the same geometry.
     await editor.flush();

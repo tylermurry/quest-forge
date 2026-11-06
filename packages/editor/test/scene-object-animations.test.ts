@@ -1,4 +1,4 @@
-import { validateProject, type Project, type SceneFile } from "@questforge/schema";
+import { type Project, type SceneFile } from "@questforge/schema";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   addObjectAnimation,
@@ -8,7 +8,7 @@ import {
   patchObjectLoop,
   removeObjectLoop,
 } from "../src/model/scene/objectAnimations.ts";
-import { m1Project } from "./support/fixtures.ts";
+import { errorsIn, m1Project } from "./support/fixtures.ts";
 import { sceneEditor } from "./support/scene.ts";
 
 // Object animations in the scene editor (spec 05, D111–D113).
@@ -25,7 +25,7 @@ describe("object animation commands", () => {
     expect(bench(next).animation).toEqual({ image: "hero_sheet", frames: [0, 1, 2], fps: 6 });
     // A new image keeps only frames it has.
     expect(bench(patchObjectLoop(next, "shed", "workbench", { image: "rock_img" })).animation!.frames).toEqual([0]);
-    expect(validateProject(next)).toEqual([]);
+    expect(errorsIn(next)).toEqual([]);
     expect(bench(removeObjectLoop(next, "shed", "workbench")).animation).toBeUndefined();
     expect(bench(p).animation).toBeUndefined();
   });
