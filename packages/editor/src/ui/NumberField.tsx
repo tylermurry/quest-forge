@@ -19,6 +19,8 @@ export function NumberField(props: {
   max?: number;
   step?: number;
   className?: string;
+  /** Keeps the label for screen readers only, for fields inside a sentence (spec 10). */
+  compact?: boolean;
 }) {
   const id = useId();
   const [text, setText] = useState(String(props.value));
@@ -38,7 +40,7 @@ export function NumberField(props: {
   const ok = parse(text) !== null;
   return (
     <div className={cn("grid gap-1", props.className)}>
-      <Label htmlFor={id} className="text-muted-foreground text-[11px] font-normal">
+      <Label htmlFor={id} className={cn("text-muted-foreground text-[11px] font-normal", props.compact && "sr-only")}>
         {props.label}
       </Label>
       <Input

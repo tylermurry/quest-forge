@@ -103,3 +103,19 @@
     -webkit-user-drag: none;
   }
 }
+
+/* Jump-to flash on a rule part (D120). */
+@keyframes qf-flash {
+  0%,
+  60% {
+    box-shadow: 0 0 0 2px var(--err);
+    background-color: color-mix(in oklch, var(--err) 18%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+.qf-flash {
+  animation: qf-flash 1.6s ease-out;
+  border-radius: 6px;
+}

@@ -125,6 +125,12 @@ export class WorkspaceState {
     this.changed();
   }
 
+  /** Highlights a spot without changing the selection, e.g. "Set by rule N" (D118). */
+  flash(location: Location) {
+    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
+    this.changed();
+  }
+
   /** The Inspector showed the highlight; it doesn't come back on the next render. */
   clearHighlight() {
     if (!this.highlight) return;

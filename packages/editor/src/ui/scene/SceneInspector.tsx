@@ -29,6 +29,8 @@ import { NumberField } from "../NumberField.tsx";
 import { TextField } from "../TextField.tsx";
 import { useCanvasImages } from "./images.ts";
 import { ObjectAnimations } from "../sprites/ObjectAnimations.tsx";
+import { RuleInspector } from "../rules/RuleInspector.tsx";
+import { thingOwner } from "../../model/rules/owner.ts";
 import { objectFrameSize } from "@questforge/engine";
 
 // The Inspector for things on a scene canvas (spec 09, D99). Every change is one
@@ -144,7 +146,9 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
 
   if (!doc) return null;
   const scene = doc.data as SceneFile;
-  const problems = sceneProblems(editor.problems, doc.path, scene).get(thingKey(thing)) ?? [];
+  // Problems inside rules show on their rule cards in red (spec 10); the rest show here.
+  const problems = (sceneProblems(editor.problems, doc.path, scene).get(thingKey(thing)) ?? []).filter((x) => !x.location.path.includes("rules"));
+  const ruleOwner = thingOwner(sceneId, thing.list, thing.key);
   const run = (label: string, f: Parameters<typeof editor.apply>[1], field?: string) => editor.apply(label, f, field && `${sceneId}:${thing.list}:${thing.key}:${field}`);
   const blur = () => editor.history.breakMerge();
   const num = (label: string, value: number, apply: (n: number) => void, opts: { integer?: boolean; min?: number; max?: number; step?: number } = { integer: true }) => (
@@ -189,9 +193,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
               <p className="text-muted-foreground text-[12px]">Not set: the player walks to the nearest walkable point. Use the Walk-to tool (W) to place one.</p>
             )}
           </Section>
-          <Section title="Rules">
-            <p className="text-[13px]">{h.rules.length} (the rule inspector arrives in M5)</p>
-          </Section>
+          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -204,9 +206,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
           <Section title="ID">
             <div ref={nameBox}>{idRow}</div>
           </Section>
-          <Section title="Rules">
-            <p className="text-[13px]">{r.rules.length} (the rule inspector arrives in M5)</p>
-          </Section>
+          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -257,9 +257,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
               </Button>
             )}
           </Section>
-          <Section title="Rules">
-            <p className="text-[13px]">{o.rules.length} (the rule inspector arrives in M5)</p>
-          </Section>
+          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -277,9 +275,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
             </div>
           </Section>
           <Check label="Visible when the scene starts" checked={c.visible} onChange={(visible) => run(visible ? "Show character" : "Hide character", (q) => setPlacement(q, sceneId, c.character, { visible }))} />
-          <Section title="Rules">
-            <p className="text-[13px]">{c.rules.length} (the rule inspector arrives in M5)</p>
-          </Section>
+          {ruleOwner && <RuleInspector actions={actions} owner={ruleOwner} />}
         </>
       );
       break;
@@ -382,7 +378,8 @@ export function SceneSettings({ actions, sceneId }: { actions: Actions; sceneId:
   const doc = editor.project.scenes.find((s) => s.data.id === sceneId);
   if (!doc) return null;
   const scene = doc.data as SceneFile;
-  const sceneWide = sceneProblems(editor.problems, doc.path, scene).get("") ?? [];
+  // Problems in the scene's own rules show on their cards (spec 10).
+  const sceneWide = (sceneProblems(editor.problems, doc.path, scene).get("") ?? []).filter((x) => x.location.path[0] !== "rules");
   return (
     <div className="mb-2 grid gap-2">
       <Problems problems={sceneWide} />

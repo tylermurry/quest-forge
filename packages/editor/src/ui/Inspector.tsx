@@ -3,6 +3,7 @@ import { entriesInFolder } from "../model/commands.ts";
 import { SECTIONS, isAssetKind, sectionEntries } from "../model/browser.ts";
 import { describeReferences, entryReferences, renameEntry, summarizeReferences } from "../model/commands.ts";
 import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
+import { RuleInspector } from "./rules/RuleInspector.tsx";
 import { TextField } from "./TextField.tsx";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase first-of-type:mt-0";
@@ -89,6 +90,12 @@ export function Inspector({ actions }: { actions: Actions }) {
       )}
       {image && <ImagePreview path={image.path} actions={actions} />}
       <References summary={summarizeReferences(refs)} lines={describeReferences(p, refs)} />
+      {/* Scene-level rules: scene_enter / scene_exit (D124). */}
+      {sel.section === "scene" && (
+        <dd className="mt-1 grid gap-2">
+          <RuleInspector actions={actions} owner={{ kind: "scene", scene: sel.id }} />
+        </dd>
+      )}
     </dl>
   );
 }
