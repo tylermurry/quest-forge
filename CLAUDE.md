@@ -27,7 +27,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   must be in canonical form. The round-trip test enforces this.
 - Problems (validation) carry `severity`, `code`, a plain-English `message`, a `breadcrumb`, and
   a jump-to `location` (`file` + data `path`).
-- Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas),
+- Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas; `dialogue.ts` also has the
+  graph helpers `nodePorts` (ports `next` / `then` / `else` / `option:<id>`), `reachableNodes` and `silentLoops`, D140),
   `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
   `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (spec 14 errors), `warnings.ts` (spec 14
   warnings and empty rule text, D119/D122; `logicBlocks` walks every rule and dialogue node, `awardTotal`), `migrate.ts`
@@ -42,9 +43,11 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `viewport.ts` (letterbox transform picked in CSS px, 60 Hz `FixedStep`), `world.ts` (one scene's
   simulation: movement, actors, hit-test, approach points), `state.ts` (the serializable `GameState`),
   `rules.ts` (conditions, first-match, rule keys, default responses), `sequence.ts` (action runner
-  behind a `SequenceHost`), `session.ts` (a game being played: state, verbs, scene changes, regions,
-  text), `ui/` (`textbox.ts` layout and timing, `layout.ts` 44 CSS px controls, `controller.ts`
-  pointer input → bar/inventory/session, `icons.ts` + `draw.ts` drawing), `render.ts` (Canvas 2D),
+  behind a `SequenceHost`), `dialogue.ts` (`DialogueRun`: walks a dialogue graph; once/first-time keys by
+  stable IDs, D137; endings, D141), `session.ts` (a game being played: state, verbs, scene changes, regions,
+  text, the dialogue playing and its `choices`), `ui/` (`textbox.ts` layout and timing, `layout.ts` 44 CSS px controls
+  and `choiceLayout` for the dialogue list box (D143), `controller.ts` pointer input → bar/inventory/list box/session,
+  `icons.ts` + `draw.ts` drawing), `render.ts` (Canvas 2D),
   `game.ts` (`createGame`, image cache, DOM glue), `trace.ts` (playtest trace events, D129), `debug.ts` (debug layer
   shapes, D132).
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.
@@ -61,7 +64,7 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   (`corepack pnpm --filter @questforge/engine fixture`). Edit the script, not the YAML or PNGs.
   `test/fixture.test.ts` checks it's canonical and problem-free (except the dev-only stress scene's `scene_unreachable`
   warning) and plays the M2 puzzle chain
-  (garden + shed) with touch taps only.
+  (garden + shed) and the M7 shop (coin under the workbench, the visitor's `shop` dialogue in the shed) with touch taps only.
 - Dev page: `corepack pnpm --filter @questforge/engine dev` (Vite, port 5174, also `engine-dev` in
   `.claude/launch.json`; `engine-dev-alt` uses another port when 5174 is taken). `window.game` exposes
   the running game (`game.session`, `game.ui`) for debugging. Browser-tool clicks are mouse events:
@@ -162,6 +165,17 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `data-playtest-game`: plain shortcuts and Space skip it (`inPlaytestGame`), Escape blurs it. Tests use
   `test/support/playtest.ts` (`playtestEditor()` on an m1 disk copy, headless sessions, `tap`/`settle`). Dev page:
   `window.game` is the running playtest game.
+- Dialogue graph (M7, spec 11, D136–D144): engine `start_dialogue` blocks the rule; `dialogue_end` runs at the end, then
+  the rule goes on (D136). Editor DOM-free logic in `packages/editor/src/model/dialogue/`: `commands.ts` (pure node/port/
+  option commands by stable ID, `editConditions`/`editActions` take list edits from `rules/parts.ts`, which rule cards
+  share), `context.ts` (`dialogueContext`: the scene that starts it, D142), `layout.ts` (auto-layout), `problems.ts`
+  (problems by node and part). UI in `ui/dialogue/`: `DialogueEditor.tsx` (React Flow; local node state follows the
+  file and a drag commits on drop; port dropped on empty space opens the create menu; registry handles `edit.delete`,
+  `dialogue.layout`, `dialogue.fit`), `NodeCard.tsx`, `NodeInspector.tsx` (the Inspector page for a
+  `{ kind: "dialogueNode" }` selection). `ui/rules/PartRows.tsx` holds the condition/action rows both inspectors use.
+  Play from This Node (`play.node`, Shift+F6) is `Playtest.playNode()`; the log and state panel read the engine's
+  `dialogue_*` trace events. Dev page: `window.dialogueGraph` is the React Flow instance. The browser tool's instant
+  drag doesn't start a React Flow connection: dispatch `mousedown` on the handle, a few `mousemove`s, then `mouseup`.
 - Validation is debounced: `Editor.problems` is the last result, refreshed 250 ms after a change (D120). Tests call
   `editor.validateNow()` instead of waiting. Browser-tool clicks by `ref` may scroll the page first; prefer coordinates or a
   JS `click()` when testing popovers. Radix dropdowns open from the keyboard in jsdom (`focus()` + `{Enter}`).
