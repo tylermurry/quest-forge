@@ -1,0 +1,5 @@
+schemaVersion: 2
+id: coin
+name: coin
+description: A worn copper coin.
+icon: coin_icon

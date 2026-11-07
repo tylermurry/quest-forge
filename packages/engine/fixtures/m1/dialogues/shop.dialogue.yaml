@@ -1,0 +1,59 @@
+schemaVersion: 2
+id: shop
+name: Visitor's shop
+nodes:
+  - id: start
+    type: start
+    pos: [0, 0]
+    next: hello
+  - id: hello
+    type: line
+    pos: [320, -24]
+    character: visitor
+    text: Welcome! Have a look at my wares.
+    next: menu
+  - id: menu
+    type: choices
+    pos: [640, -60]
+    options:
+      - id: ask
+        text: Where are you headed?
+        if: []
+        once: true
+        next: travels
+      - id: buy
+        text: I'll buy the lantern.
+        if:
+          - type: has_item
+            item: coin
+        once: false
+        next: sell
+      - id: bye
+        text: Goodbye.
+        if: []
+        once: false
+        next: done
+  - id: travels
+    type: line
+    pos: [960, -200]
+    character: visitor
+    text: Over the hills, once the rain stops.
+    next: menu
+  - id: sell
+    type: actions
+    pos: [960, -40]
+    do:
+      - type: take_item
+        item: coin
+      - type: give_item
+        item: lantern
+    next: thanks
+  - id: thanks
+    type: line
+    pos: [1280, -40]
+    character: visitor
+    text: Mind the oil. Anything else?
+    next: menu
+  - id: done
+    type: end
+    pos: [960, 120]

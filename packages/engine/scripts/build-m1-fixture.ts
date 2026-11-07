@@ -6,12 +6,17 @@
 // the shed (region exit), take the string. Combine stick + string → fishing rod.
 // Use the rod on the pond → fish. Talk to the gardener while holding the fish
 // (gated rule) → a sequence that rolls the boulder away and opens the ledge.
+//
+// M7 shop (spec 11 acceptance): Hand the workbench → a coin. Talk to the visitor in
+// the shed → the shop dialogue: a once-only question, buying the lantern only while
+// you have the coin, and a loop back to the menu.
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
 import {
   AssetsFile,
   CharacterFile,
+  DialogueFile,
   FlagsFile,
   GameFile,
   ItemFile,
@@ -260,6 +265,21 @@ function iconFish(): Bitmap {
   return b;
 }
 
+function iconCoin(): Bitmap {
+  const b = new Bitmap(24, 24);
+  b.ellipse(12, 12, 8, 8, (dx, dy) => shade([220, 180, 60, 255], 1.15 - dy * 0.3 - dx * 0.1));
+  b.ellipse(12, 12, 4, 4, [190, 150, 40, 255]);
+  return b;
+}
+
+function iconLantern(): Bitmap {
+  const b = new Bitmap(24, 24);
+  b.polygon([[8, 7], [16, 7], [17, 20], [7, 20]], [60, 60, 70, 255]);
+  b.ellipse(12, 14, 3, 4, [250, 210, 90, 255]);
+  b.ellipse(12, 4, 3, 2, [60, 60, 70, 255]);
+  return b;
+}
+
 // ── Project data ────────────────────────────────────────────────────────────
 
 const look = (text: string) => ({ when: { type: "look" as const }, if: [], do: [{ type: "narrate" as const, text }], once: false });
@@ -303,6 +323,8 @@ const items = [
   item("string", "string", "A coil of garden string."),
   item("rod", "fishing rod", "A stick with a string tied to it. Crude, but it might work."),
   item("fish", "fish", "A small, wriggling fish."),
+  item("coin", "coin", "A worn copper coin."),
+  item("lantern", "lantern", "A little oil lantern."),
 ];
 
 const sheet = (columns: number, rows: number) => ({ columns, rows, cellWidth: 32, cellHeight: 48 });
@@ -442,7 +464,21 @@ const shed = SceneFile.parse(withRuleIds({
   walkable: { outer: SHED_WALKABLE, holes: [] },
   spawns: { door: { x: 100, y: 370, facing: "right" } },
   objects: [
-    { id: "workbench", name: "workbench", image: "workbench_img", x: 400, y: 200, baseline: 268, visible: true, obstacle: [[400, 256], [560, 256], [560, 268], [400, 268]], rules: [look("A sturdy workbench, covered in sawdust.")] },
+    {
+      id: "workbench",
+      name: "workbench",
+      image: "workbench_img",
+      x: 400,
+      y: 200,
+      baseline: 268,
+      visible: true,
+      obstacle: [[400, 256], [560, 256], [560, 268], [400, 268]],
+      rules: [
+        look("A sturdy workbench, covered in sawdust."),
+        rule({ type: "hand" }, [narrate("Under the sawdust you find a coin."), { type: "give_item", item: "coin" }], [], true),
+        rule({ type: "hand" }, [narrate("Just sawdust now.")]),
+      ],
+    },
     {
       id: "string",
       name: "string",
@@ -457,11 +493,46 @@ const shed = SceneFile.parse(withRuleIds({
       ],
     },
   ],
-  characters: [],
+  characters: [
+    {
+      character: "visitor",
+      x: 230,
+      y: 300,
+      facing: "right",
+      visible: true,
+      rules: [look("A traveller with a pack full of odds and ends."), rule({ type: "talk" }, [{ type: "start_dialogue", dialogue: "shop" }])],
+    },
+  ],
   hotspots: [{ id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] }],
   regions: [{ id: "exit_garden", shape: [[0, 320], [55, 320], [55, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])] }],
   rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
 }));
+
+// The visitor's shop (spec 11 acceptance), laid out left to right like auto-layout.
+const option = (id: string, text: string, next: string, extra: Raw = {}) => ({ id, text, if: [], once: false, next, ...extra });
+const shop = DialogueFile.parse({
+  schemaVersion: SCHEMA_VERSION,
+  id: "shop",
+  name: "Visitor's shop",
+  nodes: [
+    { id: "start", type: "start", pos: [0, 0], next: "hello" },
+    { id: "hello", type: "line", pos: [320, -24], character: "visitor", text: "Welcome! Have a look at my wares.", next: "menu" },
+    {
+      id: "menu",
+      type: "choices",
+      pos: [640, -60],
+      options: [
+        option("ask", "Where are you headed?", "travels", { once: true }),
+        option("buy", "I'll buy the lantern.", "sell", { if: [{ type: "has_item", item: "coin" }] }),
+        option("bye", "Goodbye.", "done"),
+      ],
+    },
+    { id: "travels", type: "line", pos: [960, -200], character: "visitor", text: "Over the hills, once the rain stops.", next: "menu" },
+    { id: "sell", type: "actions", pos: [960, -40], do: [{ type: "take_item", item: "coin" }, { type: "give_item", item: "lantern" }], next: "thanks" },
+    { id: "thanks", type: "line", pos: [1280, -40], character: "visitor", text: "Mind the oil. Anything else?", next: "menu" },
+    { id: "done", type: "end", pos: [960, 120] },
+  ],
+});
 
 // 15 objects and 3 characters for the spec 03 frame-rate check.
 const stressObjects = Array.from({ length: 15 }, (_, i) => {
@@ -502,6 +573,7 @@ const files: Record<string, string | Buffer> = {
   "scenes/garden.scene.yaml": serialize(garden),
   "scenes/stress.scene.yaml": serialize(stress),
   "scenes/shed.scene.yaml": serialize(shed),
+  "dialogues/shop.dialogue.yaml": serialize(shop),
   ...Object.fromEntries(items.map((i) => [`items/${i.id}.item.yaml`, serialize(i)])),
   "assets/images/shed_bg.png": shedBackground().png(),
   "assets/images/flowerpot.png": flowerpot().png(),
@@ -511,6 +583,8 @@ const files: Record<string, string | Buffer> = {
   "assets/images/items/string.png": stringCoil(24).png(),
   "assets/images/items/rod.png": iconRod().png(),
   "assets/images/items/fish.png": iconFish().png(),
+  "assets/images/items/coin.png": iconCoin().png(),
+  "assets/images/items/lantern.png": iconLantern().png(),
   "assets/images/garden_bg.png": gardenBackground().png(),
   "assets/images/palm.png": palm().png(),
   "assets/images/rock.png": stone(70, 40, [130, 135, 125, 255]).png(),

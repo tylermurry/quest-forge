@@ -13,7 +13,7 @@ describe("state panel view", () => {
     const v = stateView(editor.project, session());
     expect(v.scene).toEqual({ id: "garden", label: "Garden" });
     expect(v.inventory).toEqual([]);
-    expect(v.addable.map((i) => i.id)).toEqual(["fish", "rod", "stick", "string"]);
+    expect(v.addable.map((i) => i.id)).toEqual(["coin", "fish", "lantern", "rod", "stick", "string"]);
     expect(v.flags).toEqual([{ id: "path_open", value: false }]);
     expect(v.score).toBe(0);
     expect(v.maxScore).toBe(25);

@@ -18,8 +18,8 @@ async function withShop(started = true): Promise<Project> {
   const p = await m1Project();
   const shop = DialogueFile.parse({
     schemaVersion: 2,
-    id: "shop",
-    name: "Shop",
+    id: "chat",
+    name: "Chat",
     nodes: [
       { id: "start", type: "start", pos: [0, 0], next: "hello" },
       { id: "hello", type: "line", pos: [300, 0], character: "gardener", text: "Welcome!", next: "menu" },
@@ -40,11 +40,11 @@ async function withShop(started = true): Promise<Project> {
   });
   return {
     ...p,
-    dialogues: [{ path: "dialogues/shop.dialogue.yaml", data: shop }],
+    dialogues: [...p.dialogues, { path: "dialogues/chat.dialogue.yaml", data: shop }],
     scenes: p.scenes.map((d) => {
       if (!started || d.data.id !== "garden") return d;
       const characters = d.data.characters.map((c) =>
-        c.character === "gardener" ? { ...c, rules: [{ id: "rule_9", when: { type: "talk" as const }, if: [], do: [{ type: "start_dialogue" as const, dialogue: "shop" }], once: false }, ...c.rules] } : c,
+        c.character === "gardener" ? { ...c, rules: [{ id: "rule_9", when: { type: "talk" as const }, if: [], do: [{ type: "start_dialogue" as const, dialogue: "chat" }], once: false }, ...c.rules] } : c,
       );
       return { ...d, data: { ...d.data, characters } };
     }),
@@ -55,11 +55,11 @@ describe("Play from this node (spec 11, D142)", () => {
   it("starts in the scene that starts the dialogue, at the selected node", async () => {
     const { playtest, ws, session, tick, dispose } = await playtestEditor(await withShop());
     expect(playtest.nodeTarget()).toBe(null);
-    ws.select({ kind: "dialogueNode", dialogue: "shop", node: "menu" });
-    expect(playtest.nodeTarget()).toEqual({ dialogue: "shop", node: "menu", scene: "garden", spawn: "default" });
+    ws.select({ kind: "dialogueNode", dialogue: "chat", node: "menu" });
+    expect(playtest.nodeTarget()).toEqual({ dialogue: "chat", node: "menu", scene: "garden", spawn: "default" });
     expect(playtest.playNode()).toBe(true);
     tick();
-    expect(session().dialogue).toEqual({ id: "shop", node: "menu" });
+    expect(session().dialogue).toEqual({ id: "chat", node: "menu" });
     expect(session().choices?.options.map((o) => o.id)).toEqual(["ask", "bye"]);
     // Restart replays from the node (D142).
     session().choose("ask");
@@ -72,7 +72,7 @@ describe("Play from this node (spec 11, D142)", () => {
   it("uses the game's start when no scene starts it, and is blocked by errors like Play (D38)", async () => {
     const p = await withShop(false);
     const { playtest, ws, editor, session, tick, dispose } = await playtestEditor(p);
-    ws.select({ kind: "dialogueNode", dialogue: "shop", node: "start" });
+    ws.select({ kind: "dialogueNode", dialogue: "chat", node: "start" });
     expect(playtest.nodeTarget()).toMatchObject({ scene: "garden", spawn: "default" });
     playtest.playNode();
     tick();
@@ -97,9 +97,9 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
     settle();
     const lines = formatLog(playtest.events, playtest.run!.project, editor.project);
     const text = lines.map((l) => `${"  ".repeat(l.depth)}${l.text}`);
-    const start = text.findIndex((t) => t.startsWith("Dialogue “Shop” starts"));
+    const start = text.findIndex((t) => t.startsWith("Dialogue “Chat” starts"));
     expect(text.slice(start)).toEqual([
-      "Dialogue “Shop” starts",
+      "Dialogue “Chat” starts",
       "  Gardener: “Welcome!”",
       "  Choices: 2 of 3 options shown",
       "  Option “Buy the rod.” hidden: condition 1 failed: Player has fish",
@@ -110,17 +110,17 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
       "  Option “Buy the rod.” hidden: condition 1 failed: Player has fish",
       "Player chose “Goodbye.”",
       "  End node",
-      "Dialogue “Shop” ends",
-      "Dialogue ends Shop (Game)",
+      "Dialogue “Chat” ends",
+      "Dialogue ends Chat (Game)",
       "  1 rule for other verbs",
       "  No rule matched",
     ]);
     // The hidden option's line jumps to its failed condition; jumping selects the node (D121).
     const hidden = lines[start + 3]!;
-    expect(hidden.jump?.location).toEqual({ file: "dialogues/shop.dialogue.yaml", path: ["nodes", 2, "options", 1, "if", 0] });
+    expect(hidden.jump?.location).toEqual({ file: "dialogues/chat.dialogue.yaml", path: ["nodes", 2, "options", 1, "if", 0] });
     ws.jumpTo(hidden.jump!);
-    expect(ws.selection).toEqual({ kind: "dialogueNode", dialogue: "shop", node: "menu" });
-    expect(ws.active).toBe("dialogue:shop");
+    expect(ws.selection).toEqual({ kind: "dialogueNode", dialogue: "chat", node: "menu" });
+    expect(ws.active).toBe("dialogue:chat");
     dispose();
   });
 
@@ -129,11 +129,12 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
     playtest.play();
     tap("talk", GARDENER);
     let v = stateView(editor.project, session());
-    expect(v.dialogue).toEqual({ id: "shop", name: "Shop", node: "menu", nodeType: "choices" });
-    expect(v.onceOptions).toEqual([{ key: choiceKey("shop", "menu", "ask"), dialogue: "Shop", text: "What's new?", chosen: false }]);
-    applyStateEdit(session(), { kind: "setChoice", key: choiceKey("shop", "menu", "ask"), chosen: true });
+    expect(v.dialogue).toEqual({ id: "chat", name: "Chat", node: "menu", nodeType: "choices" });
+    const ours = () => v.onceOptions.filter((o) => o.key.startsWith("chat/"));
+    expect(ours()).toEqual([{ key: choiceKey("chat", "menu", "ask"), dialogue: "Chat", text: "What's new?", chosen: false }]);
+    applyStateEdit(session(), { kind: "setChoice", key: choiceKey("chat", "menu", "ask"), chosen: true });
     v = stateView(editor.project, session());
-    expect(v.onceOptions[0]!.chosen).toBe(true);
+    expect(ours()[0]!.chosen).toBe(true);
     applyStateEdit(session(), { kind: "giveItem", item: "fish" });
     session().choose("bye");
     tap("talk", GARDENER);
@@ -152,8 +153,8 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
     state.dialogueChoices.push("gone/menu/x");
     state.fired.push("dialogue:gone/menu/x");
     const kept = sanitizeState(p, state);
-    expect(kept.state.dialogueChoices).toEqual(["shop/menu/ask"]);
-    expect(kept.state.fired.filter((k) => k.startsWith("dialogue:"))).toEqual(["dialogue:shop/menu/ask"]);
+    expect(kept.state.dialogueChoices).toEqual(["chat/menu/ask"]);
+    expect(kept.state.fired.filter((k) => k.startsWith("dialogue:"))).toEqual(["dialogue:chat/menu/ask"]);
     expect(kept.dropped).toEqual(["dialogue choice gone/menu/x"]);
     dispose();
   });
@@ -162,7 +163,7 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
 describe("jump-to a dialogue node (D121)", () => {
   it("opens the graph and selects the node a problem points into", async () => {
     const p = await withShop();
-    const jump = locate(p, { file: "dialogues/shop.dialogue.yaml", path: ["nodes", 4, "do", 1, "item"] })!;
-    expect(jump.target).toEqual({ kind: "dialogueNode", dialogue: "shop", node: "sell" });
+    const jump = locate(p, { file: "dialogues/chat.dialogue.yaml", path: ["nodes", 4, "do", 1, "item"] })!;
+    expect(jump.target).toEqual({ kind: "dialogueNode", dialogue: "chat", node: "sell" });
   });
 });

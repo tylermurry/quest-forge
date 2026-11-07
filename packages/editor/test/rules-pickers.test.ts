@@ -14,8 +14,8 @@ const pickField = (parts: readonly (string | Field)[], key: string) => parts.fin
 describe("picker options (spec 10)", () => {
   it("lists each kind, with names where there are names", async () => {
     const p = await m1Project();
-    expect(pickerOptions(p, "item").map((o) => o.id)).toEqual(["fish", "rod", "stick", "string"]);
-    expect(pickerOptions(p, "item")[0]).toEqual({ id: "fish", label: "fish" });
+    expect(pickerOptions(p, "item").map((o) => o.id)).toEqual(["coin", "fish", "lantern", "rod", "stick", "string"]);
+    expect(pickerOptions(p, "item")[0]).toEqual({ id: "coin", label: "coin" });
     expect(pickerOptions(p, "flag")).toEqual([{ id: "path_open", label: "path_open" }]);
     expect(pickerOptions(p, "counter")).toEqual([]);
     expect(pickerOptions(p, "scene").map((o) => o.label)).toEqual(["Garden", "Garden shed", "Stress test"]);

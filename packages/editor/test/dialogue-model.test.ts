@@ -27,7 +27,7 @@ import { errorsIn, m1Project } from "./support/fixtures.ts";
 
 // The dialogue graph's commands (spec 11): pure Project → Project, each one undo step.
 
-const D = "shop";
+const D = "chat";
 const nodes = (p: Project) => dialogueOf(p, D).nodes;
 const node = <T extends DialogueNode["type"]>(p: Project, id: string, _type?: T) => nodes(p).find((n) => n.id === id) as Extract<DialogueNode, { type: T }>;
 /** Every result must still parse: the schema is strict (D59). */
@@ -35,7 +35,7 @@ const parses = (p: Project) => DialogueFile.parse(dialogueOf(p, D));
 
 async function withShop(): Promise<Project> {
   const p = await m1Project();
-  const r = createNamedEntry(p, "dialogue", "Shop");
+  const r = createNamedEntry(p, "dialogue", "Chat");
   expect(r.id).toBe(D);
   return r.project;
 }
@@ -65,7 +65,7 @@ describe("dialogue commands", () => {
     p = addNode(p, D, "choices", [0, 0]).project;
     p = addNode(p, D, "branch", [0, 0]).project;
     expect(node(p, "choices_1", "choices").options).toEqual([{ id: "option_1", text: "", if: [], once: false, next: null }]);
-    expect(node(p, "branch_1", "branch").if).toEqual([{ type: "has_item", item: "fish" }]);
+    expect(node(p, "branch_1", "branch").if).toEqual([{ type: "has_item", item: "coin" }]);
     parses(p);
   });
 
@@ -148,9 +148,9 @@ describe("dialogue commands", () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0]).project;
     p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.add(d, l, "has_item"));
-    p = createAndUse(p, "item", "Coin", (q, id) => editConditions(q, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: id })));
-    expect(p.items.some((i) => i.data.id === "coin")).toBe(true);
-    expect(node(p, "choices_1", "choices").options[0]!.if).toEqual([{ type: "has_item", item: "coin" }]);
+    p = createAndUse(p, "item", "Gold bar", (q, id) => editConditions(q, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: id })));
+    expect(p.items.some((i) => i.data.id === "gold_bar")).toBe(true);
+    expect(node(p, "choices_1", "choices").options[0]!.if).toEqual([{ type: "has_item", item: "gold_bar" }]);
   });
 
   it("auto-layout lays out columns from Start, left to right, in port order", async () => {
@@ -188,7 +188,7 @@ describe("problems on the graph (spec 14)", () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0], { node: "start", port: "next" }).project;
     p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.add(d, l, "has_item"));
-    p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: "coin" }));
+    p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: "gold" }));
     p = addNode(p, D, "line", [0, 0]).project;
     const all = validateProject(p);
     const doc = p.dialogues.find((d) => d.data.id === D)!;
@@ -202,12 +202,12 @@ describe("problems on the graph (spec 14)", () => {
   });
 });
 
-describe("the shopkeeper conversation (spec 11 acceptance)", () => {
+describe("the shopkeeper conversation (spec 11 acceptance), a gem standing in for the coin", () => {
   it("builds a once-only question, a choice gated on a coin and a loop back to the menu, as undo steps", async () => {
     const fs = new MemoryFs();
     await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });
     const ed = await Editor.open({ fs });
-    ed.apply("New dialogue", (p) => createNamedEntry(p, "dialogue", "Shop").project);
+    ed.apply("New dialogue", (p) => createNamedEntry(p, "dialogue", "Chat").project);
     const run = (label: string, f: (p: Project) => Project) => ed.apply(label, f);
     const make = (label: string, f: (p: Project) => { project: Project; id: string }) => ed.applyWith(label, f)?.id;
 
@@ -225,10 +225,10 @@ describe("the shopkeeper conversation (spec 11 acceptance)", () => {
     const buy = make("Add option", (p) => addOption(p, D, menu))!;
     run("Edit option", (p) => setOption(p, D, menu, buy, { text: "I'll buy the rod." }));
     run("Add condition", (p) => editConditions(p, D, { node: menu, option: buy }, (l, d) => conditions.add(d, l, "has_item")));
-    run("Create item and use it", (p) => createAndUse(p, "item", "Coin", (q, id) => editConditions(q, D, { node: menu, option: buy }, (l, d) => conditions.setFields(d, l, 0, { item: id }))));
+    run("Create item and use it", (p) => createAndUse(p, "item", "Gem", (q, id) => editConditions(q, D, { node: menu, option: buy }, (l, d) => conditions.setFields(d, l, 0, { item: id }))));
     const sell = make("Add Actions", (p) => addNode(p, D, "actions", [720, 100], { node: menu, port: `option:${buy}` }))!;
     run("Add action", (p) => editActions(p, D, sell, (l, d) => actions.add(d, l, "take_item")));
-    run("Edit action", (p) => editActions(p, D, sell, (l, d) => actions.setFields(d, l, 0, { item: "coin" })));
+    run("Edit action", (p) => editActions(p, D, sell, (l, d) => actions.setFields(d, l, 0, { item: "gem" })));
     run("Add action", (p) => editActions(p, D, sell, (l, d) => actions.add(d, l, "give_item")));
     run("Edit action", (p) => editActions(p, D, sell, (l, d) => actions.setFields(d, l, 1, { item: "rod" })));
     run("Connect", (p) => connect(p, D, sell, "next", menu));
@@ -244,7 +244,7 @@ describe("the shopkeeper conversation (spec 11 acceptance)", () => {
     expect(d.nodes.flatMap((n) => nodePorts(n).map((x) => x.next))).not.toContain(null);
     expect(node(p, menu, "choices").options.map((o) => [o.text, o.once, o.if])).toEqual([
       ["What's new?", true, []],
-      ["I'll buy the rod.", false, [{ type: "has_item", item: "coin" }]],
+      ["I'll buy the rod.", false, [{ type: "has_item", item: "gem" }]],
       ["Goodbye.", false, []],
     ]);
     // Each command was its own undo step.

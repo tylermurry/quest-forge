@@ -93,7 +93,6 @@ describe("vocabulary (spec 02)", () => {
       "missing_reference do.12.animation",
       "missing_reference do.14.sound",
       "missing_reference do.15.music",
-      "missing_reference do.17.dialogue",
       "empty_text do.0.text",
       "empty_text do.1.text",
       "empty_text do.19.message",
@@ -139,7 +138,7 @@ describe("rule commands (spec 10)", () => {
   it("edits the trigger and the once toggle", async () => {
     let p = await m1Project();
     p = setTriggerType(p, POND, "rule_4", "use_item");
-    expect(rule(p, POND, "rule_4").when).toEqual({ type: "use_item", item: "fish" });
+    expect(rule(p, POND, "rule_4").when).toEqual({ type: "use_item", item: "coin" });
     p = setTriggerField(p, POND, "rule_4", "item", "rod");
     expect(rule(p, POND, "rule_4").when).toEqual({ type: "use_item", item: "rod" });
     expect(() => setTriggerField(p, POND, "rule_4", "item", "Not An ID")).toThrow(CommandError);

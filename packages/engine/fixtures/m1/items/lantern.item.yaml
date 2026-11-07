@@ -1,0 +1,5 @@
+schemaVersion: 2
+id: lantern
+name: lantern
+description: A little oil lantern.
+icon: lantern_icon

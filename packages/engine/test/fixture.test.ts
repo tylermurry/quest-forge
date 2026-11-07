@@ -228,3 +228,88 @@ describe("the M2 puzzle chain, touch only at phone size (spec 06)", () => {
     expect(JSON.parse(JSON.stringify(s.state))).toEqual(s.state);
   });
 });
+
+describe("the M7 shop, touch only at phone size (spec 11, spec 06)", () => {
+  it("plays coin → talk → once-only question → buy while holding the coin → loop → goodbye", async () => {
+    const { project } = await load();
+    const images = await imagesOf(project);
+    const s = new Session(project, (id) => images.get(id), { scene: "shed", spawn: "door" });
+    const ui = new PlayerUi(s);
+    const cssScale = fitViewport(844, 390).scale; // iPhone 14 landscape
+    ui.setScale(cssScale);
+
+    const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
+    const step = () => {
+      s.tick(1 / 60);
+      ui.tick(1 / 60);
+    };
+    const tap = (p: Vec) => {
+      ui.pointerDown(p, "touch");
+      step();
+      ui.pointerUp(p, "touch");
+    };
+    const said: string[] = [];
+    /** Tap through text boxes until the game is idle or the list box waits for a pick. */
+    const settle = () => {
+      for (let i = 0; i < 60 * 60; i++) {
+        if (s.text) {
+          said.push(s.text.text);
+          tap([320, 120]);
+        }
+        step();
+        if (s.choices && !s.text) return;
+        if (!s.busy && !s.world.walking && !s.text) return;
+      }
+      throw new Error("never settled");
+    };
+    const verb = (id: string) => {
+      tap(center(ui.layout.tab.hit));
+      tap(center(ui.layout.barButtons.find((b) => b.id === id)!.rect));
+    };
+    const shown = () => s.choices?.options.map((o) => o.text) ?? [];
+    /** Taps an option of the list box; every row is at least 44 CSS px tall (D76). */
+    const pick = (text: string) => {
+      const box = ui.choiceBox!;
+      for (const r of box.rows) expect(r.h * cssScale).toBeGreaterThanOrEqual(44);
+      tap(center(box.rows[shown().indexOf(text) - box.first]!));
+      settle();
+    };
+
+    tap([100, 385]);
+    settle();
+    // Hand on the workbench (not the string on it) → the coin.
+    verb("hand");
+    tap([420, 240]);
+    settle();
+    expect(s.state.inventory).toEqual(["coin"]);
+
+    // Talk to the visitor: the greeting in their color, then the menu.
+    verb("talk");
+    const visitor = s.world.drawList().find((d) => d.kind === "character" && d.id === "visitor")!.dest;
+    tap(center(visitor));
+    settle();
+    expect(said.at(-1)).toBe("Welcome! Have a look at my wares.");
+    expect(shown()).toEqual(["Where are you headed?", "I'll buy the lantern.", "Goodbye."]);
+
+    // The once-only question loops back to the menu without itself.
+    pick("Where are you headed?");
+    expect(said.at(-1)).toBe("Over the hills, once the rain stops.");
+    expect(shown()).toEqual(["I'll buy the lantern.", "Goodbye."]);
+
+    // Buying needs the coin; afterwards the option is gone.
+    pick("I'll buy the lantern.");
+    expect(s.state.inventory).toEqual(["lantern"]);
+    expect(said.at(-1)).toBe("Mind the oil. Anything else?");
+    expect(shown()).toEqual(["Goodbye."]);
+
+    pick("Goodbye.");
+    expect(s.busy).toBe(false);
+    expect(s.dialogue).toBe(null);
+    expect(s.state.dialogueChoices).toEqual(["shop/menu/ask"]);
+
+    // Talking again: the question stays gone, and with no coin only Goodbye is left.
+    tap(center(visitor));
+    settle();
+    expect(shown()).toEqual(["Goodbye."]);
+  });
+});

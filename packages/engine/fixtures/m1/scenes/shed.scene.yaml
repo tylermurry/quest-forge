@@ -43,6 +43,24 @@ objects:
           - type: narrate
             text: A sturdy workbench, covered in sawdust.
         once: false
+      - id: rule_2
+        when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: Under the sawdust you find a coin.
+          - type: give_item
+            item: coin
+        once: true
+      - id: rule_3
+        when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: Just sawdust now.
+        once: false
   - id: string
     name: string
     image: string_img
@@ -72,7 +90,29 @@ objects:
           - type: narrate
             text: You take the string.
         once: false
-characters: []
+characters:
+  - character: visitor
+    x: 230
+    y: 300
+    facing: right
+    visible: true
+    rules:
+      - id: rule_1
+        when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A traveller with a pack full of odds and ends.
+        once: false
+      - id: rule_2
+        when:
+          type: talk
+        if: []
+        do:
+          - type: start_dialogue
+            dialogue: shop
+        once: false
 hotspots:
   - id: window
     name: window

@@ -57,7 +57,9 @@ describe("live canvas (D113)", () => {
   afterEach(() => dispose());
 
   it("animates object loops on the canvas clock, and only redraws while something moves", async () => {
-    const p = await m1Project();
+    // The shed without its shopkeeper: nothing on it moves.
+    const m1 = await m1Project();
+    const p = { ...m1, scenes: m1.scenes.map((d) => (d.data.id === "shed" ? { ...d, data: { ...d.data, characters: [] } } : d)) };
     const s = await sceneEditor(p, "shed", { hero_sheet: [128, 144], workbench_img: [120, 60] });
     dispose = s.dispose;
     expect(s.c.animating).toBe(false);

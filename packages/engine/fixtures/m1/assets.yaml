@@ -39,4 +39,8 @@ images:
     path: assets/images/items/rod.png
   - id: fish_icon
     path: assets/images/items/fish.png
+  - id: coin_icon
+    path: assets/images/items/coin.png
+  - id: lantern_icon
+    path: assets/images/items/lantern.png
 audio: []

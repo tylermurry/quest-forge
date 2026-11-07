@@ -106,7 +106,7 @@ describe("folders", () => {
     p = moveEntry(moveEntry(p, "item", "stick", "tools"), "item", "rod", "tools");
     expect(folderReferences(p, "item", "tools").length).toBeGreaterThan(0);
     p = deleteFolder(p, "item", "tools");
-    expect(p.items.map((i) => i.data.id).sort()).toEqual(["fish", "string"]);
+    expect(p.items.map((i) => i.data.id).sort()).toEqual(["coin", "fish", "lantern", "string"]);
     expect(p.folders).not.toContain("items/tools");
   });
 });
