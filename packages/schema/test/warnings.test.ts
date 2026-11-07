@@ -90,6 +90,61 @@ describe("spec 14 warnings", () => {
     ]);
   });
 
+  it("dialogue: a Choices node with no options, and ports that lead nowhere (D140)", async () => {
+    const problems = await problemsAfter((p) => {
+      const nodes = p.dialogues[0]!.data.nodes;
+      const menu = nodes.find((n) => n.id === "menu")!;
+      if (menu.type === "choices") menu.options[2]!.next = null;
+      const thanks = nodes.find((n) => n.id === "thanks")!;
+      if (thanks.type === "line") thanks.next = null;
+      nodes.push({ id: "empty", type: "choices", pos: [0, 500], options: [] });
+      if (thanks.type === "line") thanks.next = "empty";
+    });
+    expect(summary(problems)).toEqual([
+      {
+        severity: "warning",
+        code: "dialogue_dead_end",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.2.options.2.next",
+        text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "bye": This option isn\'t connected, so the dialogue ends there. Connect it, or to end on purpose, connect it to an End node.',
+      },
+      { severity: "warning", code: "dialogue_node_unreachable", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.6", text: 'Dialogue "Shopkeeper" › Node "done": can\'t be reached from the Start node.' },
+      { severity: "warning", code: "dialogue_no_options", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.7.options", text: 'Dialogue "Shopkeeper" › Node "empty": has no options, so the dialogue ends when it gets here.' },
+    ]);
+  });
+
+  it("dialogue: a loop with no Line or Choices (D140)", async () => {
+    const problems = await problemsAfter((p) => {
+      const nodes = p.dialogues[0]!.data.nodes;
+      const sell = nodes.find((n) => n.id === "sell")!;
+      nodes.push({ id: "again", type: "branch", pos: [0, 500], if: [{ type: "has_item", item: "coin" }], then: "sell", else: "thanks" });
+      if (sell.type === "actions") sell.next = "again";
+    });
+    expect(summary(problems)).toEqual([
+      {
+        severity: "warning",
+        code: "dialogue_silent_loop",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.4",
+        text: 'Dialogue "Shopkeeper" › Node "sell": is in a loop with no Line or Choices (Actions sell, Branch again), so it would repeat forever without the player. The game stops the dialogue there.',
+      },
+    ]);
+  });
+
+  it("dialogue: empty line and option text are errors (D138)", async () => {
+    const problems = await problemsAfter((p) => {
+      const nodes = p.dialogues[0]!.data.nodes;
+      const hello = nodes.find((n) => n.id === "hello")!;
+      if (hello.type === "line") hello.text = "";
+      const menu = nodes.find((n) => n.id === "menu")!;
+      if (menu.type === "choices") menu.options[0]!.text = "";
+    });
+    expect(summary(problems)).toEqual([
+      { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.1.text", text: 'Dialogue "Shopkeeper" › Node "hello": says nothing. Type the line.' },
+      { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.options.0.text", text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "ask_cave": is an option with no text. Type what the player can say.' },
+    ]);
+  });
+
   it("hotspot with no rules", async () => {
     const problems = await problemsAfter((p) => {
       scene(p, "beach").hotspots[0]!.rules = [];

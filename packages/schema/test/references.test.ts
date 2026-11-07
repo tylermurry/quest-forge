@@ -144,3 +144,81 @@ describe("renameSceneId (M4 Inspector)", () => {
     expect(() => renameSceneId(project, "path", "spawn", "from_beach", other)).toThrow(/already has/);
   });
 });
+
+describe("references inside dialogue nodes (M7)", () => {
+  /** The fixture's dialogue, plus a branch on a flag and a counter and an animated line. */
+  const withGraph = async () => {
+    const p = structuredClone(await load());
+    const nodes = p.dialogues[0]!.data.nodes;
+    const hello = nodes.find((n) => n.id === "hello")!;
+    if (hello.type === "line") hello.animation = "idle_down";
+    nodes.push({
+      id: "check",
+      type: "branch",
+      pos: [0, 600],
+      if: [
+        { type: "flag_is", flag: "talked_to_villager", value: true },
+        { type: "counter", counter: "shop_visits", op: "gt", value: 1 },
+      ],
+      then: "done",
+      else: "done",
+    });
+    const thanks = nodes.find((n) => n.id === "thanks")!;
+    if (thanks.type === "line") thanks.next = "check";
+    return p;
+  };
+  const dialogue = (p: Awaited<ReturnType<typeof withGraph>>) => p.dialogues[0]!.data;
+
+  it("indexes the speaker, the speaker's animation slot, options, actions and branches", async () => {
+    const refs = collectReferences(await withGraph()).filter((r) => r.fileKind === "dialogue" && r.kind !== "node");
+    expect(refs.map((r) => [r.kind, r.id, r.location.path.join("."), r.scope ?? ""])).toEqual([
+      ["character", "shopkeeper", "nodes.1.character", ""],
+      ["slot", "idle_down", "nodes.1.animation", "shopkeeper"],
+      ["item", "coin", "nodes.2.options.1.if.0.item", ""],
+      ["character", "shopkeeper", "nodes.3.character", ""],
+      ["item", "coin", "nodes.4.do.0.item", ""],
+      ["item", "lantern", "nodes.4.do.1.item", ""],
+      ["flag", "talked_to_villager", "nodes.7.if.0.flag", ""],
+      ["counter", "shop_visits", "nodes.7.if.1.counter", ""],
+    ]);
+  });
+
+  it("renaming a character, item, flag or dialogue updates the nodes", async () => {
+    let p = await withGraph();
+    p = renameId(p, "character", "shopkeeper", "merchant");
+    p = renameId(p, "item", "coin", "gold");
+    p = renameId(p, "flag", "talked_to_villager", "met");
+    p = renameId(p, "flag", "shop_visits", "visits");
+    const before = findReferences(p, "dialogue", "shopkeeper_chat").length;
+    p = renameId(p, "dialogue", "shopkeeper_chat", "merchant_chat");
+    const d = dialogue(p);
+    expect(d.id).toBe("merchant_chat");
+    expect(p.dialogues[0]!.path).toBe("dialogues/merchant_chat.dialogue.yaml");
+    const at = (id: string) => d.nodes.find((n) => n.id === id)!;
+    expect(at("hello")).toMatchObject({ character: "merchant", animation: "idle_down" });
+    expect(at("menu")).toMatchObject({ options: [{}, { if: [{ item: "gold" }] }, {}] });
+    expect(at("sell")).toMatchObject({ do: [{ item: "gold" }, { item: "lantern" }] });
+    expect(at("check")).toMatchObject({ if: [{ flag: "met" }, { counter: "visits" }] });
+    // start_dialogue / dialogue_end elsewhere follow the dialogue's new ID.
+    expect(findReferences(p, "dialogue", "merchant_chat")).toHaveLength(before);
+    expect(findReferences(p, "dialogue", "shopkeeper_chat")).toEqual([]);
+    expect(validateProject(p).filter((x) => x.severity === "error")).toEqual([]);
+  });
+
+  it("deleting what a node uses leaves an error at that node (spec 14)", async () => {
+    const p = await withGraph();
+    p.characters = p.characters.filter((c) => c.data.id !== "shopkeeper");
+    p.flags!.data.flags = p.flags!.data.flags.filter((f) => f.id !== "talked_to_villager");
+    p.items = p.items.filter((i) => i.data.id !== "lantern");
+    const errors = validateProject(p).filter((x) => x.code === "missing_reference" && x.location.file.startsWith("dialogues/"));
+    expect(errors.map((e) => e.location.path.join("."))).toEqual(["nodes.1.character", "nodes.3.character", "nodes.4.do.1.item", "nodes.7.if.0.flag"]);
+  });
+
+  it("a slot the speaker doesn't have is a missing reference", async () => {
+    const p = await withGraph();
+    const hello = dialogue(p).nodes.find((n) => n.id === "hello")!;
+    if (hello.type === "line") hello.animation = "wave";
+    const errors = validateProject(p).filter((x) => x.code === "missing_reference");
+    expect(errors.map((e) => [e.location.path.join("."), e.message])).toEqual([["nodes.1.animation", expect.stringMatching(/^plays animation wave on .*, who has no animation in that slot/)]]);
+  });
+});

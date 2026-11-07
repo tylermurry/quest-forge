@@ -40,6 +40,10 @@ export type ProblemCode =
   | "flag_never_read"
   | "flag_never_set"
   | "dialogue_node_unreachable"
+  // Dialogue graph (D140)
+  | "dialogue_no_options"
+  | "dialogue_dead_end"
+  | "dialogue_silent_loop"
   | "hotspot_no_rules"
   | "award_total_mismatch"
   | "award_points_inconsistent";

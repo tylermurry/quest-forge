@@ -1,4 +1,4 @@
-import type { DialogueFile } from "./dialogue.ts";
+import { nodePorts, reachableNodes, silentLoops, type DialogueFile } from "./dialogue.ts";
 import type { DataPath, FileKind, ProblemCode } from "./problems.ts";
 import type { Project } from "./project.ts";
 import type { Action, AnyRule, Condition } from "./rules.ts";
@@ -132,25 +132,41 @@ function checkFlagsUsed(project: Project, blocks: LogicBlock[], out: Report) {
   });
 }
 
+const NODE_NOUN: Record<string, string> = { start: "Start", line: "Line", choices: "Choices", actions: "Actions", branch: "Branch", end: "End" };
+
+/**
+ * Dialogue graph warnings (spec 14, D122, D140): nodes Start can't reach, Choices with no
+ * options, ports that lead nowhere (the dialogue just ends there) and loops with no
+ * Line or Choices. Empty line and option text is an error (D119, D138).
+ */
 function checkDialogueNodes(project: Project, out: Report) {
   for (const { path, data } of project.dialogues) {
-    const byId = new Map(data.nodes.map((n) => [n.id, n]));
-    const start = data.nodes.find((n) => n.type === "start");
-    if (!start) continue; // dialogue_without_start is reported
-    const reached = new Set<string>();
-    const queue = [start.id];
-    while (queue.length) {
-      const id = queue.pop()!;
-      const n = byId.get(id);
-      if (!n || reached.has(id)) continue;
-      reached.add(id);
-      if (n.type === "choices") queue.push(...n.options.flatMap((o) => (o.next ? [o.next] : [])));
-      else if (n.type === "branch") queue.push(...[n.then, n.else].filter((x): x is string => x !== null));
-      else if (n.type !== "end" && n.next) queue.push(n.next);
-    }
+    const hasStart = data.nodes.some((n) => n.type === "start");
+    const reached = reachableNodes(data);
+    const index = new Map(data.nodes.map((n, i) => [n.id, i]));
     data.nodes.forEach((n, i) => {
-      if (!reached.has(n.id)) out.warning("dialogue_node_unreachable", "dialogue", path, ["nodes", i], "can't be reached from the Start node.", ["nodes", i]);
+      const at = ["nodes", i];
+      // Without a Start, dialogue_without_start is reported instead.
+      if (hasStart && !reached.has(n.id)) out.warning("dialogue_node_unreachable", "dialogue", path, at, "can't be reached from the Start node.", at);
+      if (n.type === "line" && n.text === "") out.error("empty_text", "dialogue", path, [...at, "text"], "says nothing. Type the line.", at);
+      if (n.type === "choices") {
+        if (n.options.length === 0) out.warning("dialogue_no_options", "dialogue", path, [...at, "options"], "has no options, so the dialogue ends when it gets here.", at);
+        n.options.forEach((o, j) => {
+          if (o.text === "") out.error("empty_text", "dialogue", path, [...at, "options", j, "text"], "is an option with no text. Type what the player can say.", [...at, "options", j]);
+        });
+      }
+      for (const p of nodePorts(n)) {
+        if (p.next !== null) continue;
+        const what = p.port === "next" ? "Its output" : p.port === "then" ? "Its true output" : p.port === "else" ? "Its false output" : "This option";
+        const crumb = p.port.startsWith("option:") ? [...at, "options", p.path[1]!] : at;
+        out.warning("dialogue_dead_end", "dialogue", path, [...at, ...p.path], `${what} isn't connected, so the dialogue ends there. Connect it, or to end on purpose, connect it to an End node.`, crumb);
+      }
     });
+    for (const loop of silentLoops(data)) {
+      const i = index.get(loop[0]!)!;
+      const names = loop.map((id) => `${NODE_NOUN[data.nodes[index.get(id)!]!.type]} ${id}`).join(", ");
+      out.warning("dialogue_silent_loop", "dialogue", path, ["nodes", i], `is in a loop with no Line or Choices (${names}), so it would repeat forever without the player. The game stops the dialogue there.`, ["nodes", i]);
+    }
   }
 }
 

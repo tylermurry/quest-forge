@@ -148,7 +148,11 @@ function dialogueRefs(d: DialogueFile, push: Push) {
       case "start":
         return next(n.next, [...at, "next"]);
       case "line":
-        if (n.character !== undefined) push("character", n.character, [...at, "character"]);
+        if (n.character !== undefined) {
+          push("character", n.character, [...at, "character"]);
+          // The speaker's slot; a narrator line has no one to animate (D139).
+          if (n.animation !== undefined) push("slot", n.animation, [...at, "animation"], n.character);
+        }
         return next(n.next, [...at, "next"]);
       case "choices":
         return n.options.forEach((o, j) => {
