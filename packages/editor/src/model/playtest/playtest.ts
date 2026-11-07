@@ -7,12 +7,15 @@ import { hasBlockingErrors, type Project, type SceneFile } from "@questforge/sch
 import type { Editor } from "../editor.ts";
 import { sameContent } from "../history.ts";
 import type { WorkspaceState } from "../workspace.ts";
+import { dialogueContext } from "../dialogue/context.ts";
 import { droppedNotice, PresetStore, sanitizeState } from "./presets.ts";
 
 /** Where a run began; Restart goes back here (D128, D132). */
 export type RunOrigin =
   | { kind: "game" }
   | { kind: "here"; scene: string; spawn: string }
+  /** Play from this node (D142): the dialogue's scene, then the dialogue at the node. */
+  | { kind: "node"; dialogue: string; node: string; scene: string; spawn: string }
   | { kind: "preset"; name: string; state: GameState };
 
 /** One launch of the engine: the project it plays and how its session starts. */
@@ -34,6 +37,20 @@ export function hereSpawn(scene: SceneFile, selected: string | null): string | n
   if (selected && scene.spawns[selected]) return selected;
   if (scene.spawns.default) return "default";
   return Object.keys(scene.spawns)[0] ?? null;
+}
+
+function startOf(origin: RunOrigin): SessionStart {
+  switch (origin.kind) {
+    case "game":
+      return {};
+    case "here":
+      return { scene: origin.scene, spawn: origin.spawn };
+    case "node":
+      // A Start node plays the dialogue from its beginning.
+      return { scene: origin.scene, spawn: origin.spawn, dialogue: { id: origin.dialogue, node: origin.node } };
+    case "preset":
+      return { state: origin.state };
+  }
 }
 
 export class Playtest {
@@ -92,6 +109,22 @@ export class Playtest {
     const selected = sel?.kind === "sceneThing" && sel.scene === scene.id && sel.list === "spawns" ? sel.key : null;
     const spawn = hereSpawn(scene, selected);
     return spawn ? { scene: scene.id, spawn } : null;
+  }
+
+  /** The node Play from this node would use: the selected dialogue node, in its scene context (D142). */
+  nodeTarget(): { dialogue: string; node: string; scene: string; spawn: string } | null {
+    const sel = this.ws.selection;
+    if (sel?.kind !== "dialogueNode") return null;
+    const d = this.editor.project.dialogues.find((x) => x.data.id === sel.dialogue)?.data;
+    if (!d?.nodes.some((n) => n.id === sel.node)) return null;
+    const ctx = dialogueContext(this.editor.project, sel.dialogue);
+    return ctx ? { dialogue: sel.dialogue, node: sel.node, scene: ctx.scene, spawn: ctx.spawn } : null;
+  }
+
+  /** Play from this node (spec 11): the selected node's dialogue, in its scene (D142). */
+  playNode(): boolean {
+    const target = this.nodeTarget();
+    return target ? this.launch({ kind: "node", ...target }) : false;
   }
 
   /** Play (F5): from the game start. */
@@ -181,7 +214,7 @@ export class Playtest {
   private launch(origin: RunOrigin, override?: SessionStart): boolean {
     if (!this.gate()) return false;
     const project = this.editor.project;
-    let start: SessionStart = override ?? (origin.kind === "game" ? {} : origin.kind === "here" ? { scene: origin.scene, spawn: origin.spawn } : { state: origin.state });
+    let start: SessionStart = override ?? startOf(origin);
     // A saved state may name things the project no longer has (D126).
     if (start.state) {
       const { state, dropped } = sanitizeState(project, start.state);

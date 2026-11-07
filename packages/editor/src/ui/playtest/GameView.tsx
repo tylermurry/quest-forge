@@ -25,6 +25,7 @@ export function GameView({ playtest, run }: { playtest: Playtest; run: Run }) {
         ...(start.scene ? { scene: start.scene } : {}),
         ...(start.spawn ? { spawn: start.spawn } : {}),
         ...(start.state ? { state: start.state } : {}),
+        ...(start.dialogue ? { dialogue: start.dialogue } : {}),
         ...playtest.hooks(run),
         debug: playtest.debug,
         // The playtest area grows the game as large as it fits (D135).

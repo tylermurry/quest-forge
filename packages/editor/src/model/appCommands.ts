@@ -2,7 +2,7 @@
 // shortcuts and (later) a command palette all run, so they never disagree.
 // DOM-free: hosts register handlers and render the list however they like.
 
-export type MenuName = "file" | "edit" | "view" | "scene" | "play";
+export type MenuName = "file" | "edit" | "view" | "scene" | "dialogue" | "play";
 
 export interface CommandSpec {
   id: string;
@@ -43,8 +43,11 @@ export const COMMANDS = [
   { id: "scene.zoomOut", label: "Zoom Out", menu: "scene", shortcut: "Mod+-" },
   { id: "scene.zoomFit", label: "Zoom to Fit", menu: "scene", shortcut: "Mod+0" },
   { id: "scene.zoomActual", label: "Actual Size (1×)", menu: "scene" },
+  { id: "dialogue.layout", label: "Auto-Layout", menu: "dialogue" },
+  { id: "dialogue.fit", label: "Fit Graph in View", menu: "dialogue" },
   { id: "play.start", label: "Play", menu: "play", shortcut: "F5" },
   { id: "play.here", label: "Play from Here", menu: "play", shortcut: "F6" },
+  { id: "play.node", label: "Play from This Node", menu: "play", shortcut: "Shift+F6" },
   { id: "play.restart", label: "Restart", menu: "play", separated: true },
   { id: "play.restartScene", label: "Restart Scene", menu: "play" },
   { id: "play.stop", label: "Stop", menu: "play", shortcut: "Shift+F5" },

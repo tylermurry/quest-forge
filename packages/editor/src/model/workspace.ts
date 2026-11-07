@@ -18,6 +18,8 @@ export type Selection =
   | { kind: "sceneThing"; scene: string; list: ThingList; key: string }
   /** Game-level rules and default responses (spec 10). */
   | { kind: "game" }
+  /** A node on a dialogue graph (spec 11). */
+  | { kind: "dialogueNode"; dialogue: string; node: string }
   | null;
 
 /** The spot a jump-to points at, which the Inspector scrolls to and flashes (D120). `seq` changes on every jump. */
@@ -147,7 +149,9 @@ export class WorkspaceState {
         this.selection = { kind: "game" };
         break;
       case "dialogueNode":
+        // The graph selects the node, and the Inspector edits it (D121).
         this.open({ section: "dialogue", id: target.dialogue });
+        this.selection = { kind: "dialogueNode", dialogue: target.dialogue, node: target.node };
         break;
     }
     // A problem inside a rule opens the Rules tab; anything else, Details (D125).
@@ -225,6 +229,7 @@ export class WorkspaceState {
     if (this.active === refKey({ section, id: from })) this.active = refKey({ section, id: to });
     if (this.selection?.kind === "entry" && this.selection.section === section && this.selection.id === from) this.selection = { ...this.selection, id: to };
     if (this.selection?.kind === "sceneThing" && section === "scene" && this.selection.scene === from) this.selection = { ...this.selection, scene: to };
+    if (this.selection?.kind === "dialogueNode" && section === "dialogue" && this.selection.dialogue === from) this.selection = { ...this.selection, dialogue: to };
     if (section === "scene") this.sceneUi.renamed(from, to);
     this.changed();
   }
@@ -247,7 +252,8 @@ export class WorkspaceState {
     const gone =
       (s?.kind === "entry" && !has(s)) ||
       (s?.kind === "folder" && s.path !== "" && !sectionFolders(project, s.section).includes(s.path)) ||
-      (s?.kind === "sceneThing" && !has({ section: "scene", id: s.scene }));
+      (s?.kind === "sceneThing" && !has({ section: "scene", id: s.scene })) ||
+      (s?.kind === "dialogueNode" && !project.dialogues.some((d) => d.data.id === s.dialogue && d.data.nodes.some((n) => n.id === s.node)));
     if (gone) {
       this.selection = null;
       changed = true;

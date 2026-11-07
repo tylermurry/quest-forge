@@ -4,6 +4,7 @@ import { SECTIONS, isAssetKind, sectionEntries } from "../model/browser.ts";
 import { describeReferences, entryReferences, renameEntry, summarizeReferences } from "../model/commands.ts";
 import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
 import { GameInspector } from "./rules/GameInspector.tsx";
+import { NodeInspector } from "./dialogue/NodeInspector.tsx";
 import { InspectorShell } from "./InspectorShell.tsx";
 import { TextField } from "./TextField.tsx";
 
@@ -43,6 +44,10 @@ export function Inspector({ actions }: { actions: Actions }) {
     return <GameInspector actions={actions} />;
   }
 
+  if (sel.kind === "dialogueNode") {
+    return <NodeInspector key={`${sel.dialogue}/${sel.node}`} actions={actions} dialogue={sel.dialogue} nodeId={sel.node} />;
+  }
+
   const entry = sectionEntries(p, sel.section).find((e) => e.id === sel.id);
   if (!entry) return null;
   const refs = entryReferences(p, sel.section, sel.id);
@@ -63,7 +68,18 @@ export function Inspector({ actions }: { actions: Actions }) {
             <SceneSettings actions={actions} sceneId={sel.id} />
           </dd>
         )}
-        {isAssetKind(sel.section) && (
+        {sel.section === "dialogue" && (
+          <dd className="grid gap-2">
+            <TextField
+              label="Name"
+              value={entry.name}
+              onChange={(v) => editor.apply("Rename dialogue", (q) => renameEntry(q, "dialogue", sel.id, v), `dialogue:${sel.id}:name`)}
+              onBlur={() => editor.history.breakMerge()}
+            />
+            <p className="text-muted-foreground text-[12px]">Select a node on the graph to edit it.</p>
+          </dd>
+        )}
+        {isAssetKind(sel.section) && sel.section !== "dialogue" && (
           <>
             <dt className={DT}>Name</dt>
             <dd>{entry.name}</dd>

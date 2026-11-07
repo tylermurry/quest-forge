@@ -15,7 +15,7 @@ export type JumpTarget =
   | { kind: "scene"; scene: string }
   /** Game-level rules and settings (spec 10). */
   | { kind: "game" }
-  /** A dialogue node; selects the dialogue until M7's graph can select the node (D121). */
+  /** A dialogue node: opens the dialogue's graph and selects the node (D121). */
   | { kind: "dialogueNode"; dialogue: string; node: string };
 
 export interface Jump {

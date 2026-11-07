@@ -177,6 +177,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     const off = registry.register({
       "play.start": { run: () => playtest.play() },
       "play.here": { run: () => playtest.playHere(), enabled: () => playtest.hereTarget() !== null },
+      "play.node": { run: () => playtest.playNode(), enabled: () => playtest.nodeTarget() !== null },
       "play.restart": { run: () => playtest.restart(), enabled: () => playtest.playing },
       "play.restartScene": { run: () => playtest.restartScene(), enabled: () => playtest.session !== null },
       "play.stop": { run: () => playtest.stop(), enabled: () => playtest.playing },
@@ -184,7 +185,7 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     // Trace events change the playtest often; menus only care whether a game runs.
     let shown = "";
     const refresh = () => {
-      const now = `${playtest.playing}/${playtest.session !== null}/${playtest.hereTarget() !== null}`;
+      const now = `${playtest.playing}/${playtest.session !== null}/${playtest.hereTarget() !== null}/${playtest.nodeTarget() !== null}`;
       if (now !== shown) (shown = now), registry.changed();
     };
     const unsubs = [playtest.subscribe(refresh), ws.subscribe(refresh)];

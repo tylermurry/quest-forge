@@ -1,49 +1,22 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowDown, ArrowUp, CircleAlert, Copy, GripVertical, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { Copy, GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { AnyRule, Problem, Project } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
-import {
-  addAction,
-  addCondition,
-  deleteRule,
-  duplicateRule,
-  moveAction,
-  removeAction,
-  removeCondition,
-  setActionFields,
-  setActionType,
-  setAnimationTarget,
-  setConditionFields,
-  setConditionType,
-  setOnce,
-  setTriggerField,
-  setTriggerType,
-} from "../../model/rules/commands.ts";
+import { addAction, addCondition, deleteRule, duplicateRule, editRuleList, setOnce, setTriggerField, setTriggerType } from "../../model/rules/commands.ts";
 import { ownerKey, ownerTriggers, type OwnerRules, type RuleOwnerRef, type TriggerType } from "../../model/rules/owner.ts";
 import { createAndUse } from "../../model/rules/pickers.ts";
 import { pointPickScene } from "../../model/rules/pointPick.ts";
 import { locateInRules, partKey, type RulePart, type RuleProblems } from "../../model/rules/problems.ts";
-import {
-  ACTION_GROUPS,
-  ACTION_LABEL,
-  ACTION_PARTS,
-  CONDITION_LABEL,
-  CONDITION_ORDER,
-  CONDITION_PARTS,
-  TRIGGER_LABEL,
-  TRIGGER_PARTS,
-  type ActionType,
-  type ConditionType,
-  type PickKind,
-} from "../../model/rules/vocab.ts";
+import { TRIGGER_LABEL, TRIGGER_PARTS, type PickKind } from "../../model/rules/vocab.ts";
 import { Button } from "../components/ui/button.tsx";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu.tsx";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { Switch } from "../components/ui/switch.tsx";
 import { cn } from "../lib/utils.ts";
 import { PartFields, type PartHandlers } from "./PartFields.tsx";
+import { ActionRows, AddActionMenu, AddConditionMenu, ConditionRows, PartProblems } from "./PartRows.tsx";
 
 /** The data keys a problem names inside one part, e.g. `item` or `target`. */
 function invalidKeys(problems: readonly Problem[] | undefined, own: OwnerRules): Set<string> {
@@ -54,20 +27,6 @@ function invalidKeys(problems: readonly Problem[] | undefined, own: OwnerRules):
     if (typeof key === "string") keys.add(key);
   }
   return keys;
-}
-
-function PartProblems({ problems }: { problems: readonly Problem[] | undefined }) {
-  if (!problems?.length) return null;
-  return (
-    <ul className="text-err grid w-full gap-0.5 text-[12px]" aria-label="Problems with this part">
-      {problems.map((p, i) => (
-        <li key={i} className="flex gap-1">
-          <CircleAlert className="mt-0.5 size-3 shrink-0" />
-          {p.message}
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
@@ -198,123 +157,41 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
       </div>
 
       {/* IF */}
-      {rule.if.map((c, i) => (
-        <div key={i} className="flex flex-wrap items-center gap-1.5 pl-2" data-part={partKey(rule.id, { kind: "if", index: i })}>
-          <span className="text-[12px] font-semibold">{i === 0 ? "If" : "and"}</span>
-          <Select value={c.type} onValueChange={(v) => run("Change condition", (q) => setConditionType(q, owner, rule.id, i, v as ConditionType))}>
-            <SelectTrigger size="sm" aria-label={`Condition ${i + 1}`} className="h-7 w-auto gap-1 px-2 text-[13px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent onPointerDown={stop}>
-              {CONDITION_ORDER.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {CONDITION_LABEL[t]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <PartFields
-            project={p}
-            parts={CONDITION_PARTS[c.type]}
-            value={c as Record<string, unknown>}
-            invalidKeys={invalidKeys(part({ kind: "if", index: i }), own)}
-            h={{ ...handlers(`if/${i}`, (patch) => (q) => setConditionFields(q, owner, rule.id, i, patch)), animTarget: () => {} }}
-          />
-          <Button variant="ghost" size="icon" className="ml-auto size-6" aria-label={`Remove condition ${i + 1}`} onClick={() => run("Remove condition", (q) => removeCondition(q, owner, rule.id, i))}>
-            <X className="size-3.5" />
-          </Button>
-          <PartProblems problems={part({ kind: "if", index: i })} />
-        </div>
-      ))}
+      <ConditionRows
+        project={p}
+        list={rule.if}
+        edit={(q, f) => editRuleList(q, owner, rule.id, "if", f)}
+        run={run}
+        blur={blur}
+        field="if"
+        editLabel="Edit rule"
+        problems={(i) => part({ kind: "if", index: i })}
+        invalid={(i) => invalidKeys(part({ kind: "if", index: i }), own)}
+        partKey={(i) => partKey(rule.id, { kind: "if", index: i })}
+      />
 
       {/* DO */}
       <div className="grid gap-1.5">
         <span className="text-[12px] font-semibold">Do</span>
         {rule.do.length === 0 && <p className="text-muted-foreground pl-2 text-[12px]">Nothing yet. Add an action below.</p>}
-        <ol className="grid gap-1.5">
-          {rule.do.map((a, i) => (
-            <li key={i} className="flex flex-wrap items-center gap-1.5 pl-2" data-part={partKey(rule.id, { kind: "do", index: i })} aria-label={`Action ${i + 1}`}>
-              <span className="text-muted-foreground w-4 text-right text-[12px] tabular-nums">{i + 1}.</span>
-              <Select value={a.type} onValueChange={(v) => run("Change action", (q) => setActionType(q, owner, rule.id, i, v as ActionType))}>
-                <SelectTrigger size="sm" aria-label={`Action ${i + 1} type`} className="h-7 w-auto gap-1 px-2 text-[13px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent onPointerDown={stop}>
-                  {ACTION_GROUPS.map((g) => (
-                    <SelectGroup key={g.title}>
-                      <SelectLabel>{g.title}</SelectLabel>
-                      {g.types.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {ACTION_LABEL[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-              <PartFields
-                project={p}
-                parts={ACTION_PARTS[a.type]}
-                value={a as Record<string, unknown>}
-                invalidKeys={invalidKeys(part({ kind: "do", index: i }), own)}
-                h={{
-                  ...handlers(`do/${i}`, (patch) => (q) => setActionFields(q, owner, rule.id, i, patch)),
-                  animTarget: (t) => run("Change animation target", (q) => setAnimationTarget(q, owner, rule.id, i, t)),
-                  ...pickHandlers(i),
-                }}
-              />
-              <span className="ml-auto flex">
-                <Button variant="ghost" size="icon" className="size-6" aria-label={`Move action ${i + 1} up`} disabled={i === 0} onClick={() => run("Move action", (q) => moveAction(q, owner, rule.id, i, i - 1))}>
-                  <ArrowUp className="size-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="size-6" aria-label={`Move action ${i + 1} down`} disabled={i === rule.do.length - 1} onClick={() => run("Move action", (q) => moveAction(q, owner, rule.id, i, i + 1))}>
-                  <ArrowDown className="size-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="size-6" aria-label={`Remove action ${i + 1}`} onClick={() => run("Remove action", (q) => removeAction(q, owner, rule.id, i))}>
-                  <X className="size-3.5" />
-                </Button>
-              </span>
-              <PartProblems problems={part({ kind: "do", index: i })} />
-            </li>
-          ))}
-        </ol>
+        <ActionRows
+          project={p}
+          list={rule.do}
+          edit={(q, f) => editRuleList(q, owner, rule.id, "do", f)}
+          run={run}
+          blur={blur}
+          field="do"
+          editLabel="Edit rule"
+          problems={(i) => part({ kind: "do", index: i })}
+          invalid={(i) => invalidKeys(part({ kind: "do", index: i }), own)}
+          partKey={(i) => partKey(rule.id, { kind: "do", index: i })}
+          pick={pickHandlers}
+        />
       </div>
 
       <div className="flex gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-6 px-2 text-[12px]">
-              <Plus className="size-3" /> Condition
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" onPointerDown={stop} onClick={stop}>
-            {CONDITION_ORDER.map((t) => (
-              <DropdownMenuItem key={t} onSelect={() => run("Add condition", (q) => addCondition(q, owner, rule.id, t))}>
-                {CONDITION_LABEL[t]}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-6 px-2 text-[12px]">
-              <Plus className="size-3" /> Action
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-80 overflow-auto" onPointerDown={stop} onClick={stop}>
-            {ACTION_GROUPS.map((g, gi) => (
-              <div key={g.title}>
-                {gi > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-muted-foreground text-[11px]">{g.title}</DropdownMenuLabel>
-                {g.types.map((t) => (
-                  <DropdownMenuItem key={t} onSelect={() => run("Add action", (q) => addAction(q, owner, rule.id, t))}>
-                    {ACTION_LABEL[t]}
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <AddConditionMenu onAdd={(t) => run("Add condition", (q) => addCondition(q, owner, rule.id, t))} />
+        <AddActionMenu onAdd={(t) => run("Add action", (q) => addAction(q, owner, rule.id, t))} />
       </div>
     </li>
   );

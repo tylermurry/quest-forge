@@ -1,4 +1,4 @@
-import type { CharacterFile, DialogueFile, ItemFile, Project } from "@questforge/schema";
+import type { CharacterFile, ItemFile, Project } from "@questforge/schema";
 import { NOUN, type Actions } from "../model/actions.ts";
 import { sectionEntries } from "../model/browser.ts";
 import { renameEntry, updateDoc } from "../model/commands.ts";
@@ -6,6 +6,7 @@ import { refKey, type EntryRef } from "../model/workspace.ts";
 import { X } from "lucide-react";
 import { Label } from "./components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select.tsx";
+import { DialogueEditor } from "./dialogue/DialogueEditor.tsx";
 import { SceneEditor } from "./scene/SceneEditor.tsx";
 import { CharacterAnimations } from "./sprites/CharacterAnimations.tsx";
 import { ImageEditor } from "./sprites/ImageEditor.tsx";
@@ -17,7 +18,7 @@ const docData = (p: Project, ref: EntryRef) => {
   return list?.find((d) => d.data.id === ref.id)?.data;
 };
 
-/** The tabbed editor area (spec 08). A scene tab is the scene editor (D103); other assets get a details form (D89). */
+/** The tabbed editor area (spec 08). A scene tab is the scene editor (D103), a dialogue tab the graph (spec 11); other assets get a details form (D89). */
 export function EditorTabs({ actions }: { actions: Actions }) {
   const { ws, editor } = actions;
   const p = editor.project;
@@ -49,6 +50,10 @@ export function EditorTabs({ actions }: { actions: Actions }) {
       {active?.section === "scene" ? (
         <div className="min-h-0 flex-1" role="tabpanel">
           <SceneEditor key={refKey(active)} actions={actions} sceneId={active.id} />
+        </div>
+      ) : active?.section === "dialogue" ? (
+        <div className="min-h-0 flex-1" role="tabpanel">
+          <DialogueEditor key={refKey(active)} actions={actions} dialogueId={active.id} />
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 py-5" role="tabpanel">
@@ -83,11 +88,6 @@ function TabContent({ actions, entry }: { actions: Actions; entry: EntryRef }) {
       {entry.section === "item" && <ItemForm actions={actions} item={data as ItemFile} />}
       {entry.section === "character" && <CharacterSummary character={data as CharacterFile} />}
       {entry.section === "character" && <CharacterAnimations actions={actions} character={data as CharacterFile} />}
-      {entry.section === "dialogue" && (
-        <p className="text-muted-foreground">
-          {(data as DialogueFile).nodes.length} nodes. The dialogue graph arrives in M7.
-        </p>
-      )}
     </div>
   );
 }
