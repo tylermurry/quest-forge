@@ -278,7 +278,7 @@ export class Session implements DialogueHost {
   choose(optionId: string) {
     if (this.text || !this._dialogue) return;
     this._dialogue.choose(optionId);
-    this.settleDialogue();
+    this.continueNow();
   }
 
   /** Skip the current text box. */
@@ -450,7 +450,11 @@ export class Session implements DialogueHost {
     const t = this.text;
     this.text = null;
     if (t?.speaker) this.world.setTalking(t.speaker.id, false);
-    // Carry on at once, so a dialogue or sequence that ends here unlocks input this tick.
+    this.continueNow();
+  }
+
+  /** Carry on at once, so a dialogue or sequence that ends here unlocks input this tick. */
+  private continueNow() {
     if (this._dialogue) {
       this._dialogue.tick(0);
       this.settleDialogue();
