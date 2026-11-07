@@ -28,7 +28,7 @@ export interface GameState {
   visited: string[];
   /** Keys of rules that have run (D117), for `once` and `first_time`. */
   fired: string[];
-  /** Dialogue `once` choices already taken (M7). */
+  /** Dialogue `once` options already chosen, as `<dialogue>/<node>/<option>` (D137). */
   dialogueChoices: string[];
   /** Audio ID of the current music, recorded by play/stop_music (D71). */
   music: string | null;

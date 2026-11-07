@@ -1,6 +1,7 @@
 import type { Session, Verb } from "../session.ts";
 import type { Vec } from "../vec.ts";
-import { computeLayout, hitButton, inRect, type InventoryButtonId, type Layout } from "./layout.ts";
+import type { ChoiceList } from "../dialogue.ts";
+import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type InventoryButtonId, type Layout } from "./layout.ts";
 
 // Player UI input (spec 06, D32, D33, D79, D80): the icon bar, inventory, settings,
 // hover labels and tap-and-hold. Pointer events arrive in scene coordinates with
@@ -37,6 +38,9 @@ export class PlayerUi {
   label: { text: string; at: Vec } | null = null;
   /** Mouse position for the drawn cursor (D77); null for touch. */
   cursor: Vec | null = null;
+  /** Page of a long dialogue list box (UI state, D143). */
+  choicePage = 0;
+  private pagedList: ChoiceList | null = null;
   private press: Press | null = null;
   private cssScale = 1;
 
@@ -52,6 +56,18 @@ export class PlayerUi {
 
   get tabVisible(): boolean {
     return this.touchSeen && !this.barOpen && !this.panel && !this.session.busy;
+  }
+
+  /** The dialogue list box as laid out now, if the player is choosing. */
+  get choiceBox(): ChoiceBox | null {
+    const list = this.session.choices;
+    if (!list) return null;
+    // A new list starts on its first page.
+    if (list !== this.pagedList) {
+      this.pagedList = list;
+      this.choicePage = 0;
+    }
+    return choiceLayout(this.layout.unit, list.options.length, this.choicePage);
   }
 
   /** Inventory items shown in the grid, in cell order. */
@@ -144,6 +160,7 @@ export class PlayerUi {
       s.skipText();
       return;
     }
+    if (s.choices) return this.choiceClick(p);
     if (this.panel === "inventory") return this.inventoryClick(p);
     if (this.panel === "settings") return this.settingsClick(p);
     if (this.barOpen) {
@@ -157,6 +174,20 @@ export class PlayerUi {
       return;
     }
     s.primaryClick(p);
+  }
+
+  /** A tap on an option picks it; "More…" turns the page (D143). */
+  private choiceClick(p: Vec) {
+    const box = this.choiceBox;
+    const list = this.session.choices;
+    if (!box || !list) return;
+    if (box.more && inRect(p, box.more)) {
+      this.choicePage = (this.choicePage + 1) % box.pages;
+      return;
+    }
+    const i = box.rows.findIndex((r) => inRect(p, r));
+    const option = i >= 0 ? list.options[box.first + i] : undefined;
+    if (option) this.session.choose(option.id);
   }
 
   private barClick(p: Vec) {

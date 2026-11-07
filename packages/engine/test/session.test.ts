@@ -272,7 +272,7 @@ describe("sequences (D72)", () => {
     expect(s.world.player.pos).toEqual([100, 380]);
   });
 
-  it("stubs start_dialogue, and notes an object animation that doesn't exist (D71, D112)", () => {
+  it("notes a missing dialogue and an object animation that doesn't exist (D112)", () => {
     const s = make({
       yard: potRules([rule({ type: "look" }, [{ type: "start_dialogue", dialogue: "shop" }, { type: "play_animation", target: { kind: "object", scene: "yard", object: "rock" }, animation: "spin" }, narrate("Done.")])]),
     });

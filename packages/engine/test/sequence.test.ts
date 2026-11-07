@@ -43,6 +43,11 @@ function fakeHost() {
     playMusic: (m) => log.push(`music ${m}`),
     endGame: (e) => log.push(e.kind === "die" ? `die ${e.message}` : "win"),
     warn: (m) => log.push(`warn ${m}`),
+    startDialogue(d) {
+      log.push(`dialogue ${d}`);
+      textOpen = true;
+      return () => !textOpen;
+    },
     dismiss: () => (textOpen = false),
     arrive: () => walking++,
     advanceAnim: () => (animLeft = 0),
@@ -156,12 +161,15 @@ describe("sequences (D72)", () => {
     expect(h.state.inventory).toEqual([]);
   });
 
-  it("stubs start_dialogue with a warning and keeps going (D71)", () => {
+  it("start_dialogue blocks until the dialogue ends, then the rule goes on (D136)", () => {
     const h = fakeHost();
     const s = new Sequence(h, acts({ type: "start_dialogue", dialogue: "shop" }, { type: "stop_music" }));
     h.state.music = "x";
     s.tick(DT);
-    expect(h.log[0]).toMatch(/^warn Dialogue "shop"/);
+    expect(h.log).toEqual(["dialogue shop"]);
+    expect(h.state.music).toBe("x");
+    h.dismiss();
+    s.tick(DT);
     expect(h.state.music).toBe(null);
     expect(s.done).toBe(true);
   });

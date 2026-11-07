@@ -67,7 +67,8 @@ describe("trace sink (D129)", () => {
     s.primaryClick(POT);
     arrive(s);
     const notes = events.filter((e) => e.type === "note");
-    expect(notes.map((n) => n.type === "note" && n.milestone)).toEqual(["M7", "M8"]);
+    // A missing dialogue is only a note; the sound is stubbed until M8.
+    expect(notes.map((n) => n.type === "note" && (n.milestone ?? null))).toEqual([null, "M8"]);
   });
 
   it("is off by default: a session without hooks still logs notes", () => {

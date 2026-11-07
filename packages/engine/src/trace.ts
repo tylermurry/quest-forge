@@ -1,4 +1,5 @@
-import type { Action, AnyRule, Condition, Trigger } from "@questforge/schema";
+import type { Action, AnyRule, Condition, DialogueNode, Trigger } from "@questforge/schema";
+import type { DialogueEndReason, OptionVerdict } from "./dialogue.ts";
 import type { RuleOwner } from "./rules.ts";
 
 // Playtest event log hooks (spec 12, D129). The editor passes a `Trace` callback to
@@ -27,7 +28,19 @@ export type TraceEvent =
   /** The player entered a scene (`from` null at the start of play). */
   | { type: "scene"; from: string | null; to: string; spawn: string | null }
   /** An engine note: a stubbed action (with the milestone that owns it, D71) or an ignored step. */
-  | { type: "note"; message: string; milestone?: "M7" | "M8" };
+  | { type: "note"; message: string; milestone?: "M8" }
+  /** A dialogue began, at its Start or (playtest) at `node`. */
+  | { type: "dialogue_start"; dialogue: string; node: string | null }
+  /** The dialogue moved to a node. */
+  | { type: "dialogue_node"; dialogue: string; node: DialogueNode }
+  /** A Choices node: which options show and why the others don't. */
+  | { type: "dialogue_options"; dialogue: string; node: string; options: { id: string; verdict: OptionVerdict }[] }
+  /** The player picked an option. */
+  | { type: "dialogue_choice"; dialogue: string; node: string; option: string }
+  /** A Branch: true or false, and the first failed condition. */
+  | { type: "dialogue_branch"; dialogue: string; node: string; result: boolean; failed?: { index: number; condition: Condition } }
+  /** The dialogue stopped (D141). */
+  | { type: "dialogue_end"; dialogue: string; reason: DialogueEndReason };
 
 export type Trace = (event: TraceEvent) => void;
 

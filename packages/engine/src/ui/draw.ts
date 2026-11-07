@@ -71,10 +71,48 @@ export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, drawText: () =>
   if (ui.barOpen) drawBar(ctx, ui, itemImg);
   if (ui.panel === "inventory") drawInventory(ctx, ui, icons, itemImg);
   if (ui.panel === "settings") drawSettings(ctx, ui);
+  drawChoices(ctx, ui);
   drawText();
   if (s.ending) drawEnding(ctx, s, L.ending);
   if (ui.label) drawLabel(ctx, ui.label.text, ui.label.at);
   if (ui.cursor) drawCursor(ctx, ui, itemImg);
+}
+
+/** Cuts text to fit `width`, with an ellipsis. */
+function fit(ctx: Ctx, text: string, width: number): string {
+  if (ctx.measureText(text).width <= width) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(`${t}…`).width > width) t = t.slice(0, -1);
+  return `${t.trimEnd()}…`;
+}
+
+/** The dialogue list box (spec 06, D143): the options the player can pick. */
+function drawChoices(ctx: Ctx, ui: PlayerUi) {
+  const box = ui.choiceBox;
+  const list = ui.session.choices;
+  if (!box || !list) return;
+  const { panel: r } = box;
+  ctx.fillStyle = "rgba(20,14,10,0.92)";
+  ctx.fillRect(r.x, r.y, r.w, r.h);
+  ctx.strokeStyle = EDGE;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  ctx.font = TEXT_FONT;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  const hover = ui.cursor;
+  box.rows.forEach((row, i) => {
+    const option = list.options[box.first + i];
+    if (!option) return;
+    const over = !!hover && hover[0] >= row.x && hover[0] < row.x + row.w && hover[1] >= row.y && hover[1] < row.y + row.h;
+    button(ctx, row, over);
+    ctx.fillStyle = over ? "#000" : EDGE;
+    ctx.fillText(fit(ctx, option.text, row.w - 16), row.x + 8, row.y + row.h / 2);
+  });
+  if (box.more) {
+    button(ctx, box.more);
+    label(ctx, "More…", box.more.x + box.more.w / 2, box.more.y + box.more.h / 2);
+  }
 }
 
 function drawTab(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined) {

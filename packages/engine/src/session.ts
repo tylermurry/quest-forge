@@ -1,6 +1,7 @@
-import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
+import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type DialogueFile, type DialogueNode, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
+import { DialogueRun, type ChoiceList, type DialogueHost } from "./dialogue.ts";
 import { defaultResponse, firstMatch, type RuleContext, type RuleOwner } from "./rules.ts";
-import { Sequence, type Done, type SequenceHost } from "./sequence.ts";
+import { Sequence, type Done } from "./sequence.ts";
 import type { Trace } from "./trace.ts";
 import {
   cloneState,
@@ -34,6 +35,8 @@ export interface SessionStart {
    * its scene, at its player position. Copied, never changed. Wins over `scene`/`spawn`.
    */
   state?: GameState;
+  /** Play this dialogue once the scene is entered (playtest "Play from this node", D142), at `node` or its Start. */
+  dialogue?: { id: string; node?: string };
 }
 
 /** Playtest-only hooks (D129). The exported game passes none. */
@@ -76,7 +79,7 @@ export function linkedScenes(scene: SceneFile): string[] {
 
 const MAX_LOG = 100;
 
-export class Session implements SequenceHost {
+export class Session implements DialogueHost {
   state!: GameState;
   world!: World;
   verb: Verb = "walk";
@@ -88,14 +91,19 @@ export class Session implements SequenceHost {
   readonly log: string[] = [];
   readonly game: GameFile;
   private sequence: Sequence | null = null;
+  /** The dialogue being played (spec 11). */
+  private _dialogue: DialogueRun | null = null;
+  /** A dialogue waiting for the scene's enter rule to finish (D142). */
+  private pendingDialogue: { id: string; node?: string } | null = null;
   private change: SceneChange | null = null;
   /** Regions the player's feet are in, so `enter_region` fires on crossing in (D72). */
   private inside = new Set<string>();
   private readonly scenes: Map<string, SceneFile>;
   private readonly characters: Map<string, CharacterFile>;
   private readonly items: Map<string, ItemFile>;
-  private readonly ctx: RuleContext;
-  private readonly trace: Trace | undefined;
+  private readonly dialogues: Map<string, DialogueFile>;
+  readonly ctx: RuleContext;
+  readonly trace: Trace | undefined;
   private readonly onRestart: (() => void) | undefined;
   private _entry!: { state: GameState; spawn: string | null };
 
@@ -112,13 +120,14 @@ export class Session implements SequenceHost {
     this.scenes = new Map(project.scenes.map((s) => [s.data.id, s.data]));
     this.characters = new Map(project.characters.map((c) => [c.data.id, c.data]));
     this.items = new Map(project.items.map((i) => [i.data.id, i.data]));
+    this.dialogues = new Map(project.dialogues.map((d) => [d.data.id, d.data]));
     this.ctx = { state: undefined as unknown as GameState, scene: (id) => this.scenes.get(id) };
     this.restart();
   }
 
   /** Input is locked (D72): a sequence or scene change is running, or the game has ended. */
   get busy(): boolean {
-    return this.sequence !== null || this.change !== null || this.ending !== null;
+    return this.sequence !== null || this._dialogue !== null || this.pendingDialogue !== null || this.change !== null || this.ending !== null;
   }
 
   /** The scene being loaded, while its images aren't ready yet. */
@@ -128,6 +137,21 @@ export class Session implements SequenceHost {
 
   get scene(): SceneFile {
     return this.world.scene;
+  }
+
+  /** The list box while a Choices node waits for the player (spec 06). */
+  get choices(): ChoiceList | null {
+    return this._dialogue?.choices ?? null;
+  }
+
+  /** The dialogue playing and its current node, for the playtest state panel. */
+  get dialogue(): { id: string; node: string | null } | null {
+    const d = this._dialogue;
+    return d ? { id: d.id, node: d.node } : null;
+  }
+
+  dialogueFile(id: string): DialogueFile | undefined {
+    return this.dialogues.get(id);
   }
 
   sceneFile(id: string): SceneFile | undefined {
@@ -156,6 +180,9 @@ export class Session implements SequenceHost {
   restart() {
     this.sequence?.stop();
     this.sequence = null;
+    this._dialogue?.stop();
+    this._dialogue = null;
+    this.pendingDialogue = this.start.dialogue ?? null;
     this.change = null;
     this.verb = "walk";
     this.item = null;
@@ -247,6 +274,13 @@ export class Session implements SequenceHost {
     this.fire({ kind: "game" }, this.game.rules, { type: "combine", item: held, with: target });
   }
 
+  /** Pick an option of the dialogue list box (spec 06). */
+  choose(optionId: string) {
+    if (this.text || !this._dialogue) return;
+    this._dialogue.choose(optionId);
+    this.settleDialogue();
+  }
+
   /** Skip the current text box. */
   skipText() {
     if (this.text) this.closeText();
@@ -261,11 +295,21 @@ export class Session implements SequenceHost {
       this.text.timeLeft -= dt;
       if (this.text.timeLeft <= 0) this.closeText();
     }
+    if (this._dialogue) {
+      this._dialogue.tick(dt);
+      this.settleDialogue();
+    }
     if (this.sequence) {
       this.sequence.tick(dt);
       if (this.sequence?.done) this.sequence = null;
     }
     this.advanceChange();
+    // Play from this node (D142): once the scene's enter rule is done.
+    const pending = this.pendingDialogue;
+    if (pending && !this.sequence && !this.change && !this.ending && !this._dialogue) {
+      this.pendingDialogue = null;
+      this.startDialogue(pending.id, pending.node);
+    }
     const { player } = this.world;
     this.state.player = { x: player.pos[0], y: player.pos[1], facing: player.facing };
     // A taken item can't stay selected.
@@ -358,18 +402,28 @@ export class Session implements SequenceHost {
   /** First match runs (D40); otherwise the verb's default response, if it has one. */
   /** Returns whether a rule matched. */
   private fire(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): boolean {
+    const m = this.match(owner, rules, trigger);
+    if (m.actions) this.run(m.actions);
+    return m.matched;
+  }
+
+  /** The first match's actions (marked fired), else the default response; traced (D129). */
+  private match(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): { matched: boolean; actions: readonly Action[] | null } {
     const trace = this.trace;
     trace?.({ type: "trigger", owner, trigger });
     const m = firstMatch(rules, owner, trigger, this.ctx, trace && ((rule, index, key, verdict) => trace({ type: "rule", owner, trigger, rule, index, key, verdict })));
     if (m) {
       markFired(this.state, m.key);
-      this.run(m.rule.do);
-      return true;
+      return { matched: true, actions: m.rule.do };
     }
     const fallback = defaultResponse(this.game, trigger);
     trace?.({ type: "no_match", owner, trigger, response: fallback });
-    if (fallback) this.run([{ type: "narrate", text: fallback }]);
-    return false;
+    return { matched: false, actions: fallback ? [{ type: "narrate", text: fallback }] : null };
+  }
+
+  /** Drops a dialogue that has ended, so input unlocks this tick. */
+  private settleDialogue() {
+    if (this._dialogue?.finished) this._dialogue = null;
   }
 
   private run(actions: readonly Action[]) {
@@ -396,7 +450,11 @@ export class Session implements SequenceHost {
     const t = this.text;
     this.text = null;
     if (t?.speaker) this.world.setTalking(t.speaker.id, false);
-    // Carry on at once, so a sequence that ends here unlocks input this tick.
+    // Carry on at once, so a dialogue or sequence that ends here unlocks input this tick.
+    if (this._dialogue) {
+      this._dialogue.tick(0);
+      this.settleDialogue();
+    }
     const seq = this.sequence;
     if (seq) {
       seq.tick(0);
@@ -404,7 +462,7 @@ export class Session implements SequenceHost {
     }
   }
 
-  private note(message: string, milestone?: "M7" | "M8") {
+  note(message: string, milestone?: "M8") {
     this.trace?.({ type: "note", message, ...(milestone ? { milestone } : {}) });
     this.log.push(message);
     if (this.log.length > MAX_LOG) this.log.shift();
@@ -448,6 +506,13 @@ export class Session implements SequenceHost {
       return;
     }
     this.world.stop();
+    // A scene change inside a dialogue ends it and the rule that started it (D72, D141).
+    if (this._dialogue) {
+      this._dialogue.stop();
+      this._dialogue = null;
+      this.sequence?.stop();
+      this.sequence = null;
+    }
     this.change = { scene: next, spawn, phase: "exit" };
     this.assets.prefetch(next);
     this.fire({ kind: "scene", scene: this.scene.id }, this.scene.rules, { type: "scene_exit" });
@@ -497,12 +562,65 @@ export class Session implements SequenceHost {
 
   endGame(ending: Ending) {
     this.world.stop();
+    this._dialogue?.stop();
+    this._dialogue = null;
+    this.sequence?.stop();
+    this.sequence = null;
     this.text = null;
     this.ending = ending;
   }
 
-  warn(message: string, milestone?: "M7" | "M8") {
+  warn(message: string, milestone?: "M8") {
     this.note(message, milestone);
+  }
+
+  /** Starts a dialogue (spec 11). One plays at a time: another start is ignored with a note (D136). */
+  startDialogue(id: string, node?: string): Done | null {
+    const d = this.dialogues.get(id);
+    if (!d) {
+      this.note(`Dialogue ${id} doesn't exist.`);
+      return null;
+    }
+    if (this._dialogue) {
+      this.note(`Ignored starting dialogue ${id} while ${this._dialogue.id} is playing.`);
+      return null;
+    }
+    const run = new DialogueRun(this, d);
+    this._dialogue = run;
+    for (const n of d.nodes) {
+      if (n.type !== "actions") continue;
+      for (const a of n.do) if (a.type === "change_scene") {
+        const next = this.scenes.get(a.scene);
+        if (next) this.assets.prefetch(next);
+      }
+    }
+    run.begin(node);
+    this.settleDialogue();
+    return () => run.finished;
+  }
+
+  /** A Line node: the speaker's say box (or the narrator's), plus its animation (D139). */
+  showLine(node: Extract<DialogueNode, { type: "line" }>): Done {
+    if (node.character === undefined) return this.narrate(node.text);
+    const done = this.say(node.character, node.text);
+    const box = this.text;
+    if (node.animation === undefined) return done;
+    const character = node.character;
+    const length = this.world.actorById(character) ? this.world.playSlot(character, node.animation) : null;
+    if (length === null) this.note(`${character} has no animation ${node.animation} here.`);
+    const special = this.world.actorById(character)?.special ?? null;
+    return () => {
+      if (this.text === box) return false;
+      // A looping animation stops with the line; a one-shot finishes by itself.
+      const actor = this.world.actorById(character);
+      if (actor && special && actor.special === special) actor.special = null;
+      return true;
+    };
+  }
+
+  /** The `dialogue_end` game rules (spec 02) for a dialogue that reached its end (D136). */
+  endRule(dialogue: string): readonly Action[] | null {
+    return this.match({ kind: "game" }, this.game.rules, { type: "dialogue_end", dialogue }).actions;
   }
 
   onAction(action: Action) {

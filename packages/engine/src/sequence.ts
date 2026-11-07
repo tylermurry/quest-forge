@@ -29,8 +29,10 @@ export interface SequenceHost {
   playMusic(music: string | null): void;
   /** `die` / `win_game` (D71). The sequence ends. */
   endGame(ending: { kind: "die"; message: string } | { kind: "win" }): void;
+  /** Plays a dialogue (spec 11); done when it ends. Null when it can't start (D136). */
+  startDialogue(dialogue: string): Done | null;
   /** Something the engine can't do yet (D71), with the milestone that owns it. */
-  warn(message: string, milestone?: "M7" | "M8"): void;
+  warn(message: string, milestone?: "M8"): void;
   /** An action is about to run (playtest event log, D129). */
   onAction?(action: Action): void;
 }
@@ -130,7 +132,8 @@ export class Sequence {
         host.playMusic(null);
         return;
       case "start_dialogue":
-        host.warn(`Dialogue "${a.dialogue}" can't play yet: dialogues arrive in M7.`, "M7");
+        // Blocks like a text box; the rule's later actions run after it ends (D136).
+        this.block = host.startDialogue(a.dialogue);
         return;
       case "wait":
         this.waitLeft = a.seconds;

@@ -6,10 +6,11 @@ export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type Scen
 export { initialState, cloneState, score, objectVisible, type GameState, type Position } from "./state.ts";
 export { firstMatch, checkCondition, defaultResponse, ruleKey, triggerMatches, type RuleOwner } from "./rules.ts";
 export { Sequence, type SequenceHost } from "./sequence.ts";
+export { DialogueRun, choiceKey, dialogueFiredKey, type ChoiceList, type DialogueEndReason, type OptionVerdict } from "./dialogue.ts";
 export type { RuleReport, RuleVerdict, Trace, TraceEvent } from "./trace.ts";
 export { layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
 export { PlayerUi, type PointerKind } from "./ui/controller.ts";
-export { computeLayout, unitFor, MIN_HIT_CSS, type Layout } from "./ui/layout.ts";
+export { choiceLayout, computeLayout, unitFor, MIN_HIT_CSS, type ChoiceBox, type Layout } from "./ui/layout.ts";
 export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";
 export { drawSprites } from "./render.ts";
 export { debugShapes, DEBUG_ALL, DEBUG_OFF, type DebugFlags, type DebugShape } from "./debug.ts";

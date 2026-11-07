@@ -119,3 +119,32 @@ export const inRect = (p: readonly [number, number], r: Rect) => p[0] >= r.x && 
 export function hitButton<Id extends string>(buttons: readonly Button<Id>[], p: readonly [number, number]): Id | null {
   return buttons.find((b) => inRect(p, b.rect))?.id ?? null;
 }
+
+/** The dialogue list box (spec 06, D76, D143): one full-width row per option, at least 44 CSS px tall. */
+export interface ChoiceBox {
+  panel: Rect;
+  /** One per option shown on this page, top to bottom. */
+  rows: Rect[];
+  /** Index of this page's first option. */
+  first: number;
+  /** "More…" when the options don't fit at once; it shows the next page. */
+  more: Rect | null;
+  pages: number;
+}
+
+const CHOICE_WIDTH = 560;
+
+export function choiceLayout(unit: number, count: number, page: number): ChoiceBox {
+  const pad = GAP * 2;
+  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - pad * 2 + GAP) / (unit + GAP)));
+  const perPage = count <= fit ? count : fit - 1;
+  const pages = Math.max(1, Math.ceil(count / Math.max(1, perPage)));
+  const p = ((page % pages) + pages) % pages;
+  const first = p * perPage;
+  const shown = Math.min(perPage, count - first);
+  const lines = shown + (pages > 1 ? 1 : 0);
+  const h = pad * 2 + lines * (unit + GAP) - GAP;
+  const panel: Rect = { x: Math.round((SCENE_WIDTH - CHOICE_WIDTH) / 2), y: SCENE_HEIGHT - GAP * 2 - h, w: CHOICE_WIDTH, h };
+  const row = (i: number): Rect => ({ x: panel.x + pad, y: panel.y + pad + i * (unit + GAP), w: panel.w - pad * 2, h: unit });
+  return { panel, rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
+}

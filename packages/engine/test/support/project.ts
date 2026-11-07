@@ -1,4 +1,4 @@
-import { CharacterFile, FlagsFile, GameFile, ItemFile, SceneFile, emptyProject, type ImageAsset, type Project } from "@questforge/schema";
+import { CharacterFile, DialogueFile, FlagsFile, GameFile, ItemFile, SceneFile, emptyProject, type ImageAsset, type Project } from "@questforge/schema";
 import type { LoadedImage } from "../../src/world.ts";
 
 // A small in-memory project for headless session tests. Parsed with the real
@@ -13,7 +13,7 @@ export const narrate = (text: string) => ({ type: "narrate", text });
 
 const anim = (frames: number[]) => ({ image: "hero_sheet", frames, fps: 8, loop: true });
 
-export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw } = {}): Project {
+export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogues?: Raw[] } = {}): Project {
   const game = GameFile.parse({
     schemaVersion: 2,
     id: "t",
@@ -71,6 +71,10 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw } = {}): 
   p.scenes = [yard, shed].map((s) => ({ path: `scenes/${s.id}.scene.yaml`, data: s }));
   p.characters = [hero, gardener].map((c) => ({ path: `characters/${c.id}.character.yaml`, data: c }));
   p.items = [item("key", "key"), item("stick", "stick"), item("string", "string"), item("rod", "fishing rod")].map((i) => ({ path: `items/${i.id}.item.yaml`, data: i }));
+  p.dialogues = (over.dialogues ?? []).map((d) => {
+    const data = DialogueFile.parse({ schemaVersion: 2, name: "Chat", ...d });
+    return { path: `dialogues/${data.id}.dialogue.yaml`, data };
+  });
   return p;
 }
 

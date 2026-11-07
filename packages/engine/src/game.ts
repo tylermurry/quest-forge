@@ -35,6 +35,8 @@ export interface GameOptions {
   spawn?: string;
   /** Start from a saved state (playtest presets and Restart scene, D126, D128). Wins over `scene`/`spawn`. */
   state?: GameState;
+  /** Playtest "Play from this node" (D142): play this dialogue once the scene is entered. */
+  dialogue?: { id: string; node?: string };
   /** Playtest event log sink (D129); the exported game passes none. */
   trace?: Trace;
   /** Playtest: what the in-game Restart button does instead (D132). */
@@ -167,6 +169,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       ...(options.scene ? { scene: options.scene } : {}),
       ...(options.spawn ? { spawn: options.spawn } : {}),
       ...(options.state ? { state: options.state } : {}),
+      ...(options.dialogue ? { dialogue: options.dialogue } : {}),
     };
     session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) });
     ui = new PlayerUi(session);
