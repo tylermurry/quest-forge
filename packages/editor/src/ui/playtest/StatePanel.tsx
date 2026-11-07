@@ -88,6 +88,37 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
           ))}
         </ul>
       </Section>
+      <Section title="Dialogue">
+        <p aria-label="Dialogue playing">
+          {v.dialogue ? (
+            <>
+              {v.dialogue.name}
+              {v.dialogue.node && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  at <span className="font-mono">{v.dialogue.node}</span>
+                  {v.dialogue.nodeType && ` (${v.dialogue.nodeType})`}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-muted-foreground">None playing</span>
+          )}
+        </p>
+        {v.onceOptions.length > 0 && (
+          <ul className="mt-1 space-y-0.5" aria-label="Once-only options">
+            {v.onceOptions.map((o) => (
+              <li key={o.key}>
+                <label className="flex items-center gap-1.5" title={`${o.dialogue}: once-only option`}>
+                  <input type="checkbox" checked={o.chosen} onChange={(e) => edit({ kind: "setChoice", key: o.key, chosen: e.target.checked })} />
+                  <span className="truncate">{o.text}</span>
+                  <span className="text-muted-foreground shrink-0">chosen</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
       <Section title="Visited scenes">
         <ul className="space-y-0.5">
           {v.visited.map((sc) => (

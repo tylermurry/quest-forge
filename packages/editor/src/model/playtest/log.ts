@@ -2,7 +2,7 @@
 // English, worded like the rule cards (vocab.ts). Each line about a rule can jump
 // to it (and to the failed condition) in the rule inspector through `ws.jumpTo`.
 import type { RuleOwner, TraceEvent } from "@questforge/engine";
-import type { Action, Condition, Project, Trigger } from "@questforge/schema";
+import type { Action, Condition, DataPath, DialogueNode, Project, Trigger } from "@questforge/schema";
 import { locate, type Jump } from "../locate.ts";
 import { ownerRules, type RuleOwnerRef } from "../rules/owner.ts";
 import { pickerOptions } from "../rules/pickers.ts";
@@ -113,9 +113,51 @@ function ruleJump(now: Project, o: RuleOwner, ruleId: string, condition?: number
 /** "Look → pond", "Use Fishing rod → door", "Player walks in → region exit_shed". */
 function triggerLine(p: Project, owner: RuleOwner, t: Trigger): string {
   const what = triggerText(p, t).replace(/^Use with /, "Use ");
-  if (t.type === "scene_enter" || t.type === "scene_exit" || t.type === "combine") return `${what} (${ownerName(p, owner)})`;
+  if (t.type === "scene_enter" || t.type === "scene_exit" || t.type === "combine" || t.type === "dialogue_end") return `${what} (${ownerName(p, owner)})`;
   return `${what} → ${ownerName(p, owner)}`;
 }
+
+// ── Dialogues (spec 11) ─────────────────────────────────────────────────────
+
+const dialogueName = (p: Project, id: string) => p.dialogues.find((d) => d.data.id === id)?.data.name ?? id;
+
+/** Jump to a node (or a spot inside it) by ID, in the project as it is now. */
+function nodeJump(now: Project, dialogue: string, node: string, sub: DataPath = []): Jump | undefined {
+  const doc = now.dialogues.find((d) => d.data.id === dialogue);
+  const i = doc?.data.nodes.findIndex((n) => n.id === node) ?? -1;
+  if (!doc || i < 0) return undefined;
+  return locate(now, { file: doc.path, path: ["nodes", i, ...sub] }) ?? undefined;
+}
+
+function optionOf(p: Project, dialogue: string, node: string, option: string) {
+  const n = p.dialogues.find((d) => d.data.id === dialogue)?.data.nodes.find((x) => x.id === node);
+  const i = n?.type === "choices" ? n.options.findIndex((o) => o.id === option) : -1;
+  return n?.type === "choices" && i >= 0 ? { index: i, text: n.options[i]!.text || option } : { index: -1, text: option };
+}
+
+function nodeLine(ran: Project, now: Project, dialogue: string, n: DialogueNode): LogLine | null {
+  const jump = nodeJump(now, dialogue, n.id);
+  switch (n.type) {
+    case "line": {
+      const who = n.character === undefined ? "Narrator" : (ran.characters.find((c) => c.data.id === n.character)?.data.name ?? n.character);
+      return { text: `${who}: ${quote(n.text)}`, tone: "action", depth: 1, jump };
+    }
+    case "actions":
+      return { text: `Actions (${n.id})`, tone: "action", depth: 1, jump };
+    case "end":
+      return { text: "End node", tone: "action", depth: 1, jump };
+    default:
+      // Start says nothing; Choices and Branch have lines of their own.
+      return null;
+  }
+}
+
+const END_TEXT = {
+  end: "ends",
+  dead_end: "ends: nothing is connected there",
+  loop: "was stopped: it looped with no Line or Choices",
+  cut: "was cut short",
+} as const;
 
 /**
  * Turns trace events into log lines. `ran` is the project the run played (rule
@@ -186,6 +228,51 @@ export function formatLog(events: readonly TraceEvent[], ran: Project, now: Proj
       case "note":
         flushOthers();
         out.push({ text: e.message, tone: "note", depth: 1 });
+        break;
+      case "dialogue_start":
+        flushOthers();
+        out.push({
+          text: `Dialogue ${quote(dialogueName(ran, e.dialogue))} starts${e.node ? ` at ${e.node}` : ""}`,
+          tone: "trigger",
+          depth: 0,
+          jump: e.node ? nodeJump(now, e.dialogue, e.node) : undefined,
+        });
+        break;
+      case "dialogue_node": {
+        flushOthers();
+        const line = nodeLine(ran, now, e.dialogue, e.node);
+        if (line) out.push(line);
+        break;
+      }
+      case "dialogue_options": {
+        flushOthers();
+        const shown = e.options.filter((o) => o.verdict.kind === "shown").length;
+        out.push({ text: `Choices: ${shown} of ${e.options.length} options shown`, tone: "match", depth: 1, jump: nodeJump(now, e.dialogue, e.node) });
+        for (const o of e.options) {
+          const v = o.verdict;
+          if (v.kind === "shown") continue;
+          const { index, text } = optionOf(ran, e.dialogue, e.node, o.id);
+          const sub: DataPath = index < 0 ? [] : v.kind === "condition_failed" ? ["options", index, "if", v.index] : ["options", index];
+          const why = v.kind === "once_chosen" ? "it's once-only and was already chosen" : v.condition.type === "first_time" ? "it's for the first time only, and it was already chosen" : `condition ${v.index + 1} failed: ${conditionText(ran, v.condition)}`;
+          out.push({ text: `Option ${quote(text)} hidden: ${why}`, tone: "skip", depth: 1, jump: nodeJump(now, e.dialogue, e.node, sub) });
+        }
+        break;
+      }
+      case "dialogue_choice": {
+        flushOthers();
+        const { index, text } = optionOf(ran, e.dialogue, e.node, e.option);
+        out.push({ text: `Player chose ${quote(text)}`, tone: "trigger", depth: 0, jump: nodeJump(now, e.dialogue, e.node, index < 0 ? [] : ["options", index]) });
+        break;
+      }
+      case "dialogue_branch": {
+        flushOthers();
+        const why = e.failed ? `: condition ${e.failed.index + 1} failed: ${conditionText(ran, e.failed.condition)}` : "";
+        out.push({ text: `Branch → ${e.result ? "true" : "false"}${why}`, tone: e.result ? "match" : "skip", depth: 1, jump: nodeJump(now, e.dialogue, e.node, e.failed ? ["if", e.failed.index] : []) });
+        break;
+      }
+      case "dialogue_end":
+        flushOthers();
+        out.push({ text: `Dialogue ${quote(dialogueName(ran, e.dialogue))} ${END_TEXT[e.reason]}`, tone: e.reason === "loop" || e.reason === "cut" ? "note" : "scene", depth: 0 });
         break;
     }
   }

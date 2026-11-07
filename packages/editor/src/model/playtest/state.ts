@@ -1,7 +1,7 @@
 // The playtest state panel (spec 12, D130): what it lists and the live edits it
 // makes. Edits change the running session's GameState at once, even during a
 // sequence; they are play state, never project data and never undo steps.
-import { score, type GameState, type Session } from "@questforge/engine";
+import { choiceKey, score, type GameState, type Session } from "@questforge/engine";
 import { logicBlocks, type Project } from "@questforge/schema";
 import { pickerOptions, type PickOption } from "../rules/pickers.ts";
 import { hereSpawn } from "./playtest.ts";
@@ -33,6 +33,27 @@ export interface StateView {
   scenes: PickOption[];
   /** Go to scene waits while a sequence or scene change runs (D130). */
   canGoToScene: boolean;
+  /** The dialogue playing and its node, with display names (spec 11). */
+  dialogue: { id: string; name: string; node: string | null; nodeType: string | null } | null;
+  /** Every once-only option in the project and whether it has been chosen (D137). */
+  onceOptions: { key: string; dialogue: string; text: string; chosen: boolean }[];
+}
+
+/** Once-only options, by their `dialogueChoices` key; keys the project lost still show. */
+function onceOptions(p: Project, s: GameState): StateView["onceOptions"] {
+  const out: StateView["onceOptions"] = [];
+  for (const { data: d } of p.dialogues) {
+    for (const n of d.nodes) {
+      if (n.type !== "choices") continue;
+      for (const o of n.options) if (o.once) out.push({ key: choiceKey(d.id, n.id, o.id), dialogue: d.name, text: o.text || o.id, chosen: false });
+    }
+  }
+  for (const key of s.dialogueChoices) {
+    const known = out.find((o) => o.key === key);
+    if (known) known.chosen = true;
+    else out.push({ key, dialogue: key.slice(0, key.indexOf("/")), text: key, chosen: true });
+  }
+  return out;
 }
 
 /** What the state panel shows for the running game. IDs the project no longer has still show, by ID. */
@@ -56,7 +77,17 @@ export function stateView(p: Project, session: Session): StateView {
     visited: scenes.map((sc) => ({ id: sc.id, label: sc.label, visited: s.visited.includes(sc.id) })),
     scenes,
     canGoToScene: !session.busy,
+    dialogue: dialogueNow(p, session),
+    onceOptions: onceOptions(p, s),
   };
+}
+
+function dialogueNow(p: Project, session: Session): StateView["dialogue"] {
+  const now = session.dialogue;
+  if (!now) return null;
+  const d = p.dialogues.find((x) => x.data.id === now.id)?.data;
+  const node = now.node === null ? undefined : d?.nodes.find((n) => n.id === now.node);
+  return { id: now.id, name: d?.name ?? now.id, node: now.node, nodeType: node?.type ?? null };
 }
 
 /** One live edit to the running game's state. */
@@ -68,7 +99,9 @@ export type StateEdit =
   | { kind: "grantAward"; award: string; points: number }
   | { kind: "revokeAward"; award: string }
   | { kind: "setVisited"; scene: string; visited: boolean }
-  | { kind: "goToScene"; scene: string };
+  | { kind: "goToScene"; scene: string }
+  /** Marks a once-only dialogue option chosen or not (D137). */
+  | { kind: "setChoice"; key: string; chosen: boolean };
 
 /** Applies an edit at once (D130). Returns false when it can't apply now (Go to scene while busy). */
 export function applyStateEdit(session: Session, edit: StateEdit): boolean {
@@ -95,6 +128,10 @@ export function applyStateEdit(session: Session, edit: StateEdit): boolean {
     case "setVisited":
       if (edit.visited && !s.visited.includes(edit.scene)) s.visited.push(edit.scene);
       if (!edit.visited) s.visited = s.visited.filter((v) => v !== edit.scene);
+      return true;
+    case "setChoice":
+      if (edit.chosen && !s.dialogueChoices.includes(edit.key)) s.dialogueChoices.push(edit.key);
+      if (!edit.chosen) s.dialogueChoices = s.dialogueChoices.filter((k) => k !== edit.key);
       return true;
     case "goToScene": {
       if (session.busy) return false;
