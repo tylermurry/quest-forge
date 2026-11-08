@@ -98,37 +98,42 @@ export function ActionRows(props: PartListProps<Action> & { pick?(i: number): Pi
   return (
     <ol className="grid gap-1.5">
       {list.map((a, i) => (
-        <li key={i} className="flex flex-wrap items-center gap-1.5 pl-2" data-part={props.partKey(i)} aria-label={`Action ${i + 1}`}>
-          <span className="text-muted-foreground w-4 text-right text-[12px] tabular-nums">{i + 1}.</span>
-          <Select value={a.type} onValueChange={(v) => run("Change action", (q) => edit(q, (l, d) => actions.setType(d, l, i, v as ActionType)))}>
-            <SelectTrigger size="sm" aria-label={`Action ${i + 1} type`} className="h-7 w-auto gap-1 px-2 text-[13px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent onPointerDown={stop}>
-              {ACTION_GROUPS.map((g) => (
-                <SelectGroup key={g.title}>
-                  <SelectLabel>{g.title}</SelectLabel>
-                  {g.types.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {ACTION_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
-          <PartFields
-            project={project}
-            parts={ACTION_PARTS[a.type]}
-            value={a as Record<string, unknown>}
-            invalidKeys={props.invalid(i)}
-            h={{
-              ...handlers(props, i, (l, d, patch) => actions.setFields(d, l, i, patch)),
-              animTarget: (t: AnimTarget) => run("Change animation target", (q) => edit(q, (l) => actions.setAnimTarget(q, l, i, t))),
-              ...props.pick?.(i),
-            }}
-          />
-          <span className="ml-auto flex">
+        <li key={i} className="flex items-start gap-1.5 pl-2" data-part={props.partKey(i)} aria-label={`Action ${i + 1}`}>
+          <span className="text-muted-foreground h-7 w-4 text-right text-[12px] leading-7 tabular-nums">{i + 1}.</span>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <Select value={a.type} onValueChange={(v) => run("Change action", (q) => edit(q, (l, d) => actions.setType(d, l, i, v as ActionType)))}>
+              <SelectTrigger size="sm" aria-label={`Action ${i + 1} type`} className="h-7 w-auto gap-1 px-2 text-[13px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent onPointerDown={stop}>
+                {ACTION_GROUPS.map((g) => (
+                  <SelectGroup key={g.title}>
+                    <SelectLabel>{g.title}</SelectLabel>
+                    {g.types.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {ACTION_LABEL[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <PartFields
+              project={project}
+              parts={ACTION_PARTS[a.type]}
+              value={a as Record<string, unknown>}
+              invalidKeys={props.invalid(i)}
+              h={{
+                ...handlers(props, i, (l, d, patch) => actions.setFields(d, l, i, patch)),
+                animTarget: (t: AnimTarget) => run("Change animation target", (q) => edit(q, (l) => actions.setAnimTarget(q, l, i, t))),
+                ...props.pick?.(i),
+              }}
+            />
+            <div className="order-4 basis-full empty:hidden">
+              <PartProblems problems={props.problems(i)} />
+            </div>
+          </div>
+          <span className="mt-0.5 flex shrink-0">
             <Button variant="ghost" size="icon" className="size-6" aria-label={`Move action ${i + 1} up`} disabled={i === 0} onClick={() => run("Move action", (q) => edit(q, (l) => actions.move(l, i, i - 1)))}>
               <ArrowUp className="size-3.5" />
             </Button>
@@ -139,7 +144,6 @@ export function ActionRows(props: PartListProps<Action> & { pick?(i: number): Pi
               <X className="size-3.5" />
             </Button>
           </span>
-          <PartProblems problems={props.problems(i)} />
         </li>
       ))}
     </ol>

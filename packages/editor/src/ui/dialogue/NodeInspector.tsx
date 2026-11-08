@@ -26,6 +26,7 @@ import { cn } from "../lib/utils.ts";
 import { ActionRows, AddActionMenu, AddConditionMenu, ConditionRows, PartProblems } from "../rules/PartRows.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { TextField } from "../TextField.tsx";
+import { flashElement } from "../flash.ts";
 
 const NARRATOR = "";
 
@@ -56,9 +57,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
     const parts = root.current ? [...root.current.querySelectorAll<HTMLElement>("[data-path]")] : [];
     const el = parts.filter((e) => pathWithin(rest, JSON.parse(e.dataset.path!) as (string | number)[])).at(-1) ?? root.current;
     el?.scrollIntoView?.({ block: "nearest" });
-    el?.classList.remove("qf-flash");
-    void el?.offsetWidth;
-    el?.classList.add("qf-flash");
+    flashElement(el, highlight.tone);
     ws.clearHighlight();
   }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
 

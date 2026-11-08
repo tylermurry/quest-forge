@@ -30,6 +30,45 @@ const garden = (p: Project) => p.scenes.find((s) => s.data.id === "garden")!.dat
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
+describe("manual save (D145)", () => {
+  it("keeps changes in memory until flush, then saves", async () => {
+    const { fs, host } = await memoryHost();
+    const ed = await Editor.open(host, { autosave: false });
+    ed.apply("Rename item", (p) => renameEntry(p, "item", "fish", "Trout"));
+    await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS * 5);
+    expect(ed.status.state).toBe("unsaved");
+    expect(ed.hasUnsavedChanges).toBe(true);
+    expect(fs.files.get("items/fish.item.yaml")).not.toContain("Trout");
+    await ed.flush();
+    expect(fs.files.get("items/fish.item.yaml")).toContain("name: Trout");
+    expect(ed.status.state).toBe("saved");
+  });
+
+  it("a failed save keeps the edits and does not retry by itself", async () => {
+    const { fs, host } = await memoryHost();
+    const ed = await Editor.open(host, { autosave: false });
+    ed.apply("Rename item", (p) => renameEntry(p, "item", "fish", "Trout"));
+    const write = vi.spyOn(fs, "writeText").mockRejectedValue(Object.assign(new Error("no"), { code: "EACCES" }));
+    await ed.flush();
+    expect(ed.status).toMatchObject({ state: "error" });
+    const calls = write.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(write.mock.calls.length).toBe(calls);
+    expect(ed.hasUnsavedChanges).toBe(true);
+  });
+
+  it("an outside change keeps unsaved edits and says so once", async () => {
+    const { fs, host, emit } = await memoryHost();
+    const ed = await Editor.open(host, { autosave: false });
+    ed.apply("Rename item", (p) => renameEntry(p, "item", "fish", "Trout"));
+    fs.files.set("items/fish.item.yaml", fs.files.get("items/fish.item.yaml")! + "\n# edited elsewhere\n");
+    emit(["items/fish.item.yaml"]);
+    await vi.advanceTimersByTimeAsync(WATCH_SETTLE_MS * 2);
+    expect(itemName(ed.project, "fish")).toBe("Trout");
+    expect(ed.notice?.text).toContain("unsaved changes were kept");
+  });
+});
+
 describe("autosave (spec 08, D21)", () => {
   it("saves about 1 s after the last change and reports Saved", async () => {
     const { fs, host } = await memoryHost();

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Input } from "./components/ui/input.tsx";
 import { Label } from "./components/ui/label.tsx";
 import { Textarea } from "./components/ui/textarea.tsx";
@@ -23,6 +23,18 @@ export function TextField(props: {
   const id = useId();
   const [text, setText] = useState(props.value);
   const [focused, setFocused] = useState(false);
+  const area = useRef<HTMLTextAreaElement>(null);
+  // Compact boxes fit their text up to three lines; focusing one shows all of it.
+  useLayoutEffect(() => {
+    const el = area.current;
+    if (!props.compact || !el) return;
+    el.style.height = "auto";
+    const cs = getComputedStyle(el);
+    const line = parseFloat(cs.lineHeight) || 20;
+    const chrome = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+    const full = el.scrollHeight + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+    el.style.height = `${focused ? full : Math.min(full, line * 3 + chrome)}px`;
+  }, [text, focused, props.compact]);
   useEffect(() => {
     if (!focused) setText(props.value);
   }, [props.value, focused]);
@@ -45,12 +57,18 @@ export function TextField(props: {
     },
   };
   return (
-    <div className={props.compact ? "grid min-w-0 flex-1" : "grid gap-1.5"}>
+    <div className={props.compact ? "order-3 grid min-w-0 basis-full" : "grid gap-1.5"}>
       <Label htmlFor={id} className={props.compact ? "sr-only" : "text-muted-foreground text-[12px] font-normal"}>
         {props.label}
       </Label>
       {props.multiline ? (
-        <Textarea rows={props.compact ? 2 : 3} {...common} className={props.compact ? "min-h-0 px-2 py-1 text-[13px]" : common.className} onChange={(e) => change(e.target.value)} />
+        <Textarea
+          ref={area}
+          rows={props.compact ? 1 : 3}
+          {...common}
+          className={props.compact ? "field-sizing-fixed min-h-0 resize-y px-2 py-1 text-[13px] leading-5" : common.className}
+          onChange={(e) => change(e.target.value)}
+        />
       ) : (
         <Input {...common} className="h-8 text-[13px]" onChange={(e) => change(e.target.value)} />
       )}

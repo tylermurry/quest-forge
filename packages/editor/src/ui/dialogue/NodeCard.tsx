@@ -14,6 +14,8 @@ export interface NodeCardData extends Record<string, unknown> {
   problems: readonly Problem[];
   /** Briefly outlined after a jump-to (D120). */
   flash: number;
+  /** The flash came from the playtest log, so it is blue. */
+  flashLog?: boolean;
 }
 export type FlowNode = Node<NodeCardData, "dialogue">;
 
@@ -53,7 +55,7 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
         selected && "ring-ring ring-2",
         errors.length > 0 && "border-err",
         unreachable && "border-dashed opacity-70",
-        data.flash > 0 && "qf-flash",
+        data.flash > 0 && (data.flashLog ? "qf-flash-log" : "qf-flash"),
       )}
       aria-label={`${NODE_LABEL[n.type]} node ${n.id}`}
       data-node={n.id}

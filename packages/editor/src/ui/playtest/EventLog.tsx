@@ -44,7 +44,7 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
       {lines.map((l, i) => {
         const cls = cn("block w-full truncate rounded-sm px-1 text-left", l.depth === 1 && "pl-4", TONE[l.tone]);
         return l.jump ? (
-          <button key={i} title={`${l.text} (click to show the rule)`} className={cn(cls, "hover:bg-muted hover:underline")} onClick={() => ws.jumpTo(l.jump!)}>
+          <button key={i} title={`${l.text} (click to show the rule)`} className={cn(cls, "hover:bg-muted hover:underline")} onClick={() => ws.jumpTo(l.jump!, "log")}>
             {l.text}
           </button>
         ) : (

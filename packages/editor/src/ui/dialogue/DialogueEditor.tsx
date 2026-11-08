@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { LayoutGrid, Maximize, Play, Plus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { nodePorts, type DialogueFile, type Project } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
 import type { CommandId } from "../../model/appCommands.ts";
@@ -71,7 +71,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
   const sel = ws.selection;
   const selectedNode = sel?.kind === "dialogueNode" && sel.dialogue === dialogueId ? sel.node : null;
   const byNode = useMemo(() => (doc ? problemsByNode(editor.problems, doc.path, doc.data) : new Map()), [editor.problems, doc]);
-  const [flash, setFlash] = useState<{ node: string; seq: number } | null>(null);
+  const [flash, setFlash] = useState<{ node: string; seq: number; log: boolean } | null>(null);
   const [menu, setMenu] = useState<CreateMenu | null>(null);
 
   // Local React Flow state follows the file; drags change it until the drop commits.
@@ -90,7 +90,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
           position: { x: n.pos[0], y: n.pos[1] },
           deletable: n.type !== "start",
           selected: n.id === selectedNode || (selectedNode === null && !!was?.selected),
-          data: { node: n, project, problems: byNode.get(n.id) ?? [], flash: flash?.node === n.id ? flash.seq : 0 },
+          data: { node: n, project, problems: byNode.get(n.id) ?? [], flash: flash?.node === n.id ? flash.seq : 0, flashLog: flash?.node === n.id && flash.log },
         };
       });
     });
@@ -107,7 +107,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     const i = highlight.location.path[1];
     const n = typeof i === "number" && pathWithin(highlight.location.path, ["nodes", i]) ? doc.data.nodes[i] : undefined;
     if (!n) return;
-    setFlash({ node: n.id, seq: highlight.seq });
+    setFlash({ node: n.id, seq: highlight.seq, log: highlight.tone === "log" });
     void rf.setCenter(n.pos[0] + 120, n.pos[1] + 40, { zoom: Math.max(rf.getZoom(), 0.8), duration: 300 });
   }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -228,6 +228,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
           edges={edges}
           nodeTypes={NODE_TYPES}
           colorMode="dark"
+          style={{ "--xy-edge-stroke-selected": "#f5b942" } as CSSProperties}
           fitView
           fitViewOptions={{ padding: 0.15, maxZoom: 1 }}
           minZoom={0.2}

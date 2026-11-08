@@ -26,7 +26,11 @@ export type Selection =
 export interface Highlight {
   location: Location;
   seq: number;
+  /** Where the jump came from: a problem flashes red, a playtest log line blue. */
+  tone: FlashTone;
 }
+
+export type FlashTone = "problem" | "log";
 
 export const refKey = (r: EntryRef) => `${r.section}:${r.id}`;
 export const folderKey = (section: Section, path: string) => `${section}/${path}`;
@@ -129,7 +133,7 @@ export class WorkspaceState {
   }
 
   /** Jump-to from a problem (spec 14, D120): opens and selects the exact thing, then highlights the spot. */
-  jumpTo({ target, location }: Jump) {
+  jumpTo({ target, location }: Jump, tone: FlashTone = "problem") {
     this.inspectorRequest++;
     switch (target.kind) {
       case "entry":
@@ -156,7 +160,7 @@ export class WorkspaceState {
     }
     // A problem inside a rule opens the Rules tab; anything else, Details (D125).
     this.inspectorTab = location.path.includes("rules") ? "rules" : "details";
-    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
+    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1, tone };
     this.changed();
   }
 
@@ -182,7 +186,7 @@ export class WorkspaceState {
 
   /** Highlights a spot without changing the selection, e.g. "Set by rule N" (D118). */
   flash(location: Location) {
-    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1 };
+    this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1, tone: "problem" };
     this.changed();
   }
 

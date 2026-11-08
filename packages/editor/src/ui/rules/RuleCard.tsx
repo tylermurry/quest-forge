@@ -17,6 +17,7 @@ import { Switch } from "../components/ui/switch.tsx";
 import { cn } from "../lib/utils.ts";
 import { PartFields, type PartHandlers } from "./PartFields.tsx";
 import { ActionRows, AddActionMenu, AddConditionMenu, ConditionRows, PartProblems } from "./PartRows.tsx";
+import { flashElement } from "../flash.ts";
 
 /** The data keys a problem names inside one part, e.g. `item` or `target`. */
 function invalidKeys(problems: readonly Problem[] | undefined, own: OwnerRules): Set<string> {
@@ -61,9 +62,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
     const sel = where.part ? `[data-part="${partKey(rule.id, where.part)}"]` : null;
     const el = (sel && root.current?.querySelector<HTMLElement>(sel)) || root.current;
     el?.scrollIntoView?.({ block: "nearest" });
-    el?.classList.remove("qf-flash");
-    void el?.offsetWidth;
-    el?.classList.add("qf-flash");
+    flashElement(el, highlight.tone);
     ws.clearHighlight();
   }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
 

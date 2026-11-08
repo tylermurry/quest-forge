@@ -3,9 +3,11 @@ import { CommandRegistry } from "../model/appCommands.ts";
 import { Editor, projectTitle } from "../model/editor.ts";
 import { addRecent, removeRecent, type RecentProject } from "../model/recent.ts";
 import { createBlankProject, folderNameFor } from "../model/template.ts";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./components/ui/alert-dialog.tsx";
 import { StartScreen } from "./StartScreen.tsx";
 import { Workspace } from "./Workspace.tsx";
 import { CommandsContext, usePlatform, useShortcutKeys } from "./hooks.ts";
+import { saveNow } from "./saveNow.ts";
 
 // Editor shell (spec 08). Components stay thin: logic lives in src/model.
 export function App() {
@@ -54,7 +56,7 @@ export function App() {
   const open = async (root: string, known = recent) => {
     setError(null);
     try {
-      const ed = await Editor.open(platform.host(root));
+      const ed = await Editor.open(platform.host(root), { autosave: false });
       (window as unknown as { editor: Editor }).editor = ed;
       remember(addRecent(known, { root, title: projectTitle(ed.project), openedAt: Date.now() }));
       setEditor((old) => {
@@ -79,16 +81,24 @@ export function App() {
     await open(root);
   };
 
+  // Saving is manual (D145): leaving with unsaved changes asks first.
+  const [leaving, setLeaving] = useState<((ok: boolean) => void) | null>(null);
+  const confirmLeave = async (): Promise<boolean> => {
+    if (!editor?.editor.hasUnsavedChanges) return true;
+    const ok = await new Promise<boolean>((resolve) => setLeaving(() => resolve));
+    setLeaving(null);
+    return ok;
+  };
+
   const close = async () => {
-    if (!editor) return;
-    await editor.editor.flush();
+    if (!editor || !(await confirmLeave())) return;
     editor.editor.dispose();
     setEditor(null);
   };
 
   // File menu commands.
-  const latest = useRef({ close, open, editor });
-  latest.current = { close, open, editor };
+  const latest = useRef({ close, open, editor, confirmLeave });
+  latest.current = { close, open, editor, confirmLeave };
   useEffect(
     () =>
       registry.register({
@@ -105,10 +115,12 @@ export function App() {
               setChooserRequest((n) => n + 1);
               return;
             }
+            if (!(await latest.current.confirmLeave())) return;
             const root = await platform.openFolder();
             if (root) await latest.current.open(root);
           },
         },
+        "project.save": { run: () => void (latest.current.editor && saveNow(latest.current.editor.editor)), enabled: () => latest.current.editor !== null },
         "project.close": { run: () => void latest.current.close(), enabled: () => latest.current.editor !== null },
       }),
     [registry, platform],
@@ -118,7 +130,7 @@ export function App() {
   return (
     <CommandsContext.Provider value={registry}>
       {editor ? (
-        <Workspace key={editor.root} root={editor.root} editor={editor.editor} onClose={() => void close()} nativeMenu={native} />
+        <Workspace key={editor.root} root={editor.root} editor={editor.editor} onClose={() => void close()} />
       ) : (
         <StartScreen
           onOpen={(r) => void open(r)}
@@ -130,6 +142,20 @@ export function App() {
           chooserRequest={chooserRequest}
         />
       )}
+      <AlertDialog open={leaving !== null} onOpenChange={(o) => !o && leaving?.(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Go back without saving?</AlertDialogTitle>
+            <AlertDialogDescription>You have unsaved changes. If you go back to the project selector now, they will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => leaving?.(true)}>
+              Go back without saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </CommandsContext.Provider>
   );
 }

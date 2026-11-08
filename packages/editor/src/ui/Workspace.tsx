@@ -1,5 +1,5 @@
 import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from "@dnd-kit/core";
-import { CircleAlert, CircleCheck, LoaderCircle, PanelBottom, PanelLeft, PanelRight, Redo2, Undo2 } from "lucide-react";
+import { ArrowLeft, CircleAlert, LoaderCircle, PanelBottom, PanelLeft, PanelRight, Redo2, Save, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDefaultLayout, type PanelImperativeHandle } from "react-resizable-panels";
 import { toast } from "sonner";
@@ -22,13 +22,12 @@ import { PlayControls } from "./playtest/PlayControls.tsx";
 import { PlaytestArea } from "./playtest/PlaytestArea.tsx";
 import { useCommands, useEditor, usePlatform } from "./hooks.ts";
 import { cn } from "./lib/utils.ts";
+import { saveNow } from "./saveNow.ts";
 
 interface Props {
   root: string;
   editor: Editor;
   onClose(): void;
-  /** The app's native menu bar owns Close Project, so the title bar doesn't repeat it. */
-  nativeMenu?: boolean;
 }
 
 /** Panel sizes are a per-user preference, kept in the webview's storage (D92). */
@@ -42,13 +41,13 @@ function layoutStorage() {
 
 function SaveStatus({ editor }: { editor: Editor }) {
   const s = editor.status;
+  if (s.state === "saved") return null; // a save shows a toast instead (D145)
   const icon = {
-    saved: <CircleCheck className="text-ok size-3.5" />,
     unsaved: <span className="bg-muted-foreground size-2 rounded-full" />,
     saving: <LoaderCircle className="size-3.5 animate-spin" />,
     error: <CircleAlert className="text-err size-3.5" />,
   }[s.state];
-  const text = s.state === "error" ? s.message : { saved: "Saved", unsaved: "Unsaved changes", saving: "Saving…" }[s.state];
+  const text = s.state === "error" ? s.message : { unsaved: "Unsaved changes", saving: "Saving…" }[s.state];
   return (
     <span className={cn("flex min-w-0 items-center gap-1.5 text-[12px]", s.state === "error" ? "text-err" : "text-muted-foreground")}>
       {icon}
@@ -59,11 +58,11 @@ function SaveStatus({ editor }: { editor: Editor }) {
   );
 }
 
-function IconButton({ label, onClick, disabled, active, children }: { label: string; onClick(): void; disabled?: boolean; active?: boolean; children: React.ReactNode }) {
+function IconButton({ label, onClick, disabled, active, className, children }: { label: string; onClick(): void; disabled?: boolean; active?: boolean; className?: string; children: React.ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-xs" aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick} className={cn(active === false && "text-muted-foreground")}>
+        <Button variant="ghost" size="icon-xs" aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick} className={cn(active === false && "text-muted-foreground", className)}>
           {children}
         </Button>
       </TooltipTrigger>
@@ -73,7 +72,7 @@ function IconButton({ label, onClick, disabled, active, children }: { label: str
 }
 
 /** Main layout (spec 08): browser · tabs · inspector · dock, each resizable (D92). */
-export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) {
+export function Workspace({ root, editor, onClose }: Props) {
   const registry = useCommands();
   const ed = useEditor(editor);
   const platform = usePlatform();
@@ -231,6 +230,9 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
     <DndContext sensors={sensors} collisionDetection={pointerWithin}>
     <div className="flex h-full flex-col">
       <TitleBar>
+        <IconButton label="Back to project selector" onClick={onClose}>
+          <ArrowLeft />
+        </IconButton>
         <span className="truncate text-[13px] font-semibold">{projectTitle(ed.project)}</span>
         <div className="flex items-center">
           <IconButton label={ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo"} disabled={!ed.history.canUndo} onClick={() => ed.undo()}>
@@ -240,6 +242,9 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
             <Redo2 />
           </IconButton>
         </div>
+        <Button variant="ghost" size="xs" disabled={ed.status.state === "saved" || ed.status.state === "saving"} onClick={() => void saveNow(ed)}>
+          <Save /> Save
+        </Button>
         <SaveStatus editor={ed} />
         <div className="ml-auto flex items-center gap-0.5">
           <PlayControls playtest={playtest} />
@@ -253,11 +258,6 @@ export function Workspace({ root, editor, onClose, nativeMenu = false }: Props) 
           <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
             <PanelRight />
           </IconButton>
-          {!nativeMenu && (
-            <Button variant="ghost" size="xs" className="ml-2" onClick={onClose}>
-              Close project
-            </Button>
-          )}
         </div>
       </TitleBar>
       <ResizablePanelGroup orientation="horizontal" id="questforge.columns" defaultLayout={columns.defaultLayout} onLayoutChanged={columns.onLayoutChanged} className="min-h-0 flex-1">

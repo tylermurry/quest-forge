@@ -176,6 +176,7 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   Play from This Node (`play.node`, Shift+F6) is `Playtest.playNode()`; the log and state panel read the engine's
   `dialogue_*` trace events. Dev page: `window.dialogueGraph` is the React Flow instance. The browser tool's instant
   drag doesn't start a React Flow connection: dispatch `mousedown` on the handle, a few `mousemove`s, then `mouseup`.
+- Saving is manual in the app (D145): `Editor.open(host, { autosave: false })`, Save = `editor.flush()`, and `App` confirms before leaving with `hasUnsavedChanges`. The model default is still autosave on, which most Editor tests rely on.
 - Validation is debounced: `Editor.problems` is the last result, refreshed 250 ms after a change (D120). Tests call
   `editor.validateNow()` instead of waiting. Browser-tool clicks by `ref` may scroll the page first; prefer coordinates or a
   JS `click()` when testing popovers. Radix dropdowns open from the keyboard in jsdom (`focus()` + `{Enter}`).

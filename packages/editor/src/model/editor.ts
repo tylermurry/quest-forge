@@ -27,6 +27,12 @@ export const WATCH_SETTLE_MS = 200;
 /** Validation runs this long after the last change (D120). */
 export const VALIDATE_DELAY_MS = 250;
 
+/** How a project is opened. The app saves by hand (D145); tests and tools can keep autosave on. */
+export interface EditorOptions {
+  /** Save about AUTOSAVE_DELAY_MS after the last change. Default true. */
+  autosave?: boolean;
+}
+
 export type SaveStatus =
   | { state: "saved" }
   | { state: "unsaved" }
@@ -83,10 +89,16 @@ export class Editor {
   /** Text of files that failed to load, so an outside fix is noticed but our saves aren't. */
   private brokenTexts = new Map<string, string>();
 
+  private readonly autosave: boolean;
+  /** An outside change was noticed while unsaved edits were waiting (manual save only). */
+  private outsideWhileDirty = false;
+
   private constructor(
     readonly host: ProjectHost,
     loaded: { project: Project; problems: Problem[] },
+    options: EditorOptions = {},
   ) {
+    this.autosave = options.autosave ?? true;
     this._project = loaded.project;
     this._loadProblems = loaded.problems;
     this.stopWatching = host.watch?.((paths) => this.onDiskChange(paths)) ?? null;
@@ -94,9 +106,9 @@ export class Editor {
   }
 
   /** Opens a project folder. The trash from the last session is emptied first (D88). */
-  static async open(host: ProjectHost): Promise<Editor> {
+  static async open(host: ProjectHost, options?: EditorOptions): Promise<Editor> {
     await host.fs.removeTree(TRASH_DIR);
-    const editor = new Editor(host, await loadProject(host.fs));
+    const editor = new Editor(host, await loadProject(host.fs), options);
     await editor.readBroken();
     return editor;
   }
@@ -227,12 +239,12 @@ export class Editor {
     this.dirty = true;
     this.failures = 0;
     this._status = { state: "unsaved" };
-    this.scheduleSave(AUTOSAVE_DELAY_MS);
+    if (this.autosave) this.scheduleSave(AUTOSAVE_DELAY_MS);
     this.scheduleValidate();
     this.changed();
   }
 
-  // ── Autosave ───────────────────────────────────────────────────────────────
+  // ── Saving (autosave, or by hand with `flush`, D145) ───────────────────────────────────────────────────────────────
 
   private scheduleSave(delay: number) {
     if (this.disposed) return;
@@ -273,13 +285,16 @@ export class Editor {
         if (wasValidated) this.validatedFor = this._project;
         else this.scheduleValidate();
         this._status = this.dirty ? { state: "unsaved" } : { state: "saved" };
-        if (this.dirty) this.scheduleSave(AUTOSAVE_DELAY_MS);
+        if (this.dirty && this.autosave) this.scheduleSave(AUTOSAVE_DELAY_MS);
       } catch (e) {
         this.dirty = true;
         const delay = RETRY_DELAYS_MS[Math.min(this.failures, RETRY_DELAYS_MS.length - 1)]!;
         this.failures++;
-        this._status = { state: "error", message: `Couldn't save: ${describeSaveError(e)}. Your changes are kept; trying again in ${delay / 1000} s.` };
-        if (!(e instanceof SaveError)) this.scheduleSave(delay);
+        this._status = {
+          state: "error",
+          message: `Couldn't save: ${describeSaveError(e)}. Your changes are kept${this.autosave ? `; trying again in ${delay / 1000} s` : ". Fix the problem and save again"}.`,
+        };
+        if (this.autosave && !(e instanceof SaveError)) this.scheduleSave(delay);
       } finally {
         this.saving = null;
         this.changed();
@@ -336,7 +351,18 @@ export class Editor {
       this.changedDuringSave = true;
       return;
     }
-    if (await this.diskMatches()) return;
+    if (await this.diskMatches()) {
+      this.outsideWhileDirty = false;
+      return;
+    }
+    if (!this.autosave && this.dirty) {
+      // Unsaved edits could be a lot of work: keep them and say so once instead of reloading (D145).
+      if (!this.outsideWhileDirty) {
+        this.outsideWhileDirty = true;
+        this.showNotice({ kind: "error", text: "Files changed on disk outside the editor. Your unsaved changes were kept: saving will overwrite those outside changes." });
+      }
+      return;
+    }
     await this.reload("outside");
   }
 
@@ -350,6 +376,7 @@ export class Editor {
     this._loadProblems = loaded.problems;
     await this.readBroken();
     this.dirty = false;
+    this.outsideWhileDirty = false;
     this.failures = 0;
     this.history.clear();
     this._status = { state: "saved" };

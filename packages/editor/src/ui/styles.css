@@ -119,3 +119,18 @@
   animation: qf-flash 1.6s ease-out;
   border-radius: 6px;
 }
+/* The same flash, blue, for a jump from the playtest log. */
+@keyframes qf-flash-log {
+  0%,
+  60% {
+    box-shadow: 0 0 0 2px var(--primary);
+    background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+.qf-flash-log {
+  animation: qf-flash-log 1.6s ease-out;
+  border-radius: 6px;
+}

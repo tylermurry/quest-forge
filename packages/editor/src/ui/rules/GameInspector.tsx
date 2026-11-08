@@ -7,6 +7,7 @@ import { NumberField } from "../NumberField.tsx";
 import { TextField } from "../TextField.tsx";
 import { Picker } from "./Picker.tsx";
 import { InspectorShell } from "../InspectorShell.tsx";
+import { flashElement } from "../flash.ts";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase";
 
@@ -27,9 +28,7 @@ export function GameInspector({ actions }: { actions: Actions }) {
     const key = String(highlight.location.path[0] ?? "");
     const el = root.current?.querySelector<HTMLElement>(`[data-game="${key}"]`) ?? root.current;
     el?.scrollIntoView?.({ block: "nearest" });
-    el?.classList.remove("qf-flash");
-    void el?.offsetWidth;
-    el?.classList.add("qf-flash");
+    flashElement(el, highlight.tone);
     ws.clearHighlight();
   }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
 
