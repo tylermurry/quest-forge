@@ -31,8 +31,8 @@ export interface SequenceHost {
   endGame(ending: { kind: "die"; message: string } | { kind: "win" }): void;
   /** Plays a dialogue (spec 11); done when it ends. Null when it can't start (D136). */
   startDialogue(dialogue: string): Done | null;
-  /** Something the engine can't do yet (D71), with the milestone that owns it. */
-  warn(message: string, milestone?: "M8"): void;
+  /** Something the engine skipped, for the playtest event log. */
+  warn(message: string): void;
   /** An action is about to run (playtest event log, D129). */
   onAction?(action: Action): void;
 }

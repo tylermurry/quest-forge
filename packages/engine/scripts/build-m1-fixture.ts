@@ -10,6 +10,9 @@
 // M7 shop (spec 11 acceptance): Hand the workbench → a coin. Talk to the visitor in
 // the shed → the shop dialogue: a once-only question, buying the lantern only while
 // you have the coin, and a loop back to the menu.
+//
+// M8 (spec 07): each scene has its own music loop, picking things up plays a
+// sound, and grabbing the saw in the shed is a death (Restore · Restart · Try again).
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
@@ -29,6 +32,44 @@ import {
 } from "@questforge/schema";
 
 const ROOT = join(import.meta.dirname, "../fixtures/m1");
+
+// ── Tiny WAV writer (8-bit mono PCM, no dependencies) ───────────────────────
+
+const RATE = 11025;
+
+/** Notes as [frequency Hz, beats]; 0 Hz is a rest. A soft square-ish tone with a short fade per note. */
+function wav(notes: [number, number][], beat: number, volume = 0.25): Buffer {
+  const samples: number[] = [];
+  for (const [f, beats] of notes) {
+    const n = Math.round(beats * beat * RATE);
+    for (let i = 0; i < n; i++) {
+      const env = Math.min(1, i / 200, (n - i) / 400);
+      const t = i / RATE;
+      const v = f === 0 ? 0 : (Math.sin(2 * Math.PI * f * t) + 0.3 * Math.sin(6 * Math.PI * f * t)) * env * volume;
+      samples.push(Math.max(0, Math.min(255, Math.round(128 + v * 127))));
+    }
+  }
+  const data = Buffer.from(samples);
+  const h = Buffer.alloc(44);
+  h.write("RIFF", 0, "ascii");
+  h.writeUInt32LE(36 + data.length, 4);
+  h.write("WAVEfmt ", 8, "ascii");
+  h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20); // PCM
+  h.writeUInt16LE(1, 22); // mono
+  h.writeUInt32LE(RATE, 24);
+  h.writeUInt32LE(RATE, 28); // bytes per second
+  h.writeUInt16LE(1, 32); // block align
+  h.writeUInt16LE(8, 34); // bits per sample
+  h.write("data", 36, "ascii");
+  h.writeUInt32LE(data.length, 40);
+  return Buffer.concat([h, data]);
+}
+
+const [C4, D4, E4, F4, G4, A4, B4, C5, E5] = [262, 294, 330, 349, 392, 440, 494, 523, 659];
+const gardenTheme = () => wav([[C4, 1], [E4, 1], [G4, 1], [E4, 1], [F4, 1], [A4, 1], [G4, 2], [E4, 1], [D4, 1], [C4, 2], [0, 2]], 0.3);
+const shedTheme = () => wav([[A4 / 2, 2], [C4, 2], [E4, 2], [D4, 2], [A4 / 2, 2], [B4 / 2, 2], [C4, 4]], 0.35, 0.2);
+const pickup = () => wav([[C5, 0.5], [E5, 1]], 0.08, 0.35);
 
 // ── Tiny RGBA canvas + PNG writer (no dependencies) ─────────────────────────
 
@@ -343,7 +384,11 @@ const assets = AssetsFile.parse({
     { id: "string_img", path: "assets/images/string.png" },
     ...items.map((i) => ({ id: i.icon, path: `assets/images/items/${i.id}.png` })),
   ],
-  audio: [],
+  audio: [
+    { id: "garden_theme", path: "assets/audio/garden_theme.wav" },
+    { id: "shed_theme", path: "assets/audio/shed_theme.wav" },
+    { id: "pickup", path: "assets/audio/pickup.wav" },
+  ],
 });
 
 const hero = CharacterFile.parse({
@@ -380,6 +425,7 @@ const garden = SceneFile.parse(withRuleIds({
   id: "garden",
   name: "Garden",
   background: "garden_bg",
+  music: "garden_theme",
   depth: { far: { y: 150, scale: 0.35 }, near: { y: 395, scale: 1 } },
   walkable: { outer: WALKABLE, holes: [POND] },
   spawns: { default: { x: 200, y: 380, facing: "up" }, from_shed: { x: 555, y: 370, facing: "left" } },
@@ -395,7 +441,7 @@ const garden = SceneFile.parse(withRuleIds({
       visible: true,
       obstacle: [[142, 312], [168, 312], [168, 319], [142, 319]],
       rules: [
-        rule({ type: "hand" }, [narrate("You tip the pot. Underneath is a straight, springy stick."), { type: "give_item", item: "stick" }, { type: "award_points", points: 5, award: "found_stick" }], [], true),
+        rule({ type: "hand" }, [narrate("You tip the pot. Underneath is a straight, springy stick."), { type: "play_sound", sound: "pickup" }, { type: "give_item", item: "stick" }, { type: "award_points", points: 5, award: "found_stick" }], [], true),
         rule({ type: "hand" }, [narrate("Nothing else under there.")]),
         look("A terracotta flowerpot with a sprig of something green."),
       ],
@@ -460,6 +506,7 @@ const shed = SceneFile.parse(withRuleIds({
   id: "shed",
   name: "Garden shed",
   background: "shed_bg",
+  music: "shed_theme",
   depth: { far: { y: 250, scale: 0.8 }, near: { y: 395, scale: 1.1 } },
   walkable: { outer: SHED_WALKABLE, holes: [] },
   spawns: { door: { x: 100, y: 370, facing: "right" } },
@@ -475,7 +522,7 @@ const shed = SceneFile.parse(withRuleIds({
       obstacle: [[400, 256], [560, 256], [560, 268], [400, 268]],
       rules: [
         look("A sturdy workbench, covered in sawdust."),
-        rule({ type: "hand" }, [narrate("Under the sawdust you find a coin."), { type: "give_item", item: "coin" }], [], true),
+        rule({ type: "hand" }, [narrate("Under the sawdust you find a coin."), { type: "play_sound", sound: "pickup" }, { type: "give_item", item: "coin" }], [], true),
         rule({ type: "hand" }, [narrate("Just sawdust now.")]),
       ],
     },
@@ -503,7 +550,17 @@ const shed = SceneFile.parse(withRuleIds({
       rules: [look("A traveller with a pack full of odds and ends."), rule({ type: "talk" }, [{ type: "start_dialogue", dialogue: "shop" }])],
     },
   ],
-  hotspots: [{ id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] }],
+  hotspots: [
+    { id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] },
+    // A death (spec 07): Restore · Restart · Try again.
+    {
+      id: "saw",
+      name: "saw",
+      shape: [[100, 120], [180, 120], [180, 180], [100, 180]],
+      walkTo: { x: 140, y: 290, facing: "up" },
+      rules: [look("A rusty saw hangs on the wall. Its teeth look sharp."), rule({ type: "hand" }, [narrate("You grab the saw by the blade."), { type: "die", message: "Ouch! Gardening is a dangerous hobby. Maybe hold sharp things by the handle." }])],
+    },
+  ],
   regions: [{ id: "exit_garden", shape: [[0, 320], [55, 320], [55, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])] }],
   rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
 }));
@@ -591,6 +648,9 @@ const files: Record<string, string | Buffer> = {
   "assets/images/boulder.png": stone(84, 64, [140, 120, 100, 255]).png(),
   "assets/images/characters/hero_sheet.png": figureSheet([190, 40, 40, 255], null, 3, 4).png(),
   "assets/images/characters/gardener_sheet.png": figureSheet([60, 130, 60, 255], [200, 170, 80, 255], 1, 4).png(),
+  "assets/audio/garden_theme.wav": gardenTheme(),
+  "assets/audio/shed_theme.wav": shedTheme(),
+  "assets/audio/pickup.wav": pickup(),
 };
 
 await rm(ROOT, { recursive: true, force: true });

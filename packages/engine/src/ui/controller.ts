@@ -1,4 +1,6 @@
+import { SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, SaveSlots, type PlayerSettings } from "../saves.ts";
 import type { Session, Verb } from "../session.ts";
+import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
 import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type InventoryButtonId, type Layout } from "./layout.ts";
@@ -15,7 +17,19 @@ export const REVEAL_CSS = 8;
 export const HOLD_SECONDS = 0.4;
 export const HOLD_SLOP_CSS = 10;
 
-export type Panel = "inventory" | "settings" | null;
+/** `save` / `load` are the slot list (D149); `volume` the volume panel (D150). */
+export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | null;
+
+/** What the player UI keeps outside the game state: save slots and volumes (spec 07). */
+export interface UiServices {
+  slots: SaveSlots;
+  settings: PlayerSettings;
+  /** Volumes changed: apply and store them. */
+  onSettings?(s: PlayerSettings): void;
+}
+
+/** How long a notice ("Game saved.") stays up, in seconds. */
+export const NOTICE_SECONDS = 2.5;
 export type InventoryMode = "look" | "select" | "item";
 
 interface Press {
@@ -40,12 +54,26 @@ export class PlayerUi {
   cursor: Vec | null = null;
   /** Page of a long dialogue list box (UI state, D143). */
   choicePage = 0;
+  /** The slot picked in the save / load list, 0-based (UI state). */
+  slot: number | null = null;
+  slotPage = 0;
+  /** A short message at the bottom of the screen. */
+  notice: { text: string; timeLeft: number } | null = null;
+  readonly slots: SaveSlots;
+  settings: PlayerSettings;
+  private readonly onSettings: ((s: PlayerSettings) => void) | undefined;
   private pagedList: ChoiceList | null = null;
   private press: Press | null = null;
   private cssScale = 1;
 
-  constructor(readonly session: Session) {
+  constructor(
+    readonly session: Session,
+    services?: UiServices,
+  ) {
     this.layout = computeLayout(1);
+    this.slots = services?.slots ?? new SaveSlots(null, session.game);
+    this.settings = { ...(services?.settings ?? DEFAULT_SETTINGS) };
+    this.onSettings = services?.onSettings;
   }
 
   /** CSS px per scene px changed (resize, zoom). */
@@ -126,6 +154,10 @@ export class PlayerUi {
   }
 
   tick(dt: number) {
+    if (this.notice) {
+      this.notice.timeLeft -= dt;
+      if (this.notice.timeLeft <= 0) this.notice = null;
+    }
     const press = this.press;
     if (press && !press.long && !press.moved) {
       press.held += dt;
@@ -151,10 +183,10 @@ export class PlayerUi {
   private activate(p: Vec) {
     const s = this.session;
     const L = this.layout;
-    if (s.ending) {
-      if (inRect(p, L.ending.restart)) this.restart();
-      return;
-    }
+    // The slot list and volume panel sit over everything, the death box included.
+    if (this.panel === "save" || this.panel === "load") return this.slotsClick(p);
+    if (this.panel === "volume") return this.volumeClick(p);
+    if (s.ending) return this.endingClick(p);
     // Text first: any click skips it, over the scene or the inventory (D72, D78).
     if (s.text) {
       s.skipText();
@@ -255,17 +287,140 @@ export class PlayerUi {
       case "restart":
         this.restart();
         return;
+      case "save":
+        this.openSlots("save");
+        return;
+      case "load":
+        if (this.slots.any) this.openSlots("load");
+        return;
+      case "volume":
+        this.panel = "volume";
+        return;
       case "close":
         this.panel = null;
         return;
       default:
-        // Save, Load and Volume are disabled until M8 (D80).
         return;
     }
   }
 
+  /** The death or win box (spec 07): Restore · Restart · Try again. */
+  private endingClick(p: Vec) {
+    const ending = this.session.ending!;
+    const L = this.layout.ending;
+    switch (hitButton(ending.kind === "die" ? L.buttons : L.win, p)) {
+      case "restore":
+        if (this.slots.any) this.openSlots("load");
+        return;
+      case "restart":
+        this.restart();
+        return;
+      case "try_again":
+        this.session.tryAgain();
+        this.closeAll();
+        return;
+      default:
+        return;
+    }
+  }
+
+  /** Opens the save or load list on a sensible slot: the first empty one to save, the newest save to load (D149). */
+  openSlots(mode: "save" | "load") {
+    const list = this.slots.list;
+    let pick: number | null = null;
+    if (mode === "save") {
+      const empty = list.findIndex((x) => x === null);
+      pick = empty >= 0 ? empty : null;
+    } else {
+      let newest = -1;
+      list.forEach((x, i) => {
+        if (x && (newest < 0 || x.savedAt > list[newest]!.savedAt)) newest = i;
+      });
+      pick = newest >= 0 ? newest : null;
+    }
+    this.panel = mode;
+    this.barOpen = false;
+    this.slot = pick;
+    this.slotPage = pick === null ? 0 : Math.floor(pick / this.layout.slots.perPage);
+  }
+
+  /** Slot index shown in a row of the list on the current page, if any. */
+  slotAt(row: number): number | null {
+    const i = this.slotPage * this.layout.slots.perPage + row;
+    return i < SLOT_COUNT ? i : null;
+  }
+
+  /** The Save / Load button works: a slot is picked (and, to load, holds a save). */
+  get slotActionEnabled(): boolean {
+    if (this.slot === null) return false;
+    return this.panel === "save" || this.slots.list[this.slot] !== null;
+  }
+
+  private slotsClick(p: Vec) {
+    const L = this.layout.slots;
+    const button = hitButton(L.buttons, p);
+    if (button === "cancel") {
+      // Back to where the list was opened from: the death box needs no panel.
+      this.panel = this.session.ending ? null : "settings";
+      return;
+    }
+    if (button === "more") {
+      this.slotPage = (this.slotPage + 1) % L.pages;
+      return;
+    }
+    if (button === "act") {
+      if (this.slotActionEnabled) (this.panel === "save" ? this.saveTo(this.slot!) : this.loadFrom(this.slot!));
+      return;
+    }
+    const r = L.rows.findIndex((row) => inRect(p, row));
+    const i = r >= 0 ? this.slotAt(r) : null;
+    if (i !== null && (this.panel === "save" || this.slots.list[i])) this.slot = i;
+  }
+
+  /** Saves the game into a slot, named after the scene and score. */
+  saveTo(index: number): boolean {
+    const s = this.session;
+    const name = `${s.scene.name} · Score ${score(s.state)} of ${s.game.maxScore}`;
+    const ok = this.slots.save(index, name, s.state);
+    this.panel = null;
+    this.showNotice(ok ? `Game saved in slot ${index + 1}.` : (this.slots.error ?? "The game couldn't be saved."));
+    return ok;
+  }
+
+  /** Loads a slot's save (spec 07). */
+  loadFrom(index: number): boolean {
+    const slot = this.slots.get(index);
+    if (!slot) return false;
+    this.session.load(slot.state);
+    this.closeAll();
+    return true;
+  }
+
+  private volumeClick(p: Vec) {
+    const id = hitButton(this.layout.volume.buttons, p);
+    if (!id) return;
+    if (id === "ok") {
+      this.panel = "settings";
+      return;
+    }
+    const key = id.startsWith("music") ? "music" : "sfx";
+    const step = id.endsWith("_up") ? 1 : -1;
+    const next = Math.max(0, Math.min(VOLUME_STEPS, this.settings[key] + step));
+    if (next === this.settings[key]) return;
+    this.settings = { ...this.settings, [key]: next };
+    this.onSettings?.(this.settings);
+  }
+
+  showNotice(text: string) {
+    this.notice = { text, timeLeft: NOTICE_SECONDS };
+  }
+
   private restart() {
     this.session.requestRestart();
+    this.closeAll();
+  }
+
+  private closeAll() {
     this.panel = null;
     this.barOpen = false;
     this.label = null;

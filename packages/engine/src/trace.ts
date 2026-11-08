@@ -27,8 +27,8 @@ export type TraceEvent =
   | { type: "action"; action: Action }
   /** The player entered a scene (`from` null at the start of play). */
   | { type: "scene"; from: string | null; to: string; spawn: string | null }
-  /** An engine note: a stubbed action (with the milestone that owns it, D71) or an ignored step. */
-  | { type: "note"; message: string; milestone?: "M8" }
+  /** An engine note: an ignored step, a load, the scene's music. */
+  | { type: "note"; message: string }
   /** A dialogue began, at its Start or (playtest) at `node`. */
   | { type: "dialogue_start"; dialogue: string; node: string | null }
   /** The dialogue moved to a node. */

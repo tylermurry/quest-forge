@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isEmptyPlan, loadProject, planSave, validateProject, type CharacterFile, type Project } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
+import { DEFAULT_SETTINGS, MemoryStore, SaveSlots } from "../src/saves.ts";
 import { Session } from "../src/session.ts";
 import { sheetFits, type Rect } from "../src/sprite.ts";
 import { score } from "../src/state.ts";
@@ -311,5 +312,78 @@ describe("the M7 shop, touch only at phone size (spec 11, spec 06)", () => {
     tap(center(visitor));
     settle();
     expect(shown()).toEqual(["Goodbye."]);
+  });
+});
+
+describe("the M8 shed: save, die, try again, restore (spec 07), touch only at phone size", () => {
+  it("saves in the shed, dies on the saw, tries again, then restores the save after a fresh start", async () => {
+    const { project } = await load();
+    const images = await imagesOf(project);
+    const store = new MemoryStore();
+    const start = () => {
+      const s = new Session(project, (id) => images.get(id), { scene: "shed", spawn: "door" });
+      const ui = new PlayerUi(s, { slots: new SaveSlots(store, s.game), settings: DEFAULT_SETTINGS });
+      ui.setScale(fitViewport(844, 390).scale);
+      return { s, ui };
+    };
+    let { s, ui } = start();
+    const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
+    const tap = (p: Vec) => {
+      ui.pointerDown(p, "touch");
+      s.tick(1 / 60);
+      ui.tick(1 / 60);
+      ui.pointerUp(p, "touch");
+    };
+    const settle = () => {
+      for (let i = 0; i < 60 * 60; i++) {
+        if (s.text) tap([320, 120]);
+        s.tick(1 / 60);
+        ui.tick(1 / 60);
+        if (!s.busy && !s.world.walking && !s.text) return;
+        if (s.ending) return;
+      }
+      throw new Error("never settled");
+    };
+    const bar = (id: string) => {
+      tap(center(ui.layout.tab.hit));
+      tap(center(ui.layout.barButtons.find((b) => b.id === id)!.rect));
+    };
+    const pressIn = <Id extends string>(list: { id: Id; rect: Rect }[], id: Id) => tap(center(list.find((b) => b.id === id)!.rect));
+
+    settle();
+    expect(s.state.music).toBe("shed_theme");
+    bar("hand");
+    tap([420, 240]);
+    settle();
+    expect(s.state.inventory).toEqual(["coin"]);
+    expect(s.sounds).toEqual(["pickup"]);
+
+    // Save into the first slot from Settings.
+    bar("settings");
+    pressIn(ui.layout.settings.buttons, "save");
+    pressIn(ui.layout.slots.buttons, "act");
+    const saved = structuredClone(s.state);
+
+    // Grab the saw: the death box.
+    bar("hand");
+    tap([140, 150]);
+    settle();
+    expect(s.ending?.kind).toBe("die");
+    pressIn(ui.layout.ending.buttons, "try_again");
+    expect(s.ending).toBe(null);
+    expect(s.state.inventory).toEqual([]);
+    expect(s.state.visited).toEqual(["shed"]);
+
+    // A fresh page, then Restore from the death box after dying again.
+    ({ s, ui } = start());
+    settle();
+    bar("hand");
+    tap([140, 150]);
+    settle();
+    pressIn(ui.layout.ending.buttons, "restore");
+    expect(ui.panel).toBe("load");
+    pressIn(ui.layout.slots.buttons, "act");
+    expect(s.ending).toBe(null);
+    expect(s.state).toEqual(saved);
   });
 });

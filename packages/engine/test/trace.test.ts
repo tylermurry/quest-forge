@@ -61,22 +61,23 @@ describe("trace sink (D129)", () => {
     expect(events.filter((e) => e.type === "scene").at(-1)).toEqual({ type: "scene", from: "yard", to: "shed", spawn: "door" });
   });
 
-  it("tags stub notes with the milestone that owns them (D71)", () => {
+  it("notes skipped steps; sounds are actions, not notes (M8)", () => {
     const { s, events } = traced(door([rule({ type: "hand" }, [{ type: "start_dialogue", dialogue: "chat" }, { type: "play_sound", sound: "creak" }])]));
     s.selectVerb("hand");
     s.primaryClick(POT);
     arrive(s);
     const notes = events.filter((e) => e.type === "note");
-    // A missing dialogue is only a note; the sound is stubbed until M8.
-    expect(notes.map((n) => n.type === "note" && (n.milestone ?? null))).toEqual([null, "M8"]);
+    expect(notes).toHaveLength(1);
+    expect(events.some((e) => e.type === "action" && e.action.type === "play_sound")).toBe(true);
+    expect(s.sounds).toEqual(["creak"]);
   });
 
   it("is off by default: a session without hooks still logs notes", () => {
-    const s = new Session(testProject(door([rule({ type: "hand" }, [{ type: "play_sound", sound: "creak" }])])), testImages);
+    const s = new Session(testProject(door([rule({ type: "hand" }, [{ type: "start_dialogue", dialogue: "chat" }])])), testImages);
     s.selectVerb("hand");
     s.primaryClick(POT);
     arrive(s);
-    expect(s.log.at(-1)).toContain("creak");
+    expect(s.log.at(-1)).toContain("chat");
   });
 });
 

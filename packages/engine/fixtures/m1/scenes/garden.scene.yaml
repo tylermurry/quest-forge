@@ -2,6 +2,7 @@ schemaVersion: 2
 id: garden
 name: Garden
 background: garden_bg
+music: garden_theme
 depth:
   far:
     y: 150
@@ -80,6 +81,8 @@ objects:
         do:
           - type: narrate
             text: You tip the pot. Underneath is a straight, springy stick.
+          - type: play_sound
+            sound: pickup
           - type: give_item
             item: stick
           - type: award_points

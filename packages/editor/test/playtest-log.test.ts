@@ -90,7 +90,7 @@ describe("event log lines", () => {
     dispose();
   });
 
-  it("notes stubbed actions with their milestone (D71)", async () => {
+  it("logs sounds as actions (spec 07)", async () => {
     const p = await withDoor();
     const garden = p.scenes.find((s) => s.data.id === "garden")!;
     const door = garden.data.hotspots.find((h) => h.id === "door")!;
@@ -100,7 +100,9 @@ describe("event log lines", () => {
     playtest.play();
     tap("look", DOOR);
     const log = texts(formatLog(playtest.events, playtest.run!.project, editor.project));
-    expect(log).toContain("  Sound: creak (no sound until audio arrives in M8)");
+    // Sounds play for real since M8: the log shows the action, no stub note.
+    expect(log).toContain("  Play sound creak");
+    expect(log.some((l) => l.includes("M8"))).toBe(false);
     dispose();
   });
 

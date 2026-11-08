@@ -91,8 +91,6 @@ describe("vocabulary (spec 02)", () => {
       "missing_reference if.3.counter",
       "missing_reference do.8.counter",
       "missing_reference do.12.animation",
-      "missing_reference do.14.sound",
-      "missing_reference do.15.music",
       "empty_text do.0.text",
       "empty_text do.1.text",
       "empty_text do.19.message",

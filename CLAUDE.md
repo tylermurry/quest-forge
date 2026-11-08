@@ -49,9 +49,13 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   and `choiceLayout` for the dialogue list box (D143), `controller.ts` pointer input → bar/inventory/list box/session,
   `icons.ts` + `draw.ts` drawing), `render.ts` (Canvas 2D),
   `game.ts` (`createGame`, image cache, DOM glue), `trace.ts` (playtest trace events, D129), `debug.ts` (debug layer
-  shapes, D132).
+  shapes, D132), `restore.ts` (`readState`/`sanitizeState`: any stored GameState made safe for the project, shared by
+  save slots and playtest presets), `saves.ts` (`SaveSlots` over a `KeyValueStore`, volumes, `MemoryStore` for tests,
+  D146/D150), `audio.ts` (`AudioSync`: music follows `state.music`, `session.sounds` drained; `sceneAudioIds`),
+  `webaudio.ts` (the Web Audio backend, unlocked from pointer events, D151). `Session.load(state)` restores a save
+  exactly (no `scene_enter`, D147); `Session.tryAgain()` returns to the scene-entry snapshot.
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.
-  Only `game.ts`, `render.ts`, `ui/draw.ts` and `ui/icons.ts` touch the canvas or DOM.
+  Only `game.ts`, `render.ts`, `webaudio.ts`, `ui/draw.ts` and `ui/icons.ts` touch the canvas, DOM or Web Audio.
 - Everything that must survive a scene change or a save lives in `GameState` as plain JSON (D75).
   UI state (current item, open panels) stays out. Rules are identified by location keys (D73).
 - New actions/conditions: handle them in `sequence.ts` / `rules.ts` (exhaustive switches), and say in
@@ -64,10 +68,12 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   (`corepack pnpm --filter @questforge/engine fixture`). Edit the script, not the YAML or PNGs.
   `test/fixture.test.ts` checks it's canonical and problem-free (except the dev-only stress scene's `scene_unreachable`
   warning) and plays the M2 puzzle chain
-  (garden + shed) and the M7 shop (coin under the workbench, the visitor's `shop` dialogue in the shed) with touch taps only.
+  (garden + shed), the M7 shop (coin under the workbench, the visitor's `shop` dialogue in the shed) and the M8 save /
+  death / Try again / Restore loop (the saw in the shed) with touch taps only. Its audio is generated 8-bit WAV.
 - Dev page: `corepack pnpm --filter @questforge/engine dev` (Vite, port 5174, also `engine-dev` in
   `.claude/launch.json`; `engine-dev-alt` uses another port when 5174 is taken). `window.game` exposes
-  the running game (`game.session`, `game.ui`) for debugging. Browser-tool clicks are mouse events:
+  the running game (`game.session`, `game.ui`, `game.audio`) for debugging. Saves and volumes go to the page's
+  localStorage (`questforge/<gameId>/…`); pass `storage` to `createGame` to change that. Browser-tool clicks are mouse events:
   test touch by dispatching `PointerEvent`s with `pointerType: "touch"` on the canvas.
 - Schema project model (M3): `Project` splits content (docs, `folders`, `pendingFiles`) from disk state
   (`files`, `saved`, `savedFolders`, `trash`). Undo swaps content and keeps disk state (`withDiskState`).

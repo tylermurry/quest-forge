@@ -8,6 +8,7 @@ import {
   changeThingId,
   removeObstacle,
   setBackground,
+  setSceneMusic,
   setBaseline,
   setDepthScale,
   setDepthY,
@@ -77,8 +78,17 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
   );
 }
 
-function ImageSelect({ actions, value, onChange, label, allowNone }: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void; label: string; allowNone?: boolean }) {
-  const images = actions.editor.project.assets?.data.images ?? [];
+function ImageSelect(props: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void; label: string; allowNone?: boolean }) {
+  return <AssetSelect {...props} kind="images" none="None (black)" />;
+}
+
+/** A scene's music (D148): any imported sound, or none (whatever is playing carries on). */
+function MusicSelect(props: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void }) {
+  return <AssetSelect {...props} kind="audio" label="Music" allowNone none="None (keep what's playing)" />;
+}
+
+function AssetSelect({ actions, value, onChange, label, allowNone, kind, none }: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void; label: string; allowNone?: boolean; kind: "images" | "audio"; none: string }) {
+  const images = actions.editor.project.assets?.data[kind] ?? [];
   return (
     <div className="grid gap-1">
       <Label className="text-muted-foreground text-[11px] font-normal">{label}</Label>
@@ -87,7 +97,7 @@ function ImageSelect({ actions, value, onChange, label, allowNone }: { actions: 
           <SelectValue />
         </SelectTrigger>
         <SelectContent onPointerDown={(e) => e.stopPropagation()}>
-          {allowNone && <SelectItem value="__none">None (black)</SelectItem>}
+          {allowNone && <SelectItem value="__none">{none}</SelectItem>}
           {value !== undefined && !images.some((i) => i.id === value) && <SelectItem value={value}>{value} (missing)</SelectItem>}
           {images.map((i) => (
             <SelectItem key={i.id} value={i.id}>
@@ -364,7 +374,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
   );
 }
 
-/** Scene-wide settings when the scene itself is selected: name and background. */
+/** Scene-wide settings when the scene itself is selected: background and music. */
 export function SceneSettings({ actions, sceneId }: { actions: Actions; sceneId: string }) {
   const { editor } = actions;
   const doc = editor.project.scenes.find((s) => s.data.id === sceneId);
@@ -376,6 +386,7 @@ export function SceneSettings({ actions, sceneId }: { actions: Actions; sceneId:
     <div className="mb-2 grid gap-2">
       <Problems problems={sceneWide} />
       <ImageSelect actions={actions} label="Background" value={scene.background} allowNone onChange={(v) => editor.apply(v ? "Set background" : "Remove background", (q) => setBackground(q, sceneId, v))} />
+      <MusicSelect actions={actions} value={scene.music} onChange={(v) => editor.apply(v ? "Set scene music" : "Remove scene music", (q) => setSceneMusic(q, sceneId, v))} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ schemaVersion: 2
 id: shed
 name: Garden shed
 background: shed_bg
+music: shed_theme
 depth:
   far:
     y: 250
@@ -50,6 +51,8 @@ objects:
         do:
           - type: narrate
             text: Under the sawdust you find a coin.
+          - type: play_sound
+            sound: pickup
           - type: give_item
             item: coin
         once: true
@@ -133,6 +136,36 @@ hotspots:
         do:
           - type: narrate
             text: Sunlight and cobwebs.
+        once: false
+  - id: saw
+    name: saw
+    shape:
+      - [100, 120]
+      - [180, 120]
+      - [180, 180]
+      - [100, 180]
+    walkTo:
+      x: 140
+      y: 290
+      facing: up
+    rules:
+      - id: rule_1
+        when:
+          type: look
+        if: []
+        do:
+          - type: narrate
+            text: A rusty saw hangs on the wall. Its teeth look sharp.
+        once: false
+      - id: rule_2
+        when:
+          type: hand
+        if: []
+        do:
+          - type: narrate
+            text: You grab the saw by the blade.
+          - type: die
+            message: Ouch! Gardening is a dangerous hobby. Maybe hold sharp things by the handle.
         once: false
 regions:
   - id: exit_garden

@@ -108,6 +108,7 @@ export function Inspector({ actions }: { actions: Actions }) {
           </>
         )}
         {image && <ImagePreview path={image.path} actions={actions} />}
+        {audio && <AudioPreview path={audio.path} actions={actions} />}
         <References actions={actions} refs={refs} />
       </dl>
     </InspectorShell>
@@ -125,6 +126,13 @@ function ImagePreview({ path, actions }: { path: string; actions: Actions }) {
       alt=""
     />
   );
+}
+
+/** Listen to an imported sound (spec 07). Shown once the file is saved into the project. */
+function AudioPreview({ path, actions }: { path: string; actions: Actions }) {
+  const url = actions.assetUrl?.(path);
+  if (!url || !actions.editor.project.files.includes(path)) return null;
+  return <audio className="mt-3 h-8 w-full" controls preload="none" src={url} aria-label="Listen" />;
 }
 
 /** "Used by": a header per file, with one link per use: click to show where it is, flashed blue like a playtest log jump. */

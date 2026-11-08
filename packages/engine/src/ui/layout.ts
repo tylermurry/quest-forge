@@ -18,6 +18,9 @@ export type BarButtonId = "walk" | "look" | "hand" | "talk" | "item" | "inventor
 export const BAR_BUTTONS: readonly BarButtonId[] = ["walk", "look", "hand", "talk", "item", "inventory", "settings"];
 export type InventoryButtonId = "look" | "select" | "item" | "ok";
 export type SettingsButtonId = "restart" | "save" | "load" | "volume" | "close";
+export type SlotsButtonId = "act" | "more" | "cancel";
+export type VolumeButtonId = "music_down" | "music_up" | "sfx_down" | "sfx_up" | "ok";
+export type EndingButtonId = "restore" | "restart" | "try_again";
 
 export interface Button<Id extends string = string> {
   id: Id;
@@ -35,7 +38,14 @@ export interface Layout {
   tab: { hit: Rect; visual: Rect };
   inventory: { panel: Rect; cells: Rect[]; buttons: Button<InventoryButtonId>[] };
   settings: { panel: Rect; buttons: Button<SettingsButtonId>[] };
-  ending: { panel: Rect; restart: Rect };
+  /** Save / load list (D149): slot rows on one page, then Save or Load, More…, Cancel. */
+  slots: { panel: Rect; rows: Rect[]; perPage: number; pages: number; buttons: Button<SlotsButtonId>[] };
+  /** Music and sound-effect volume (D150): a bar between − and + for each. */
+  volume: { panel: Rect; music: Rect; sfx: Rect; labelX: number; buttons: Button<VolumeButtonId>[] };
+  /** The death / win box (spec 07): message, then Restore · Restart · Try again (death only). */
+  ending: { panel: Rect; message: Rect; buttons: Button<EndingButtonId>[]; win: Button<EndingButtonId>[] };
+  /** Short notices ("Game saved."), at the bottom centre. */
+  notice: { x: number; y: number };
 }
 
 const centered = (w: number, h: number): Rect => ({ x: Math.round((SCENE_WIDTH - w) / 2), y: Math.round((SCENE_HEIGHT - h) / 2), w, h });
@@ -98,9 +108,46 @@ export function computeLayout(cssScale: number): Layout {
     });
   }
 
-  // Ending (D71 stand-in for the M8 death box): message area plus Restart.
-  const ePanel = centered(380, 120 + u);
-  const restart = { x: Math.round((SCENE_WIDTH - Math.max(u * 3, 120)) / 2), y: ePanel.y + ePanel.h - pad - u, w: Math.max(u * 3, 120), h: u };
+  // Save / load slots: two columns of rows, paged when they don't all fit (D149).
+  const slotCount = 10;
+  const slotsW = Math.min(SCENE_WIDTH - GAP * 4, 600);
+  const rowsFit = Math.max(1, Math.floor((SCENE_HEIGHT - GAP * 4 - title - pad * 3 - u + GAP) / (u + GAP)));
+  const perCol = Math.min(Math.ceil(slotCount / 2), rowsFit);
+  const perPage = perCol * 2;
+  const pages = Math.ceil(slotCount / perPage);
+  const slotsPanel = centered(slotsW, title + pad * 3 + perCol * (u + GAP) - GAP + u);
+  const colW = Math.floor((slotsW - pad * 2 - GAP) / 2);
+  const slotRows: Rect[] = [];
+  for (let i = 0; i < perPage; i++) {
+    const col = Math.floor(i / perCol);
+    slotRows.push({ x: slotsPanel.x + pad + col * (colW + GAP), y: slotsPanel.y + pad + title + (i % perCol) * (u + GAP), w: colW, h: u });
+  }
+  const slotBtnW = Math.max(u * 2.5, 96);
+  const slotBtnY = slotsPanel.y + slotsPanel.h - pad - u;
+  const slotButtons = row(pages > 1 ? (["act", "more", "cancel"] as const) : (["act", "cancel"] as const), slotsPanel, slotBtnY, slotBtnW, u);
+
+  // Volume: "Music  [−] ▮▮▮▯▯ [+]" and the same for sound effects, then OK.
+  const labelW = 110;
+  const barW = 120;
+  const volW = pad * 2 + labelW + u + GAP + barW + GAP + u;
+  const volPanel = centered(volW, title + pad * 3 + 2 * (u + GAP) - GAP + u);
+  const volRow = (i: number) => volPanel.y + pad + title + i * (u + GAP);
+  const minusX = volPanel.x + pad + labelW;
+  const barX = minusX + u + GAP;
+  const plusX = barX + barW + GAP;
+  const volButtons: Button<VolumeButtonId>[] = [
+    { id: "music_down", rect: { x: minusX, y: volRow(0), w: u, h: u } },
+    { id: "music_up", rect: { x: plusX, y: volRow(0), w: u, h: u } },
+    { id: "sfx_down", rect: { x: minusX, y: volRow(1), w: u, h: u } },
+    { id: "sfx_up", rect: { x: plusX, y: volRow(1), w: u, h: u } },
+    ...row(["ok"] as const, volPanel, volPanel.y + volPanel.h - pad - u, Math.max(u * 2, 64), u),
+  ];
+
+  // Ending (spec 07): message area, then a row of buttons.
+  const eBtnW = Math.max(Math.round(u * 2.5), 100);
+  const ePanel = centered(Math.max(380, eBtnW * 3 + GAP * 2 + pad * 2), 120 + u);
+  const eBtnY = ePanel.y + ePanel.h - pad - u;
+  const message: Rect = { x: ePanel.x + pad, y: ePanel.y + pad + title + GAP, w: ePanel.w - pad * 2, h: eBtnY - (ePanel.y + pad + title + GAP) - GAP };
 
   return {
     unit: u,
@@ -110,7 +157,15 @@ export function computeLayout(cssScale: number): Layout {
     tab,
     inventory: { panel, cells, buttons: invButtons },
     settings: { panel: sPanel, buttons: sButtons },
-    ending: { panel: ePanel, restart },
+    slots: { panel: slotsPanel, rows: slotRows, perPage, pages, buttons: slotButtons },
+    volume: { panel: volPanel, music: { x: barX, y: volRow(0), w: barW, h: u }, sfx: { x: barX, y: volRow(1), w: barW, h: u }, labelX: volPanel.x + pad, buttons: volButtons },
+    ending: {
+      panel: ePanel,
+      message,
+      buttons: row(["restore", "restart", "try_again"] as const, ePanel, eBtnY, eBtnW, u),
+      win: row(["restore", "restart"] as const, ePanel, eBtnY, eBtnW, u),
+    },
+    notice: { x: SCENE_WIDTH / 2, y: SCENE_HEIGHT - GAP * 2 - 10 },
   };
 }
 

@@ -107,6 +107,7 @@ describe("spec 14 acceptance in the editor", () => {
     expect(game.byPart.get(partKey(combine, { kind: "do", index: 0 }))).toHaveLength(1);
     const pot = ruleProblems(problems, ownerRules(p, POT)!);
     const hand = ownerRules(p, POT)!.rules.find((r) => r.do.some((a) => a.type === "give_item"))!.id;
-    expect(pot.byPart.get(partKey(hand, { kind: "do", index: 1 }))![0]!.message).toBe("uses item stick, which doesn't exist.");
+    // Narrate, play the pickup sound (M8), then give the stick.
+    expect(pot.byPart.get(partKey(hand, { kind: "do", index: 2 }))![0]!.message).toBe("uses item stick, which doesn't exist.");
   });
 });

@@ -43,4 +43,10 @@ images:
     path: assets/images/items/coin.png
   - id: lantern_icon
     path: assets/images/items/lantern.png
-audio: []
+audio:
+  - id: garden_theme
+    path: assets/audio/garden_theme.wav
+  - id: shed_theme
+    path: assets/audio/shed_theme.wav
+  - id: pickup
+    path: assets/audio/pickup.wav

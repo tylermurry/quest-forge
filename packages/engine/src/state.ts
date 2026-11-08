@@ -1,7 +1,7 @@
 import type { Facing, FlagsFile, Placement, SceneFile } from "@questforge/schema";
 
-// Runtime game state (spec 07, D75): one plain JSON object, so M8 save/load can
-// store it as-is. Everything that changes during play and must survive a scene
+// Runtime game state (spec 07, D75): one plain JSON object, so save/load (spec 07)
+// stores it as-is. Everything that changes during play and must survive a scene
 // change or a save lives here; UI state (current item, open panels) does not.
 
 /** A standing position. Coordinates may be fractional at runtime. */

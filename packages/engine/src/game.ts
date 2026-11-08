@@ -10,14 +10,17 @@ import {
   type Project,
   type SceneFile,
 } from "@questforge/schema";
+import { AudioSync, sceneAudioIds } from "./audio.ts";
 import { DEBUG_OFF, type DebugFlags } from "./debug.ts";
 import { drawLoading, drawSession, present } from "./render.ts";
-import { Session, type SessionStart } from "./session.ts";
+import { SaveSlots, readSettings, writeSettings, type KeyValueStore } from "./saves.ts";
+import { Session, linkedScenes, type SessionStart } from "./session.ts";
 import type { GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
 import { PlayerUi, type PointerKind } from "./ui/controller.ts";
 import { sheetFits } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
+import { WebAudio } from "./webaudio.ts";
 import type { LoadedImage, World } from "./world.ts";
 
 // The engine entry point (spec 03): data in, no user code.
@@ -45,6 +48,10 @@ export interface GameOptions {
   debug?: Partial<DebugFlags>;
   /** Scale to fill the canvas instead of whole multiples (the editor's playtest area, D135). Still letterboxed. */
   fill?: boolean;
+  /** Where save slots and volumes are kept (spec 07). Default: the page's localStorage; null turns saving off. */
+  storage?: KeyValueStore | null;
+  /** Play sound (default true). */
+  audio?: boolean;
 }
 
 export interface Game {
@@ -57,6 +64,8 @@ export interface Game {
   /** The playing scene, once loaded. */
   readonly world: World | null;
   readonly debug: DebugFlags;
+  /** Audio state, for debugging: has a gesture unlocked it, and which track is sounding. Null with `audio: false`. */
+  readonly audio: { readonly unlocked: boolean; readonly playing: string | null } | null;
   destroy(): void;
 }
 
@@ -91,6 +100,12 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   let ui: PlayerUi | null = null;
   const images = new ImageCache(project, characters, bundle.assetUrl);
   let viewport = fitViewport(canvas.width, canvas.height);
+  const storage = options.storage !== undefined ? options.storage : pageStorage(view);
+  const settings = readSettings(storage, game.id);
+  const audio = options.audio === false ? null : new WebAudio(project.assets!.data.audio, bundle.assetUrl, view, (m) => session?.note(m));
+  const audioSync = audio ? new AudioSync(audio) : null;
+  audioSync?.setVolumes(settings);
+  let audioScene: string | null = null;
   let destroyed = false;
   let raf = 0;
 
@@ -114,6 +129,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   };
   const kindOf = (e: PointerEvent): PointerKind => (e.pointerType === "touch" || e.pointerType === "pen" ? e.pointerType : "mouse");
   const onPointerDown = (e: PointerEvent) => {
+    audio?.unlock();
     if (!ui) return;
     e.preventDefault();
     // Keep the moves and the release of a touch even if it leaves the canvas.
@@ -128,7 +144,11 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     ui.pointerDown(scenePoint(e), kindOf(e), e.button);
   };
   const onPointerMove = (e: PointerEvent) => ui?.pointerMove(scenePoint(e), kindOf(e));
-  const onPointerUp = (e: PointerEvent) => ui?.pointerUp(scenePoint(e), kindOf(e));
+  const onPointerUp = (e: PointerEvent) => {
+    // iOS counts pointerup (not a touch's pointerdown) as the gesture that may start audio.
+    audio?.unlock();
+    ui?.pointerUp(scenePoint(e), kindOf(e));
+  };
   const onPointerCancel = () => ui?.pointerCancel();
   const onPointerLeave = (e: PointerEvent) => e.pointerType === "mouse" && ui?.pointerMove(null, "mouse");
   const onContextMenu = (e: Event) => e.preventDefault();
@@ -142,6 +162,9 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   ] as const;
   for (const [type, fn] of listeners) canvas.addEventListener(type, fn as EventListener);
   canvas.style.touchAction = "none";
+  const doc = canvas.ownerDocument;
+  const onVisibility = () => audio?.setHidden(doc.visibilityState === "hidden");
+  doc.addEventListener("visibilitychange", onVisibility);
   // The cursor is drawn in the back buffer (D77).
   canvas.style.cursor = "none";
 
@@ -149,9 +172,20 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     session?.tick(dt);
     ui?.tick(dt);
   });
+  /** Music and sounds follow the session; a new scene's audio is fetched on entry. */
+  const syncAudio = () => {
+    if (!session || !audio || !audioSync) return;
+    if (session.scene.id !== audioScene) {
+      audioScene = session.scene.id;
+      const linked = linkedSceneFiles(session);
+      audio.prefetch([...sceneAudioIds(session.scene), ...linked.flatMap((sc) => (sc.music === undefined ? [] : [sc.music]))]);
+    }
+    audioSync.update(session);
+  };
   const frame = (now: number) => {
     if (destroyed) return;
     loop.advance(now);
+    syncAudio();
     const loading = session ? session.loading : scene;
     if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0);
@@ -172,7 +206,14 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       ...(options.dialogue ? { dialogue: options.dialogue } : {}),
     };
     session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) });
-    ui = new PlayerUi(session);
+    ui = new PlayerUi(session, {
+      slots: new SaveSlots(storage, game),
+      settings,
+      onSettings: (next) => {
+        audioSync?.setVolumes(next);
+        writeSettings(storage, game.id, next);
+      },
+    });
     resize();
   });
 
@@ -188,13 +229,30 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       return session?.world ?? null;
     },
     debug,
+    audio,
     destroy() {
       destroyed = true;
       view.cancelAnimationFrame(raf);
       observer.disconnect();
       for (const [type, fn] of listeners) canvas.removeEventListener(type, fn as EventListener);
+      doc.removeEventListener("visibilitychange", onVisibility);
+      audio?.close();
     },
   };
+}
+
+/** The page's localStorage, or null where the browser blocks it. */
+function pageStorage(view: Window): KeyValueStore | null {
+  try {
+    return view.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** Scenes the current scene's rules can change to (D75), for prefetching their music. */
+function linkedSceneFiles(session: Session): SceneFile[] {
+  return linkedScenes(session.scene).flatMap((id) => session.sceneFile(id) ?? []);
 }
 
 /** Image IDs a scene needs: background, objects, and every character placed in it (plus the player). */

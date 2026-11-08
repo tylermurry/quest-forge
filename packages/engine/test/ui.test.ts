@@ -34,7 +34,9 @@ describe("layout (D76)", () => {
         L.barButtons.map((b) => b.rect),
         [...L.inventory.cells, ...L.inventory.buttons.map((b) => b.rect)],
         L.settings.buttons.map((b) => b.rect),
-        [L.ending.restart],
+        L.ending.buttons.map((b) => b.rect),
+        [...L.slots.rows, ...L.slots.buttons.map((b) => b.rect)],
+        L.volume.buttons.map((b) => b.rect),
         [L.tab.hit],
       ];
       for (const group of groups) {
@@ -189,7 +191,7 @@ describe("inventory (D80)", () => {
 });
 
 describe("settings and endings (D71, D80)", () => {
-  it("Restart from settings resets the game; Save/Load do nothing yet", () => {
+  it("Restart from settings resets the game; Save opens the slots and Cancel comes back", () => {
     const { s, ui } = make();
     s.state.inventory.push("key");
     ui.touchSeen = true;
@@ -197,19 +199,24 @@ describe("settings and endings (D71, D80)", () => {
     tap(ui, bar(ui, "settings"));
     expect(ui.panel).toBe("settings");
     tap(ui, center(ui.layout.settings.buttons.find((b) => b.id === "save")!.rect));
+    expect(ui.panel).toBe("save");
+    tap(ui, center(ui.layout.slots.buttons.find((b) => b.id === "cancel")!.rect));
+    expect(ui.panel).toBe("settings");
+    // Nothing saved yet: Load stays shut.
+    tap(ui, center(ui.layout.settings.buttons.find((b) => b.id === "load")!.rect));
     expect(ui.panel).toBe("settings");
     tap(ui, center(ui.layout.settings.buttons.find((b) => b.id === "restart")!.rect));
     expect(ui.panel).toBe(null);
     expect(s.state.inventory).toEqual([]);
   });
 
-  it("an ending only answers its Restart button", () => {
+  it("an ending only answers its buttons", () => {
     const enter = rule({ type: "scene_enter" }, [{ type: "die", message: "Oops." }], [{ type: "first_time" }]);
     const { s, ui } = make({ yard: { rules: [enter] } });
     expect(s.ending?.kind).toBe("die");
     tap(ui, [100, 380]);
     expect(s.ending?.kind).toBe("die");
-    tap(ui, center(ui.layout.ending.restart));
+    tap(ui, center(ui.layout.ending.buttons.find((b) => b.id === "restart")!.rect));
     // Restart resets fired rules too, so the first-time enter rule runs again.
     expect(s.ending?.kind).toBe("die");
     expect(s.state.fired).toEqual([`yard/scene/${enter.id}`]);

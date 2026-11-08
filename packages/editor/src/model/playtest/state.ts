@@ -1,22 +1,17 @@
 // The playtest state panel (spec 12, D130): what it lists and the live edits it
 // makes. Edits change the running session's GameState at once, even during a
 // sequence; they are play state, never project data and never undo steps.
-import { choiceKey, score, type GameState, type Session } from "@questforge/engine";
-import { logicBlocks, type Project } from "@questforge/schema";
+import { awardCatalog, choiceKey, score, type GameState, type Session } from "@questforge/engine";
+import type { Project } from "@questforge/schema";
 import { pickerOptions, type PickOption } from "../rules/pickers.ts";
 import { hereSpawn } from "./playtest.ts";
 
+/** An award ID and the points it gives first (D132); the catalog is the engine's (shared with loading saves). */
 export interface AwardOption {
   id: string;
   points: number;
 }
-
-/** Every award ID in the project's `award_points` actions, with the points it gives first (D132). */
-export function awardCatalog(p: Project): AwardOption[] {
-  const out = new Map<string, number>();
-  for (const b of logicBlocks(p)) for (const { a } of b.actions) if (a.type === "award_points" && !out.has(a.award)) out.set(a.award, a.points);
-  return [...out].map(([id, points]) => ({ id, points }));
-}
+export { awardCatalog };
 
 export interface StateView {
   scene: PickOption;

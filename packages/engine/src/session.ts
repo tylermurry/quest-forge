@@ -1,6 +1,7 @@
 import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type DialogueFile, type DialogueNode, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
 import { DialogueRun, type ChoiceList, type DialogueHost } from "./dialogue.ts";
 import { defaultResponse, firstMatch, type RuleContext, type RuleOwner } from "./rules.ts";
+import { sanitizeState } from "./restore.ts";
 import { Sequence, type Done } from "./sequence.ts";
 import type { Trace } from "./trace.ts";
 import {
@@ -56,6 +57,9 @@ export interface SceneAssets {
 }
 export const ALWAYS_READY: SceneAssets = { ready: () => true, prefetch: () => {} };
 
+/** Most sounds waiting for the host at once; older ones are dropped (a headless session never drains them). */
+const MAX_SOUNDS = 8;
+
 /** A scene change in progress (D72): the old scene's exit rule, then loading. */
 interface SceneChange {
   scene: SceneFile;
@@ -90,6 +94,8 @@ export class Session implements DialogueHost {
   /** Warnings and audio events, newest last (for the dev page and later the event log). */
   readonly log: string[] = [];
   readonly game: GameFile;
+  /** `play_sound` IDs not yet played, oldest first. The host drains them (spec 07). */
+  readonly sounds: string[] = [];
   private sequence: Sequence | null = null;
   /** The dialogue being played (spec 11). */
   private _dialogue: DialogueRun | null = null;
@@ -105,7 +111,8 @@ export class Session implements DialogueHost {
   readonly ctx: RuleContext;
   readonly trace: Trace | undefined;
   private readonly onRestart: (() => void) | undefined;
-  private _entry!: { state: GameState; spawn: string | null };
+  /** The auto-snapshot of the current scene's entry (D43, D128). `enter`: Try again re-runs its `scene_enter` rule. */
+  private _entry!: { state: GameState; spawn: string | null; enter: boolean };
 
   constructor(
     private readonly project: Project,
@@ -176,18 +183,24 @@ export class Session implements DialogueHost {
     else this.restart();
   }
 
-  /** Back to the start. */
-  restart() {
+  /** Stops whatever runs and clears UI state, before a restart or a load. */
+  private reset() {
     this.sequence?.stop();
     this.sequence = null;
     this._dialogue?.stop();
     this._dialogue = null;
-    this.pendingDialogue = this.start.dialogue ?? null;
+    this.pendingDialogue = null;
     this.change = null;
     this.verb = "walk";
     this.item = null;
     this.text = null;
     this.ending = null;
+  }
+
+  /** Back to the start. */
+  restart() {
+    this.reset();
+    this.pendingDialogue = this.start.dialogue ?? null;
     if (this.start.state) {
       const state = cloneState(this.start.state);
       const scene = this.scenes.get(state.scene);
@@ -206,6 +219,36 @@ export class Session implements DialogueHost {
     this.state = initialState(this.project.flags?.data ?? null, sceneId, spawn);
     this.ctx.state = this.state;
     this.enterScene(scene, spawnId, null);
+  }
+
+  /**
+   * Loads a saved state (spec 07, D43, D147): IDs the project no longer has are
+   * dropped (listed in the result, and the player is told), then play goes on exactly
+   * where it was saved. The scene's `scene_enter` rule does not run again.
+   */
+  load(saved: GameState): { dropped: string[] } {
+    const { state, dropped } = sanitizeState(this.project, saved);
+    const scene = this.scenes.get(state.scene);
+    if (!scene) throw new Error(`Scene ${state.scene} doesn't exist`);
+    this.reset();
+    this.state = state;
+    this.ctx.state = state;
+    this.enterScene(scene, null, null, false);
+    if (dropped.length) {
+      this.note(`Loaded a save without ${dropped.join(", ")}, which no longer ${dropped.length === 1 ? "exists" : "exist"}.`);
+      this.run([{ type: "narrate", text: "This saved game is from an older version of the game. A few things in it no longer exist and were left out." }]);
+    }
+    return { dropped };
+  }
+
+  /** "Try again" after a death (spec 07): back to the current scene's entry snapshot. */
+  tryAgain() {
+    const entry = this._entry;
+    const scene = this.scenes.get(entry.state.scene)!;
+    this.reset();
+    this.state = cloneState(entry.state);
+    this.ctx.state = this.state;
+    this.enterScene(scene, entry.spawn, null, entry.enter);
   }
 
   // ── Input ─────────────────────────────────────────────────────────────────
@@ -321,10 +364,11 @@ export class Session implements DialogueHost {
 
   // ── Rules ─────────────────────────────────────────────────────────────────
 
-  private enterScene(scene: SceneFile, spawn: string | null, from: string | null) {
+  /** `enter` false (a load): the scene's music and `scene_enter` rule don't run, so the saved state stays exact. */
+  private enterScene(scene: SceneFile, spawn: string | null, from: string | null, enter = true) {
     const s = this.state;
     s.scene = scene.id;
-    this._entry = { state: cloneState(s), spawn };
+    this._entry = { state: cloneState(s), spawn, enter };
     this.trace?.({ type: "scene", from, to: scene.id, spawn });
     this.world = new World(scene, this.characters, this.images, {
       player: this.game.player,
@@ -342,6 +386,12 @@ export class Session implements DialogueHost {
     for (const id of linkedScenes(scene)) {
       const next = this.scenes.get(id);
       if (next) this.assets.prefetch(next);
+    }
+    if (!enter) return;
+    // Scene music (spec 07, D148): the same track carries on; no music field leaves it as it is.
+    if (scene.music !== undefined && s.music !== scene.music) {
+      s.music = scene.music;
+      this.note(`Music: ${scene.music} (the scene's music)`);
     }
     this.fire({ kind: "scene", scene: scene.id }, scene.rules, { type: "scene_enter" });
   }
@@ -466,8 +516,8 @@ export class Session implements DialogueHost {
     }
   }
 
-  note(message: string, milestone?: "M8") {
-    this.trace?.({ type: "note", message, ...(milestone ? { milestone } : {}) });
+  note(message: string) {
+    this.trace?.({ type: "note", message });
     this.log.push(message);
     if (this.log.length > MAX_LOG) this.log.shift();
   }
@@ -557,12 +607,12 @@ export class Session implements DialogueHost {
   }
 
   playSound(sound: string) {
-    this.note(`Sound: ${sound} (no sound until audio arrives in M8)`, "M8");
+    this.sounds.push(sound);
+    if (this.sounds.length > MAX_SOUNDS) this.sounds.shift();
   }
 
-  playMusic(music: string | null) {
-    this.note(music ? `Music: ${music} (no sound until audio arrives in M8)` : "Music stopped", "M8");
-  }
+  /** The track lives in `state.music` (set by the sequence); the host's audio follows it. */
+  playMusic() {}
 
   endGame(ending: Ending) {
     this.world.stop();
@@ -574,8 +624,8 @@ export class Session implements DialogueHost {
     this.ending = ending;
   }
 
-  warn(message: string, milestone?: "M8") {
-    this.note(message, milestone);
+  warn(message: string) {
+    this.note(message);
   }
 
   /** Starts a dialogue (spec 11). One plays at a time: another start is ignored with a note (D136). */

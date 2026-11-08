@@ -385,6 +385,15 @@ export function setBackground(p: Project, sceneId: string, imageId: string | und
   });
 }
 
+/** Sets or removes a scene's music (spec 07, D148): the track that plays while the player is in it. */
+export function setSceneMusic(p: Project, sceneId: string, audioId: string | undefined): Project {
+  if (audioId !== undefined && !p.assets?.data.audio.some((a) => a.id === audioId)) throw new CommandError(`There's no sound with ID ${audioId}.`);
+  return updateScene(p, sceneId, (s) => {
+    const { music: _old, ...rest } = s;
+    return audioId === undefined ? rest : { ...rest, music: audioId };
+  });
+}
+
 // ── Inspector fields (D99) ───────────────────────────────────────────────────
 
 /** Changes the ID of an object, spawn, hotspot or region and everything that refers to it. */

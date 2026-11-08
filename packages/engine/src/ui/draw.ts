@@ -1,4 +1,5 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { VOLUME_STEPS } from "../saves.ts";
 import type { Session } from "../session.ts";
 import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
@@ -73,7 +74,10 @@ export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, drawText: () =>
   if (ui.panel === "settings") drawSettings(ctx, ui);
   drawChoices(ctx, ui);
   drawText();
-  if (s.ending) drawEnding(ctx, s, L.ending);
+  if (s.ending) drawEnding(ctx, ui, s, L.ending);
+  if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui);
+  if (ui.panel === "volume") drawVolume(ctx, ui);
+  if (ui.notice) drawNotice(ctx, ui.notice.text, L.notice);
   if (ui.label) drawLabel(ctx, ui.label.text, ui.label.at);
   if (ui.cursor) drawCursor(ctx, ui, itemImg);
 }
@@ -188,9 +192,9 @@ function drawInventory(ctx: Ctx, ui: PlayerUi, icons: IconImage, itemImg: Canvas
 
 const SETTINGS_TEXT: Record<string, string> = {
   restart: "Restart",
-  save: "Save (coming in M8)",
-  load: "Load (coming in M8)",
-  volume: "Volume (coming in M8)",
+  save: "Save game",
+  load: "Load game",
+  volume: "Volume",
   close: "Close",
 };
 
@@ -198,7 +202,7 @@ function drawSettings(ctx: Ctx, ui: PlayerUi) {
   const L = ui.layout.settings;
   panel(ctx, L.panel, "Settings");
   for (const b of L.buttons) {
-    const enabled = b.id === "restart" || b.id === "close";
+    const enabled = b.id !== "load" || ui.slots.any;
     button(ctx, b.rect, false, enabled);
     ctx.font = TEXT_FONT;
     ctx.fillStyle = enabled ? EDGE : DIM;
@@ -208,18 +212,112 @@ function drawSettings(ctx: Ctx, ui: PlayerUi) {
   }
 }
 
-/** The D71 stand-in for M8's death box. */
-function drawEnding(ctx: Ctx, s: Session, L: { panel: Rect; restart: Rect }) {
+const ENDING_TEXT: Record<string, string> = { restore: "Restore", restart: "Restart", try_again: "Try again" };
+
+/** The Sierra death box (spec 07): message, then Restore · Restart · Try again. A win offers Restore · Restart. */
+function drawEnding(ctx: Ctx, ui: PlayerUi, s: Session, L: PlayerUi["layout"]["ending"]) {
   const e = s.ending!;
   panel(ctx, L.panel, e.kind === "die" ? "You have died" : "You won!");
   ctx.font = TEXT_FONT;
-  const lines = wrap((t) => ctx.measureText(t).width, e.kind === "die" ? e.message : `Score: ${score(s.state)} of ${s.game.maxScore}`, L.panel.w - 40);
+  const text = e.kind === "die" ? `${e.message}\n\nScore: ${score(s.state)} of ${s.game.maxScore}` : `Score: ${score(s.state)} of ${s.game.maxScore}`;
+  const lines = wrap((t) => ctx.measureText(t).width, text, L.message.w - 16);
+  const shown = lines.slice(0, Math.max(1, Math.floor(L.message.h / TEXT_LINE)));
   ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  lines.forEach((l, i) => ctx.fillText(l, L.panel.x + L.panel.w / 2, L.panel.y + 30 + i * TEXT_LINE));
-  button(ctx, L.restart);
-  label(ctx, "Restart", L.restart.x + L.restart.w / 2, L.restart.y + L.restart.h / 2);
+  shown.forEach((l, i) => ctx.fillText(l, L.message.x + L.message.w / 2, L.message.y + i * TEXT_LINE));
+  for (const b of e.kind === "die" ? L.buttons : L.win) {
+    const enabled = b.id !== "restore" || ui.slots.any;
+    button(ctx, b.rect, false, enabled);
+    ctx.font = TEXT_FONT;
+    ctx.fillStyle = enabled ? EDGE : DIM;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ENDING_TEXT[b.id]!, b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+  }
+}
+
+const savedAt = (ms: number) => {
+  try {
+    return new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+};
+
+/** The save / load list (D149): numbered slots, the picked one highlighted. */
+function drawSlots(ctx: Ctx, ui: PlayerUi) {
+  const L = ui.layout.slots;
+  const saving = ui.panel === "save";
+  panel(ctx, L.panel, saving ? "Save game" : "Load game");
+  L.rows.forEach((r, row) => {
+    const i = ui.slotAt(row);
+    if (i === null) return;
+    const slot = ui.slots.list[i] ?? null;
+    const picked = ui.slot === i;
+    const usable = saving || slot !== null;
+    button(ctx, r, picked, usable);
+    ctx.font = TEXT_FONT;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = picked ? "#000" : usable ? EDGE : DIM;
+    const head = `${i + 1}.`;
+    ctx.fillText(head, r.x + 6, r.y + r.h / 2);
+    const x = r.x + 28;
+    const w = r.w - 34;
+    if (!slot) {
+      ctx.fillText("Empty", x, r.y + r.h / 2);
+      return;
+    }
+    ctx.fillText(fit(ctx, slot.name, w), x, r.y + r.h / 2 - TEXT_LINE / 2);
+    ctx.fillStyle = picked ? "#222" : DIM;
+    ctx.fillText(fit(ctx, savedAt(slot.savedAt), w), x, r.y + r.h / 2 + TEXT_LINE / 2);
+  });
+  for (const b of L.buttons) {
+    const enabled = b.id !== "act" || ui.slotActionEnabled;
+    button(ctx, b.rect, false, enabled);
+    ctx.font = b.id === "act" ? `bold ${TEXT_FONT}` : TEXT_FONT;
+    ctx.fillStyle = enabled ? EDGE : DIM;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const text = b.id === "act" ? (saving ? "Save" : "Load") : b.id === "more" ? `More… (${ui.slotPage + 1}/${L.pages})` : "Cancel";
+    ctx.fillText(text, b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+  }
+}
+
+/** Music and sound-effect volume (D150). */
+function drawVolume(ctx: Ctx, ui: PlayerUi) {
+  const L = ui.layout.volume;
+  panel(ctx, L.panel, "Volume");
+  const bars: [string, Rect, number][] = [
+    ["Music", L.music, ui.settings.music],
+    ["Sound effects", L.sfx, ui.settings.sfx],
+  ];
+  for (const [name, r, level] of bars) {
+    label(ctx, name, L.labelX, r.y + r.h / 2, "left");
+    const seg = (r.w - (VOLUME_STEPS - 1) * 2) / VOLUME_STEPS;
+    for (let i = 0; i < VOLUME_STEPS; i++) {
+      ctx.fillStyle = i < level ? ACTIVE : "#1a140e";
+      ctx.fillRect(Math.round(r.x + i * (seg + 2)), r.y + r.h / 4, Math.floor(seg), Math.round(r.h / 2));
+    }
+  }
+  for (const b of L.buttons) {
+    button(ctx, b.rect);
+    ctx.font = `bold ${TEXT_FONT}`;
+    ctx.fillStyle = EDGE;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(b.id === "ok" ? "OK" : b.id.endsWith("_up") ? "+" : "−", b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+  }
+}
+
+function drawNotice(ctx: Ctx, text: string, at: { x: number; y: number }) {
+  ctx.font = TEXT_FONT;
+  const w = Math.ceil(ctx.measureText(text).width) + 16;
+  const h = 18;
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(Math.round(at.x - w / 2), Math.round(at.y - h / 2), w, h);
+  label(ctx, text, at.x, at.y);
 }
 
 function drawLabel(ctx: Ctx, text: string, at: readonly [number, number]) {

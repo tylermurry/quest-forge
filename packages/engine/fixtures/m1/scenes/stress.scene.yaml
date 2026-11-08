@@ -2,6 +2,7 @@ schemaVersion: 2
 id: stress
 name: Stress test
 background: garden_bg
+music: garden_theme
 depth:
   far:
     y: 150
