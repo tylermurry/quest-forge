@@ -72,7 +72,24 @@ describe("workspace (D89, D103)", () => {
     await mount();
     fireEvent.click(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!);
     const inspector = screen.getByLabelText("Inspector");
-    expect(inspector.textContent).toContain("Used by 2 rules in 1 scene and the game settings");
+    // Grouped under a header per file, one bullet per use.
+    const scene = within(inspector).getByRole("region", { name: 'Scene "Garden"' });
+    expect(within(scene).getAllByRole("listitem").length).toBeGreaterThan(0);
+    expect(within(inspector).getByRole("region", { name: "Game settings" })).toBeTruthy();
+    expect(inspector.textContent).not.toContain("Used by 2 rules");
+  });
+
+  it("each Used by line is a link that shows where it is, flashed blue", async () => {
+    await mount();
+    fireEvent.click(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!);
+    const inspector = screen.getByLabelText("Inspector");
+    const links = within(inspector).getAllByRole("button", { name: /Rule \d/ });
+    expect(links.length).toBeGreaterThan(0);
+    fireEvent.click(links[0]!);
+    // The Inspector now shows the rule's owner, and the spot flashes blue (not the problem red).
+    expect(screen.getByLabelText("Inspector").textContent).not.toContain("Used by 2 rules");
+    expect(document.querySelector(".qf-flash-log")).toBeTruthy();
+    expect(document.querySelector(".qf-flash")).toBeNull();
   });
 
   it("the Problems list jumps to the entry", async () => {

@@ -1,7 +1,9 @@
 import { NOUN, type Actions } from "../model/actions.ts";
 import { entriesInFolder } from "../model/commands.ts";
 import { SECTIONS, isAssetKind, sectionEntries } from "../model/browser.ts";
-import { describeReferences, entryReferences, renameEntry, summarizeReferences } from "../model/commands.ts";
+import type { Reference } from "@questforge/schema";
+import { entryReferences, groupReferences, renameEntry } from "../model/commands.ts";
+import { locate } from "../model/locate.ts";
 import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
 import { GameInspector } from "./rules/GameInspector.tsx";
 import { NodeInspector } from "./dialogue/NodeInspector.tsx";
@@ -106,7 +108,7 @@ export function Inspector({ actions }: { actions: Actions }) {
           </>
         )}
         {image && <ImagePreview path={image.path} actions={actions} />}
-        <References summary={summarizeReferences(refs)} lines={describeReferences(p, refs)} />
+        <References actions={actions} refs={refs} />
       </dl>
     </InspectorShell>
   );
@@ -125,19 +127,35 @@ function ImagePreview({ path, actions }: { path: string; actions: Actions }) {
   );
 }
 
-export function References({ summary, lines }: { summary: string | null; lines: string[] }) {
+/** "Used by": a header per file, with one link per use: click to show where it is, flashed blue like a playtest log jump. */
+export function References({ actions, refs }: { actions: Actions; refs: Reference[] }) {
+  const p = actions.editor.project;
   return (
     <>
       <dt className={DT}>Used by</dt>
       <dd>
-        {summary ?? "Nothing uses it yet."}
-        {lines.length > 0 && (
-          <ul className="mt-1 list-disc pl-4">
-            {lines.map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
-        )}
+        {refs.length === 0 && "Nothing uses it yet."}
+        {groupReferences(p, refs).map((g) => (
+          <section key={g.title} className="mt-2 first:mt-0" aria-label={g.title}>
+            <h4 className="text-[12px] font-semibold">{g.title}</h4>
+            <ul className="mt-0.5 list-disc pl-4">
+              {g.items.map((it, i) => {
+                const jump = locate(p, it.location);
+                return (
+                  <li key={i}>
+                    {jump ? (
+                      <button className="text-primary block cursor-pointer text-left underline-offset-2 hover:underline" title="Show where it's used" onClick={() => actions.ws.jumpTo(jump, "log")}>
+                        {it.text}
+                      </button>
+                    ) : (
+                      it.text
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
       </dd>
     </>
   );

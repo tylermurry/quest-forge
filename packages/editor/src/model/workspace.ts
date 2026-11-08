@@ -26,7 +26,7 @@ export type Selection =
 export interface Highlight {
   location: Location;
   seq: number;
-  /** Where the jump came from: a problem flashes red, a playtest log line blue. */
+  /** Where the jump came from: a problem flashes red; a playtest log line or a "Used by" link, blue. */
   tone: FlashTone;
 }
 

@@ -28,7 +28,7 @@ function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef
           return (
             <div key={verb} className="grid gap-1">
               <span className="text-muted-foreground text-[12px]">{QUICK_LABEL[verb]}</span>
-              <button className="text-primary w-fit text-left text-[13px] underline-offset-2 hover:underline" onClick={() => ws.flash({ file: own.file, path: [...own.path, i] })}>
+              <button className="text-primary w-fit cursor-pointer text-left text-[13px] underline-offset-2 hover:underline" onClick={() => ws.flash({ file: own.file, path: [...own.path, i] })}>
                 Set by rule {q.number}
               </button>
             </div>

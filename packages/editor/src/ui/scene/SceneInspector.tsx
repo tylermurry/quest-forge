@@ -2,7 +2,7 @@ import type { Facing, Problem, SceneFile } from "@questforge/schema";
 import { CircleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Actions } from "../../model/actions.ts";
-import { describeReferences, sceneThingReferences, summarizeReferences } from "../../model/commands.ts";
+import { sceneThingReferences } from "../../model/commands.ts";
 import {
   addObstacle,
   changeThingId,
@@ -341,7 +341,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
       {body}
       {kind && (
         <dl className="grid gap-0.5">
-          <References summary={summarizeReferences(refs)} lines={describeReferences(p, refs)} />
+          <References actions={actions} refs={refs} />
         </dl>
       )}
       {changingId && (

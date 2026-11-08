@@ -430,6 +430,25 @@ export function summarizeReferences(refs: Reference[]): string | null {
 /** One line per reference: where it is, for the delete dialog. */
 export const describeReferences = (p: Project, refs: Reference[]) => refs.map((r) => describeReference(p, r));
 
+export interface ReferenceGroup {
+  /** The file that holds the uses, e.g. `Scene "Garden"` or `Game settings`. */
+  title: string;
+  items: { text: string; location: Reference["location"] }[];
+}
+
+/** Uses grouped by the file they're in (scenes first, then items, characters, dialogues, the rest), for the Inspector. */
+export function groupReferences(p: Project, refs: Reference[]): ReferenceGroup[] {
+  const order: Reference["fileKind"][] = ["scene", "item", "character", "dialogue", "game", "flags", "assets"];
+  const groups = new Map<string, { kind: Reference["fileKind"]; group: ReferenceGroup }>();
+  for (const r of refs) {
+    const [root = "", ...rest] = describeReference(p, r).split(" › ");
+    const g = groups.get(r.location.file) ?? { kind: r.fileKind, group: { title: r.fileKind === "scene" ? `Scene "${root}"` : root, items: [] } };
+    groups.set(r.location.file, g);
+    g.group.items.push({ text: rest.join(" › ") || "Setting", location: r.location });
+  }
+  return [...groups.values()].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)).map((g) => g.group);
+}
+
 /** References to everything inside a folder (for deleting a folder). */
 export function folderReferences(p: Project, section: Section, folder: string): Reference[] {
   const ids = new Set(entriesInFolder(p, section, folder).map((e) => e.id));
