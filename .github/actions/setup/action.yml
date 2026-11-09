@@ -6,6 +6,8 @@ runs:
     - uses: actions/setup-node@v5
       with:
         node-version: 24
+        # v5 otherwise sees packageManager and looks for pnpm before corepack has enabled it.
+        package-manager-cache: false
     - name: Enable corepack
       shell: bash
       run: corepack enable
