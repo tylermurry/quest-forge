@@ -17,6 +17,8 @@ export interface SequenceHost {
   say(character: string, text: string): Done;
   /** Walk the player there (or the nearest reachable point). */
   walkPlayerTo(x: number, y: number): Done;
+  /** Walk another character there (or the nearest reachable point). Null when they aren't in this scene. */
+  walkCharacterTo(character: string, x: number, y: number): Done | null;
   face(facing: Facing): void;
   /** Leaves the scene; the sequence ends here (D72). */
   changeScene(scene: string, spawn: string): void;
@@ -87,6 +89,9 @@ export class Sequence {
         return;
       case "walk_player_to":
         this.block = host.walkPlayerTo(a.x, a.y);
+        return;
+      case "walk_character_to":
+        this.block = host.walkCharacterTo(a.character, a.x, a.y);
         return;
       case "face":
         host.face(a.facing);

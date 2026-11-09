@@ -2,7 +2,7 @@ import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, ty
 import { scaleAt, walkSpeedAt } from "./depth.ts";
 import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage, type ObjectPose } from "./drawables.ts";
 import { NavMesh, sceneNav } from "./nav.ts";
-import { facingFor, type AnimKind } from "./sprite.ts";
+import { facingFor, resolveAnim, type AnimKind } from "./sprite.ts";
 import type { Position } from "./state.ts";
 import { dist, sub, type Vec } from "./vec.ts";
 
@@ -64,6 +64,8 @@ export class World {
   private path: Vec[] = [];
   private _lastPath: Vec[] = [];
   private onArrive: (() => void) | null = null;
+  /** Walks of NPCs started by `walk_character_to`, by character ID. */
+  private readonly npcWalks = new Map<string, { path: Vec[]; onArrive: (() => void) | null }>();
 
   constructor(
     scene: SceneFile,
@@ -138,6 +140,60 @@ export class World {
     if (this.path.length === 0) this.arrive();
   }
 
+  /** Whether an NPC is mid-walk from `walkNpcTo`. */
+  isNpcWalking(id: string): boolean {
+    return this.npcWalks.has(id);
+  }
+
+  /**
+   * Walk an NPC to `p` (or the nearest reachable point). Returns false when the
+   * character isn't an NPC here. `onArrive` runs when they get there; a later walk replaces it.
+   */
+  walkNpcTo(id: string, p: Vec, onArrive: (() => void) | null = null): boolean {
+    const a = this.npcs.find((n) => n.id === id);
+    if (!a) return false;
+    a.special = null;
+    const path = this.navMesh.findPath(a.pos, p).slice(1);
+    if (path.length === 0) {
+      this.npcWalks.delete(id);
+      this.setAnim(a, "idle", a.facing);
+      onArrive?.();
+      return true;
+    }
+    this.npcWalks.set(id, { path, onArrive });
+    return true;
+  }
+
+  private tickNpcWalks(dt: number) {
+    for (const [id, walk] of this.npcWalks) {
+      const a = this.npcs.find((n) => n.id === id)!;
+      let budget = walkSpeedAt(this.scene.depth, a.pos[1], a.character.walkSpeed) * dt;
+      while (budget > 0 && walk.path.length > 0) {
+        const next = walk.path[0]!;
+        const d = dist(a.pos, next);
+        if (d > 0) {
+          // A character with no walk animation slides in its idle pose instead of vanishing.
+          const facing = facingFor(sub(next, a.pos), a.facing);
+          this.setAnim(a, resolveAnim(a.character, "walk", facing) ? "walk" : "idle", facing);
+        }
+        if (d <= budget) {
+          a.pos = next;
+          walk.path.shift();
+          budget -= d;
+        } else {
+          const k = budget / d;
+          a.pos = [a.pos[0] + (next[0] - a.pos[0]) * k, a.pos[1] + (next[1] - a.pos[1]) * k];
+          budget = 0;
+        }
+      }
+      if (walk.path.length === 0) {
+        this.npcWalks.delete(id);
+        this.setAnim(a, "idle", a.facing);
+        walk.onArrive?.();
+      }
+    }
+  }
+
   /** Stop where the player is, dropping any arrival callback. */
   stop() {
     this.path = [];
@@ -172,6 +228,7 @@ export class World {
   placeCharacter(id: string, p: Position) {
     const a = this.actorById(id);
     if (a && a !== this.player) {
+      this.npcWalks.delete(id);
       a.pos = [p.x, p.y];
       this.setAnim(a, "idle", p.facing);
       return;
@@ -245,6 +302,7 @@ export class World {
         if (!anim.loop && a.special.time >= anim.frames.length / anim.fps) a.special = null;
       }
     }
+    this.tickNpcWalks(dt);
     if (this.path.length === 0) return;
     let budget = walkSpeedAt(this.scene.depth, this.player.pos[1], this.player.character.walkSpeed) * dt;
     while (budget > 0 && this.path.length > 0) {

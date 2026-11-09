@@ -89,11 +89,11 @@ describe("vocabulary (spec 02)", () => {
     const inRule = validateProject(q).filter((x) => x.location.path.join(".").startsWith(at));
     expect(inRule.map((x) => `${x.code} ${x.location.path.slice(4).join(".")}`)).toEqual([
       "missing_reference if.3.counter",
-      "missing_reference do.8.counter",
-      "missing_reference do.12.animation",
+      "missing_reference do.9.counter",
+      "missing_reference do.13.animation",
       "empty_text do.0.text",
       "empty_text do.1.text",
-      "empty_text do.19.message",
+      "empty_text do.20.message",
     ]);
   });
 

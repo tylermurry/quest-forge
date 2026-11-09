@@ -109,6 +109,32 @@ describe("walk-into regions and scene changes", () => {
     expect(s.world.actorById("gardener")?.pos).toEqual([500, 380]);
   });
 
+  it("walks another character to a point and remembers where they stopped", () => {
+    const s = make();
+    const done = s.walkCharacterTo("gardener", 400, 380)!;
+    expect(done()).toBe(false);
+    run(s, 20);
+    expect(done()).toBe(true);
+    expect(s.world.actorById("gardener")?.pos).toEqual([400, 380]);
+    expect(s.state.characters["yard/gardener"]).toMatchObject({ x: 400, y: 380 });
+  });
+
+  it("keeps a character with no walk animation visible while it walks", () => {
+    const s = make();
+    const gardener = s.world.actorById("gardener")!;
+    gardener.character = { ...gardener.character, animations: { idle_down: gardener.character.animations.idle_down! } };
+    s.walkCharacterTo("gardener", 400, 380);
+    run(s, 0.3);
+    const g = s.world.actorById("gardener")!;
+    expect(g.kind).toBe("idle");
+    expect(s.world.drawList().some((d) => d.id === "gardener")).toBe(true);
+  });
+
+  it("skips a walk for a character who isn't in the scene", () => {
+    const s = make();
+    expect(s.walkCharacterTo("nobody", 400, 380)).toBeNull();
+  });
+
   it("waits for the next scene's images, and prefetches linked scenes on entry (D75)", () => {
     const loaded = new Set(["yard"]);
     const fetched: string[] = [];

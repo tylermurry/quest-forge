@@ -544,6 +544,20 @@ export class Session implements DialogueHost {
     return () => !this.world.walking;
   }
 
+  walkCharacterTo(character: string, x: number, y: number): Done | null {
+    if (character === this.world.player.id) return this.walkPlayerTo(x, y);
+    const scene = this.scene.id;
+    const arrived = () => {
+      const a = this.world.actorById(character);
+      if (a) setCharacterPosition(this.state, scene, character, { x: a.pos[0], y: a.pos[1], facing: a.facing });
+    };
+    if (!this.world.walkNpcTo(character, [x, y], arrived)) {
+      this.note(`Character ${character} isn't in ${scene}, so it can't walk.`);
+      return null;
+    }
+    return () => !this.world.isNpcWalking(character);
+  }
+
   face(facing: Facing) {
     this.world.face(facing);
   }

@@ -20,7 +20,7 @@ export interface PointPick {
  */
 export function pointPickScene(owner: RuleOwnerRef, action: Action, activeScene: string | null): string | null {
   if (action.type === "set_character_position") return action.scene;
-  if (action.type === "walk_player_to") return ownerScene(owner) ?? activeScene;
+  if (action.type === "walk_player_to" || action.type === "walk_character_to") return ownerScene(owner) ?? activeScene;
   return null;
 }
 

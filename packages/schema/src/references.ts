@@ -95,6 +95,8 @@ function actionRefs(a: Action, at: DataPath, push: Push) {
       push("scene", a.target.scene, [...at, "target", "scene"]);
       push("object", a.target.object, [...at, "target", "object"], a.target.scene);
       return push("animation", a.animation, [...at, "animation"], animationScope(a.target.scene, a.target.object));
+    case "walk_character_to":
+      return push("character", a.character, [...at, "character"]);
     case "set_character_position":
       push("character", a.character, [...at, "character"]);
       return push("scene", a.scene, [...at, "scene"]);

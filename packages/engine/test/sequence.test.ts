@@ -29,6 +29,10 @@ function fakeHost() {
       const mine = walking;
       return () => walking !== mine;
     },
+    walkCharacterTo(c, x, y) {
+      log.push(`walk ${c} ${x},${y}`);
+      return null;
+    },
     face: (f) => log.push(`face ${f}`),
     changeScene: (s, sp) => log.push(`scene ${s} ${sp}`),
     setObjectVisible: (s, o, v) => log.push(`${v ? "show" : "hide"} ${s}/${o}`),

@@ -109,6 +109,8 @@ export class RuleDefaults {
         return { type, character: this.character(), text: "" };
       case "walk_player_to":
         return { type, ...this.point() };
+      case "walk_character_to":
+        return { type, character: this.character(), ...this.point() };
       case "face":
         return { type, facing: "down" };
       case "change_scene": {

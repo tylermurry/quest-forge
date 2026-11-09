@@ -99,6 +99,7 @@ export const ACTION_LABEL: Record<ActionType, string> = {
   narrate: "Narrate",
   say: "Say",
   walk_player_to: "Walk player to",
+  walk_character_to: "Walk character to",
   face: "Face",
   change_scene: "Change scene",
   give_item: "Give item",
@@ -109,7 +110,7 @@ export const ACTION_LABEL: Record<ActionType, string> = {
   show_object: "Show object",
   hide_object: "Hide object",
   play_animation: "Play animation",
-  set_character_position: "Move character",
+  set_character_position: "Move character to",
   play_sound: "Play sound",
   play_music: "Play music",
   stop_music: "Stop music",
@@ -122,7 +123,7 @@ export const ACTION_LABEL: Record<ActionType, string> = {
 /** Spec 02's action categories, for a grouped dropdown. */
 export const ACTION_GROUPS: { title: string; types: ActionType[] }[] = [
   { title: "Text", types: ["narrate", "say"] },
-  { title: "Movement", types: ["walk_player_to", "face", "change_scene"] },
+  { title: "Movement", types: ["walk_player_to", "walk_character_to", "face", "change_scene"] },
   { title: "Items", types: ["give_item", "take_item"] },
   { title: "State", types: ["set_flag", "add_to_counter", "award_points"] },
   { title: "World", types: ["show_object", "hide_object", "play_animation", "set_character_position"] },
@@ -134,6 +135,7 @@ export const ACTION_PARTS: Record<ActionType, Part[]> = {
   narrate: [{ kind: "text", key: "text", label: "Narration" }],
   say: [pick("character", "character", "Character"), { kind: "text", key: "text", label: "Line" }],
   walk_player_to: [{ kind: "point", label: "Point" }],
+  walk_character_to: [pick("character", "character", "Character"), "to", { kind: "point", label: "Point" }],
   face: [facing],
   change_scene: [pick("scene", "scene", "Scene"), "at", pick("spawn", "spawn", "Spawn point", "scene")],
   give_item: [pick("item", "item", "Item")],

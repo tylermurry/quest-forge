@@ -61,6 +61,7 @@ export const Action = z.discriminatedUnion("type", [
   tag("say", { character: Id, text: RuleText }),
   // Movement
   tag("walk_player_to", { x: SceneX, y: SceneY }),
+  tag("walk_character_to", { character: Id, x: SceneX, y: SceneY }),
   tag("face", { facing: Facing }),
   tag("change_scene", { scene: Id, spawn: Id }),
   // Items
