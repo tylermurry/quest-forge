@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Questforge engine — M2</title>
+    <title>Questforge engine</title>
     <style>
       html, body { margin: 0; height: 100%; background: #111; color: #ddd; font: 13px system-ui, sans-serif; }
       body { display: flex; flex-direction: column; }
@@ -14,6 +14,7 @@
       #game { flex: 1; width: 100%; min-height: 0; display: block; }
       #errors { white-space: pre-wrap; color: #f88; padding: 12px; }
       .hint { color: #888; }
+      .open { border: 1px solid #555; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
       #state { padding: 4px 12px; background: #161616; border-bottom: 1px solid #333; color: #aaa; font: 12px ui-monospace, monospace; white-space: pre-wrap; }
       /* Phones in landscape: the game gets the whole screen. */
       @media (max-height: 500px) { header, #state { display: none; } }
@@ -21,7 +22,9 @@
   </head>
   <body>
     <header>
-      <strong>Engine fixture (M2)</strong>
+      <strong>Engine</strong>
+      <span id="source">fixture m1</span>
+      <label class="open">Open game (.quest)… <input type="file" id="quest" accept=".quest" hidden /></label>
       <label>Scene <select id="scene"><option value="garden">Garden</option><option value="shed">Shed</option><option value="stress">Stress (15 objects, 3 characters)</option></select></label>
       <label><input type="checkbox" id="debug" /> Debug layers</label>
       <button id="boulder">Hide boulder</button>

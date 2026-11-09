@@ -64,6 +64,16 @@ export const browserPlatform: Platform = {
     };
   },
   assetUrl: (root, path) => `/__fs/file?${new URLSearchParams({ root, path })}`,
+  // The dev page has no save dialog: the browser downloads the file.
+  async saveBuild(fileName, bytes) {
+    const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: "application/octet-stream" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return `Downloads/${fileName}`;
+  },
   async loadRecent() {
     try {
       return parseRecent(JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"));

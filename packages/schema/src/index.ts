@@ -16,3 +16,5 @@ export * from "./references.ts";
 export * from "./geometry.ts";
 export * from "./validate.ts";
 export * from "./warnings.ts";
+export * from "./zip.ts";
+export * from "./quest.ts";

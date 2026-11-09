@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
+import { GameBuilder } from "../model/build.ts";
 import { togglePanels, type PanelName } from "../model/panels.ts";
 import { Playtest } from "../model/playtest/playtest.ts";
 import { WorkspaceState } from "../model/workspace.ts";
@@ -86,6 +87,18 @@ export function Workspace({ root, editor, onClose }: Props) {
     void playtest.presets.attach(ed.host.fs);
     return () => playtest.presets.detach();
   }, [playtest, ed]);
+  // Build Game (D153) reads asset files through the same URLs the canvas uses.
+  const [builder] = useState(
+    () =>
+      new GameBuilder(editor, ws, {
+        readFile: async (path) => {
+          const res = await fetch(platform.assetUrl(root, path));
+          if (!res.ok) throw new Error(res.status === 404 ? "the file isn't in the project folder" : `error ${res.status}`);
+          return new Uint8Array(await res.arrayBuffer());
+        },
+        saveBuild: (name, bytes) => platform.saveBuild(name, bytes),
+      }),
+  );
   const [images] = useState(() => new CanvasImages((path) => platform.assetUrl(root, path)));
   useEffect(() => () => images.dispose(), [images]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
@@ -170,6 +183,21 @@ export function Workspace({ root, editor, onClose }: Props) {
       off();
     };
   }, [ed, registry]);
+
+  // File ▸ Build Game (D153). Errors and failures arrive as notices; success is a toast.
+  useEffect(
+    () =>
+      registry.register({
+        "project.build": {
+          run: async () => {
+            const r = await builder.build();
+            if (r.kind === "built") toast.success("Game built", { description: r.where });
+          },
+          enabled: () => !builder.building,
+        },
+      }),
+    [builder, registry],
+  );
 
   // Play menu (spec 12, D131).
   useEffect(() => {

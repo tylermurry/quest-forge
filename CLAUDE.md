@@ -12,7 +12,7 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
 
 ## Repo layout (pnpm workspace, D52)
 - `packages/schema` (`@questforge/schema`): zod schemas, project load/save, references/rename,
-  validation. Node-only code (fs adapter) is exported from `@questforge/schema/node`.
+  validation, and the `.quest` format. Node-only code (fs adapter) is exported from `@questforge/schema/node`.
 - `packages/engine`: web runtime (M1+). Canvas 2D, no runtime dependencies besides the schema (D30). `packages/editor`: Tauri + React editor (M3+).
 - `templates/demo`: "The Lantern". Built **only** in the editor (D6). Never hand-edit it.
 
@@ -32,7 +32,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
   `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (spec 14 errors), `warnings.ts` (spec 14
   warnings and empty rule text, D119/D122; `logicBlocks` walks every rule and dialogue node, `awardTotal`), `migrate.ts`
-  (`MIGRATIONS`; v2 gives rules IDs, `withRuleIds` also builds test data). The test fixture project is
+  (`MIGRATIONS`; v2 gives rules IDs, `withRuleIds` also builds test data), `zip.ts` (dependency-free zip read/write) and
+  `quest.ts` (the built game, D153/D154: `compileGame`, `buildQuest`, `readQuest`, `usedAssetIds`). The test fixture project is
   `packages/schema/test/fixtures/mini`. It must stay canonical and problem-free (no warnings either). To change it, load it,
   edit the Project and save it with `saveProject` (a throwaway script), never by hand.
 - Rules have a required `id` (`rule_<n>`, unique within the list, never shown, D117); fired keys are `<owner>/<id>`. Rule
@@ -52,7 +53,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   shapes, D132), `restore.ts` (`readState`/`sanitizeState`: any stored GameState made safe for the project, shared by
   save slots and playtest presets), `saves.ts` (`SaveSlots` over a `KeyValueStore`, volumes, `MemoryStore` for tests,
   D146/D150), `audio.ts` (`AudioSync`: music follows `state.music`, `session.sounds` drained; `sceneAudioIds`),
-  `webaudio.ts` (the Web Audio backend, unlocked from pointer events, D151). `Session.load(state)` restores a save
+  `webaudio.ts` (the Web Audio backend, unlocked from pointer events, D151), `quest.ts` (`loadQuest`: a `.quest` file →
+  a `ProjectBundle` with blob asset URLs, D153). `Session.load(state)` restores a save
   exactly (no `scene_enter`, D147); `Session.tryAgain()` returns to the scene-entry snapshot.
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.
   Only `game.ts`, `render.ts`, `webaudio.ts`, `ui/draw.ts` and `ui/icons.ts` touch the canvas, DOM or Web Audio.
@@ -182,6 +184,12 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   Play from This Node (`play.node`, Shift+F6) is `Playtest.playNode()`; the log and state panel read the engine's
   `dialogue_*` trace events. Dev page: `window.dialogueGraph` is the React Flow instance. The browser tool's instant
   drag doesn't start a React Flow connection: dispatch `mousedown` on the handle, a few `mousemove`s, then `mouseup`.
+- Build Game (M9, D153/D154): File ▸ Build Game… (`project.build`, Mod+B) writes one `.quest` file. Never call it "export".
+  `model/build.ts` (`GameBuilder`: D38 gate, `buildQuest` on the in-memory project, `BuildHost` reads asset bytes through
+  `platform.assetUrl` and saves through `platform.saveBuild`). The app's Rust `build_save` (raw body, like `fs_write_bytes`)
+  shows the save dialog and writes only the picked path; the dev page downloads. The engine dev page plays a `.quest`
+  (Open game…, drop, or `?quest=<url>`). Tests: `schema/test/quest.test.ts`, `engine/test/quest.test.ts`, the M2 chain from a
+  built `.quest` in `engine/test/fixture.test.ts`, `editor/test/build.test.ts`.
 - Saving is manual in the app (D145): `Editor.open(host, { autosave: false })`, Save = `editor.flush()`, and `App` confirms before leaving with `hasUnsavedChanges`. The model default is still autosave on, which most Editor tests rely on.
 - Validation is debounced: `Editor.problems` is the last result, refreshed 250 ms after a change (D120). Tests call
   `editor.validateNow()` instead of waiting. Browser-tool clicks by `ref` may scroll the page first; prefer coordinates or a

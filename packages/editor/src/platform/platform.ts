@@ -30,6 +30,11 @@ export interface Platform {
    * accelerators then own the shortcuts, so the page doesn't handle them too.
    */
   installMenu?(registry: CommandRegistry): Promise<() => void>;
+  /**
+   * Build Game (D153): asks where to save the built `.quest` file (suggesting
+   * `fileName`) and writes it. Returns where it went, as shown to the user, or null if cancelled.
+   */
+  saveBuild(fileName: string, bytes: Uint8Array): Promise<string | null>;
   /** How a folder path is shown to the user. */
   displayPath(root: string): string;
 }

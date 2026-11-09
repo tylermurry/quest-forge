@@ -24,6 +24,7 @@ export const COMMANDS = [
   { id: "project.new", label: "New Project…", menu: "file", shortcut: "Mod+N" },
   { id: "project.open", label: "Open Folder…", menu: "file", shortcut: "Mod+O" },
   { id: "project.save", label: "Save", menu: "file", shortcut: "Mod+S", separated: true },
+  { id: "project.build", label: "Build Game…", menu: "file", shortcut: "Mod+B" },
   { id: "project.close", label: "Back to Project Selector", menu: "file", shortcut: "Mod+Shift+W" },
   { id: "edit.undo", label: "Undo", menu: "edit", shortcut: "Mod+Z", textAware: true },
   { id: "edit.redo", label: "Redo", menu: "edit", shortcut: "Mod+Shift+Z", textAware: true },

@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isEmptyPlan, loadProject, planSave, validateProject, type CharacterFile, type Project } from "@questforge/schema";
+import { buildQuest, isEmptyPlan, loadProject, planSave, validateProject, type CharacterFile, type Project } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
+import { loadQuest } from "../src/quest.ts";
 import { DEFAULT_SETTINGS, MemoryStore, SaveSlots } from "../src/saves.ts";
 import { Session } from "../src/session.ts";
 import { sheetFits, type Rect } from "../src/sprite.ts";
@@ -108,125 +109,141 @@ describe("the M1 fixture", () => {
   });
 });
 
+/** The M2 puzzle chain, touch only at phone size (spec 06); also played from a built `.quest` (D153). */
+function playM2Chain(project: Project, images: Map<string, LoadedImage>) {
+  const s = new Session(project, (id) => images.get(id));
+  const ui = new PlayerUi(s);
+  ui.setScale(fitViewport(844, 390).scale); // iPhone 14 landscape, CSS px per scene px
+
+  const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
+  const step = () => {
+    s.tick(1 / 60);
+    ui.tick(1 / 60);
+  };
+  const tap = (p: Vec) => {
+    ui.pointerDown(p, "touch");
+    step();
+    ui.pointerUp(p, "touch");
+  };
+  const texts: string[] = [];
+  /** Play on, tapping through every text box, until the game is idle again. */
+  const settle = () => {
+    for (let i = 0; i < 60 * 60; i++) {
+      if (s.text) {
+        texts.push(s.text.text);
+        tap([320, 200]);
+      }
+      step();
+      if (!s.busy && !s.world.walking && !s.text) return;
+    }
+    throw new Error("never settled");
+  };
+  const verb = (id: string) => {
+    tap(center(ui.layout.tab.hit));
+    expect(ui.barOpen).toBe(true);
+    tap(center(ui.layout.barButtons.find((b) => b.id === id)!.rect));
+  };
+  const invCell = (item: string) => center(ui.layout.inventory.cells[s.state.inventory.indexOf(item)]!);
+  const invButton = (id: string) => center(ui.layout.inventory.buttons.find((b) => b.id === id)!.rect);
+
+  // Touch input reveals the tab.
+  tap([200, 385]);
+  settle();
+
+  // 1. Hand on the flowerpot → stick (+5).
+  verb("hand");
+  tap([155, 300]);
+  settle();
+  expect(s.state.inventory).toEqual(["stick"]);
+  // A second Hand gets the next matching rule.
+  tap([155, 300]);
+  settle();
+  expect(texts.at(-1)).toBe("Nothing else under there.");
+
+  // Default response: talk to the rock.
+  verb("talk");
+  tap([475, 280]);
+  settle();
+  expect(texts.at(-1)).toBe("Nobody answers.");
+
+  // 2. Walk into the east exit → the shed, with its first-time enter text.
+  verb("walk");
+  tap([615, 375]);
+  settle();
+  expect(s.scene.id).toBe("shed");
+  expect(texts.at(-1)).toBe("A cramped garden shed. It smells of soil and oil.");
+
+  // 3. Take the string from the workbench.
+  verb("hand");
+  tap([481, 195]);
+  settle();
+  expect(s.state.inventory).toEqual(["stick", "string"]);
+  expect(s.world.isObjectVisible("string")).toBe(false);
+
+  // Back to the garden through the west exit.
+  verb("walk");
+  tap([40, 385]);
+  settle();
+  expect(s.scene.id).toBe("garden");
+  expect(s.state.visited).toEqual(["garden", "shed"]);
+
+  // 4. Inventory: select the string, then hold it on the stick → fishing rod.
+  tap(center(ui.layout.tab.hit));
+  tap(center(ui.layout.barButtons.find((b) => b.id === "inventory")!.rect));
+  tap(invButton("select"));
+  tap(invCell("string"));
+  expect(s.item).toBe("string");
+  tap(center(ui.layout.tab.hit));
+  tap(center(ui.layout.barButtons.find((b) => b.id === "inventory")!.rect));
+  expect(ui.inventoryMode).toBe("item");
+  tap(invCell("stick"));
+  settle();
+  expect(s.state.inventory).toEqual(["rod"]);
+  tap(invButton("select"));
+  tap(invCell("rod"));
+  expect(ui.panel).toBe(null);
+  expect(s.verb).toBe("item");
+
+  // 5. Use the rod on the pond → fish (+5).
+  tap([300, 320]);
+  settle();
+  expect(s.state.inventory).toEqual(["rod", "fish"]);
+
+  // 6. Talk to the gardener holding the fish: the gated sequence (+10).
+  verb("talk");
+  tap([560, 312]);
+  settle();
+  expect(s.state.inventory).toEqual(["rod"]);
+  expect(s.state.flags.path_open).toBe(true);
+  expect(s.world.isObjectVisible("boulder")).toBe(false);
+  expect(s.state.characters["garden/gardener"]).toEqual({ x: 372, y: 262, facing: "left" });
+  expect(texts).toContain("With a grunt, the gardener rolls the boulder aside. The path to the ledge is open.");
+
+  // 7. The ledge, now reachable (+5).
+  verb("walk");
+  tap([330, 160]);
+  settle();
+  expect(texts.at(-1)).toBe("From the ledge you can see the whole valley.");
+  expect(score(s.state)).toBe(s.game.maxScore);
+  expect(JSON.parse(JSON.stringify(s.state))).toEqual(s.state);
+}
+
 describe("the M2 puzzle chain, touch only at phone size (spec 06)", () => {
   it("plays pick up → exit → take → combine → use → gated sequence → ledge", async () => {
     const { project } = await load();
-    const images = await imagesOf(project);
-    const s = new Session(project, (id) => images.get(id));
-    const ui = new PlayerUi(s);
-    ui.setScale(fitViewport(844, 390).scale); // iPhone 14 landscape, CSS px per scene px
+    playM2Chain(project, await imagesOf(project));
+  });
 
-    const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
-    const step = () => {
-      s.tick(1 / 60);
-      ui.tick(1 / 60);
-    };
-    const tap = (p: Vec) => {
-      ui.pointerDown(p, "touch");
-      step();
-      ui.pointerUp(p, "touch");
-    };
-    const texts: string[] = [];
-    /** Play on, tapping through every text box, until the game is idle again. */
-    const settle = () => {
-      for (let i = 0; i < 60 * 60; i++) {
-        if (s.text) {
-          texts.push(s.text.text);
-          tap([320, 200]);
-        }
-        step();
-        if (!s.busy && !s.world.walking && !s.text) return;
-      }
-      throw new Error("never settled");
-    };
-    const verb = (id: string) => {
-      tap(center(ui.layout.tab.hit));
-      expect(ui.barOpen).toBe(true);
-      tap(center(ui.layout.barButtons.find((b) => b.id === id)!.rect));
-    };
-    const invCell = (item: string) => center(ui.layout.inventory.cells[s.state.inventory.indexOf(item)]!);
-    const invButton = (id: string) => center(ui.layout.inventory.buttons.find((b) => b.id === id)!.rect);
-
-    // Touch input reveals the tab.
-    tap([200, 385]);
-    settle();
-
-    // 1. Hand on the flowerpot → stick (+5).
-    verb("hand");
-    tap([155, 300]);
-    settle();
-    expect(s.state.inventory).toEqual(["stick"]);
-    // A second Hand gets the next matching rule.
-    tap([155, 300]);
-    settle();
-    expect(texts.at(-1)).toBe("Nothing else under there.");
-
-    // Default response: talk to the rock.
-    verb("talk");
-    tap([475, 280]);
-    settle();
-    expect(texts.at(-1)).toBe("Nobody answers.");
-
-    // 2. Walk into the east exit → the shed, with its first-time enter text.
-    verb("walk");
-    tap([615, 375]);
-    settle();
-    expect(s.scene.id).toBe("shed");
-    expect(texts.at(-1)).toBe("A cramped garden shed. It smells of soil and oil.");
-
-    // 3. Take the string from the workbench.
-    verb("hand");
-    tap([481, 195]);
-    settle();
-    expect(s.state.inventory).toEqual(["stick", "string"]);
-    expect(s.world.isObjectVisible("string")).toBe(false);
-
-    // Back to the garden through the west exit.
-    verb("walk");
-    tap([40, 385]);
-    settle();
-    expect(s.scene.id).toBe("garden");
-    expect(s.state.visited).toEqual(["garden", "shed"]);
-
-    // 4. Inventory: select the string, then hold it on the stick → fishing rod.
-    tap(center(ui.layout.tab.hit));
-    tap(center(ui.layout.barButtons.find((b) => b.id === "inventory")!.rect));
-    tap(invButton("select"));
-    tap(invCell("string"));
-    expect(s.item).toBe("string");
-    tap(center(ui.layout.tab.hit));
-    tap(center(ui.layout.barButtons.find((b) => b.id === "inventory")!.rect));
-    expect(ui.inventoryMode).toBe("item");
-    tap(invCell("stick"));
-    settle();
-    expect(s.state.inventory).toEqual(["rod"]);
-    tap(invButton("select"));
-    tap(invCell("rod"));
-    expect(ui.panel).toBe(null);
-    expect(s.verb).toBe("item");
-
-    // 5. Use the rod on the pond → fish (+5).
-    tap([300, 320]);
-    settle();
-    expect(s.state.inventory).toEqual(["rod", "fish"]);
-
-    // 6. Talk to the gardener holding the fish: the gated sequence (+10).
-    verb("talk");
-    tap([560, 312]);
-    settle();
-    expect(s.state.inventory).toEqual(["rod"]);
-    expect(s.state.flags.path_open).toBe(true);
-    expect(s.world.isObjectVisible("boulder")).toBe(false);
-    expect(s.state.characters["garden/gardener"]).toEqual({ x: 372, y: 262, facing: "left" });
-    expect(texts).toContain("With a grunt, the gardener rolls the boulder aside. The path to the ledge is open.");
-
-    // 7. The ledge, now reachable (+5).
-    verb("walk");
-    tap([330, 160]);
-    settle();
-    expect(texts.at(-1)).toBe("From the ledge you can see the whole valley.");
-    expect(score(s.state)).toBe(s.game.maxScore);
-    expect(JSON.parse(JSON.stringify(s.state))).toEqual(s.state);
+  it("plays the same from the built .quest file (D153)", async () => {
+    const { project } = await load();
+    const bundle = await loadQuest(await buildQuest(project, (p) => readFile(join(ROOT, p)).then((b) => new Uint8Array(b))));
+    const images = new Map<string, LoadedImage>();
+    for (const asset of bundle.project.assets!.data.images) {
+      const v = new DataView(await (await fetch(bundle.assetUrl(asset.path))).arrayBuffer());
+      images.set(asset.id, { asset, size: { w: v.getUint32(16), h: v.getUint32(20) } });
+    }
+    playM2Chain(bundle.project, images);
+    bundle.dispose();
   });
 });
 

@@ -1,6 +1,7 @@
 //! Questforge's native side (spec 08, D90): file I/O confined to the open project
-//! folder, folder watching, and the recent-projects file. Native dialogs come from
-//! tauri-plugin-dialog. All project logic lives in TypeScript.
+//! folder, folder watching, the recent-projects file, and saving a built game where
+//! the user picks (D153). Native dialogs come from tauri-plugin-dialog. All project
+//! logic lives in TypeScript.
 
 use notify::{RecursiveMode, Watcher};
 use std::collections::HashMap;
@@ -144,6 +145,27 @@ fn fs_write_bytes(request: Request<'_>) -> Res<()> {
     }
 }
 
+/// Build Game (D153): asks where to save the built `.quest` file with the native
+/// save dialog and writes the raw body there. The only write outside the project
+/// folder, and only to the path the user just picked. Returns that path, or None if cancelled.
+#[tauri::command]
+async fn build_save(app: tauri::AppHandle, request: Request<'_>) -> Res<Option<String>> {
+    use tauri_plugin_dialog::DialogExt;
+    let name = request.headers().get("x-name").map(|v| v.to_str().map(percent_decode)).transpose().map_err(err)?.unwrap_or_else(|| "game.quest".into());
+    let InvokeBody::Raw(bytes) = request.body() else {
+        return Err("expected raw bytes".into());
+    };
+    let Some(picked) = app.dialog().file().set_title("Build Game").set_file_name(&name).add_filter("Questforge game", &["quest"]).blocking_save_file() else {
+        return Ok(None);
+    };
+    let mut path = picked.into_path().map_err(err)?;
+    if path.extension().and_then(|e| e.to_str()) != Some("quest") {
+        path.set_extension("quest");
+    }
+    atomic_write(&path, bytes)?;
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
 #[tauri::command]
 #[specta::specta]
 fn fs_move(root: String, from: String, to: String) -> Res<()> {
@@ -281,8 +303,8 @@ fn recent_save(app: tauri::AppHandle, json: String) -> Res<()> {
 }
 
 /// The typed commands (D92): tauri-specta generates their TypeScript bindings.
-/// `fs_write_bytes` takes a raw request body, which specta can't describe, so it is
-/// registered separately and called by hand in `tauri.ts`.
+/// `fs_write_bytes` and `build_save` take a raw request body, which specta can't
+/// describe, so they are registered separately and called by hand in `tauri.ts`.
 pub fn specta_builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new().commands(collect_commands![
         fs_list,
@@ -316,7 +338,7 @@ pub fn export_bindings() {
 
 /// Commands specta can't type (raw request bodies).
 fn raw_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync + 'static {
-    tauri::generate_handler![fs_write_bytes]
+    tauri::generate_handler![fs_write_bytes, build_save]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -336,7 +358,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(Watches::default())
         .invoke_handler(move |invoke| match invoke.message.command() {
-            "fs_write_bytes" => raw(invoke),
+            "fs_write_bytes" | "build_save" => raw(invoke),
             _ => typed(invoke),
         })
         .run(tauri::generate_context!())

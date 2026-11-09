@@ -147,6 +147,14 @@ export const tauriPlatform: Platform = {
     };
   },
   assetUrl: (root, path) => convertFileSrc(`${root}/${path}`),
+  /** Raw bytes as the body; Rust shows the native save dialog and writes only where the user chose (D153). */
+  async saveBuild(fileName, bytes) {
+    try {
+      return await invoke<string | null>("build_save", bytes, { headers: { "x-name": encodeURIComponent(fileName) } });
+    } catch (e) {
+      throw new Error(typeof e === "string" ? e : String(e));
+    }
+  },
   async loadRecent() {
     try {
       return parseRecent(JSON.parse(await ok(commands.recentLoad())));

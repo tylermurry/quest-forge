@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
-// Dev page (D68): plays the hand-written engine fixture with the real engine.
-import { MemoryFs, formatProblem, loadProject } from "@questforge/schema";
-import { DEBUG_ALL, DEBUG_OFF, ProjectErrors, createGame, score, type Game } from "../src/index.ts";
+// Dev page (D68): plays the hand-written engine fixture with the real engine, or a
+// built game: open a `.quest` file, drop one on the page, or pass `?quest=<url>` (D153).
+import { MemoryFs, QuestError, formatProblem, loadProject } from "@questforge/schema";
+import { DEBUG_ALL, DEBUG_OFF, ProjectErrors, createGame, loadQuest, score, type Game, type ProjectBundle, type QuestBundle } from "../src/index.ts";
 
 const PREFIX = "../fixtures/m1/";
 const yaml = import.meta.glob<string>("../fixtures/m1/**/*.yaml", { query: "?raw", import: "default", eager: true });
@@ -21,24 +22,66 @@ const boulderBtn = document.querySelector<HTMLButtonElement>("#boulder")!;
 const stats = document.querySelector<HTMLSpanElement>("#stats")!;
 const errors = document.querySelector<HTMLDivElement>("#errors")!;
 const stateBox = document.querySelector<HTMLDivElement>("#state")!;
+const questInput = document.querySelector<HTMLInputElement>("#quest")!;
+const source = document.querySelector<HTMLSpanElement>("#source")!;
 
 const { project, problems } = await loadProject(new MemoryFs(files));
+const fixture: ProjectBundle = { project, assetUrl: (p) => assetUrls.get(p) ?? p };
+let bundle: ProjectBundle = fixture;
+let quest: QuestBundle | null = null;
 let game: Game | null = null;
 
-function start(scene: string) {
+function showError(text: string) {
+  errors.hidden = false;
+  errors.textContent = text;
+}
+
+function start(scene?: string) {
   game?.destroy();
   errors.hidden = true;
   try {
-    if (problems.length) throw new ProjectErrors(problems);
-    game = createGame({ project, assetUrl: (p) => assetUrls.get(p) ?? p }, canvas, { scene, debug: debugBox.checked ? DEBUG_ALL : DEBUG_OFF });
+    if (bundle === fixture && problems.length) throw new ProjectErrors(problems);
+    game = createGame(bundle, canvas, { ...(scene ? { scene } : {}), debug: debugBox.checked ? DEBUG_ALL : DEBUG_OFF });
     (window as unknown as { game: Game }).game = game;
   } catch (e) {
-    errors.hidden = false;
-    errors.textContent = e instanceof ProjectErrors ? e.problems.map(formatProblem).join("\n") : String(e);
+    showError(e instanceof ProjectErrors ? e.problems.map(formatProblem).join("\n") : String(e));
     return;
   }
   void game.ready.then(syncBoulder);
 }
+
+/** Plays a built game from its bytes, from its own start scene. */
+async function playQuest(name: string, bytes: Uint8Array) {
+  let next: QuestBundle;
+  try {
+    next = await loadQuest(bytes);
+  } catch (e) {
+    showError(e instanceof QuestError ? `${name} ${e.message}` : `Couldn't open ${name}: ${String(e)}`);
+    return;
+  }
+  game?.destroy();
+  game = null;
+  quest?.dispose();
+  quest = next;
+  bundle = next;
+  source.textContent = `${name} · ${next.project.game!.data.title}`;
+  sceneSelect.replaceChildren(...next.project.scenes.map((s) => new Option(s.data.name || s.data.id, s.data.id)));
+  sceneSelect.value = next.project.game!.data.startScene;
+  start();
+}
+
+const openFile = async (file: File) => playQuest(file.name, new Uint8Array(await file.arrayBuffer()));
+questInput.addEventListener("change", () => {
+  const file = questInput.files?.[0];
+  if (file) void openFile(file);
+  questInput.value = "";
+});
+addEventListener("dragover", (e) => e.preventDefault());
+addEventListener("drop", (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer?.files[0];
+  if (file) void openFile(file);
+});
 
 function syncBoulder() {
   const w = game?.world;
@@ -92,4 +135,9 @@ const meter = (now: number) => {
 };
 requestAnimationFrame(meter);
 
-start(sceneSelect.value);
+const questUrl = new URLSearchParams(location.search).get("quest");
+if (questUrl) {
+  const res = await fetch(questUrl).catch(() => null);
+  if (res?.ok) await playQuest(questUrl.split("/").pop() ?? questUrl, new Uint8Array(await res.arrayBuffer()));
+  else showError(`Couldn't download ${questUrl}.`);
+} else start(sceneSelect.value);

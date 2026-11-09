@@ -1,6 +1,7 @@
 // Runtime engine (specs 03–07). Data in, no user code (spec 03).
 export { SCHEMA_VERSION } from "@questforge/schema";
 export { createGame, ProjectErrors, sceneImageIds, type Game, type GameOptions, type ProjectBundle } from "./game.ts";
+export { loadQuest, assetType, type QuestBundle } from "./quest.ts";
 export { World, type Drawable, type LoadedImage, type Target, type WorldOptions } from "./world.ts";
 export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type SceneAssets, type SessionHooks, type SessionStart, type Verb } from "./session.ts";
 export { readState, sanitizeState, awardCatalog, type Sanitized } from "./restore.ts";

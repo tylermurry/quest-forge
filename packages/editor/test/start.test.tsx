@@ -30,6 +30,7 @@ function memoryPlatform(): Platform & { disks: Map<string, MemoryFs> } {
     loadRecent: async () => recent,
     saveRecent: async (l) => void (recent = l),
     listProjects: async () => [...disks.keys()],
+    saveBuild: async () => null,
     displayPath: (r) => r,
   };
 }
