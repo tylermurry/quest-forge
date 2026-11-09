@@ -1,0 +1,15 @@
+# Typecheck + tests on pull requests. Pushes to main run the same check inside
+# site.yml and release.yml before they deploy or release.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: corepack pnpm check

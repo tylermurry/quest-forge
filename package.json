@@ -9,7 +9,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p packages/schema && tsc -p packages/engine && tsc -p packages/editor",
+    "typecheck": "tsc -p packages/schema && tsc -p packages/engine && tsc -p packages/editor && tsc -p packages/site",
     "check": "npm run typecheck && npm test"
   },
   "devDependencies": {

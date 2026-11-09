@@ -1,0 +1,141 @@
+# Builds the editor for macOS, Windows and Linux on every push to main and publishes a
+# GitHub release (D156). The version is the latest v* tag with the patch bumped (none: 0.0.1);
+# it's passed to the build, never committed, so this workflow can't trigger itself.
+# Installers are uploaded under fixed names so the site can link to releases/latest/download/<name>.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One release at a time so tags stay in order; a newer push waits rather than cancelling a build.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: next
+        name: Next patch version
+        run: |
+          last=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          if [ -z "$last" ]; then
+            next=0.0.1
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            next="$major.$minor.$((patch + 1))"
+          fi
+          echo "Last: ${last:-none}, next: $next"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: corepack pnpm check
+
+  build:
+    needs: [version, check]
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: macos
+            os: macos-latest
+            args: --target universal-apple-darwin --bundles dmg
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
+          - name: windows
+            os: windows-latest
+            args: --bundles nsis,msi
+            rust-targets: ""
+          - name: linux
+            os: ubuntu-22.04
+            args: --bundles appimage,deb
+            rust-targets: ""
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Linux build dependencies
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/editor/src-tauri -> target
+      - uses: ./.github/actions/setup
+      - name: Set the version
+        working-directory: packages/editor
+        run: |
+          echo "{\"version\": \"$VERSION\"}" > src-tauri/tauri.release.conf.json
+          cat src-tauri/tauri.release.conf.json
+      - name: Build
+        working-directory: packages/editor
+        # Signing stays off until certificates exist (unsigned builds, D156). When they do, set
+        # APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY, APPLE_ID,
+        # APPLE_PASSWORD and APPLE_TEAM_ID as secrets and pass them here as env.
+        run: corepack pnpm tauri build --config src-tauri/tauri.release.conf.json ${{ matrix.args }}
+      - name: Collect installers
+        run: |
+          mkdir -p out
+          b=packages/editor/src-tauri/target
+          case "${{ matrix.name }}" in
+            macos)
+              cp $b/universal-apple-darwin/release/bundle/dmg/*.dmg out/Questforge-macos.dmg ;;
+            windows)
+              cp $b/release/bundle/nsis/*-setup.exe out/Questforge-windows-setup.exe
+              cp $b/release/bundle/msi/*.msi out/Questforge-windows.msi ;;
+            linux)
+              cp $b/release/bundle/appimage/*.AppImage out/Questforge-linux.AppImage
+              cp $b/release/bundle/deb/*.deb out/Questforge-linux.deb ;;
+          esac
+          ls -la out
+      - uses: actions/upload-artifact@v5
+        with:
+          name: installers-${{ matrix.name }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: installers-*
+          path: out
+          merge-multiple: true
+      - name: Publish the release
+        run: |
+          ls -la out
+          gh release create "v$VERSION" out/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Questforge $VERSION" \
+            --generate-notes \
+            --latest

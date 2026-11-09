@@ -48,6 +48,17 @@
         "5177"
       ],
       "port": 5177
+    },
+    {
+      "name": "site-dev",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@questforge/site",
+        "dev"
+      ],
+      "port": 5178
     }
   ]
 }

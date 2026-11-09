@@ -15,6 +15,9 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   validation, and the `.quest` format. Node-only code (fs adapter) is exported from `@questforge/schema/node`.
 - `packages/engine`: web runtime (M1+). Canvas 2D, no runtime dependencies besides the schema (D30). `packages/editor`: Tauri + React editor (M3+).
 - `templates/demo`: "The Lantern". Built **only** in the editor (D6). Never hand-edit it.
+- `packages/site` (`@questforge/site`, D155): the public splash page (`/`) and `.quest` player (`/play`), deployed to
+  Cloudflare (D157). Dev: `corepack pnpm --filter @questforge/site dev` (port 5178, `site-dev` in `.claude/launch.json`).
+  `src/download.ts` picks the installer (tested in `test/download.test.ts`); screenshots live in `public/screenshots/` (WebP).
 
 ## Conventions
 - Run pnpm through corepack: `corepack pnpm install`, `corepack pnpm check` (typecheck + tests).
@@ -200,3 +203,7 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
   regenerates `src/platform/bindings.ts` (tauri-specta), so commit it after changing a command.
   New commands need `#[specta::specta]` and an entry in `specta_builder()`.
 - One ticket ≈ one commit, with tests. Commit messages are imperative and explain why.
+- GitHub (`tylermurry/quest-forge`, public): `.github/workflows/ci.yml` checks PRs; on every push to `main`, `site.yml`
+  deploys the site (secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) and `release.yml` builds all three
+  platforms and publishes `vX.Y.Z` (latest tag + 1 patch, never committed, D156). Installer file names are fixed: the site
+  links to them, so change both together. `.github/actions/setup` is the shared Node/corepack/install step.
