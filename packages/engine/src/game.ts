@@ -246,6 +246,8 @@ function pageStorage(view: Window): KeyValueStore | null {
   try {
     return view.localStorage;
   } catch {
+    // Browsers throw here when site data is blocked. The game then runs without saves, and
+    // the save UI says so (SaveSlots.error), so there is nothing more to report.
     return null;
   }
 }

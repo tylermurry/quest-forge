@@ -81,6 +81,7 @@ export class NodeFs implements ProjectFs {
     try {
       entries = await readdir(dir);
     } catch {
+      // The folder is already gone (or not a folder), so there is nothing to remove.
       return;
     }
     if (entries.some((e) => e !== KEEP_FILE)) return;

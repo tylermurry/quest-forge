@@ -50,6 +50,7 @@ export class WebAudio implements AudioBackend {
       blip.start(0);
       this.startMusic();
     }
+    // A refused resume is retried by the next pointer event, which is why this runs on every one.
     if (this.ctx.state !== "running" && !this.hidden) void this.ctx.resume().catch(() => {});
   };
 
@@ -57,6 +58,8 @@ export class WebAudio implements AudioBackend {
   setHidden(hidden: boolean) {
     this.hidden = hidden;
     if (!this.ctx || this.closed) return;
+    // Suspend/resume can be refused by the browser (no gesture yet). Audio is not essential here,
+    // and the next pointer event resumes it.
     void (hidden ? this.ctx.suspend() : this.ctx.resume()).catch(() => {});
   }
 
@@ -176,6 +179,7 @@ export class WebAudio implements AudioBackend {
       // Already stopped.
     }
     this.current = null;
+    // Closing an already-closed context rejects. The game is being torn down, so there is nothing to tell.
     void this.ctx?.close().catch(() => {});
     this.ctx = null;
   }

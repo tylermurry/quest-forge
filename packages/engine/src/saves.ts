@@ -64,6 +64,7 @@ export class SaveSlots {
     try {
       text = this.store?.getItem(savesKey(this.game.id)) ?? null;
     } catch {
+      // Blocked storage: start with empty slots. Saving then reports the problem (`error`).
       return empty;
     }
     if (!text) return empty;
@@ -72,6 +73,8 @@ export class SaveSlots {
       const list = isRecord(raw) && Array.isArray(raw.slots) ? raw.slots : [];
       return empty.map((_, i) => readSlot(list[i]));
     } catch {
+      // A stored blob that is not valid JSON can't be repaired. Showing empty slots is the only
+      // safe reading, and the next save replaces it.
       return empty;
     }
   }
@@ -133,6 +136,7 @@ export function readSettings(store: KeyValueStore | null, gameId: string): Playe
     if (!isRecord(raw)) return { ...DEFAULT_SETTINGS };
     return { music: volume(raw.music, DEFAULT_SETTINGS.music), sfx: volume(raw.sfx, DEFAULT_SETTINGS.sfx) };
   } catch {
+    // Blocked or unreadable storage: the defaults are the right volumes to play with.
     return { ...DEFAULT_SETTINGS };
   }
 }
