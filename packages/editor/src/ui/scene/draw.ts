@@ -164,7 +164,9 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
       ctx.fill("evenodd");
     }
     shape(outer, { list: "walkable", key: "outer" }, COLORS.walkable);
-    holes.forEach((h, i) => shape(h, { list: "walkable", key: `hole:${i}` }, COLORS.hole, "rgba(248,113,113,0.12)"));
+    holes.forEach((h, i) => {
+      shape(h, { list: "walkable", key: `hole:${i}` }, COLORS.hole, "rgba(248,113,113,0.12)");
+    });
   }
   if (shown("hotspots")) {
     for (const h of scene.hotspots) {

@@ -127,7 +127,9 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
     } satisfies Partial<Record<CommandId, unknown>>);
     const offs = [c.subscribe(() => registry.changed()), ws.sceneUi.subscribe(() => registry.changed())];
     return () => {
-      offs.forEach((o) => o());
+      offs.forEach((o) => {
+        o();
+      });
       off();
     };
   }, [c, registry, ws]);

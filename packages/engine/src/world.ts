@@ -10,7 +10,7 @@ import {
 } from "@questforge/schema";
 import { scaleAt, walkSpeedAt } from "./depth.ts";
 import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage, type ObjectPose } from "./drawables.ts";
-import { NavMesh, sceneNav } from "./nav.ts";
+import { type NavMesh, sceneNav } from "./nav.ts";
 import { facingFor, resolveAnim, type AnimKind } from "./sprite.ts";
 import type { Position } from "./state.ts";
 import { dist, sub, type Vec } from "./vec.ts";

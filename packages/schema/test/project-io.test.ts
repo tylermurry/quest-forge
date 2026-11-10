@@ -184,7 +184,7 @@ describe("load problems", () => {
 
   it("opens a v1 project: rules get IDs, and the next save writes v2", async () => {
     const files = await base();
-    const v1 = files["game.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 1").replace(/^  - id: rule_\d+\n    when:/gm, "  - when:");
+    const v1 = files["game.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 1").replace(/^ {2}- id: rule_\d+\n {4}when:/gm, "  - when:");
     expect(v1).not.toContain("id: rule_");
     const fs = new MemoryFs({ ...files, "game.yaml": v1 });
     const { project, problems } = await loadProject(fs);

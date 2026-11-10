@@ -36,6 +36,7 @@ export function PartProblems({ problems }: { problems: readonly Problem[] | unde
   return (
     <ul className="grid w-full gap-0.5 text-[12px]" aria-label="Problems with this part">
       {problems.map((p, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
         <li key={i} className={p.severity === "error" ? "text-err flex gap-1" : "text-warn flex gap-1"}>
           <CircleAlert className="mt-0.5 size-3 shrink-0" />
           {p.message}
@@ -83,6 +84,7 @@ export function ConditionRows(props: PartListProps<Condition> & { first?: string
   return (
     <>
       {list.map((c, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: rule parts have no ids and are addressed by position (data-part), so position is their identity
         <div key={i} className="flex flex-wrap items-center gap-1.5 pl-2" data-part={props.partKey(i)}>
           <span className="text-[12px] font-semibold">{i === 0 ? (props.first ?? "If") : "and"}</span>
           <Select value={c.type} onValueChange={(v) => run("Change condition", (q) => edit(q, (l, d) => conditions.setType(d, l, i, v as ConditionType)))}>
@@ -126,6 +128,7 @@ export function ActionRows(props: PartListProps<Action> & { pick?(i: number): Pi
   return (
     <ol className="grid gap-1.5">
       {list.map((a, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: rule parts have no ids and are addressed by position (data-part), so position is their identity
         <li key={i} className="flex items-start gap-1.5 pl-2" data-part={props.partKey(i)} aria-label={`Action ${i + 1}`}>
           <span className="text-muted-foreground h-7 w-4 text-right text-[12px] leading-7 tabular-nums">{i + 1}.</span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">

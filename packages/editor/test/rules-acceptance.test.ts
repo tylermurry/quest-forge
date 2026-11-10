@@ -22,7 +22,10 @@ describe("rule inspector acceptance", () => {
       expect(offered).toContain(value);
       return value;
     };
-    const say = (text: string) => (typed.push(text), text);
+    const say = (text: string) => {
+      typed.push(text);
+      return text;
+    };
 
     // Draw the door on the Hotspots layer with the Rectangle tool.
     c.setLayer("hotspots");

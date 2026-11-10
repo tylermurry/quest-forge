@@ -4,12 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // useState keeps one value, useEffect is captured and run by the test, and the cleanup is kept.
 const react = vi.hoisted(() => ({
   value: null as unknown,
-  effect: null as null | (() => void | (() => void)),
-  setValue: (v: unknown) => void (react.value = v),
+  effect: null as null | (() => (() => void) | undefined),
+  setValue: (v: unknown) => {
+    react.value = v;
+  },
 }));
 vi.mock("react", () => ({
   useState: (initial: unknown) => [react.value ?? initial, react.setValue],
-  useEffect: (fn: () => void | (() => void)) => void (react.effect = fn),
+  useEffect: (fn: () => (() => void) | undefined) => {
+    react.effect = fn;
+  },
 }));
 
 import { REPO } from "../src/download.ts";
@@ -21,10 +25,13 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 async function run(response: () => Promise<Response>) {
   const fetchMock = vi.fn(response);
   vi.stubGlobal("fetch", fetchMock);
+  // biome-ignore lint/correctness/useHookAtTopLevel: the test calls the hook directly with React mocked (useState/useEffect are captured by the test), so there is no component to render it in
   const initial = useLatestRelease();
   const cleanup = react.effect!() as () => void;
   await flush();
-  return { initial, after: useLatestRelease(), fetchMock, cleanup };
+  // biome-ignore lint/correctness/useHookAtTopLevel: the test calls the hook directly with React mocked (useState/useEffect are captured by the test), so there is no component to render it in
+  const after = useLatestRelease();
+  return { initial, after, fetchMock, cleanup };
 }
 
 const json = (body: unknown, ok = true) => Promise.resolve({ ok, json: () => Promise.resolve(body) } as Response);

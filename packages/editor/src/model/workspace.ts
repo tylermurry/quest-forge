@@ -213,7 +213,9 @@ export class WorkspaceState {
   reveal(section: Section, path: string) {
     this.collapsedSections.delete(section);
     const segs = path ? path.split("/") : [];
-    segs.forEach((_, i) => this.expanded.add(folderKey(section, segs.slice(0, i + 1).join("/"))));
+    segs.forEach((_, i) => {
+      this.expanded.add(folderKey(section, segs.slice(0, i + 1).join("/")));
+    });
     this.changed();
   }
 

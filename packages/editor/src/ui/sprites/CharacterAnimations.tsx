@@ -177,6 +177,7 @@ function SlotEditor({ actions, character, slot, images }: { actions: Actions; ch
             <div className="flex flex-wrap items-center gap-1">
               <span className="text-muted-foreground mr-1 text-[11px]">Take a row:</span>
               {Array.from({ length: asset.sheet?.rows ?? 1 }, (_, r) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of the sheet's rows; the row number is its identity
                 <Button key={r} variant="outline" size="xs" onClick={() => patch("Pick animation frames", { image: asset.id, frames: rowFrames(asset, r) })}>
                   Row {r + 1}
                 </Button>

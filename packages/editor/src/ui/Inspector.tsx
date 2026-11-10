@@ -150,6 +150,7 @@ export function References({ actions, refs }: { actions: Actions; refs: Referenc
               {g.items.map((it, i) => {
                 const jump = locate(p, it.location);
                 return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
                   <li key={i}>
                     {jump ? (
                       <button

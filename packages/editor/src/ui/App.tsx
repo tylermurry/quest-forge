@@ -50,7 +50,10 @@ export function App() {
     if (!platform.installMenu) return;
     let remove: (() => void) | null = null;
     let live = true;
-    void platform.installMenu(registry).then((r) => (live ? (remove = r) : r()));
+    void platform.installMenu(registry).then((r) => {
+      if (live) remove = r;
+      else r();
+    });
     return () => {
       live = false;
       remove?.();

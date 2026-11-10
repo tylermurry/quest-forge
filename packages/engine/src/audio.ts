@@ -23,7 +23,7 @@ export interface AudioSource {
 }
 
 /** Volume step (0–10) → gain, on a curve so the low steps aren't all loud. */
-export const gainFor = (step: number) => Math.pow(Math.max(0, Math.min(VOLUME_STEPS, step)) / VOLUME_STEPS, 2);
+export const gainFor = (step: number) => (Math.max(0, Math.min(VOLUME_STEPS, step)) / VOLUME_STEPS) ** 2;
 
 /** Follows a session each frame: switches music only when the track changes, plays queued sounds once. */
 export class AudioSync {

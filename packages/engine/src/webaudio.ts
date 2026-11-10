@@ -149,7 +149,7 @@ export class WebAudio implements AudioBackend {
   sound(id: string) {
     const ctx = this.ctx;
     // Before the first gesture there is no sound to make; it isn't queued for later.
-    if (!ctx || ctx.state !== "running") {
+    if (ctx?.state !== "running") {
       void this.fetchBytes(id);
       return;
     }

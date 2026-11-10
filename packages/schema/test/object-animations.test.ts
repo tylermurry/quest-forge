@@ -89,7 +89,7 @@ describe("object animation validation", () => {
     ];
     expect(
       report(p)
-        .map((r) => r[0] + " " + r[1])
+        .map((r) => `${r[0]} ${r[1]}`)
         .sort(),
     ).toEqual(["duplicate_id objects.0.animations.1.id", "missing_reference objects.0.animations.0.image"]);
   });

@@ -61,7 +61,7 @@ describe("manual save", () => {
     const { fs, host, emit } = await memoryHost();
     const ed = await Editor.open(host, { autosave: false });
     ed.apply("Rename item", (p) => renameEntry(p, "item", "fish", "Trout"));
-    fs.files.set("items/fish.item.yaml", fs.files.get("items/fish.item.yaml")! + "\n# edited elsewhere\n");
+    fs.files.set("items/fish.item.yaml", `${fs.files.get("items/fish.item.yaml")!}\n# edited elsewhere\n`);
     emit(["items/fish.item.yaml"]);
     await vi.advanceTimersByTimeAsync(WATCH_SETTLE_MS * 2);
     expect(itemName(ed.project, "fish")).toBe("Trout");

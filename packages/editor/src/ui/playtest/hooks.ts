@@ -10,7 +10,11 @@ export function usePlaytest(playtest: Playtest): Playtest {
   useEffect(() => {
     let raf = 0;
     const off = playtest.subscribe(() => {
-      if (!raf) raf = requestAnimationFrame(() => ((raf = 0), bump()));
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          bump();
+        });
     });
     const timer = setInterval(() => playtest.session && bump(), 200);
     return () => {

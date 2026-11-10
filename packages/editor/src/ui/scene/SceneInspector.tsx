@@ -132,6 +132,7 @@ function Problems({ problems }: { problems: Problem[] }) {
   return (
     <ul className="border-err/40 bg-err/10 text-err mt-2 grid gap-1 rounded-md border p-2 text-[12px]" aria-label="Problems with this">
       {problems.map((p, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
         <li key={i} className="flex gap-1.5">
           <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
           <span>{p.message}</span>
@@ -243,11 +244,9 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
       const r = scene.regions.find((x) => x.id === thing.key);
       if (!r) return null;
       body = (
-        <>
-          <Section title="ID">
-            <div ref={nameBox}>{idRow}</div>
-          </Section>
-        </>
+        <Section title="ID">
+          <div ref={nameBox}>{idRow}</div>
+        </Section>
       );
       break;
     }

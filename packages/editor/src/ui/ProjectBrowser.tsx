@@ -283,7 +283,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <button
                   className="text-muted-foreground flex size-4 shrink-0 items-center justify-center"
                   aria-label={isOpen ? "Collapse" : "Expand"}
-                  onClick={(e) => (e.stopPropagation(), ws.toggleFolder(f.section, f.path))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    ws.toggleFolder(f.section, f.path);
+                  }}
                 >
                   {isOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>
@@ -392,7 +395,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <button
                   className="flex size-4 shrink-0 items-center justify-center"
                   aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
-                  onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    ws.toggleFolder(section, "");
+                  }}
                 >
                   {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>

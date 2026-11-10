@@ -329,7 +329,7 @@ export class PlayerUi {
     const list = this.slots.list;
     let pick: number | null = null;
     if (mode === "save") {
-      const empty = list.findIndex((x) => x === null);
+      const empty = list.indexOf(null);
       pick = empty >= 0 ? empty : null;
     } else {
       let newest = -1;

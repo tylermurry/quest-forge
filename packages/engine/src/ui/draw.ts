@@ -225,7 +225,9 @@ function drawEnding(ctx: Ctx, ui: PlayerUi, s: Session, L: PlayerUi["layout"]["e
   ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  shown.forEach((l, i) => ctx.fillText(l, L.message.x + L.message.w / 2, L.message.y + i * TEXT_LINE));
+  shown.forEach((l, i) => {
+    ctx.fillText(l, L.message.x + L.message.w / 2, L.message.y + i * TEXT_LINE);
+  });
   for (const b of e.kind === "die" ? L.buttons : L.win) {
     const enabled = b.id !== "restore" || ui.slots.any;
     button(ctx, b.rect, false, enabled);

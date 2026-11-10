@@ -236,11 +236,16 @@ export function Workspace({ root, editor, onClose }: Props) {
     let shown = "";
     const refresh = () => {
       const now = `${playtest.playing}/${playtest.session !== null}/${playtest.hereTarget() !== null}/${playtest.nodeTarget() !== null}`;
-      if (now !== shown) (shown = now), registry.changed();
+      if (now !== shown) {
+        shown = now;
+        registry.changed();
+      }
     };
     const unsubs = [playtest.subscribe(refresh), ws.subscribe(refresh)];
     return () => {
-      unsubs.forEach((u) => u());
+      unsubs.forEach((u) => {
+        u();
+      });
       off();
     };
   }, [playtest, ws, registry]);

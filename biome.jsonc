@@ -37,37 +37,15 @@
       "preset": "recommended",
       "style": {
         // Deliberate style: with noUncheckedIndexedAccess the code asserts non-null where an invariant guarantees it (854 uses).
-        "noNonNullAssertion": "off",
-        // Existing findings, follow-up #32 (17).
-        "useImportType": "off",
-        "useTemplate": "off",
-        "useExponentiationOperator": "off",
-        // Existing findings in CSS, follow-up #32 (6).
-        "noDescendingSpecificity": "off"
+        "noNonNullAssertion": "off"
       },
       "correctness": {
         // Deliberate exceptions carry a biome-ignore with their reason.
-        "useExhaustiveDependencies": "error",
-        // Existing finding in a test helper that calls a mocked hook, follow-up #32 (2).
-        "useHookAtTopLevel": "off"
+        "useExhaustiveDependencies": "error"
       },
       "suspicious": {
-        // Existing findings, follow-up #32.
-        "useIterableCallbackReturn": "off", // 28
-        "noArrayIndexKey": "off", // 14
-        "noAssignInExpressions": "off", // 10
-        "noControlCharactersInRegex": "off", // 4
-        "noConfusingVoidType": "off", // 2
         // `then` is a dialogue graph port name in the schema, not a thenable (6).
         "noThenProperty": "off"
-      },
-      "complexity": {
-        // Existing findings, follow-up #32.
-        "noCommaOperator": "off", // 6
-        "useOptionalChain": "off", // 3
-        "noUselessFragments": "off", // 1
-        "useIndexOf": "off", // 1
-        "noAdjacentSpacesInRegex": "off" // 1
       },
       "a11y": {
         // Real accessibility findings in the editor UI, existing, follow-up #30 (49 in total).
