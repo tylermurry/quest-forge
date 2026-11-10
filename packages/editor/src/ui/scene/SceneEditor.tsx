@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUp,
   Eye,
   EyeOff,
   Image as ImageIcon,
@@ -376,6 +378,34 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                     >
                       {row.title} <span className="text-muted-foreground ml-0.5">{row.detail}</span>
                     </button>
+                    {row.draggable && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+                          aria-label={`Bring ${row.title} forward`}
+                          title="Bring forward"
+                          disabled={!c.canMoveObject(row.ref.key, 1)}
+                          onClick={() => c.moveObjectForward(row.ref.key, 1)}
+                        >
+                          <ArrowUp />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+                          aria-label={`Send ${row.title} backward`}
+                          title="Send backward"
+                          disabled={!c.canMoveObject(row.ref.key, -1)}
+                          onClick={() => c.moveObjectForward(row.ref.key, -1)}
+                        >
+                          <ArrowDown />
+                        </Button>
+                      </>
+                    )}
                     {row.deletable && (
                       <Button
                         variant="ghost"

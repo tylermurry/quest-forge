@@ -62,6 +62,32 @@ describe("workspace", () => {
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
 
+  it("changes an object's draw order from its Layers row buttons, one Cmd+Z undoes it", async () => {
+    const ed = await mount();
+    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const rowNames = () =>
+      within(screen.getByRole("region", { name: "Objects layer" }))
+        .getAllByRole("listitem")
+        .map((r) => r.getAttribute("aria-label"));
+    const start = rowNames();
+    const objects = screen.getByRole("region", { name: "Objects layer" });
+    // The front row can't come forward; the back row can't go backward.
+    const front = within(objects).getAllByRole("listitem")[0]!;
+    expect((within(front).getByRole("button", { name: /^Bring .* forward$/ }) as HTMLButtonElement).disabled).toBe(true);
+    const back = within(objects).getAllByRole("listitem").at(-1)!;
+    expect((within(back).getByRole("button", { name: /^Send .* backward$/ }) as HTMLButtonElement).disabled).toBe(true);
+
+    const send = within(front).getByRole("button", { name: /^Send .* backward$/ });
+    send.focus();
+    fireEvent.click(send);
+    const after = rowNames();
+    expect(after[1]).toBe(start[0]);
+    expect(after[0]).toBe(start[1]);
+    expect(ed.history.undoLabel).toBe("Reorder object");
+    fireEvent.keyDown(window, { key: "z", ...mod() });
+    expect(rowNames()).toEqual(start);
+  });
+
   it("deleting a referenced object asks first", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);

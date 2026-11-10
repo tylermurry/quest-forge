@@ -233,7 +233,7 @@ change.
 - Reason: the interaction is pointing at positions in a picture. A keyboard version would be a different product
   feature, not an access path to the same one.
 - Still keyboard-operable around them: the scene tools (V, P, R, S, W), delete (also removes the last point of a polygon being drawn)
-  (`edit.delete`, Backspace), zoom commands, the Layers panel (buttons that select, hide, lock and delete things),
+  (`edit.delete`, Backspace), zoom commands, the Layers panel (buttons that select, hide, lock, delete and reorder things),
   the Scene Inspector (number fields that nudge with the arrow keys), and Escape handing focus back from the
   Playtest game. Everything else in the editor must meet UXA-2.
 - Accepted by the owner in [issue #12](https://github.com/tylermurry/quest-forge/issues/12).

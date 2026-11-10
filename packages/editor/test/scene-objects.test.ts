@@ -71,6 +71,46 @@ describe("Objects layer", () => {
     dispose();
   });
 
+  it("brings an object forward and sends it backward one row at a time, one undo step each, and stops at the ends", async () => {
+    const { c, editor, scene, dispose } = await sceneEditor(undefined, "garden", SIZES);
+    const images = sizedImages(editor.project, SIZES);
+    const frontFirst = () =>
+      drawOrder(scene(), images)
+        .reverse()
+        .map((r) => r.key);
+    const start = frontFirst();
+    const ids = scene().objects.map((o) => o.id);
+    const middle = start.find((k) => ids.includes(k) && k !== start[0] && k !== start.at(-1))!;
+    const at = start.indexOf(middle);
+    const undoDepth = () => editor.history.undoLabel;
+    const labelBefore = undoDepth();
+
+    expect(c.moveObjectForward(middle, 1)).toBe(true);
+    expect(frontFirst().indexOf(middle)).toBe(at - 1);
+    expect(undoDepth()).toBe("Reorder object");
+    editor.undo();
+    expect(frontFirst()).toEqual(start);
+    expect(undoDepth()).toBe(labelBefore);
+
+    expect(c.moveObjectForward(middle, -1)).toBe(true);
+    expect(frontFirst().indexOf(middle)).toBe(at + 1);
+    editor.undo();
+    expect(frontFirst()).toEqual(start);
+
+    // At the front there is no further forward; at the back, no further backward.
+    c.reorder(middle, 0);
+    expect(frontFirst()[0]).toBe(middle);
+    const atFront = frontFirst();
+    expect(c.canMoveObject(middle, 1)).toBe(false);
+    expect(c.moveObjectForward(middle, 1)).toBe(false);
+    expect(frontFirst()).toEqual(atFront);
+    c.reorder(middle, start.length - 1);
+    expect(frontFirst().at(-1)).toBe(middle);
+    expect(c.canMoveObject(middle, -1)).toBe(false);
+    expect(c.moveObjectForward(middle, -1)).toBe(false);
+    dispose();
+  });
+
   it("refuses to place things on a locked Objects layer", async () => {
     const { c, ws, scene, at, dispose } = await sceneEditor(undefined, "garden", SIZES);
     ws.sceneUi.toggleLocked("garden", "objects");
