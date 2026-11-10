@@ -172,7 +172,13 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
 
   if (!d) return null;
 
-  const onNodesChange = (changes: NodeChange<FlowNode>[]) => setNodes((ns) => applyNodeChanges(changes.filter((c) => c.type !== "remove"), ns));
+  const onNodesChange = (changes: NodeChange<FlowNode>[]) => {
+    setNodes((ns) => applyNodeChanges(changes.filter((c) => c.type !== "remove"), ns));
+    // Space/Enter on a focused node only marks it selected in React Flow; open it in the Inspector like a click does.
+    // The sync above sets `selected` on local state directly and never emits changes, so this cannot loop.
+    const picked = changes.flatMap((c) => (c.type === "select" && c.selected ? [c.id] : []));
+    if (picked.length === 1 && picked[0] !== selectedNode) selectNode(picked[0]!);
+  };
   const onEdgesChange = (changes: EdgeChange[]) => setEdges((es) => applyEdgeChanges(changes.filter((c) => c.type !== "remove"), es));
 
   const onConnect = (c: Connection) => {

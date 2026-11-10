@@ -76,6 +76,17 @@ describe("dialogue graph tab", () => {
     expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ options: [{ text: "See you.", once: false }] });
   });
 
+  it("selecting a node from the keyboard opens it in the Inspector like a click", async () => {
+    await mount();
+    const card = screen.getByLabelText("Choices node menu");
+    const node = card.closest(".react-flow__node") as HTMLElement;
+    expect(node.getAttribute("tabindex")).toBe("0");
+    fireEvent.keyDown(node, { key: "Enter", code: "Enter" });
+    expect(within(inspector()).getByText("Choices node")).toBeTruthy();
+    fireEvent.keyDown(screen.getByLabelText("Line node hello").closest(".react-flow__node")!, { key: " ", code: "Space" });
+    expect(within(inspector()).getByText("Line node")).toBeTruthy();
+  });
+
   it("a Line picks its speaker; the narrator has no animation field", async () => {
     const { editor } = await mount();
     fireEvent.click(screen.getByLabelText("Line node hello"));

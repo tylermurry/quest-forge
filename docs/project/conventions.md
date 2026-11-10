@@ -219,3 +219,20 @@ change.
   shows the save dialog and writes only the picked path; the dev page downloads. The engine dev page plays a `.quest`
   (Open game…, drop, or `?quest=<url>`). Tests: `schema/test/quest.test.ts`, `engine/test/quest.test.ts`, the puzzle chain from a
   built `.quest` in `engine/test/fixture.test.ts`, `editor/test/build.test.ts`.
+
+## Standards exceptions
+
+- UXA-2 (operable without a mouse), game play: the game player (the exported game and the editor's Playtest) is
+  pointer-operated. Point-and-click play (clicking verbs, hotspots and the walk target) takes pointer events only
+  (`packages/engine/src/game.ts`, `packages/engine/src/ui/controller.ts`); it has no keyboard route.
+- UXA-2, scene canvas: drawing shapes and placing and moving things on the scene canvas
+  (`packages/editor/src/ui/scene/SceneCanvas.tsx`) is pointer-only. The canvas forwards only pointer and wheel events
+  (plus held Space to pan).
+- Reason: the interaction is pointing at positions in a picture. A keyboard version would be a different product
+  feature, not an access path to the same one.
+- Still keyboard-operable around them: the scene tools (V, P, R, S, W), delete (also removes the last point of a polygon being drawn)
+  (`edit.delete`, Backspace), zoom commands, the Layers panel (buttons that select, hide, lock and delete things),
+  the Scene Inspector (number fields that nudge with the arrow keys), and Escape handing focus back from the
+  Playtest game. Everything else in the editor must meet UXA-2.
+- Accepted by the owner in [issue #12](https://github.com/tylermurry/quest-forge/issues/12).
+- A future exception is added here with the rule, scope, reason and the issue that approved it.
