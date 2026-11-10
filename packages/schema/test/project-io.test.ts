@@ -23,11 +23,7 @@ describe("loading the fixture project", () => {
     const { project, problems } = await loadProject(new NodeFs(FIXTURE));
     expect(problems).toEqual([]);
     expect(project.game?.data.title).toBe("The Lantern");
-    expect(project.scenes.map((s) => s.path)).toEqual([
-      "scenes/outdoors/beach.scene.yaml",
-      "scenes/outdoors/path.scene.yaml",
-      "scenes/shop.scene.yaml",
-    ]);
+    expect(project.scenes.map((s) => s.path)).toEqual(["scenes/outdoors/beach.scene.yaml", "scenes/outdoors/path.scene.yaml", "scenes/shop.scene.yaml"]);
     expect(project.items).toHaveLength(4);
     expect(project.characters).toHaveLength(3);
     expect(project.dialogues).toHaveLength(1);
@@ -98,7 +94,9 @@ describe("round-trip", () => {
     const fs = new MemoryFs();
     const project: Project = {
       ...(await loadProject(fs)).project,
-      items: [{ path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 2 } }],
+      items: [
+        { path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 2 } },
+      ],
     };
     await saveProject(fs, project);
     expect(fs.files.get("items/coin.item.yaml")).toBe(await readFile(join(FIXTURE, "items/coin.item.yaml"), "utf8"));

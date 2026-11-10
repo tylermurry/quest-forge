@@ -26,7 +26,10 @@ const settle = (s: Session) => {
   s.tick(1 / 60);
 };
 const withAudio = (p: Project, ids: string[]) => {
-  p.assets = { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 2, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }) };
+  p.assets = {
+    path: "assets.yaml",
+    data: AssetsFile.parse({ schemaVersion: 2, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }),
+  };
   return p;
 };
 const button = <Id extends string>(list: { id: Id; rect: Rect }[], id: Id) => center(list.find((b) => b.id === id)!.rect);
@@ -35,7 +38,16 @@ const POT: Vec = [320, 320];
 
 /** Yard with music; walking into the shed region; the shed has a hand-to-die trap and its own music. */
 function adventure(): Project {
-  const exit = { id: "exit", shape: [[600, 250], [640, 250], [640, 400], [600, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])] };
+  const exit = {
+    id: "exit",
+    shape: [
+      [600, 250],
+      [640, 250],
+      [640, 400],
+      [600, 400],
+    ],
+    rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])],
+  };
   return withAudio(
     testProject({
       yard: {
@@ -45,16 +57,56 @@ function adventure(): Project {
           {
             id: "pot",
             name: "flowerpot",
-            shape: [[300, 300], [340, 300], [340, 340], [300, 340]],
+            shape: [
+              [300, 300],
+              [340, 300],
+              [340, 340],
+              [300, 340],
+            ],
             walkTo: { x: 320, y: 360, facing: "up" },
-            rules: [rule({ type: "hand" }, [{ type: "give_item", item: "key" }, { type: "award_points", points: 5, award: "key" }, { type: "play_sound", sound: "ding" }, narrate("A key!")], [], true)],
+            rules: [
+              rule(
+                { type: "hand" },
+                [
+                  { type: "give_item", item: "key" },
+                  { type: "award_points", points: 5, award: "key" },
+                  { type: "play_sound", sound: "ding" },
+                  narrate("A key!"),
+                ],
+                [],
+                true,
+              ),
+            ],
           },
         ],
       },
       shed: {
         music: "shed_theme",
-        hotspots: [{ id: "saw", name: "saw", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], walkTo: { x: 320, y: 360, facing: "up" }, rules: [rule({ type: "hand" }, [{ type: "give_item", item: "stick" }, { type: "die", message: "Ouch." }])] }],
-        rules: [rule({ type: "scene_enter" }, [{ type: "set_flag", flag: "open", value: true }, { type: "add_to_counter", counter: "n", amount: 1 }])],
+        hotspots: [
+          {
+            id: "saw",
+            name: "saw",
+            shape: [
+              [300, 300],
+              [340, 300],
+              [340, 340],
+              [300, 340],
+            ],
+            walkTo: { x: 320, y: 360, facing: "up" },
+            rules: [
+              rule({ type: "hand" }, [
+                { type: "give_item", item: "stick" },
+                { type: "die", message: "Ouch." },
+              ]),
+            ],
+          },
+        ],
+        rules: [
+          rule({ type: "scene_enter" }, [
+            { type: "set_flag", flag: "open", value: true },
+            { type: "add_to_counter", counter: "n", amount: 1 },
+          ]),
+        ],
       },
     }),
     ["yard_theme", "shed_theme", "ding"],
@@ -100,11 +152,19 @@ describe("save slots", () => {
     const store = new MemoryStore();
     store.setItem(savesKey("t"), "{not json");
     expect(new SaveSlots(store, { id: "t", version: 1 }).any).toBe(false);
-    store.setItem(savesKey("t"), JSON.stringify({ slots: [null, { name: "x", state: { nope: 1 } }, { name: "ok", savedAt: 5, version: 1, state: { scene: "yard" } }] }));
+    store.setItem(
+      savesKey("t"),
+      JSON.stringify({ slots: [null, { name: "x", state: { nope: 1 } }, { name: "ok", savedAt: 5, version: 1, state: { scene: "yard" } }] }),
+    );
     const slots = new SaveSlots(store, { id: "t", version: 1 });
     expect(slots.list.map((x) => x?.name ?? null).slice(0, 3)).toEqual([null, null, "ok"]);
     expect(slots.get(2)!.state.inventory).toEqual([]);
-    const full = { getItem: () => null, setItem: () => { throw new Error("QuotaExceeded"); } };
+    const full = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("QuotaExceeded");
+      },
+    };
     const failing = new SaveSlots(full, { id: "t", version: 1 });
     expect(failing.save(0, "x", slots.get(2)!.state)).toBe(false);
     expect(failing.error).toMatch(/couldn't be saved/);
@@ -335,7 +395,12 @@ describe("audio", () => {
 
   it("queued sounds are capped when nobody plays them (headless)", () => {
     const p = adventure();
-    p.scenes[0]!.data.hotspots[0]!.rules = [rule({ type: "hand" }, Array.from({ length: 20 }, () => ({ type: "play_sound", sound: "ding" })))] as never;
+    p.scenes[0]!.data.hotspots[0]!.rules = [
+      rule(
+        { type: "hand" },
+        Array.from({ length: 20 }, () => ({ type: "play_sound", sound: "ding" })),
+      ),
+    ] as never;
     const { s } = play(p);
     s.selectVerb("hand");
     s.primaryClick(POT);

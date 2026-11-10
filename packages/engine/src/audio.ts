@@ -46,10 +46,11 @@ export class AudioSync {
 }
 
 function ruleAudio(rules: readonly AnyRule[], out: Set<string>) {
-  for (const r of rules) for (const a of r.do as readonly Action[]) {
-    if (a.type === "play_sound") out.add(a.sound);
-    if (a.type === "play_music") out.add(a.music);
-  }
+  for (const r of rules)
+    for (const a of r.do as readonly Action[]) {
+      if (a.type === "play_sound") out.add(a.sound);
+      if (a.type === "play_music") out.add(a.music);
+    }
 }
 
 /** Audio a scene may need soon: its music and every sound or track its rules play (prefetched on entry). */

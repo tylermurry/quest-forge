@@ -8,11 +8,7 @@ const same = (a: P, b: P) => a[0] === b[0] && a[1] === b[1];
 
 /** True if `p` lies on segment a–b (endpoints included). */
 export function onSegment(p: P, a: P, b: P): boolean {
-  return (
-    cross(a, b, p) === 0 &&
-    Math.min(a[0], b[0]) <= p[0] && p[0] <= Math.max(a[0], b[0]) &&
-    Math.min(a[1], b[1]) <= p[1] && p[1] <= Math.max(a[1], b[1])
-  );
+  return cross(a, b, p) === 0 && Math.min(a[0], b[0]) <= p[0] && p[0] <= Math.max(a[0], b[0]) && Math.min(a[1], b[1]) <= p[1] && p[1] <= Math.max(a[1], b[1]);
 }
 
 /** True if segments a–b and c–d share any point (touching counts). */

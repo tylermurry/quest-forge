@@ -77,7 +77,8 @@ function sentence(p: Project, label: string, parts: Part[], values: Record<strin
   return words.filter((w) => w !== "").join(" ");
 }
 
-export const conditionText = (p: Project, c: Condition) => sentence(p, CONDITION_LABEL[c.type], CONDITION_PARTS[c.type], c as unknown as Record<string, unknown>);
+export const conditionText = (p: Project, c: Condition) =>
+  sentence(p, CONDITION_LABEL[c.type], CONDITION_PARTS[c.type], c as unknown as Record<string, unknown>);
 export const actionText = (p: Project, a: Action) => sentence(p, ACTION_LABEL[a.type], ACTION_PARTS[a.type], a as unknown as Record<string, unknown>);
 const triggerText = (p: Project, t: Trigger) => sentence(p, TRIGGER_LABEL[t.type], TRIGGER_PARTS[t.type], t as unknown as Record<string, unknown>);
 
@@ -196,7 +197,10 @@ export function formatLog(events: readonly TraceEvent[], ran: Project, now: Proj
         } else if (v.kind === "once_fired") {
           out.push({ text: `${n} skipped: it runs once and already ran`, tone: "skip", depth: 1, jump: ruleJump(now, e.owner, e.rule.id) });
         } else {
-          const why = v.condition.type === "first_time" ? "it's for the first time only, and it already ran" : `condition ${v.index + 1} failed: ${conditionText(ran, v.condition)}`;
+          const why =
+            v.condition.type === "first_time"
+              ? "it's for the first time only, and it already ran"
+              : `condition ${v.index + 1} failed: ${conditionText(ran, v.condition)}`;
           out.push({ text: `${n} skipped: ${why}`, tone: "skip", depth: 1, jump: ruleJump(now, e.owner, e.rule.id, v.index) });
         }
         break;
@@ -220,7 +224,9 @@ export function formatLog(events: readonly TraceEvent[], ran: Project, now: Proj
       case "scene":
         flushOthers();
         out.push({
-          text: e.from ? `${sceneName(ran, e.from)} → ${sceneName(ran, e.to)}${e.spawn ? ` (at ${e.spawn})` : ""}` : `Start in ${sceneName(ran, e.to)}${e.spawn ? ` (at ${e.spawn})` : ""}`,
+          text: e.from
+            ? `${sceneName(ran, e.from)} → ${sceneName(ran, e.to)}${e.spawn ? ` (at ${e.spawn})` : ""}`
+            : `Start in ${sceneName(ran, e.to)}${e.spawn ? ` (at ${e.spawn})` : ""}`,
           tone: "scene",
           depth: 0,
         });
@@ -253,7 +259,12 @@ export function formatLog(events: readonly TraceEvent[], ran: Project, now: Proj
           if (v.kind === "shown") continue;
           const { index, text } = optionOf(ran, e.dialogue, e.node, o.id);
           const sub: DataPath = index < 0 ? [] : v.kind === "condition_failed" ? ["options", index, "if", v.index] : ["options", index];
-          const why = v.kind === "once_chosen" ? "it's once-only and was already chosen" : v.condition.type === "first_time" ? "it's for the first time only, and it was already chosen" : `condition ${v.index + 1} failed: ${conditionText(ran, v.condition)}`;
+          const why =
+            v.kind === "once_chosen"
+              ? "it's once-only and was already chosen"
+              : v.condition.type === "first_time"
+                ? "it's for the first time only, and it was already chosen"
+                : `condition ${v.index + 1} failed: ${conditionText(ran, v.condition)}`;
           out.push({ text: `Option ${quote(text)} hidden: ${why}`, tone: "skip", depth: 1, jump: nodeJump(now, e.dialogue, e.node, sub) });
         }
         break;
@@ -261,18 +272,32 @@ export function formatLog(events: readonly TraceEvent[], ran: Project, now: Proj
       case "dialogue_choice": {
         flushOthers();
         const { index, text } = optionOf(ran, e.dialogue, e.node, e.option);
-        out.push({ text: `Player chose ${quote(text)}`, tone: "trigger", depth: 0, jump: nodeJump(now, e.dialogue, e.node, index < 0 ? [] : ["options", index]) });
+        out.push({
+          text: `Player chose ${quote(text)}`,
+          tone: "trigger",
+          depth: 0,
+          jump: nodeJump(now, e.dialogue, e.node, index < 0 ? [] : ["options", index]),
+        });
         break;
       }
       case "dialogue_branch": {
         flushOthers();
         const why = e.failed ? `: condition ${e.failed.index + 1} failed: ${conditionText(ran, e.failed.condition)}` : "";
-        out.push({ text: `Branch → ${e.result ? "true" : "false"}${why}`, tone: e.result ? "match" : "skip", depth: 1, jump: nodeJump(now, e.dialogue, e.node, e.failed ? ["if", e.failed.index] : []) });
+        out.push({
+          text: `Branch → ${e.result ? "true" : "false"}${why}`,
+          tone: e.result ? "match" : "skip",
+          depth: 1,
+          jump: nodeJump(now, e.dialogue, e.node, e.failed ? ["if", e.failed.index] : []),
+        });
         break;
       }
       case "dialogue_end":
         flushOthers();
-        out.push({ text: `Dialogue ${quote(dialogueName(ran, e.dialogue))} ${END_TEXT[e.reason]}`, tone: e.reason === "loop" || e.reason === "cut" ? "note" : "scene", depth: 0 });
+        out.push({
+          text: `Dialogue ${quote(dialogueName(ran, e.dialogue))} ${END_TEXT[e.reason]}`,
+          tone: e.reason === "loop" || e.reason === "cut" ? "note" : "scene",
+          depth: 0,
+        });
         break;
     }
   }

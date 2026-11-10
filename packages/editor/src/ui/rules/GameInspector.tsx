@@ -40,40 +40,56 @@ export function GameInspector({ actions }: { actions: Actions }) {
   return (
     <div ref={root}>
       <InspectorShell actions={actions} title={g.title} subtitle="Game settings and rules that work anywhere" owner={{ kind: "game" }}>
+        <section className="grid gap-1.5" aria-label="Start" data-game="startScene">
+          <h4 className={DT}>Start</h4>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-muted-foreground text-[12px]">Play starts in</span>
+            <Picker
+              label="Start scene"
+              value={g.startScene}
+              options={pickerOptions(p, "scene")}
+              onPick={(id) => editor.apply("Change start scene", (q) => setStart(q, id))}
+            />
+            <span className="text-muted-foreground text-[12px]">at</span>
+            <Picker
+              label="Start spawn"
+              value={g.startSpawn}
+              options={pickerOptions(p, "spawn", g.startScene)}
+              onPick={(id) => editor.apply("Change start spawn", (q) => setStart(q, g.startScene, id))}
+            />
+          </div>
+        </section>
 
-          <section className="grid gap-1.5" aria-label="Start" data-game="startScene">
-            <h4 className={DT}>Start</h4>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-muted-foreground text-[12px]">Play starts in</span>
-              <Picker label="Start scene" value={g.startScene} options={pickerOptions(p, "scene")} onPick={(id) => editor.apply("Change start scene", (q) => setStart(q, id))} />
-              <span className="text-muted-foreground text-[12px]">at</span>
-              <Picker label="Start spawn" value={g.startSpawn} options={pickerOptions(p, "spawn", g.startScene)} onPick={(id) => editor.apply("Change start spawn", (q) => setStart(q, g.startScene, id))} />
-            </div>
-          </section>
+        <section className="grid gap-1.5" aria-label="Score" data-game="maxScore">
+          <h4 className={DT}>Score</h4>
+          <NumberField
+            label="Max score"
+            integer
+            min={0}
+            value={g.maxScore}
+            onChange={(n) => editor.apply("Change max score", (q) => setMaxScore(q, n), "game:maxScore")}
+            onBlur={blur}
+            className="w-28"
+          />
+          <p className={total === g.maxScore ? "text-muted-foreground text-[12px]" : "text-warn text-[12px]"}>
+            Awards in the game add up to {total} ({awards} award{awards === 1 ? "" : "s"}).
+          </p>
+        </section>
 
-          <section className="grid gap-1.5" aria-label="Score" data-game="maxScore">
-            <h4 className={DT}>Score</h4>
-            <NumberField label="Max score" integer min={0} value={g.maxScore} onChange={(n) => editor.apply("Change max score", (q) => setMaxScore(q, n), "game:maxScore")} onBlur={blur} className="w-28" />
-            <p className={total === g.maxScore ? "text-muted-foreground text-[12px]" : "text-warn text-[12px]"}>
-              Awards in the game add up to {total} ({awards} award{awards === 1 ? "" : "s"}).
-            </p>
-          </section>
-
-          <section className="grid gap-2" aria-label="Default responses" data-game="defaultResponses">
-            <h4 className={DT}>Default responses</h4>
-            <p className="text-muted-foreground text-[12px]">What the narrator says when no rule answers (first match wins, then these).</p>
-            {RESPONSE_VERBS.map((verb) => (
-              <TextField
-                key={verb}
-                multiline
-                label={RESPONSE_LABEL[verb]}
-                value={g.defaultResponses[verb]}
-                onChange={(v) => editor.apply("Change default response", (q) => setDefaultResponse(q, verb, v), `game:response:${verb}`)}
-                onBlur={blur}
-              />
-            ))}
-          </section>
-
+        <section className="grid gap-2" aria-label="Default responses" data-game="defaultResponses">
+          <h4 className={DT}>Default responses</h4>
+          <p className="text-muted-foreground text-[12px]">What the narrator says when no rule answers (first match wins, then these).</p>
+          {RESPONSE_VERBS.map((verb) => (
+            <TextField
+              key={verb}
+              multiline
+              label={RESPONSE_LABEL[verb]}
+              value={g.defaultResponses[verb]}
+              onChange={(v) => editor.apply("Change default response", (q) => setDefaultResponse(q, verb, v), `game:response:${verb}`)}
+              onBlur={blur}
+            />
+          ))}
+        </section>
       </InspectorShell>
     </div>
   );

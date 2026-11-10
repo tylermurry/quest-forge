@@ -15,7 +15,10 @@ describe("project browser model", () => {
     const p = await m1Project();
     expect(outline(buildSection(p, "scene"))).toEqual(["Garden", "Garden shed", "Stress test"]);
     const images = outline(buildSection(p, "image"));
-    expect(images.slice(0, 2)).toEqual([{ "characters/": ["gardener_sheet", "hero_sheet"] }, { "items/": ["coin_icon", "fish_icon", "lantern_icon", "rod_icon", "stick_icon", "string_icon"] }]);
+    expect(images.slice(0, 2)).toEqual([
+      { "characters/": ["gardener_sheet", "hero_sheet"] },
+      { "items/": ["coin_icon", "fish_icon", "lantern_icon", "rod_icon", "stick_icon", "string_icon"] },
+    ]);
     expect(buildSection(p, "flag").entries.every((e) => e.detail)).toBe(true);
   });
 

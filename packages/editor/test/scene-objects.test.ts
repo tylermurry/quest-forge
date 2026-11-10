@@ -3,7 +3,10 @@ import { moveObject } from "../src/model/scene/commands.ts";
 import { drawOrder } from "../src/model/scene/things.ts";
 import { sizedImages, sceneEditor } from "./support/scene.ts";
 
-const SIZES = { palm_img: [60, 200], boulder_img: [84, 66], flowerpot_img: [32, 32], rock_img: [70, 40], workbench_img: [80, 40] } as Record<string, [number, number]>;
+const SIZES = { palm_img: [60, 200], boulder_img: [84, 66], flowerpot_img: [32, 32], rock_img: [70, 40], workbench_img: [80, 40] } as Record<
+  string,
+  [number, number]
+>;
 
 describe("Objects layer", () => {
   it("moves an object left as well as right; its baseline and obstacle follow", async () => {
@@ -47,7 +50,10 @@ describe("Objects layer", () => {
   it("reordering an object in the list sets its baseline between its new neighbours", async () => {
     const { c, editor, scene, dispose } = await sceneEditor(undefined, "garden", SIZES);
     const images = sizedImages(editor.project, SIZES);
-    const frontFirst = () => drawOrder(scene(), images).reverse().map((r) => r.key);
+    const frontFirst = () =>
+      drawOrder(scene(), images)
+        .reverse()
+        .map((r) => r.key);
     const before = frontFirst();
     // Move the rearmost object to the very front, then to second place.
     const back = before.at(-1)!;
@@ -57,7 +63,10 @@ describe("Objects layer", () => {
     c.reorder(back, 1);
     expect(frontFirst()[1]).toBe(back);
     // Whatever the list says is what the engine draws: the same sort.
-    const sprites = c.frame()!.sprites.map((s) => s.d.id).reverse();
+    const sprites = c
+      .frame()!
+      .sprites.map((s) => s.d.id)
+      .reverse();
     expect(sprites).toEqual(frontFirst());
     dispose();
   });

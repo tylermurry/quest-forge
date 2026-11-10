@@ -317,7 +317,13 @@ export class SceneController {
     const hiddenChars = new Set(scene.characters.filter((c) => !c.visible).map((c) => c.character));
     const hiddenObjects = new Set(scene.objects.filter((o) => !o.visible).map((o) => o.id));
     const time = this.clock;
-    const list = sceneDrawables(scene, this.host.images, () => true, [...this.placedActors(scene), ...ghosts], () => ({ time }));
+    const list = sceneDrawables(
+      scene,
+      this.host.images,
+      () => true,
+      [...this.placedActors(scene), ...ghosts],
+      () => ({ time }),
+    );
     return list.map((d) => {
       const ghost = d.kind === "character" && d.id.startsWith(GHOST);
       const hidden = d.kind === "object" ? hiddenObjects.has(d.id) : hiddenChars.has(d.id);

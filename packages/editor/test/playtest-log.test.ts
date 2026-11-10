@@ -17,12 +17,23 @@ async function withDoor(): Promise<Project> {
   const door = {
     id: "door",
     name: "door",
-    shape: [[60, 290], [120, 290], [120, 350], [60, 350]] as [number, number][],
+    shape: [
+      [60, 290],
+      [120, 290],
+      [120, 350],
+      [60, 350],
+    ] as [number, number][],
     walkTo: { x: 90, y: 370, facing: "up" as const },
     rules: [
       { id: "rule_1", when: { type: "look" as const }, if: [], do: [narrate("A sturdy door.")], once: false },
       { id: "rule_2", when: { type: "use_item" as const, item: "rod" }, if: [], do: [narrate("Poke.")], once: false },
-      { id: "rule_3", when: { type: "use_item" as const, item: "key" }, if: [{ type: "flag_is" as const, flag: "path_open", value: true }], do: [narrate("The door unlocks.")], once: false },
+      {
+        id: "rule_3",
+        when: { type: "use_item" as const, item: "key" },
+        if: [{ type: "flag_is" as const, flag: "path_open", value: true }],
+        do: [narrate("The door unlocks.")],
+        once: false,
+      },
     ],
   };
   return {
@@ -114,7 +125,11 @@ describe("event log lines", () => {
     // Move rule 1 to the bottom: its log lines still jump to it.
     editor.apply("Move rule", (p: Project) => ({
       ...p,
-      scenes: p.scenes.map((d) => (d.data.id === "garden" ? { ...d, data: { ...d.data, hotspots: d.data.hotspots.map((h) => (h.id === "door" ? { ...h, rules: [...h.rules.slice(1), h.rules[0]!] } : h)) } } : d)),
+      scenes: p.scenes.map((d) =>
+        d.data.id === "garden"
+          ? { ...d, data: { ...d.data, hotspots: d.data.hotspots.map((h) => (h.id === "door" ? { ...h, rules: [...h.rules.slice(1), h.rules[0]!] } : h)) } }
+          : d,
+      ),
     }));
     const matched = formatLog(playtest.events, playtest.run!.project, editor.project).findLast((l) => l.text === "Rule 1 matched")!;
     ws.jumpTo(matched.jump!);

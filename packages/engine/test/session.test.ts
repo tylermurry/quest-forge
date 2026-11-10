@@ -19,7 +19,20 @@ const ROCK: [number, number] = [230, 220];
 const GARDENER: [number, number] = [500, 360];
 
 const potRules = (rules: unknown[]) => ({
-  hotspots: [{ id: "pot", name: "flowerpot", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], walkTo: { x: 320, y: 360, facing: "up" }, rules }],
+  hotspots: [
+    {
+      id: "pot",
+      name: "flowerpot",
+      shape: [
+        [300, 300],
+        [340, 300],
+        [340, 340],
+        [300, 340],
+      ],
+      walkTo: { x: 320, y: 360, facing: "up" },
+      rules,
+    },
+  ],
 });
 const gardenerRules = (rules: unknown[]) => ({ characters: [{ character: "gardener", x: 500, y: 380, facing: "left", visible: true, rules }] });
 
@@ -70,7 +83,11 @@ describe("verbs", () => {
 
   it("falls back to the default response for each verb", () => {
     const s = make();
-    for (const [verb, reply] of [["look", "Nothing special."], ["hand", "You can't."], ["talk", "Nobody answers."]] as const) {
+    for (const [verb, reply] of [
+      ["look", "Nothing special."],
+      ["hand", "You can't."],
+      ["talk", "Nobody answers."],
+    ] as const) {
       s.selectVerb(verb);
       s.primaryClick(ROCK);
       arrive(s);
@@ -257,7 +274,14 @@ describe("sequences", () => {
   });
 
   it("die ends the game until Restart, which resets the state", () => {
-    const s = make({ yard: potRules([rule({ type: "hand" }, [{ type: "give_item", item: "key" }, { type: "die", message: "A snake bites you." }])]) });
+    const s = make({
+      yard: potRules([
+        rule({ type: "hand" }, [
+          { type: "give_item", item: "key" },
+          { type: "die", message: "A snake bites you." },
+        ]),
+      ]),
+    });
     s.selectVerb("hand");
     s.primaryClick(POT);
     run(s, 5);
@@ -274,7 +298,13 @@ describe("sequences", () => {
 
   it("notes a missing dialogue and an object animation that doesn't exist", () => {
     const s = make({
-      yard: potRules([rule({ type: "look" }, [{ type: "start_dialogue", dialogue: "shop" }, { type: "play_animation", target: { kind: "object", scene: "yard", object: "rock" }, animation: "spin" }, narrate("Done.")])]),
+      yard: potRules([
+        rule({ type: "look" }, [
+          { type: "start_dialogue", dialogue: "shop" },
+          { type: "play_animation", target: { kind: "object", scene: "yard", object: "rock" }, animation: "spin" },
+          narrate("Done."),
+        ]),
+      ]),
     });
     s.selectVerb("look");
     s.primaryClick(POT);

@@ -3,9 +3,26 @@ import type { Action, Condition, Problem, Project } from "@questforge/schema";
 import type { RuleDefaults } from "../../model/rules/defaults.ts";
 import { actions, conditions, type AnimTarget } from "../../model/rules/parts.ts";
 import { createAndUse } from "../../model/rules/pickers.ts";
-import { ACTION_GROUPS, ACTION_LABEL, ACTION_PARTS, CONDITION_LABEL, CONDITION_ORDER, CONDITION_PARTS, type ActionType, type ConditionType, type PickKind } from "../../model/rules/vocab.ts";
+import {
+  ACTION_GROUPS,
+  ACTION_LABEL,
+  ACTION_PARTS,
+  CONDITION_LABEL,
+  CONDITION_ORDER,
+  CONDITION_PARTS,
+  type ActionType,
+  type ConditionType,
+  type PickKind,
+} from "../../model/rules/vocab.ts";
 import { Button } from "../components/ui/button.tsx";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu.tsx";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { PartFields, type PartHandlers } from "./PartFields.tsx";
 
@@ -46,12 +63,17 @@ export interface PartListProps<T> {
   editLabel: string;
 }
 
-function handlers<T>(props: PartListProps<T>, i: number, set: (list: T[], d: RuleDefaults, patch: Record<string, unknown>) => T[]): Omit<PartHandlers, "animTarget"> {
+function handlers<T>(
+  props: PartListProps<T>,
+  i: number,
+  set: (list: T[], d: RuleDefaults, patch: Record<string, unknown>) => T[],
+): Omit<PartHandlers, "animTarget"> {
   const { run, edit, blur, field } = props;
   return {
     patch: (patch, f) => run(props.editLabel, (q) => edit(q, (l, d) => set(l, d, patch)), f && `${field}/${i}/${f}`),
     blur,
-    create: (pick: PickKind, name: string, key: string) => run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => edit(r, (l, d) => set(l, d, { [key]: id })))),
+    create: (pick: PickKind, name: string, key: string) =>
+      run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => edit(r, (l, d) => set(l, d, { [key]: id })))),
   };
 }
 
@@ -82,7 +104,13 @@ export function ConditionRows(props: PartListProps<Condition> & { first?: string
             invalidKeys={props.invalid(i)}
             h={{ ...handlers(props, i, (l, d, patch) => conditions.setFields(d, l, i, patch)), animTarget: () => {} }}
           />
-          <Button variant="ghost" size="icon" className="ml-auto size-6" aria-label={`Remove condition ${i + 1}`} onClick={() => run("Remove condition", (q) => edit(q, (l) => conditions.remove(l, i)))}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto size-6"
+            aria-label={`Remove condition ${i + 1}`}
+            onClick={() => run("Remove condition", (q) => edit(q, (l) => conditions.remove(l, i)))}
+          >
             <X className="size-3.5" />
           </Button>
           <PartProblems problems={props.problems(i)} />
@@ -134,13 +162,33 @@ export function ActionRows(props: PartListProps<Action> & { pick?(i: number): Pi
             </div>
           </div>
           <span className="mt-0.5 flex shrink-0">
-            <Button variant="ghost" size="icon" className="size-6" aria-label={`Move action ${i + 1} up`} disabled={i === 0} onClick={() => run("Move action", (q) => edit(q, (l) => actions.move(l, i, i - 1)))}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              aria-label={`Move action ${i + 1} up`}
+              disabled={i === 0}
+              onClick={() => run("Move action", (q) => edit(q, (l) => actions.move(l, i, i - 1)))}
+            >
               <ArrowUp className="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="size-6" aria-label={`Move action ${i + 1} down`} disabled={i === list.length - 1} onClick={() => run("Move action", (q) => edit(q, (l) => actions.move(l, i, i + 1)))}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              aria-label={`Move action ${i + 1} down`}
+              disabled={i === list.length - 1}
+              onClick={() => run("Move action", (q) => edit(q, (l) => actions.move(l, i, i + 1)))}
+            >
               <ArrowDown className="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="size-6" aria-label={`Remove action ${i + 1}`} onClick={() => run("Remove action", (q) => edit(q, (l) => actions.remove(l, i)))}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              aria-label={`Remove action ${i + 1}`}
+              onClick={() => run("Remove action", (q) => edit(q, (l) => actions.remove(l, i)))}
+            >
               <X className="size-3.5" />
             </Button>
           </span>

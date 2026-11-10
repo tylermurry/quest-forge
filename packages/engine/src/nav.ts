@@ -27,10 +27,7 @@ export class NavMesh {
     this.outer = outer;
     this.holes = holes;
     this.edges = [outer, ...holes].flatMap((poly) => poly.map((a, i) => ({ a, b: poly[(i + 1) % poly.length]! })));
-    this.nodes = [
-      ...cornerNodes(outer, "reflex"),
-      ...holes.flatMap((h) => cornerNodes(h, "convex")),
-    ].filter((n) => this.isWalkable(n));
+    this.nodes = [...cornerNodes(outer, "reflex"), ...holes.flatMap((h) => cornerNodes(h, "convex"))].filter((n) => this.isWalkable(n));
     this.links = this.nodes.map(() => []);
     for (let i = 0; i < this.nodes.length; i++) {
       for (let j = i + 1; j < this.nodes.length; j++) {

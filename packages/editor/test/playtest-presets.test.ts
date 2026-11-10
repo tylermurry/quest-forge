@@ -86,7 +86,11 @@ describe("presets file", () => {
   it("a missing or broken file, or a broken entry, is skipped", () => {
     expect(readPresets(null)).toEqual([]);
     expect(readPresets("{not json")).toEqual([]);
-    expect(readPresets(JSON.stringify({ presets: [{ name: "x" }, { name: "", state: { scene: "a" } }, 7, { name: "ok", state: { scene: "garden", inventory: ["a", 3] } }] })).map((x) => x.name)).toEqual(["ok"]);
+    expect(
+      readPresets(
+        JSON.stringify({ presets: [{ name: "x" }, { name: "", state: { scene: "a" } }, 7, { name: "ok", state: { scene: "garden", inventory: ["a", 3] } }] }),
+      ).map((x) => x.name),
+    ).toEqual(["ok"]);
     const s = readState({ scene: "garden", inventory: ["a", 3], player: { x: "1" } })!;
     expect(s.inventory).toEqual(["a"]);
     expect(s.player).toEqual({ x: 0, y: 0, facing: "down" });

@@ -220,7 +220,11 @@ export class Playtest {
     // A saved state may name things the project no longer has.
     if (start.state) {
       const { state, dropped } = sanitizeState(project, start.state);
-      if (dropped.length) this.editor.showNotice({ kind: "info", text: droppedNotice(override ? "Restart scene" : `Preset "${origin.kind === "preset" ? origin.name : ""}"`, dropped) });
+      if (dropped.length)
+        this.editor.showNotice({
+          kind: "info",
+          text: droppedNotice(override ? "Restart scene" : `Preset "${origin.kind === "preset" ? origin.name : ""}"`, dropped),
+        });
       start = { state };
     }
     const run: Run = { id: this.nextId++, project, start, origin };

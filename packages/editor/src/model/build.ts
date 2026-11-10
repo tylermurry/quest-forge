@@ -11,7 +11,12 @@ export interface BuildHost {
   saveBuild(fileName: string, bytes: Uint8Array): Promise<string | null>;
 }
 
-export type BuildResult = { kind: "built"; where: string } | { kind: "cancelled" } | { kind: "blocked" } | { kind: "failed"; message: string } | { kind: "busy" };
+export type BuildResult =
+  | { kind: "built"; where: string }
+  | { kind: "cancelled" }
+  | { kind: "blocked" }
+  | { kind: "failed"; message: string }
+  | { kind: "busy" };
 
 export class GameBuilder {
   private _building = false;
@@ -33,7 +38,10 @@ export class GameBuilder {
     const errors = this.editor.problems.filter((p) => p.severity === "error");
     if (errors.length) {
       this.ws.showProblems();
-      this.editor.showNotice({ kind: "error", text: `Fix ${errors.length === 1 ? "the error" : `the ${errors.length} errors`} in Problems before building the game.` });
+      this.editor.showNotice({
+        kind: "error",
+        text: `Fix ${errors.length === 1 ? "the error" : `the ${errors.length} errors`} in Problems before building the game.`,
+      });
       return { kind: "blocked" };
     }
     this._building = true;

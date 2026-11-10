@@ -31,7 +31,15 @@ const scene = SceneFile.parse({
   name: "Yard",
   background: "bg",
   depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
-  walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [] },
+  walkable: {
+    outer: [
+      [0, 200],
+      [640, 200],
+      [640, 400],
+      [0, 400],
+    ],
+    holes: [],
+  },
   spawns: { default: { x: 100, y: 380, facing: "up" } },
   objects: [
     { id: "tree", image: "t", x: 0, y: 0, visible: true, rules: [] },

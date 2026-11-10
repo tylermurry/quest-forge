@@ -47,7 +47,12 @@ export function drawIcon(ctx: Ctx, id: IconId, r: Rect, color = "#fff") {
       ctx.beginPath();
       ctx.roundRect(4, 7.5, 8, 7, 2);
       ctx.fill();
-      for (const [x, top] of [[4.6, 3], [6.8, 1.8], [9, 2.2], [11.2, 3.6]] as const) {
+      for (const [x, top] of [
+        [4.6, 3],
+        [6.8, 1.8],
+        [9, 2.2],
+        [11.2, 3.6],
+      ] as const) {
         ctx.beginPath();
         ctx.roundRect(x - 0.9, top, 1.8, 7, 0.9);
         ctx.fill();

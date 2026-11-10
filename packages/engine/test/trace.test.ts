@@ -18,7 +18,22 @@ const arrive = (s: Session) => {
 };
 const POT: [number, number] = [320, 320];
 const door = (rules: unknown[]) => ({
-  yard: { hotspots: [{ id: "pot", name: "door", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], walkTo: { x: 320, y: 360, facing: "up" }, rules }] },
+  yard: {
+    hotspots: [
+      {
+        id: "pot",
+        name: "door",
+        shape: [
+          [300, 300],
+          [340, 300],
+          [340, 340],
+          [300, 340],
+        ],
+        walkTo: { x: 320, y: 360, facing: "up" },
+        rules,
+      },
+    ],
+  },
 });
 
 describe("trace sink", () => {
@@ -46,23 +61,55 @@ describe("trace sink", () => {
     ]);
     const tail = events.slice(events.findIndex((e) => e.type === "trigger" && e.trigger.type === "use_item"));
     expect(tail[0]).toEqual({ type: "trigger", owner: { kind: "hotspot", scene: "yard", id: "pot" }, trigger: { type: "use_item", item: "key" } });
-    expect(tail.at(-2)).toEqual({ type: "no_match", owner: { kind: "hotspot", scene: "yard", id: "pot" }, trigger: { type: "use_item", item: "key" }, response: "That won't work." });
+    expect(tail.at(-2)).toEqual({
+      type: "no_match",
+      owner: { kind: "hotspot", scene: "yard", id: "pot" },
+      trigger: { type: "use_item", item: "key" },
+      response: "That won't work.",
+    });
     expect(tail.at(-1)).toEqual({ type: "action", action: { type: "narrate", text: "That won't work." } });
   });
 
   it("reports the match, its actions and scene changes", () => {
-    const { s, events } = traced(door([rule({ type: "hand" }, [{ type: "set_flag", flag: "open", value: true }, { type: "change_scene", scene: "shed", spawn: "door" }])]));
+    const { s, events } = traced(
+      door([
+        rule({ type: "hand" }, [
+          { type: "set_flag", flag: "open", value: true },
+          { type: "change_scene", scene: "shed", spawn: "door" },
+        ]),
+      ]),
+    );
     expect(events[0]).toEqual({ type: "scene", from: null, to: "yard", spawn: "default" });
     s.selectVerb("hand");
     s.primaryClick(POT);
     arrive(s);
     const kinds = events.map((e) => (e.type === "rule" ? `rule:${e.verdict.kind}` : e.type === "action" ? `action:${e.action.type}` : e.type));
-    expect(kinds).toEqual(["scene", "trigger", "no_match", "trigger", "rule:matched", "action:set_flag", "action:change_scene", "trigger", "no_match", "scene", "trigger", "no_match"]);
+    expect(kinds).toEqual([
+      "scene",
+      "trigger",
+      "no_match",
+      "trigger",
+      "rule:matched",
+      "action:set_flag",
+      "action:change_scene",
+      "trigger",
+      "no_match",
+      "scene",
+      "trigger",
+      "no_match",
+    ]);
     expect(events.filter((e) => e.type === "scene").at(-1)).toEqual({ type: "scene", from: "yard", to: "shed", spawn: "door" });
   });
 
   it("notes skipped steps; sounds are actions, not notes", () => {
-    const { s, events } = traced(door([rule({ type: "hand" }, [{ type: "start_dialogue", dialogue: "chat" }, { type: "play_sound", sound: "creak" }])]));
+    const { s, events } = traced(
+      door([
+        rule({ type: "hand" }, [
+          { type: "start_dialogue", dialogue: "chat" },
+          { type: "play_sound", sound: "creak" },
+        ]),
+      ]),
+    );
     s.selectVerb("hand");
     s.primaryClick(POT);
     arrive(s);
@@ -101,7 +148,18 @@ describe("start state and entry snapshot", () => {
 
   it("records the state before scene_enter on each entry", () => {
     const enter = rule({ type: "scene_enter" }, [{ type: "give_item", item: "rod" }]);
-    const s = new Session(testProject({ shed: { rules: [enter] }, ...door([rule({ type: "hand" }, [{ type: "give_item", item: "key" }, { type: "change_scene", scene: "shed", spawn: "door" }])]) }), testImages);
+    const s = new Session(
+      testProject({
+        shed: { rules: [enter] },
+        ...door([
+          rule({ type: "hand" }, [
+            { type: "give_item", item: "key" },
+            { type: "change_scene", scene: "shed", spawn: "door" },
+          ]),
+        ]),
+      }),
+      testImages,
+    );
     expect(s.entry.spawn).toBe("default");
     s.selectVerb("hand");
     s.primaryClick(POT);

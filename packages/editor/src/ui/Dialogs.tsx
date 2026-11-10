@@ -74,7 +74,13 @@ export function Prompt(props: {
           </DialogHeader>
           <div className="grid gap-1.5">
             <Label htmlFor="prompt-input">{props.label}</Label>
-            <Input id="prompt-input" aria-label={props.label} value={value} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setValue(e.target.value)} />
+            <Input
+              id="prompt-input"
+              aria-label={props.label}
+              value={value}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => setValue(e.target.value)}
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" size="sm" onClick={props.onCancel}>

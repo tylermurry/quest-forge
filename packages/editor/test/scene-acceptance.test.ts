@@ -70,13 +70,31 @@ describe("scene editor acceptance", () => {
     // 2. Draw the walkable area with the Polygon tool (double-click closes)…
     c.setLayer("walkable");
     c.setTool("polygon");
-    for (const p of [[20, 395], [620, 395], [560, 190], [80, 190]] as Vec[]) click(p);
+    for (const p of [
+      [20, 395],
+      [620, 395],
+      [560, 190],
+      [80, 190],
+    ] as Vec[])
+      click(p);
     click([80, 190], 2);
-    expect(scene().walkable.outer).toEqual([[20, 395], [620, 395], [560, 190], [80, 190]]);
+    expect(scene().walkable.outer).toEqual([
+      [20, 395],
+      [620, 395],
+      [560, 190],
+      [80, 190],
+    ]);
     // …and one hole (a rock) with the Rectangle tool.
     c.setTool("rect");
     drag([280, 280], [360, 320]);
-    expect(scene().walkable.holes).toEqual([[[280, 280], [360, 280], [360, 320], [280, 320]]]);
+    expect(scene().walkable.holes).toEqual([
+      [
+        [280, 280],
+        [360, 280],
+        [360, 320],
+        [280, 320],
+      ],
+    ]);
 
     // 3. Place a foreground object: drop a palm image near the front.
     c.dropFiles([png("palm.png", 60, 180)], at([150, 390]).screen);

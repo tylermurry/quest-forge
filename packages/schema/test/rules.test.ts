@@ -1,16 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  ACTION_TYPES,
-  Action,
-  CONDITION_TYPES,
-  Condition,
-  GameFile,
-  GameRule,
-  InteractRule,
-  RegionRule,
-  SceneRule,
-  TRIGGER_TYPES,
-} from "../src/index.ts";
+import { ACTION_TYPES, Action, CONDITION_TYPES, Condition, GameFile, GameRule, InteractRule, RegionRule, SceneRule, TRIGGER_TYPES } from "../src/index.ts";
 
 type Case = { good: Record<string, unknown>; bad: Record<string, unknown> };
 
@@ -43,7 +32,10 @@ const conditions: Record<string, Case> = {
 const actions: Record<string, Case> = {
   narrate: { good: { type: "narrate", text: "A sturdy oak door." }, bad: { type: "narrate" } },
   say: { good: { type: "say", character: "shopkeeper", text: "Hello!" }, bad: { type: "say", text: "Hello!" } },
-  walk_character_to: { good: { type: "walk_character_to", character: "gardener", x: 100, y: 300 }, bad: { type: "walk_character_to", character: "gardener", x: 100, y: 999 } },
+  walk_character_to: {
+    good: { type: "walk_character_to", character: "gardener", x: 100, y: 300 },
+    bad: { type: "walk_character_to", character: "gardener", x: 100, y: 999 },
+  },
   walk_player_to: { good: { type: "walk_player_to", x: 100, y: 300 }, bad: { type: "walk_player_to", x: 100, y: 999 } },
   face: { good: { type: "face", facing: "up" }, bad: { type: "face", facing: "north" } },
   change_scene: { good: { type: "change_scene", scene: "cave", spawn: "default" }, bad: { type: "change_scene", scene: "cave" } },

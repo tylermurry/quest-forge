@@ -24,15 +24,29 @@ export class RuleDefaults {
   private first(ids: string[], placeholder: string) {
     return ids[0] ?? placeholder;
   }
-  item = () => this.first(this.project.items.map((i) => i.data.id), "item");
+  item = () =>
+    this.first(
+      this.project.items.map((i) => i.data.id),
+      "item",
+    );
   flag = () => this.first(this.flagsOf("bool"), "flag");
   counter = () => this.first(this.flagsOf("counter"), "counter");
   character = () => {
     // A placed character's own rules speak as that character; otherwise the player.
     if (this.owner.kind === "thing" && this.owner.list === "characters") return this.owner.key;
-    return this.project.game?.data.player ?? this.first(this.project.characters.map((c) => c.data.id), "player");
+    return (
+      this.project.game?.data.player ??
+      this.first(
+        this.project.characters.map((c) => c.data.id),
+        "player",
+      )
+    );
   };
-  dialogue = () => this.first(this.project.dialogues.map((d) => d.data.id), "dialogue");
+  dialogue = () =>
+    this.first(
+      this.project.dialogues.map((d) => d.data.id),
+      "dialogue",
+    );
   sound = () => this.first(this.project.assets?.data.audio.map((a) => a.id) ?? [], "sound");
   sceneId = () => this.scene?.id ?? "scene";
 
@@ -128,7 +142,11 @@ export class RuleDefaults {
         return { type, counter: this.counter(), amount: 1 };
       case "award_points":
         // A fresh award named after the owner: each award counts once.
-        return { type, points: 1, award: uniqueId(this.owner.kind === "thing" ? this.owner.key : this.owner.kind === "scene" ? this.owner.scene : "award", awardIds(this.project)) };
+        return {
+          type,
+          points: 1,
+          award: uniqueId(this.owner.kind === "thing" ? this.owner.key : this.owner.kind === "scene" ? this.owner.scene : "award", awardIds(this.project)),
+        };
       case "show_object":
       case "hide_object": {
         const scene = this.sceneId();

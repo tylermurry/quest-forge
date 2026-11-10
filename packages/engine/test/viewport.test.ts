@@ -28,7 +28,13 @@ describe("fitViewport", () => {
   });
 
   it("never crops: the scene always fits", () => {
-    for (const [w, h] of [[375, 812], [812, 375], [1000, 1000], [641, 401], [3000, 500]] as const) {
+    for (const [w, h] of [
+      [375, 812],
+      [812, 375],
+      [1000, 1000],
+      [641, 401],
+      [3000, 500],
+    ] as const) {
       const v = fitViewport(w, h);
       expect(v.offsetX).toBeGreaterThanOrEqual(0);
       expect(v.offsetY).toBeGreaterThanOrEqual(0);
@@ -39,9 +45,21 @@ describe("fitViewport", () => {
 });
 
 describe("toScene: clicks map to the right scene pixel at all scales", () => {
-  it.each([[640, 400], [1280, 800], [1920, 1200], [2560, 1440], [320, 600], [812, 375]])("at %i×%i", (w, h) => {
+  it.each([
+    [640, 400],
+    [1280, 800],
+    [1920, 1200],
+    [2560, 1440],
+    [320, 600],
+    [812, 375],
+  ])("at %i×%i", (w, h) => {
     const v = fitViewport(w, h);
-    for (const p of [[0, 0], [319, 199], [639, 399], [100.5, 250.25]] as const) {
+    for (const p of [
+      [0, 0],
+      [319, 199],
+      [639, 399],
+      [100.5, 250.25],
+    ] as const) {
       const d = toDevice(v, p);
       const back = toScene(v, d[0], d[1])!;
       expect(back[0]).toBeCloseTo(p[0], 9);

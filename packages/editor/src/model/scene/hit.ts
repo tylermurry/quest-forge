@@ -83,7 +83,8 @@ function layerHits(p: Vec, layer: Layer, c: HitContext): Hit | null {
   const { scene } = c;
   switch (layer) {
     case "guides": {
-      for (const [id, s] of Object.entries(scene.spawns).reverse()) if (dist([s.x, s.y], p) <= tol(POINT_PX)) return { kind: "spawn", ref: { list: "spawns", key: id } };
+      for (const [id, s] of Object.entries(scene.spawns).reverse())
+        if (dist([s.x, s.y], p) <= tol(POINT_PX)) return { kind: "spawn", ref: { list: "spawns", key: id } };
       for (const key of ["near", "far"] as const) {
         const y = scene.depth[key].y;
         // The line spans the scene; its grab square sits just left of it.
@@ -93,14 +94,16 @@ function layerHits(p: Vec, layer: Layer, c: HitContext): Hit | null {
       return null;
     }
     case "hotspots": {
-      for (const h of [...scene.hotspots].reverse()) if (h.walkTo && dist([h.walkTo.x, h.walkTo.y], p) <= tol(POINT_PX)) return { kind: "walkto", ref: { list: "hotspots", key: h.id } };
+      for (const h of [...scene.hotspots].reverse())
+        if (h.walkTo && dist([h.walkTo.x, h.walkTo.y], p) <= tol(POINT_PX)) return { kind: "walkto", ref: { list: "hotspots", key: h.id } };
       break;
     }
     case "objects": {
       for (const d of [...c.sprites].reverse()) {
         const r = d.dest;
         if (d.id.includes(":")) continue; // preview-only actors such as the ghost
-        if (p[0] >= r.x && p[0] < r.x + r.w && p[1] >= r.y && p[1] < r.y + r.h) return { kind: "sprite", ref: { list: d.kind === "object" ? "objects" : "characters", key: d.id } };
+        if (p[0] >= r.x && p[0] < r.x + r.w && p[1] >= r.y && p[1] < r.y + r.h)
+          return { kind: "sprite", ref: { list: d.kind === "object" ? "objects" : "characters", key: d.id } };
       }
       break;
     }

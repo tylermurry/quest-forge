@@ -11,10 +11,7 @@ export const schemaVersion = z.literal(SCHEMA_VERSION);
 
 /** Stable asset ID slug. */
 export const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
-export const Id = z
-  .string()
-  .max(64)
-  .regex(ID_PATTERN, "must be lowercase letters, digits and underscores, starting with a letter");
+export const Id = z.string().max(64).regex(ID_PATTERN, "must be lowercase letters, digits and underscores, starting with a letter");
 export type Id = z.infer<typeof Id>;
 
 export const SceneX = z.int().min(0).max(SCENE_WIDTH);

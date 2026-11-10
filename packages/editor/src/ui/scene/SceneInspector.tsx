@@ -87,7 +87,23 @@ function MusicSelect(props: { actions: Actions; value: string | undefined; onCha
   return <AssetSelect {...props} kind="audio" label="Music" allowNone none="None (keep what's playing)" />;
 }
 
-function AssetSelect({ actions, value, onChange, label, allowNone, kind, none }: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void; label: string; allowNone?: boolean; kind: "images" | "audio"; none: string }) {
+function AssetSelect({
+  actions,
+  value,
+  onChange,
+  label,
+  allowNone,
+  kind,
+  none,
+}: {
+  actions: Actions;
+  value: string | undefined;
+  onChange(v: string | undefined): void;
+  label: string;
+  allowNone?: boolean;
+  kind: "images" | "audio";
+  none: string;
+}) {
   const images = actions.editor.project.assets?.data[kind] ?? [];
   return (
     <div className="grid gap-1">
@@ -159,11 +175,15 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
   // Problems inside rules show on their rule cards in red; the rest show here.
   const problems = (sceneProblems(editor.problems, doc.path, scene).get(thingKey(thing)) ?? []).filter((x) => !x.location.path.includes("rules"));
   const ruleOwner = thingOwner(sceneId, thing.list, thing.key);
-  const run = (label: string, f: Parameters<typeof editor.apply>[1], field?: string) => editor.apply(label, f, field && `${sceneId}:${thing.list}:${thing.key}:${field}`);
+  const run = (label: string, f: Parameters<typeof editor.apply>[1], field?: string) =>
+    editor.apply(label, f, field && `${sceneId}:${thing.list}:${thing.key}:${field}`);
   const blur = () => editor.history.breakMerge();
-  const num = (label: string, value: number, apply: (n: number) => void, opts: { integer?: boolean; min?: number; max?: number; step?: number } = { integer: true }) => (
-    <NumberField label={label} value={value} onChange={apply} onBlur={blur} {...opts} />
-  );
+  const num = (
+    label: string,
+    value: number,
+    apply: (n: number) => void,
+    opts: { integer?: boolean; min?: number; max?: number; step?: number } = { integer: true },
+  ) => <NumberField label={label} value={value} onChange={apply} onBlur={blur} {...opts} />;
   const idRow = (
     <div className="flex items-center gap-2">
       <code className="selectable font-mono text-[12px]">{thing.key}</code>
@@ -184,7 +204,12 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
       body = (
         <>
           <div ref={nameBox}>
-            <TextField label="Name (shown to the player)" value={h.name} onChange={(v) => run("Rename hotspot", (q) => setThingName(q, sceneId, thing, v), "name")} onBlur={blur} />
+            <TextField
+              label="Name (shown to the player)"
+              value={h.name}
+              onChange={(v) => run("Rename hotspot", (q) => setThingName(q, sceneId, thing, v), "name")}
+              onBlur={blur}
+            />
           </div>
           <Section title="ID">{idRow}</Section>
           <Section title="Walk-to point">
@@ -195,12 +220,19 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
                   {num("Y", w.y, (y) => run("Move walk-to point", (q) => setWalkTo(q, sceneId, h.id, { ...w, y }), "walky"))}
                   <FacingSelect value={w.facing} onChange={(facing) => run("Change walk-to facing", (q) => setWalkTo(q, sceneId, h.id, { ...w, facing }))} />
                 </div>
-                <Button variant="ghost" size="xs" className="justify-self-start" onClick={() => run("Remove walk-to point", (q) => setWalkTo(q, sceneId, h.id, undefined))}>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="justify-self-start"
+                  onClick={() => run("Remove walk-to point", (q) => setWalkTo(q, sceneId, h.id, undefined))}
+                >
                   Remove walk-to point
                 </Button>
               </>
             ) : (
-              <p className="text-muted-foreground text-[12px]">Not set: the player walks to the nearest walkable point. Use the Walk-to tool (W) to place one.</p>
+              <p className="text-muted-foreground text-[12px]">
+                Not set: the player walks to the nearest walkable point. Use the Walk-to tool (W) to place one.
+              </p>
             )}
           </Section>
         </>
@@ -234,7 +266,12 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
             onBlur={blur}
           />
           <Section title="ID">{idRow}</Section>
-          <ImageSelect actions={actions} label="Image" value={o.image} onChange={(v) => v && run("Change object image", (q) => setObjectFields(q, sceneId, o.id, { image: v }))} />
+          <ImageSelect
+            actions={actions}
+            label="Image"
+            value={o.image}
+            onChange={(v) => v && run("Change object image", (q) => setObjectFields(q, sceneId, o.id, { image: v }))}
+          />
           <ObjectAnimations actions={actions} sceneId={sceneId} object={o} />
           <Section title="Position (top-left)">
             <div className="grid grid-cols-2 gap-2">
@@ -246,21 +283,47 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
             <Check
               label={`Auto (bottom edge${autoBaseline !== undefined ? `, y ${autoBaseline}` : ""})`}
               checked={o.baseline === undefined}
-              onChange={(auto) => run(auto ? "Use automatic baseline" : "Set baseline", (q) => setBaseline(q, sceneId, o.id, auto ? undefined : Math.min(400, Math.max(0, autoBaseline ?? o.y))))}
+              onChange={(auto) =>
+                run(auto ? "Use automatic baseline" : "Set baseline", (q) =>
+                  setBaseline(q, sceneId, o.id, auto ? undefined : Math.min(400, Math.max(0, autoBaseline ?? o.y))),
+                )
+              }
             />
-            {o.baseline !== undefined && num("Baseline y", o.baseline, (y) => run("Move baseline", (q) => setBaseline(q, sceneId, o.id, y), "baseline"), { integer: true, min: 0, max: 400 })}
+            {o.baseline !== undefined &&
+              num("Baseline y", o.baseline, (y) => run("Move baseline", (q) => setBaseline(q, sceneId, o.id, y), "baseline"), {
+                integer: true,
+                min: 0,
+                max: 400,
+              })}
           </Section>
-          <Check label="Visible when the scene starts" checked={o.visible} onChange={(visible) => run(visible ? "Show object" : "Hide object", (q) => setObjectFields(q, sceneId, o.id, { visible }))} />
+          <Check
+            label="Visible when the scene starts"
+            checked={o.visible}
+            onChange={(visible) => run(visible ? "Show object" : "Hide object", (q) => setObjectFields(q, sceneId, o.id, { visible }))}
+          />
           <Section title="Obstacle">
             {o.obstacle ? (
               <>
-                <p className="text-muted-foreground text-[12px]">Blocks walking while the object is visible ({o.obstacle.length} points). Drag its points on the canvas, or redraw it with the Polygon tool.</p>
-                <Button variant="ghost" size="xs" className="justify-self-start" onClick={() => run("Remove obstacle", (q) => removeObstacle(q, sceneId, o.id))}>
+                <p className="text-muted-foreground text-[12px]">
+                  Blocks walking while the object is visible ({o.obstacle.length} points). Drag its points on the canvas, or redraw it with the Polygon tool.
+                </p>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="justify-self-start"
+                  onClick={() => run("Remove obstacle", (q) => removeObstacle(q, sceneId, o.id))}
+                >
                   Remove obstacle
                 </Button>
               </>
             ) : (
-              <Button variant="secondary" size="xs" className="justify-self-start" disabled={!size} onClick={() => size && run("Add obstacle", (q) => addObstacle(q, sceneId, o.id, size))}>
+              <Button
+                variant="secondary"
+                size="xs"
+                className="justify-self-start"
+                disabled={!size}
+                onClick={() => size && run("Add obstacle", (q) => addObstacle(q, sceneId, o.id, size))}
+              >
                 Add obstacle
               </Button>
             )}
@@ -281,7 +344,11 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
               <FacingSelect value={c.facing} onChange={(facing) => run("Turn character", (q) => setPlacement(q, sceneId, c.character, { facing }))} />
             </div>
           </Section>
-          <Check label="Visible when the scene starts" checked={c.visible} onChange={(visible) => run(visible ? "Show character" : "Hide character", (q) => setPlacement(q, sceneId, c.character, { visible }))} />
+          <Check
+            label="Visible when the scene starts"
+            checked={c.visible}
+            onChange={(visible) => run(visible ? "Show character" : "Hide character", (q) => setPlacement(q, sceneId, c.character, { visible }))}
+          />
         </>
       );
       break;
@@ -306,12 +373,22 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
     case "depth":
       body = (
         <>
-          <p className="text-muted-foreground text-[12px]">Characters with their feet on the far line draw at its scale, on the near line at its scale, and in between at a blend.</p>
+          <p className="text-muted-foreground text-[12px]">
+            Characters with their feet on the far line draw at its scale, on the near line at its scale, and in between at a blend.
+          </p>
           {(["far", "near"] as const).map((key) => (
             <Section key={key} title={key === "far" ? "Far line" : "Near line"}>
               <div className="grid grid-cols-2 gap-2">
-                {num("Y", scene.depth[key].y, (y) => run("Move depth line", (q) => setDepthY(q, sceneId, key, y), `${key}y`), { integer: true, min: 0, max: 400 })}
-                {num("Scale", scene.depth[key].scale, (v) => run("Change depth scale", (q) => setDepthScale(q, sceneId, key, v), `${key}scale`), { min: 0.01, max: 4, step: 0.05 })}
+                {num("Y", scene.depth[key].y, (y) => run("Move depth line", (q) => setDepthY(q, sceneId, key, y), `${key}y`), {
+                  integer: true,
+                  min: 0,
+                  max: 400,
+                })}
+                {num("Scale", scene.depth[key].scale, (v) => run("Change depth scale", (q) => setDepthScale(q, sceneId, key, v), `${key}scale`), {
+                  min: 0.01,
+                  max: 4,
+                  step: 0.05,
+                })}
               </div>
             </Section>
           ))}
@@ -331,13 +408,21 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
       break;
     }
     case "background":
-      body = <ImageSelect actions={actions} label="Image" value={scene.background} allowNone onChange={(v) => run(v ? "Set background" : "Remove background", (q) => setBackground(q, sceneId, v))} />;
+      body = (
+        <ImageSelect
+          actions={actions}
+          label="Image"
+          value={scene.background}
+          allowNone
+          onChange={(v) => run(v ? "Set background" : "Remove background", (q) => setBackground(q, sceneId, v))}
+        />
+      );
       break;
   }
 
   const title =
     thing.list === "hotspots"
-      ? scene.hotspots.find((h) => h.id === thing.key)?.name ?? thing.key
+      ? (scene.hotspots.find((h) => h.id === thing.key)?.name ?? thing.key)
       : thing.list === "walkable"
         ? thing.key === "outer"
           ? "Walkable outline"
@@ -385,8 +470,18 @@ export function SceneSettings({ actions, sceneId }: { actions: Actions; sceneId:
   return (
     <div className="mb-2 grid gap-2">
       <Problems problems={sceneWide} />
-      <ImageSelect actions={actions} label="Background" value={scene.background} allowNone onChange={(v) => editor.apply(v ? "Set background" : "Remove background", (q) => setBackground(q, sceneId, v))} />
-      <MusicSelect actions={actions} value={scene.music} onChange={(v) => editor.apply(v ? "Set scene music" : "Remove scene music", (q) => setSceneMusic(q, sceneId, v))} />
+      <ImageSelect
+        actions={actions}
+        label="Background"
+        value={scene.background}
+        allowNone
+        onChange={(v) => editor.apply(v ? "Set background" : "Remove background", (q) => setBackground(q, sceneId, v))}
+      />
+      <MusicSelect
+        actions={actions}
+        value={scene.music}
+        onChange={(v) => editor.apply(v ? "Set scene music" : "Remove scene music", (q) => setSceneMusic(q, sceneId, v))}
+      />
     </div>
   );
 }

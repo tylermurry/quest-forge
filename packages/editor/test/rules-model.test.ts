@@ -202,7 +202,13 @@ describe("quick fields", () => {
     p = setQuickText(p, POND, "talk", "T");
     expect(ids(p, POND)).toEqual(["rule_1", "rule_2", "rule_3", "rule_4", "rule_5"]);
     p = setQuickText(p, POND, "talk", "The pond doesn't answer.");
-    expect(rule(p, POND, "rule_5")).toEqual({ id: "rule_5", when: { type: "talk" }, if: [], do: [{ type: "narrate", text: "The pond doesn't answer." }], once: false });
+    expect(rule(p, POND, "rule_5")).toEqual({
+      id: "rule_5",
+      when: { type: "talk" },
+      if: [],
+      do: [{ type: "narrate", text: "The pond doesn't answer." }],
+      once: false,
+    });
     p = setQuickText(p, POND, "look", "A murky pond.");
     expect(rule(p, POND, "rule_1").do).toEqual([{ type: "narrate", text: "A murky pond." }]);
     p = setQuickText(p, POND, "talk", "");

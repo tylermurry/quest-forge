@@ -35,8 +35,22 @@ export function Dock({ actions }: { actions: Actions }) {
         {problems.length > 0 && (
           <>
             <div className="flex flex-wrap items-center gap-1.5 px-2 py-1" role="group" aria-label="Severity filter">
-              <FilterToggle label="Errors" count={counts.error} on={filter.error} icon={CircleX} tone="text-err" onToggle={() => setFilter({ ...filter, error: !filter.error })} />
-              <FilterToggle label="Warnings" count={counts.warning} on={filter.warning} icon={TriangleAlert} tone="text-warn" onToggle={() => setFilter({ ...filter, warning: !filter.warning })} />
+              <FilterToggle
+                label="Errors"
+                count={counts.error}
+                on={filter.error}
+                icon={CircleX}
+                tone="text-err"
+                onToggle={() => setFilter({ ...filter, error: !filter.error })}
+              />
+              <FilterToggle
+                label="Warnings"
+                count={counts.warning}
+                on={filter.warning}
+                icon={TriangleAlert}
+                tone="text-warn"
+                onToggle={() => setFilter({ ...filter, warning: !filter.warning })}
+              />
               <span className="text-muted-foreground text-[12px]">
                 {counts.error > 0 ? "Errors block playtest and export." : "Nothing blocks playtest."} Click one to jump to it.
               </span>
@@ -49,7 +63,10 @@ export function Dock({ actions }: { actions: Actions }) {
                 return (
                   <li key={i}>
                     <button
-                      className={cn("hover:bg-muted flex w-full items-start gap-2 rounded-sm px-2 py-1 text-left disabled:opacity-60", pr.severity === "error" ? "text-err" : "text-warn")}
+                      className={cn(
+                        "hover:bg-muted flex w-full items-start gap-2 rounded-sm px-2 py-1 text-left disabled:opacity-60",
+                        pr.severity === "error" ? "text-err" : "text-warn",
+                      )}
                       disabled={!target}
                       onClick={() => target && ws.jumpTo(target)}
                     >

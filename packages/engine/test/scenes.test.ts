@@ -16,9 +16,31 @@ const arrive = (s: Session) => {
   s.tick(1 / 60);
 };
 
-const EXIT = [[580, 260], [640, 260], [640, 340], [580, 340]];
-const exitRegion = (actions: Record<string, unknown>[] = [{ type: "change_scene", scene: "shed", spawn: "door" }]) => ({ id: "exit_east", shape: EXIT, rules: [rule({ type: "enter_region" }, actions)] });
-const shedBack = { regions: [{ id: "exit_west", shape: [[0, 300], [30, 300], [30, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "yard", spawn: "from_shed" }])] }] };
+const EXIT = [
+  [580, 260],
+  [640, 260],
+  [640, 340],
+  [580, 340],
+];
+const exitRegion = (actions: Record<string, unknown>[] = [{ type: "change_scene", scene: "shed", spawn: "door" }]) => ({
+  id: "exit_east",
+  shape: EXIT,
+  rules: [rule({ type: "enter_region" }, actions)],
+});
+const shedBack = {
+  regions: [
+    {
+      id: "exit_west",
+      shape: [
+        [0, 300],
+        [30, 300],
+        [30, 400],
+        [0, 400],
+      ],
+      rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "yard", spawn: "from_shed" }])],
+    },
+  ],
+};
 
 describe("walk-into regions and scene changes", () => {
   it("walking into an exit runs yard's exit rule, then enters the shed at its spawn", () => {
@@ -66,7 +88,19 @@ describe("walk-into regions and scene changes", () => {
     const s = make({
       yard: {
         regions: [exitRegion([narrate("Region!")])],
-        hotspots: [{ id: "pot", name: "pot", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], rules: [rule({ type: "look" }, [{ type: "walk_player_to", x: 620, y: 300 }])] }],
+        hotspots: [
+          {
+            id: "pot",
+            name: "pot",
+            shape: [
+              [300, 300],
+              [340, 300],
+              [340, 340],
+              [300, 340],
+            ],
+            rules: [rule({ type: "look" }, [{ type: "walk_player_to", x: 620, y: 300 }])],
+          },
+        ],
       },
     });
     s.selectVerb("look");
@@ -79,7 +113,12 @@ describe("walk-into regions and scene changes", () => {
   it("drops actions after change_scene and ignores change_scene in an exit rule", () => {
     const s = make({
       yard: {
-        regions: [exitRegion([{ type: "change_scene", scene: "shed", spawn: "door" }, { type: "give_item", item: "key" }])],
+        regions: [
+          exitRegion([
+            { type: "change_scene", scene: "shed", spawn: "door" },
+            { type: "give_item", item: "key" },
+          ]),
+        ],
         rules: [rule({ type: "scene_exit" }, [{ type: "change_scene", scene: "yard", spawn: "default" }])],
       },
     });
@@ -155,7 +194,9 @@ describe("walk-into regions and scene changes", () => {
   });
 
   it("lists the scenes a scene's rules link to", () => {
-    const p = testProject({ yard: { regions: [exitRegion()], rules: [rule({ type: "scene_enter" }, [{ type: "change_scene", scene: "yard", spawn: "default" }])] } });
+    const p = testProject({
+      yard: { regions: [exitRegion()], rules: [rule({ type: "scene_enter" }, [{ type: "change_scene", scene: "yard", spawn: "default" }])] },
+    });
     expect(linkedScenes(p.scenes[0]!.data)).toEqual(["shed"]);
   });
 

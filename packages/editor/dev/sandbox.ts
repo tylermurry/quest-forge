@@ -34,7 +34,15 @@ const send = (res: ServerResponse, status: number, data: unknown) => {
   res.end(JSON.stringify(data));
 };
 
-const MIME: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav" };
+const MIME: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  mp3: "audio/mpeg",
+  ogg: "audio/ogg",
+  wav: "audio/wav",
+};
 
 /** Copies the m1 fixture into the sandbox once, so the dev page has a project to open. */
 async function seedSandbox() {
@@ -49,7 +57,10 @@ async function runOp(op: string, a: Op): Promise<unknown> {
   if (op === "projects") {
     await seedSandbox();
     const entries = await readdir(SANDBOX, { withFileTypes: true });
-    return entries.filter((e) => e.isDirectory() && !e.name.startsWith(".")).map((e) => e.name).sort();
+    return entries
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort();
   }
   if (op === "exists") return !!(await stat(sandboxPath(a.root)).catch(() => null));
   const fs = new NodeFs(sandboxPath(a.root));

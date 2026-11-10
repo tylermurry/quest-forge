@@ -83,7 +83,23 @@ const cell = (ui: PlayerUi, i: number) => center(ui.layout.inventory.cells[i]!);
 
 describe("touch play", () => {
   it("a tap walks with the current verb; the tab opens the bar to change it", () => {
-    const { s, ui } = make({ yard: { hotspots: [{ id: "pot", name: "flowerpot", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], rules: [rule({ type: "look" }, [narrate("A pot.")])] }] } });
+    const { s, ui } = make({
+      yard: {
+        hotspots: [
+          {
+            id: "pot",
+            name: "flowerpot",
+            shape: [
+              [300, 300],
+              [340, 300],
+              [340, 340],
+              [300, 340],
+            ],
+            rules: [rule({ type: "look" }, [narrate("A pot.")])],
+          },
+        ],
+      },
+    });
     expect(ui.tabVisible).toBe(false);
     tap(ui, [200, 380]);
     expect(ui.touchSeen).toBe(true);

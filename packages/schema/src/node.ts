@@ -30,13 +30,19 @@ export class NodeFs implements ProjectFs {
 
   async list() {
     const out: string[] = [];
-    await this.walk((f) => out.push(f), () => {});
+    await this.walk(
+      (f) => out.push(f),
+      () => {},
+    );
     return out.sort();
   }
 
   async listFolders() {
     const out: string[] = [];
-    await this.walk(() => {}, (d) => out.push(d));
+    await this.walk(
+      () => {},
+      (d) => out.push(d),
+    );
     return out.sort();
   }
 

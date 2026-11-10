@@ -73,7 +73,8 @@ function Download() {
             </div>
           ) : (
             <p className="download-mobile">
-              The editor runs on a desktop or laptop. Grab it there, or open a game you’ve been sent with <strong>Load Quest</strong>: games play right here on your phone.
+              The editor runs on a desktop or laptop. Grab it there, or open a game you’ve been sent with <strong>Load Quest</strong>: games play right here on
+              your phone.
             </p>
           )}
           {primary?.os === "mac" && (
@@ -82,9 +83,7 @@ function Download() {
             </p>
           )}
           {primary?.os === "windows" && (
-            <p className="fine note">
-              This early build isn’t signed yet. If SmartScreen warns you, choose More info, then Run anyway.
-            </p>
+            <p className="fine note">This early build isn’t signed yet. If SmartScreen warns you, choose More info, then Run anyway.</p>
           )}
           <p className="fine note">
             No account, no tracking. <a href="/privacy">Privacy</a>
@@ -144,7 +143,8 @@ export function Home() {
               you grew up with.
             </h1>
             <p className="lede hero-lede">
-              Quest Forge is a desktop editor for point-and-click adventures in the classic style: a verb bar, a bag of odd items, a narrator with opinions, and the occasional untimely death. You draw the rooms and write what happens. Nobody writes code.
+              Quest Forge is a desktop editor for point-and-click adventures in the classic style: a verb bar, a bag of odd items, a narrator with opinions, and
+              the occasional untimely death. You draw the rooms and write what happens. Nobody writes code.
             </p>
             <div className="hero-actions">
               {primary ? (
@@ -160,7 +160,11 @@ export function Home() {
             </div>
           </div>
           <div className="wrap">
-            <Shot wide src="/screenshots/scene-editor.webp" alt="The Quest Forge editor: the project browser, a garden scene with its layers, hotspots and walkable floor, and the pond hotspot open in the Inspector." />
+            <Shot
+              wide
+              src="/screenshots/scene-editor.webp"
+              alt="The Quest Forge editor: the project browser, a garden scene with its layers, hotspots and walkable floor, and the pond hotspot open in the Inspector."
+            />
           </div>
         </section>
 
@@ -168,20 +172,31 @@ export function Home() {
           <Feature
             n="01"
             title="Paint the room. Then show where people can walk."
-            shot={<Shot src="/screenshots/scene-walk.webp" alt="Editing the walkable floor of a scene, with a stand-in character and the path it would walk." />}
+            shot={
+              <Shot src="/screenshots/scene-walk.webp" alt="Editing the walkable floor of a scene, with a stand-in character and the path it would walk." />
+            }
           >
             <p>
-              Bring in a background from any paint program. Trace the floor with a few clicks, drop in props and foreground pieces, and mark the hotspots players can poke at. A stand-in character follows your mouse at the right size, and a line shows the path they’d take, so you see where they’ll get stuck before anyone else does.
+              Bring in a background from any paint program. Trace the floor with a few clicks, drop in props and foreground pieces, and mark the hotspots
+              players can poke at. A stand-in character follows your mouse at the right size, and a line shows the path they’d take, so you see where they’ll
+              get stuck before anyone else does.
             </p>
           </Feature>
 
           <Feature
             n="02"
             title="Rules that read like sentences."
-            shot={<Shot src="/screenshots/rules.webp" alt="A rule card: when the player uses the fishing rod on the pond, narrate a line, give them a fish and award 5 points, once." />}
+            shot={
+              <Shot
+                src="/screenshots/rules.webp"
+                alt="A rule card: when the player uses the fishing rod on the pond, narrate a line, give them a fish and award 5 points, once."
+              />
+            }
           >
             <p>
-              Every reaction is a card you can read out loud: <em>Use the fishing rod on the pond, once: say “You dangle the string in the water,” give them a fish, award 5 points.</em> You pick each part from a menu, so there’s nothing to misspell and nothing to compile. For the simple stuff, type what Look says and you’re done.
+              Every reaction is a card you can read out loud:{" "}
+              <em>Use the fishing rod on the pond, once: say “You dangle the string in the water,” give them a fish, award 5 points.</em> You pick each part
+              from a menu, so there’s nothing to misspell and nothing to compile. For the simple stuff, type what Look says and you’re done.
             </p>
           </Feature>
 
@@ -189,10 +204,16 @@ export function Home() {
             n="03"
             title="Conversations you can see."
             wide
-            shot={<Shot src="/screenshots/dialogue.webp" alt="A dialogue graph: a greeting, a menu of choices with one shown only if the player has a coin, and a sale." />}
+            shot={
+              <Shot
+                src="/screenshots/dialogue.webp"
+                alt="A dialogue graph: a greeting, a menu of choices with one shown only if the player has a coin, and a sale."
+              />
+            }
           >
             <p>
-              Lay out talk as a map of lines and choices. Show an option only if the player has the coin, drop one once it’s been asked, and make a sale without leaving the chat. Start a playtest from any line to hear how it goes.
+              Lay out talk as a map of lines and choices. Show an option only if the player has the coin, drop one once it’s been asked, and make a sale without
+              leaving the chat. Start a playtest from any line to hear how it goes.
             </p>
           </Feature>
 
@@ -203,7 +224,8 @@ export function Home() {
             shot={<Shot src="/screenshots/playtest.webp" alt="A playtest running inside the editor, with the game state panel and the event log." />}
           >
             <p>
-              The game runs inside the editor. Hand yourself an item, flip a switch, jump to the last room. The log says which rule ran and why the others didn’t, in plain words, and one click takes you to the card that needs fixing.
+              The game runs inside the editor. Hand yourself an item, flip a switch, jump to the last room. The log says which rule ran and why the others
+              didn’t, in plain words, and one click takes you to the card that needs fixing.
             </p>
           </Feature>
 
@@ -213,7 +235,8 @@ export function Home() {
             shot={<Shot src="/screenshots/game.webp" alt="A finished Quest Forge game playing in a web browser." />}
           >
             <p>
-              Build Game makes a single <code>.quest</code> file. Send it to anyone: they open it on this site and play, on a laptop or a phone, with saves, music and a score. Nothing to install and nothing uploaded.
+              Build Game makes a single <code>.quest</code> file. Send it to anyone: they open it on this site and play, on a laptop or a phone, with saves,
+              music and a score. Nothing to install and nothing uploaded.
             </p>
             <QuestPicker className="btn btn-outline">Load Quest</QuestPicker>
           </Feature>
@@ -257,9 +280,8 @@ export function Footer() {
         </nav>
       </div>
       <p className="wrap foot-note">
-        Quest Forge is free software under the{" "}
-        <a href={`${GITHUB}/blob/main/LICENSE`}>GPL-3.0-or-later licence</a>. Games you make with it are
-        yours: a built .quest file is your own content, not a derivative of the editor.
+        Quest Forge is free software under the <a href={`${GITHUB}/blob/main/LICENSE`}>GPL-3.0-or-later licence</a>. Games you make with it are yours: a built
+        .quest file is your own content, not a derivative of the editor.
       </p>
     </footer>
   );

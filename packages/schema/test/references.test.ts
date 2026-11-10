@@ -219,6 +219,8 @@ describe("references inside dialogue nodes", () => {
     const hello = dialogue(p).nodes.find((n) => n.id === "hello")!;
     if (hello.type === "line") hello.animation = "wave";
     const errors = validateProject(p).filter((x) => x.code === "missing_reference");
-    expect(errors.map((e) => [e.location.path.join("."), e.message])).toEqual([["nodes.1.animation", expect.stringMatching(/^plays animation wave on .*, who has no animation in that slot/)]]);
+    expect(errors.map((e) => [e.location.path.join("."), e.message])).toEqual([
+      ["nodes.1.animation", expect.stringMatching(/^plays animation wave on .*, who has no animation in that slot/)],
+    ]);
   });
 });

@@ -19,7 +19,8 @@ function updateObject(p: Project, sceneId: string, id: string, f: (o: SceneObjec
 function check(p: Project, a: ObjectAnimation) {
   if (!p.assets?.data.images.some((i) => i.id === a.image)) throw new CommandError(`There's no image with ID ${a.image}.`);
   if (a.frames.length === 0) throw new CommandError("An animation needs at least one frame.");
-  if (!ObjectAnimation.safeParse({ image: a.image, frames: a.frames, fps: a.fps }).success) throw new CommandError("Frames per second must be more than 0 and at most 60.");
+  if (!ObjectAnimation.safeParse({ image: a.image, frames: a.frames, fps: a.fps }).success)
+    throw new CommandError("Frames per second must be more than 0 and at most 60.");
 }
 
 /** Changing the image keeps only frames it has (frame 0 if none). */
@@ -53,7 +54,10 @@ export function removeObjectLoop(p: Project, sceneId: string, id: string): Proje
 export function addObjectAnimation(p: Project, sceneId: string, id: string): { project: Project; id: string } {
   let made = "";
   const project = updateObject(p, sceneId, id, (o) => {
-    made = uniqueId("anim", (o.animations ?? []).map((a) => a.id));
+    made = uniqueId(
+      "anim",
+      (o.animations ?? []).map((a) => a.id),
+    );
     return { ...o, animations: [...(o.animations ?? []), { id: made, ...starter(o) }] };
   });
   return { project, id: made };

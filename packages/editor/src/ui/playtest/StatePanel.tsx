@@ -33,12 +33,7 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
     <div className="h-full overflow-auto text-[12px]" aria-label="Game state">
       <Section title="Scene">
         <div className="flex items-center gap-1.5">
-          <Picker
-            label="Go to scene"
-            value={v.scene.id}
-            options={v.scenes}
-            onPick={(scene) => edit({ kind: "goToScene", scene })}
-          />
+          <Picker label="Go to scene" value={v.scene.id} options={v.scenes} onPick={(scene) => edit({ kind: "goToScene", scene })} />
           {!v.canGoToScene && <span className="text-muted-foreground">(waits for the current action)</span>}
         </div>
       </Section>
@@ -54,7 +49,9 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
           ))}
           {v.inventory.length === 0 && <li className="text-muted-foreground">Empty</li>}
         </ul>
-        {v.addable.length > 0 && <Picker label="Add item" placeholder="Add item…" value="" options={v.addable} onPick={(item) => edit({ kind: "giveItem", item })} />}
+        {v.addable.length > 0 && (
+          <Picker label="Add item" placeholder="Add item…" value="" options={v.addable} onPick={(item) => edit({ kind: "giveItem", item })} />
+        )}
       </Section>
       {(v.flags.length > 0 || v.counters.length > 0) && (
         <Section title="Flags and counters">
@@ -68,19 +65,38 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
             {v.counters.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-2">
                 <span className="font-mono">{c.id}</span>
-                <NumberField compact integer label={c.id} value={c.value} className="w-20" onChange={(value) => edit({ kind: "setCounter", counter: c.id, value })} onBlur={() => {}} />
+                <NumberField
+                  compact
+                  integer
+                  label={c.id}
+                  value={c.value}
+                  className="w-20"
+                  onChange={(value) => edit({ kind: "setCounter", counter: c.id, value })}
+                  onBlur={() => {}}
+                />
               </li>
             ))}
           </ul>
         </Section>
       )}
-      <Section title="Score" extra={<span className="text-foreground normal-case">{v.score} of {v.maxScore}</span>}>
+      <Section
+        title="Score"
+        extra={
+          <span className="text-foreground normal-case">
+            {v.score} of {v.maxScore}
+          </span>
+        }
+      >
         {v.awards.length === 0 && <p className="text-muted-foreground">No awards in this game.</p>}
         <ul className="space-y-0.5">
           {v.awards.map((a) => (
             <li key={a.id}>
               <label className="flex items-center gap-1.5">
-                <input type="checkbox" checked={a.granted} onChange={(e) => edit(e.target.checked ? { kind: "grantAward", award: a.id, points: a.points } : { kind: "revokeAward", award: a.id })} />
+                <input
+                  type="checkbox"
+                  checked={a.granted}
+                  onChange={(e) => edit(e.target.checked ? { kind: "grantAward", award: a.id, points: a.points } : { kind: "revokeAward", award: a.id })}
+                />
                 <span className="font-mono">{a.id}</span>
                 <span className="text-muted-foreground">+{a.points}</span>
               </label>

@@ -67,9 +67,7 @@ describe("image and audio files follow assets.yaml", () => {
     expect(project.files).toContain("assets/images/shell.png");
 
     // Undoing the import after the save trashes the written file.
-    expect(planSave({ ...project, assets: loaded.assets }).moves).toEqual([
-      { from: "assets/images/shell.png", to: `${TRASH_DIR}/assets/images/shell.png` },
-    ]);
+    expect(planSave({ ...project, assets: loaded.assets }).moves).toEqual([{ from: "assets/images/shell.png", to: `${TRASH_DIR}/assets/images/shell.png` }]);
   });
 
   it("moves audio files the same way", async () => {
@@ -77,7 +75,13 @@ describe("image and audio files follow assets.yaml", () => {
     const { project } = await loadProject(fs);
     const next: Project = {
       ...project,
-      assets: { ...project.assets!, data: { ...project.assets!.data, audio: project.assets!.data.audio.map((a) => (a.id === "coin_clink" ? { ...a, path: "assets/audio/sfx/coin_clink.wav" } : a)) } },
+      assets: {
+        ...project.assets!,
+        data: {
+          ...project.assets!.data,
+          audio: project.assets!.data.audio.map((a) => (a.id === "coin_clink" ? { ...a, path: "assets/audio/sfx/coin_clink.wav" } : a)),
+        },
+      },
     };
     expect(planSave(next).moves).toEqual([{ from: "assets/audio/coin_clink.wav", to: "assets/audio/sfx/coin_clink.wav" }]);
   });

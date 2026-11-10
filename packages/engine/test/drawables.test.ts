@@ -18,7 +18,14 @@ describe("shared scene draw list", () => {
   });
 
   it("draws a scene with no player, e.g. in the editor", () => {
-    const placed = yard.characters.map((c) => ({ id: c.character, character: gardener, pos: [c.x, c.y] as const, facing: c.facing, kind: "idle" as const, animTime: 0 }));
+    const placed = yard.characters.map((c) => ({
+      id: c.character,
+      character: gardener,
+      pos: [c.x, c.y] as const,
+      facing: c.facing,
+      kind: "idle" as const,
+      animTime: 0,
+    }));
     const list = sceneDrawables(yard, testImages, () => true, placed);
     expect(list.map((d) => d.id)).toEqual(["rock", "boulder", "gardener"]);
   });

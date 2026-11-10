@@ -101,21 +101,53 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
               const own = partProblems(problems, index, sub);
               const textProblems = own.filter((x) => x.location.path[4] === "text" || x.location.path[4] === "next");
               return (
-                <div key={o.id} className={cn("bg-card grid gap-2 rounded-md border p-2", own.length > 0 && "border-err")} data-path={JSON.stringify(sub)} aria-label={`Option ${j + 1}`}>
+                <div
+                  key={o.id}
+                  className={cn("bg-card grid gap-2 rounded-md border p-2", own.length > 0 && "border-err")}
+                  data-path={JSON.stringify(sub)}
+                  aria-label={`Option ${j + 1}`}
+                >
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">Option {j + 1}</span>
                     <span className="flex-1" />
                     <label className="text-muted-foreground flex items-center gap-1.5 text-[12px]" title="Goes away after the player picks it">
                       Once
-                      <Switch size="sm" checked={o.once} aria-label={`Option ${j + 1} once`} onCheckedChange={(v) => run(v ? "Make option once-only" : "Let option repeat", (q) => setOption(q, dialogue, node.id, o.id, { once: v }))} />
+                      <Switch
+                        size="sm"
+                        checked={o.once}
+                        aria-label={`Option ${j + 1} once`}
+                        onCheckedChange={(v) =>
+                          run(v ? "Make option once-only" : "Let option repeat", (q) => setOption(q, dialogue, node.id, o.id, { once: v }))
+                        }
+                      />
                     </label>
-                    <Button variant="ghost" size="icon" className="size-6" aria-label={`Move option ${j + 1} up`} disabled={j === 0} onClick={() => run("Move option", (q) => moveOption(q, dialogue, node.id, o.id, j - 1))}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      aria-label={`Move option ${j + 1} up`}
+                      disabled={j === 0}
+                      onClick={() => run("Move option", (q) => moveOption(q, dialogue, node.id, o.id, j - 1))}
+                    >
                       <ArrowUp className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-6" aria-label={`Move option ${j + 1} down`} disabled={j === node.options.length - 1} onClick={() => run("Move option", (q) => moveOption(q, dialogue, node.id, o.id, j + 1))}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      aria-label={`Move option ${j + 1} down`}
+                      disabled={j === node.options.length - 1}
+                      onClick={() => run("Move option", (q) => moveOption(q, dialogue, node.id, o.id, j + 1))}
+                    >
                       <ArrowDown className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-6" aria-label={`Remove option ${j + 1}`} onClick={() => run("Remove option", (q) => removeOption(q, dialogue, node.id, o.id))}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      aria-label={`Remove option ${j + 1}`}
+                      onClick={() => run("Remove option", (q) => removeOption(q, dialogue, node.id, o.id))}
+                    >
                       <Trash2 className="size-3.5" />
                     </Button>
                   </div>
@@ -131,14 +163,24 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
                   />
                   {conditionsOf({ node: node.id, option: o.id }, o.if, [...sub, "if"], "Show if")}
                   <div className="flex">
-                    <AddConditionMenu label="Show if…" onAdd={(t) => run("Add condition", (q) => editConditions(q, dialogue, { node: node.id, option: o.id }, (l, d) => conditionList.add(d, l, t)))} />
+                    <AddConditionMenu
+                      label="Show if…"
+                      onAdd={(t) =>
+                        run("Add condition", (q) => editConditions(q, dialogue, { node: node.id, option: o.id }, (l, d) => conditionList.add(d, l, t)))
+                      }
+                    />
                   </div>
                   <PartProblems problems={textProblems} />
                 </div>
               );
             })}
             <div>
-              <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => editor.applyWith("Add option", (q) => addOption(q, dialogue, node.id))}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[12px]"
+                onClick={() => editor.applyWith("Add option", (q) => addOption(q, dialogue, node.id))}
+              >
                 <Plus className="size-3.5" /> Option
               </Button>
             </div>
@@ -150,7 +192,9 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
             {node.if.length === 0 && <p className="text-muted-foreground text-[12px]">No conditions: it always carries on from the true port.</p>}
             {conditionsOf({ node: node.id }, node.if, ["if"])}
             <div className="flex">
-              <AddConditionMenu onAdd={(t) => run("Add condition", (q) => editConditions(q, dialogue, { node: node.id }, (l, d) => conditionList.add(d, l, t)))} />
+              <AddConditionMenu
+                onAdd={(t) => run("Add condition", (q) => editConditions(q, dialogue, { node: node.id }, (l, d) => conditionList.add(d, l, t)))}
+              />
             </div>
           </div>
         )}
@@ -181,7 +225,12 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
             <Play className="size-3.5" /> Play from this node
           </Button>
           {node.type !== "start" && (
-            <Button size="sm" variant="ghost" className="text-err h-7 text-[12px]" onClick={() => run(`Delete ${NODE_LABEL[node.type]} node`, (q) => deleteNodes(q, dialogue, [node.id]))}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-err h-7 text-[12px]"
+              onClick={() => run(`Delete ${NODE_LABEL[node.type]} node`, (q) => deleteNodes(q, dialogue, [node.id]))}
+            >
               <Trash2 className="size-3.5" /> Delete node
             </Button>
           )}
@@ -221,7 +270,15 @@ function LineFields(props: {
         />
       </div>
       <div data-path={JSON.stringify(["text"])}>
-        <TextField label="Line" multiline value={node.text} valid={() => true} invalid={bad.has("text")} onChange={(v) => run("Edit line", set({ text: v }), "text")} onBlur={blur} />
+        <TextField
+          label="Line"
+          multiline
+          value={node.text}
+          valid={() => true}
+          invalid={bad.has("text")}
+          onChange={(v) => run("Edit line", set({ text: v }), "text")}
+          onBlur={blur}
+        />
       </div>
       {node.character !== undefined && (
         <div className="grid gap-1" data-path={JSON.stringify(["animation"])}>

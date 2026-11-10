@@ -34,7 +34,13 @@ function Port({ id, label, empty }: { id: string; label?: string; empty: boolean
   return (
     <div className="relative flex min-h-6 items-center justify-end pr-2 text-[11px]">
       {label && <span className={cn("truncate", empty ? "text-warn" : "text-muted-foreground")}>{label}</span>}
-      <Handle type="source" position={Position.Right} id={id} className={cn(portClass, empty && "!bg-warn")} aria-label={label ? `${label} port` : "Output port"} />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id={id}
+        className={cn(portClass, empty && "!bg-warn")}
+        aria-label={label ? `${label} port` : "Output port"}
+      />
     </div>
   );
 }
@@ -95,7 +101,13 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
                 {o.once && <span className="bg-muted text-muted-foreground ml-1 rounded px-1 text-[10px]">once</span>}
               </div>
               {o.if.length > 0 && <div className="text-muted-foreground text-[11px]">if {o.if.map((c) => conditionText(p, c)).join(" and ")}</div>}
-              <Handle type="source" position={Position.Right} id={`option:${o.id}`} className={cn(portClass, o.next === null && "!bg-warn")} aria-label={`Option ${o.text || o.id} port`} />
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={`option:${o.id}`}
+                className={cn(portClass, o.next === null && "!bg-warn")}
+                aria-label={`Option ${o.text || o.id} port`}
+              />
             </div>
           ))}
         </div>
@@ -117,7 +129,9 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
 
       {n.type === "branch" && (
         <>
-          <div className="px-2 pt-1">{n.if.length === 0 ? <span className="text-muted-foreground italic">Always true</span> : n.if.map((c) => conditionText(p, c)).join(" and ")}</div>
+          <div className="px-2 pt-1">
+            {n.if.length === 0 ? <span className="text-muted-foreground italic">Always true</span> : n.if.map((c) => conditionText(p, c)).join(" and ")}
+          </div>
           <Port id="then" label="true" empty={n.then === null} />
           <Port id="else" label="false" empty={n.else === null} />
         </>

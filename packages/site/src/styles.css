@@ -56,7 +56,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 400 17px/1.6 var(--font);
+  font: 400 17px / 1.6 var(--font);
   font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
 }
@@ -127,7 +127,10 @@ p {
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 120ms, border-color 120ms, color 120ms;
+  transition:
+    background-color 120ms,
+    border-color 120ms,
+    color 120ms;
 }
 
 @media (prefers-reduced-motion: reduce) {

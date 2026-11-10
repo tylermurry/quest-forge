@@ -34,7 +34,8 @@ export function debugShapes(world: World, flags: DebugFlags): DebugShape[] {
     out.push({ kind: "poly", layer: "walkable", points: scene.walkable.outer, stroke: "#0f0", fill: "rgba(0,255,0,0.08)" });
     for (const h of scene.walkable.holes) out.push({ kind: "poly", layer: "walkable", points: h, stroke: "#f00", fill: "rgba(255,0,0,0.2)" });
     for (const o of scene.objects) {
-      if (o.obstacle && world.isObjectVisible(o.id)) out.push({ kind: "poly", layer: "walkable", points: o.obstacle, stroke: "#f80", fill: "rgba(255,128,0,0.25)" });
+      if (o.obstacle && world.isObjectVisible(o.id))
+        out.push({ kind: "poly", layer: "walkable", points: o.obstacle, stroke: "#f80", fill: "rgba(255,128,0,0.25)" });
     }
     out.push({ kind: "dots", layer: "walkable", points: world.nav.nodes, color: "#0f0" });
   }
@@ -42,16 +43,37 @@ export function debugShapes(world: World, flags: DebugFlags): DebugShape[] {
     for (const r of scene.regions) out.push({ kind: "poly", layer: "regions", points: r.shape, stroke: "#c6f", fill: "rgba(200,100,255,0.15)", label: r.id });
   }
   if (flags.hotspots) {
-    for (const h of scene.hotspots) out.push({ kind: "poly", layer: "hotspots", points: h.shape, stroke: "#0ff", fill: "rgba(0,255,255,0.08)", label: h.name ?? h.id });
+    for (const h of scene.hotspots)
+      out.push({ kind: "poly", layer: "hotspots", points: h.shape, stroke: "#0ff", fill: "rgba(0,255,255,0.08)", label: h.name ?? h.id });
   }
   if (flags.baselines) {
-    for (const [label, line] of [["far", scene.depth.far], ["near", scene.depth.near]] as const) {
-      out.push({ kind: "line", layer: "baselines", points: [[0, line.y], [SCENE_WIDTH, line.y]], stroke: "#f0f", dashed: true });
+    for (const [label, line] of [
+      ["far", scene.depth.far],
+      ["near", scene.depth.near],
+    ] as const) {
+      out.push({
+        kind: "line",
+        layer: "baselines",
+        points: [
+          [0, line.y],
+          [SCENE_WIDTH, line.y],
+        ],
+        stroke: "#f0f",
+        dashed: true,
+      });
       out.push({ kind: "text", layer: "baselines", at: [4, line.y - 1], text: `${label} ×${line.scale}`, color: "#f0f", align: "left" });
     }
     for (const d of world.drawList()) {
       const y = Math.round(d.baseline);
-      out.push({ kind: "line", layer: "baselines", points: [[d.dest.x, y], [d.dest.x + d.dest.w, y]], stroke: d.kind === "character" ? "#ff0" : "#fff" });
+      out.push({
+        kind: "line",
+        layer: "baselines",
+        points: [
+          [d.dest.x, y],
+          [d.dest.x + d.dest.w, y],
+        ],
+        stroke: d.kind === "character" ? "#ff0" : "#fff",
+      });
     }
   }
   if (flags.path) {
@@ -59,7 +81,14 @@ export function debugShapes(world: World, flags: DebugFlags): DebugShape[] {
     const route = [world.player.pos, ...world.route];
     if (route.length > 1) out.push({ kind: "line", layer: "path", points: route, stroke: "#ff0" });
     const feet = world.player.pos.map(Math.round).join(", ");
-    out.push({ kind: "text", layer: "path", at: [SCENE_WIDTH - 4, 6], text: `scale ${world.playerScale.toFixed(2)}  feet (${feet})`, color: "#ff0", align: "right" });
+    out.push({
+      kind: "text",
+      layer: "path",
+      at: [SCENE_WIDTH - 4, 6],
+      text: `scale ${world.playerScale.toFixed(2)}  feet (${feet})`,
+      color: "#ff0",
+      align: "right",
+    });
   }
   return out;
 }

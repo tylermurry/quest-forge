@@ -44,7 +44,13 @@ describe("rule inspector", () => {
     fireEvent.focus(talk);
     for (const v of ["N", "No", "No answer."]) fireEvent.change(talk, { target: { value: v } });
     fireEvent.blur(talk);
-    expect(hotspot(editor, "pond").rules.at(-1)).toEqual({ id: "rule_5", when: { type: "talk" }, if: [], do: [{ type: "narrate", text: "No answer." }], once: false });
+    expect(hotspot(editor, "pond").rules.at(-1)).toEqual({
+      id: "rule_5",
+      when: { type: "talk" },
+      if: [],
+      do: [{ type: "narrate", text: "No answer." }],
+      once: false,
+    });
     expect(within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ })).toHaveLength(5);
     editor.undo();
     expect(hotspot(editor, "pond").rules).toHaveLength(4);
@@ -121,14 +127,22 @@ describe("rule inspector", () => {
     selectHotspot(/^pond/);
     const header = within(inspector()).getByRole("heading", { name: "pond" }).closest("header")!;
     expect(header.className).toContain("sticky");
-    expect(within(header).getByRole("tab", { name: /^Details/ }).getAttribute("aria-selected")).toBe("true");
+    expect(
+      within(header)
+        .getByRole("tab", { name: /^Details/ })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
     expect(within(header).getByRole("tab", { name: /^Rules/ }).textContent).toContain("4");
     expect(within(inspector()).queryByRole("region", { name: "Rules" })).toBeNull();
     act(() => void editor.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "rod") })));
     act(() => editor.validateNow());
     expect(within(header).getByLabelText("Some rules have problems")).toBeTruthy();
     fireEvent.click(within(screen.getByRole("list", { name: "Problems" })).getAllByText(/item rod/)[0]!);
-    expect(within(inspector()).getByRole("tab", { name: /^Rules/ }).getAttribute("aria-selected")).toBe("true");
+    expect(
+      within(inspector())
+        .getByRole("tab", { name: /^Rules/ })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
     expect(within(inspector()).getByRole("region", { name: "Rules" })).toBeTruthy();
   });
 });

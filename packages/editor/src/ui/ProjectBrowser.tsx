@@ -2,7 +2,18 @@ import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Gamepad2, Sear
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
-import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
+import {
+  SECTIONS,
+  buildSection,
+  countEntries,
+  filterTree,
+  isAssetKind,
+  opensTab,
+  sectionEntries,
+  type Entry,
+  type FolderNode,
+  type Section,
+} from "../model/browser.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
@@ -74,7 +85,8 @@ function MenuRow({
 
 /** Drop target data: a folder (`""` = the section root). */
 /** Browser rows carry their DragItem; other draggables (Objects rows) carry other data. */
-const isDragItem = (x: unknown): x is DragItem => !!x && typeof x === "object" && "section" in x && ((x as DragItem).kind === "entry" || (x as DragItem).kind === "folder");
+const isDragItem = (x: unknown): x is DragItem =>
+  !!x && typeof x === "object" && "section" in x && ((x as DragItem).kind === "entry" || (x as DragItem).kind === "folder");
 
 interface DropTarget {
   kind: "browserFolder";
@@ -151,7 +163,12 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     { label: "Rename", onSelect: () => setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name }) },
     ...(isAssetKind(e.section) ? [{ label: "Change ID…", onSelect: () => setPopup({ kind: "changeId", section: e.section, id: e.id }) }] : []),
     ...(e.section !== "image" && e.section !== "audio" ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
-    { label: "Delete", separated: true, destructive: true, onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)) },
+    {
+      label: "Delete",
+      separated: true,
+      destructive: true,
+      onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)),
+    },
   ];
 
   const folderMenu = (section: Section, path: string): MenuItem[] => [
@@ -171,7 +188,11 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     ...(path
       ? [
           { label: "Rename folder", separated: true, onSelect: () => setEditing({ section, kind: "folder", path, value: path.split("/").pop()! }) },
-          { label: "Delete folder", destructive: true, onSelect: () => askDelete(actions.deleteFolderWarning(section, path), () => actions.deleteFolder(section, path)) },
+          {
+            label: "Delete folder",
+            destructive: true,
+            onSelect: () => askDelete(actions.deleteFolderWarning(section, path), () => actions.deleteFolder(section, path)),
+          },
         ]
       : []),
   ];
@@ -198,7 +219,9 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
   const filesInto = (section: Section, folder: string) => (files: File[]) => onImport(section, folder, files);
   const draggingLabel =
     dragging &&
-    (dragging.kind === "folder" ? dragging.path.split("/").pop() : (sectionEntries(project, dragging.section).find((e) => e.id === dragging.id)?.name ?? dragging.id));
+    (dragging.kind === "folder"
+      ? dragging.path.split("/").pop()
+      : (sectionEntries(project, dragging.section).find((e) => e.id === dragging.id)?.name ?? dragging.id));
 
   const commitEdit = () => {
     if (!editing) return;
@@ -227,7 +250,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     );
 
   const rowClass = (selected: boolean) =>
-    cn("hover:bg-muted/70 data-[drop=true]:bg-accent data-[drop=true]:ring-ring ring-inset data-[drop=true]:ring-1", selected && "bg-selection hover:bg-selection");
+    cn(
+      "hover:bg-muted/70 data-[drop=true]:bg-accent data-[drop=true]:ring-ring ring-inset data-[drop=true]:ring-1",
+      selected && "bg-selection hover:bg-selection",
+    );
   const sel = ws.selection;
   const indent = (depth: number) => ({ paddingLeft: 4 + depth * 14 });
 
@@ -324,7 +350,14 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
       />
       <div className="relative p-2">
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2" />
-        <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
+        <Input
+          className="h-7 pl-7 text-[13px]"
+          type="search"
+          placeholder="Search names and IDs"
+          aria-label="Search"
+          value={ws.search}
+          onChange={(e) => ws.setSearch(e.target.value)}
+        />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
         {/* Game-level rules, default responses and score. */}
@@ -356,7 +389,11 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 onFiles={filesInto(section, "")}
                 onClick={() => ws.toggleFolder(section, "")}
               >
-                <button className="flex size-4 shrink-0 items-center justify-center" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}>
+                <button
+                  className="flex size-4 shrink-0 items-center justify-center"
+                  aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
+                  onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}
+                >
                   {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>
                 <span className="flex-1">{title}</span>

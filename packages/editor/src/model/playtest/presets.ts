@@ -104,7 +104,9 @@ export class PresetStore {
     try {
       await this.fs.writeText(PRESETS_FILE, this.toJSON());
     } catch {
-      this.onWriteError?.("Couldn't save your playtest presets to the project folder. They are kept until you close the editor, then lost. Check that the folder is writable.");
+      this.onWriteError?.(
+        "Couldn't save your playtest presets to the project folder. They are kept until you close the editor, then lost. Check that the folder is writable.",
+      );
     }
   }
 }

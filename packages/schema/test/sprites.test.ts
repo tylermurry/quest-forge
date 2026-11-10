@@ -11,7 +11,12 @@ const hero = (p: Project) => p.characters.find((c) => c.data.id === "hero")!.dat
 
 describe("image assets with a sheet and origin", () => {
   it("parse strictly and serialize canonically", () => {
-    const img = ImageAsset.parse({ id: "hero_sheet", path: "assets/images/hero.png", sheet: { columns: 4, rows: 2, cellWidth: 32, cellHeight: 48 }, origin: [16, 48] });
+    const img = ImageAsset.parse({
+      id: "hero_sheet",
+      path: "assets/images/hero.png",
+      sheet: { columns: 4, rows: 2, cellWidth: 32, cellHeight: 48 },
+      origin: [16, 48],
+    });
     expect(serialize(img)).toBe(
       "id: hero_sheet\npath: assets/images/hero.png\nsheet:\n  columns: 4\n  rows: 2\n  cellWidth: 32\n  cellHeight: 48\norigin: [16, 48]\n",
     );
@@ -30,7 +35,11 @@ describe("sprite validation", () => {
     const p = await fixture();
     hero(p).animations.walk_right!.frames = [4, 8];
     expect(validateProject(p).map((x) => [x.code, x.location.path.join("."), formatProblem(x)])).toEqual([
-      ["frame_out_of_range", "animations.walk_right.frames.1", 'Character "Hero": animation walk_right uses frame 8, but image hero_sheet has only 8 frames (0 to 7).'],
+      [
+        "frame_out_of_range",
+        "animations.walk_right.frames.1",
+        'Character "Hero": animation walk_right uses frame 8, but image hero_sheet has only 8 frames (0 to 7).',
+      ],
     ]);
   });
 

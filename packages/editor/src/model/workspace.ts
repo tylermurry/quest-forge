@@ -233,7 +233,8 @@ export class WorkspaceState {
     if (this.active === refKey({ section, id: from })) this.active = refKey({ section, id: to });
     if (this.selection?.kind === "entry" && this.selection.section === section && this.selection.id === from) this.selection = { ...this.selection, id: to };
     if (this.selection?.kind === "sceneThing" && section === "scene" && this.selection.scene === from) this.selection = { ...this.selection, scene: to };
-    if (this.selection?.kind === "dialogueNode" && section === "dialogue" && this.selection.dialogue === from) this.selection = { ...this.selection, dialogue: to };
+    if (this.selection?.kind === "dialogueNode" && section === "dialogue" && this.selection.dialogue === from)
+      this.selection = { ...this.selection, dialogue: to };
     if (section === "scene") this.sceneUi.renamed(from, to);
     this.changed();
   }

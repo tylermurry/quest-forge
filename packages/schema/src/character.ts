@@ -2,9 +2,7 @@ import { z } from "zod";
 import { Color, Id, Text, schemaVersion } from "./common.ts";
 
 export const DIRECTIONS = ["down", "up", "left", "right"] as const;
-export const ANIMATION_SLOTS = (["idle", "walk", "talk"] as const).flatMap((kind) =>
-  DIRECTIONS.map((dir) => `${kind}_${dir}` as const),
-);
+export const ANIMATION_SLOTS = (["idle", "walk", "talk"] as const).flatMap((kind) => DIRECTIONS.map((dir) => `${kind}_${dir}` as const));
 export const AnimationSlot = z.enum(ANIMATION_SLOTS);
 export type AnimationSlot = z.infer<typeof AnimationSlot>;
 

@@ -33,11 +33,7 @@ export interface EditorOptions {
   autosave?: boolean;
 }
 
-export type SaveStatus =
-  | { state: "saved" }
-  | { state: "unsaved" }
-  | { state: "saving" }
-  | { state: "error"; message: string };
+export type SaveStatus = { state: "saved" } | { state: "unsaved" } | { state: "saving" } | { state: "error"; message: string };
 
 /** Something the editor tells the user once, e.g. after a reload. */
 export interface Notice {
@@ -59,7 +55,8 @@ export function describeSaveError(e: unknown): string {
   const code = (e as { code?: string } | null)?.code ?? text;
   if (/EACCES|EPERM|EROFS|read-only|permission denied/i.test(code) || /read-only|permission denied/i.test(text)) return "the project folder is read-only";
   if (/ENOSPC|disk full|no space/i.test(code) || /no space|disk full/i.test(text)) return "the disk is full";
-  if (/ENOENT|not found|no such file/i.test(code) || /no such file|not found/i.test(text)) return "the project folder can't be found (was it moved or deleted?)";
+  if (/ENOENT|not found|no such file/i.test(code) || /no such file|not found/i.test(text))
+    return "the project folder can't be found (was it moved or deleted?)";
   return text;
 }
 
@@ -361,7 +358,10 @@ export class Editor {
       // Unsaved edits could be a lot of work: keep them and say so once instead of reloading.
       if (!this.outsideWhileDirty) {
         this.outsideWhileDirty = true;
-        this.showNotice({ kind: "error", text: "Files changed on disk outside the editor. Your unsaved changes were kept: saving will overwrite those outside changes." });
+        this.showNotice({
+          kind: "error",
+          text: "Files changed on disk outside the editor. Your unsaved changes were kept: saving will overwrite those outside changes.",
+        });
       }
       return;
     }

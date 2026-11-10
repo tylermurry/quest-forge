@@ -82,7 +82,10 @@ describe("project browser UI", () => {
   it("drags a scene onto a folder (dnd-kit)", async () => {
     const a = await mount();
     act(() => void a.newFolder("scene", ""));
-    await dragRow(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!, screen.getByRole("treeitem", { name: "Folder New folder" }).firstElementChild!);
+    await dragRow(
+      screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!,
+      screen.getByRole("treeitem", { name: "Folder New folder" }).firstElementChild!,
+    );
     expect(sectionEntries(a.editor.project, "scene").find((e) => e.id === "garden")?.folder).toBe("New folder");
   });
 

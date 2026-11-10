@@ -127,7 +127,9 @@ export function deleteNodes(p: Project, dialogue: string, ids: readonly string[]
   if (gone.size === 0) throw new CommandError(ids.length ? "The Start node can't be deleted: every dialogue begins there." : "Nothing to delete.");
   return update(p, dialogue, (x) => ({
     ...x,
-    nodes: x.nodes.filter((n) => !gone.has(n.id)).map((n) => nodePorts(n).reduce((m, port) => (port.next !== null && gone.has(port.next) ? setPort(m, port.port, null) : m), n)),
+    nodes: x.nodes
+      .filter((n) => !gone.has(n.id))
+      .map((n) => nodePorts(n).reduce((m, port) => (port.next !== null && gone.has(port.next) ? setPort(m, port.port, null) : m), n)),
   }));
 }
 
@@ -156,7 +158,11 @@ export function connect(p: Project, dialogue: string, node: string, port: string
 /** Auto-layout: every node gets a new position, as one step. */
 export function layoutDialogue(p: Project, dialogue: string): Project {
   const pos = autoLayout(dialogueOf(p, dialogue));
-  return moveNodes(p, dialogue, [...pos].map(([id, at]) => ({ id, pos: at })));
+  return moveNodes(
+    p,
+    dialogue,
+    [...pos].map(([id, at]) => ({ id, pos: at })),
+  );
 }
 
 // ── Line ────────────────────────────────────────────────────────────────────

@@ -13,7 +13,6 @@ export type Ctx = CanvasRenderingContext2D;
 
 const FONT = TEXT_FONT;
 
-
 /** Draws one frame of play into the back buffer in layer order. */
 export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags) {
   const session = ui.session;

@@ -80,17 +80,29 @@ export function layerRows(scene: SceneFile, images: ImageLookup): Record<Layer, 
         };
       }
       const c = scene.characters.find((x) => x.character === ref.key)!;
-      return { ref, title: c.character, detail: `character${c.visible ? "" : " · hidden"}${c.rules.length ? ` · ${rules(c.rules.length)}` : ""}`, deletable: true };
+      return {
+        ref,
+        title: c.character,
+        detail: `character${c.visible ? "" : " · hidden"}${c.rules.length ? ` · ${rules(c.rules.length)}` : ""}`,
+        deletable: true,
+      };
     });
   const { outer, holes } = scene.walkable;
   return {
     guides: [
       { ref: { list: "depth", key: "far" }, title: "Far line", detail: `y ${scene.depth.far.y} · ×${scene.depth.far.scale}`, deletable: false },
       { ref: { list: "depth", key: "near" }, title: "Near line", detail: `y ${scene.depth.near.y} · ×${scene.depth.near.scale}`, deletable: false },
-      ...Object.entries(scene.spawns).map(([id, s]): LayerRow => ({ ref: { list: "spawns", key: id }, title: id, detail: `spawn (${s.x}, ${s.y}) ${s.facing}`, deletable: true })),
+      ...Object.entries(scene.spawns).map(
+        ([id, s]): LayerRow => ({ ref: { list: "spawns", key: id }, title: id, detail: `spawn (${s.x}, ${s.y}) ${s.facing}`, deletable: true }),
+      ),
     ],
     regions: scene.regions.map((r) => ({ ref: { list: "regions", key: r.id }, title: r.id, detail: rules(r.rules.length), deletable: true })),
-    hotspots: scene.hotspots.map((h) => ({ ref: { list: "hotspots", key: h.id }, title: `${h.name} (${h.id})`, detail: rules(h.rules.length), deletable: true })),
+    hotspots: scene.hotspots.map((h) => ({
+      ref: { list: "hotspots", key: h.id },
+      title: `${h.name} (${h.id})`,
+      detail: rules(h.rules.length),
+      deletable: true,
+    })),
     walkable: [
       ...(outer.length ? [{ ref: { list: "walkable" as const, key: "outer" }, title: "Outline", detail: points(outer.length), deletable: true }] : []),
       ...holes.map((h, i) => ({ ref: { list: "walkable" as const, key: holeKey(i) }, title: `Hole ${i + 1}`, detail: points(h.length), deletable: true })),

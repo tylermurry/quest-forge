@@ -47,9 +47,27 @@ function dialogueBlocks(file: string, d: DialogueFile): LogicBlock[] {
   const block = (conditions: LogicBlock["conditions"], actions: LogicBlock["actions"]): LogicBlock => ({ fileKind: "dialogue", file, conditions, actions });
   return d.nodes.flatMap((n, i): LogicBlock[] => {
     const at = ["nodes", i];
-    if (n.type === "actions") return [block([], n.do.map((a, j) => ({ a, path: [...at, "do", j] })))];
-    if (n.type === "branch") return [block(n.if.map((c, j) => ({ c, path: [...at, "if", j] })), [])];
-    if (n.type === "choices") return n.options.map((o, k) => block(o.if.map((c, j) => ({ c, path: [...at, "options", k, "if", j] })), []));
+    if (n.type === "actions")
+      return [
+        block(
+          [],
+          n.do.map((a, j) => ({ a, path: [...at, "do", j] })),
+        ),
+      ];
+    if (n.type === "branch")
+      return [
+        block(
+          n.if.map((c, j) => ({ c, path: [...at, "if", j] })),
+          [],
+        ),
+      ];
+    if (n.type === "choices")
+      return n.options.map((o, k) =>
+        block(
+          o.if.map((c, j) => ({ c, path: [...at, "options", k, "if", j] })),
+          [],
+        ),
+      );
     return [];
   });
 }
@@ -70,9 +88,12 @@ const conditionsOf = (blocks: LogicBlock[]) => blocks.flatMap((b) => b.condition
 function checkEmptyText(project: Project, blocks: LogicBlock[], out: Report) {
   const names = new Map(project.characters.map((c) => [c.data.id, c.data.name]));
   for (const { a, path, block } of actionsOf(blocks)) {
-    if (a.type === "narrate" && a.text === "") out.error("empty_text", block.fileKind, block.file, [...path, "text"], "narrates nothing. Type what the narrator says.", path);
-    if (a.type === "say" && a.text === "") out.error("empty_text", block.fileKind, block.file, [...path, "text"], `has ${names.get(a.character) ?? a.character} say nothing. Type the line.`, path);
-    if (a.type === "die" && a.message === "") out.error("empty_text", block.fileKind, block.file, [...path, "message"], "ends the game with no message. Type what the player is told.", path);
+    if (a.type === "narrate" && a.text === "")
+      out.error("empty_text", block.fileKind, block.file, [...path, "text"], "narrates nothing. Type what the narrator says.", path);
+    if (a.type === "say" && a.text === "")
+      out.error("empty_text", block.fileKind, block.file, [...path, "text"], `has ${names.get(a.character) ?? a.character} say nothing. Type the line.`, path);
+    if (a.type === "die" && a.message === "")
+      out.error("empty_text", block.fileKind, block.file, [...path, "message"], "ends the game with no message. Type what the player is told.", path);
   }
 }
 
@@ -123,7 +144,8 @@ function checkFlagsUsed(project: Project, blocks: LogicBlock[], out: Report) {
   flags.data.flags.forEach((f, i) => {
     const noun = f.type === "bool" ? "flag" : "counter";
     const at = ["flags", i];
-    if (!read.has(f.id) && !set.has(f.id)) out.warning("flag_unused", "flags", flags.path, at, `isn't used anywhere: no rule checks or changes this ${noun}.`, at);
+    if (!read.has(f.id) && !set.has(f.id))
+      out.warning("flag_unused", "flags", flags.path, at, `isn't used anywhere: no rule checks or changes this ${noun}.`, at);
     else if (!read.has(f.id)) out.warning("flag_never_read", "flags", flags.path, at, `is changed but never checked: no condition uses this ${noun}.`, at);
     else if (!set.has(f.id)) {
       const how = f.type === "bool" ? "Set flag" : "Add to counter";
@@ -150,22 +172,42 @@ function checkDialogueNodes(project: Project, out: Report) {
       if (hasStart && !reached.has(n.id)) out.warning("dialogue_node_unreachable", "dialogue", path, at, "can't be reached from the Start node.", at);
       if (n.type === "line" && n.text === "") out.error("empty_text", "dialogue", path, [...at, "text"], "says nothing. Type the line.", at);
       if (n.type === "choices") {
-        if (n.options.length === 0) out.warning("dialogue_no_options", "dialogue", path, [...at, "options"], "has no options, so the dialogue ends when it gets here.", at);
+        if (n.options.length === 0)
+          out.warning("dialogue_no_options", "dialogue", path, [...at, "options"], "has no options, so the dialogue ends when it gets here.", at);
         n.options.forEach((o, j) => {
-          if (o.text === "") out.error("empty_text", "dialogue", path, [...at, "options", j, "text"], "is an option with no text. Type what the player can say.", [...at, "options", j]);
+          if (o.text === "")
+            out.error("empty_text", "dialogue", path, [...at, "options", j, "text"], "is an option with no text. Type what the player can say.", [
+              ...at,
+              "options",
+              j,
+            ]);
         });
       }
       for (const p of nodePorts(n)) {
         if (p.next !== null) continue;
         const what = p.port === "next" ? "Its output" : p.port === "then" ? "Its true output" : p.port === "else" ? "Its false output" : "This option";
         const crumb = p.port.startsWith("option:") ? [...at, "options", p.path[1]!] : at;
-        out.warning("dialogue_dead_end", "dialogue", path, [...at, ...p.path], `${what} isn't connected, so the dialogue ends there. Connect it, or to end on purpose, connect it to an End node.`, crumb);
+        out.warning(
+          "dialogue_dead_end",
+          "dialogue",
+          path,
+          [...at, ...p.path],
+          `${what} isn't connected, so the dialogue ends there. Connect it, or to end on purpose, connect it to an End node.`,
+          crumb,
+        );
       }
     });
     for (const loop of silentLoops(data)) {
       const i = index.get(loop[0]!)!;
       const names = loop.map((id) => `${NODE_NOUN[data.nodes[index.get(id)!]!.type]} ${id}`).join(", ");
-      out.warning("dialogue_silent_loop", "dialogue", path, ["nodes", i], `is in a loop with no Line or Choices (${names}), so it would repeat forever without the player. The game stops the dialogue there.`, ["nodes", i]);
+      out.warning(
+        "dialogue_silent_loop",
+        "dialogue",
+        path,
+        ["nodes", i],
+        `is in a loop with no Line or Choices (${names}), so it would repeat forever without the player. The game stops the dialogue there.`,
+        ["nodes", i],
+      );
     }
   }
 }
@@ -173,7 +215,11 @@ function checkDialogueNodes(project: Project, out: Report) {
 function checkHotspotRules(project: Project, out: Report) {
   for (const { path, data } of project.scenes) {
     data.hotspots.forEach((h, i) => {
-      if (h.rules.length === 0) out.warning("hotspot_no_rules", "scene", path, ["hotspots", i, "rules"], "has no rules, so clicking it only gives the default responses.", ["hotspots", i]);
+      if (h.rules.length === 0)
+        out.warning("hotspot_no_rules", "scene", path, ["hotspots", i, "rules"], "has no rules, so clicking it only gives the default responses.", [
+          "hotspots",
+          i,
+        ]);
     });
   }
 }
@@ -201,7 +247,14 @@ function checkAwards(project: Project, blocks: LogicBlock[], out: Report) {
   const { total, awards: count } = awardTotal(project, blocks);
   if (total !== game.data.maxScore) {
     const awards = count === 1 ? "1 award" : `${count} awards`;
-    out.warning("award_total_mismatch", "game", game.path, ["maxScore"], `The max score is ${game.data.maxScore}, but the awards add up to ${total} (${awards}).`, []);
+    out.warning(
+      "award_total_mismatch",
+      "game",
+      game.path,
+      ["maxScore"],
+      `The max score is ${game.data.maxScore}, but the awards add up to ${total} (${awards}).`,
+      [],
+    );
   }
 }
 

@@ -77,7 +77,14 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
               void create();
             }}
           >
-            <Input ref={titleRef} className="h-8 w-64" aria-label="Game title" placeholder="Game title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              ref={titleRef}
+              className="h-8 w-64"
+              aria-label="Game title"
+              placeholder="Game title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
             <Button type="submit" size="sm" disabled={!title.trim()}>
               <Plus /> Create blank project
             </Button>
@@ -112,7 +119,13 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
                       {gone && " (folder not found)"}
                     </span>
                   </button>
-                  <Button variant="ghost" size="icon-xs" className="opacity-0 group-hover:opacity-100" aria-label={`Remove ${r.title} from recent projects`} onClick={() => onForget(r.root)}>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="opacity-0 group-hover:opacity-100"
+                    aria-label={`Remove ${r.title} from recent projects`}
+                    onClick={() => onForget(r.root)}
+                  >
                     <X />
                   </Button>
                 </li>

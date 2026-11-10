@@ -190,7 +190,14 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     loop.advance(now);
     syncAudio();
     const loading = session ? session.loading : scene;
-    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug);
+    if (session && ui && !loading)
+      drawSession(
+        backCtx,
+        ui,
+        (id) => images.loaded.get(id)?.el,
+        session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el,
+        debug,
+      );
     else drawLoading(backCtx, loading ? images.progress(loading) : 0);
     present(screen, back, viewport);
     raf = view.requestAnimationFrame(frame);
@@ -208,7 +215,13 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       ...(options.state ? { state: options.state } : {}),
       ...(options.dialogue ? { dialogue: options.dialogue } : {}),
     };
-    session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) });
+    session = new Session(
+      project,
+      (id) => images.loaded.get(id),
+      start,
+      { ready: images.ready, prefetch: images.prefetch },
+      { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) },
+    );
     for (const m of earlyNotes.splice(0)) session.note(m);
     ui = new PlayerUi(session, {
       slots: new SaveSlots(storage, game),

@@ -180,7 +180,13 @@ export async function loadProject(fs: ProjectFs): Promise<{ project: Project; pr
   project.savedFolders = project.folders;
   for (const file of Object.values(ROOT_FILES)) {
     if (!project.files.includes(file)) {
-      problems.push({ severity: "error", code: "missing_file", breadcrumb: file, message: "is missing from the project folder.", location: { file, path: [] } });
+      problems.push({
+        severity: "error",
+        code: "missing_file",
+        breadcrumb: file,
+        message: "is missing from the project folder.",
+        location: { file, path: [] },
+      });
     }
   }
   for (const path of project.files) {
@@ -320,23 +326,23 @@ export function planSave(project: Project): SavePlan {
     if (project.saved[doc.path] !== content) writes.push({ path: doc.path, content });
   }
   if (problems.length) throw new SaveError(problems);
-  const deletes = Object.keys(project.saved).filter((p) => !current.has(p)).sort();
+  const deletes = Object.keys(project.saved)
+    .filter((p) => !current.has(p))
+    .sort();
   const folders = new Set(project.folders);
   const savedFolders = new Set(project.savedFolders);
   // A folder needs a `.keep` when it's new, or when its last file or sub-folder leaves.
   const nowPaths = [...current, ...assetEntries(project.assets?.data).map((e) => e.path)];
   const beforePaths = [...Object.keys(project.saved), ...project.files];
-  const isEmpty = (f: string, paths: string[], dirs: string[]) =>
-    !paths.some((p) => p.startsWith(`${f}/`)) && !dirs.some((d) => d.startsWith(`${f}/`));
+  const isEmpty = (f: string, paths: string[], dirs: string[]) => !paths.some((p) => p.startsWith(`${f}/`)) && !dirs.some((d) => d.startsWith(`${f}/`));
   const makeFolders = project.folders.filter((f) => !savedFolders.has(f)).sort();
   const keeps = project.folders
-    .filter(
-      (f) =>
-        isEmpty(f, nowPaths, project.folders) &&
-        (!savedFolders.has(f) || !isEmpty(f, beforePaths, project.savedFolders)),
-    )
+    .filter((f) => isEmpty(f, nowPaths, project.folders) && (!savedFolders.has(f) || !isEmpty(f, beforePaths, project.savedFolders)))
     .sort();
-  const removeFolders = project.savedFolders.filter((f) => !folders.has(f)).sort().reverse();
+  const removeFolders = project.savedFolders
+    .filter((f) => !folders.has(f))
+    .sort()
+    .reverse();
   return { makeFolders, keeps, writes, ...planAssetFiles(project), deletes, removeFolders };
 }
 

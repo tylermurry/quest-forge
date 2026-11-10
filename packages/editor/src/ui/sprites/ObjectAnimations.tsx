@@ -46,14 +46,24 @@ export function ObjectAnimations({ actions, sceneId, object }: { actions: Action
               onPatch={(label, patch, merge) => editor.apply(label, (q) => patchObjectLoop(q, sceneId, o.id, patch), merge)}
               onBlur={blur}
             />
-            <Button variant="ghost" size="xs" className="justify-self-start" onClick={() => editor.apply("Remove looping animation", (q) => removeObjectLoop(q, sceneId, o.id))}>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="justify-self-start"
+              onClick={() => editor.apply("Remove looping animation", (q) => removeObjectLoop(q, sceneId, o.id))}
+            >
               Remove looping animation
             </Button>
           </>
         ) : (
           <>
             <p className="text-muted-foreground text-[12px]">None: the object shows frame 0 of its image.</p>
-            <Button variant="secondary" size="xs" className="justify-self-start" onClick={() => editor.apply("Add looping animation", (q) => patchObjectLoop(q, sceneId, o.id, {}))}>
+            <Button
+              variant="secondary"
+              size="xs"
+              className="justify-self-start"
+              onClick={() => editor.apply("Add looping animation", (q) => patchObjectLoop(q, sceneId, o.id, {}))}
+            >
               Add looping animation
             </Button>
           </>
@@ -69,7 +79,12 @@ export function ObjectAnimations({ actions, sceneId, object }: { actions: Action
               <Button variant="ghost" size="xs" onClick={() => setRenaming(a.id)}>
                 Change ID…
               </Button>
-              <Button variant="ghost" size="xs" className="ml-auto" onClick={() => editor.apply("Delete animation", (q) => deleteObjectAnimation(q, sceneId, o.id, a.id))}>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="ml-auto"
+                onClick={() => editor.apply("Delete animation", (q) => deleteObjectAnimation(q, sceneId, o.id, a.id))}
+              >
                 Delete
               </Button>
             </div>
@@ -152,7 +167,14 @@ function AnimFields(props: {
           onChange={(v) => props.onPatch("Change animation frames", { frames: parseFrames(v, count)! }, props.fieldKey("frames"))}
           onBlur={props.onBlur}
         />
-        <NumberField label="Frames per second" min={0.1} max={60} value={anim.fps} onChange={(fps) => props.onPatch("Change animation speed", { fps }, props.fieldKey("fps"))} onBlur={props.onBlur} />
+        <NumberField
+          label="Frames per second"
+          min={0.1}
+          max={60}
+          value={anim.fps}
+          onChange={(fps) => props.onPatch("Change animation speed", { fps }, props.fieldKey("fps"))}
+          onBlur={props.onBlur}
+        />
       </div>
       <AnimCanvas images={props.images} shown={{ anim: { ...anim, loop: true }, mirror: false, still: false }} box={72} />
     </div>

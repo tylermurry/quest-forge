@@ -1,4 +1,23 @@
-import { Eye, EyeOff, Image as ImageIcon, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, Pentagon, Route, Scan, Square, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Footprints,
+  Ghost,
+  Lock,
+  LockOpen,
+  Magnet,
+  MapPin,
+  Maximize,
+  MousePointer2,
+  Pentagon,
+  Route,
+  Scan,
+  Square,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useDndMonitor, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Actions, DeleteWarning } from "../../model/actions.ts";
@@ -25,7 +44,19 @@ const TOOL_ICON: Record<Tool, React.ReactNode> = {
 };
 const TOOL_KEY: Record<Tool, string> = { select: "V", polygon: "P", rect: "R", spawn: "S", walkto: "W" };
 
-function ToolButton({ label, pressed, disabled, onClick, children }: { label: string; pressed?: boolean; disabled?: boolean; onClick(): void; children: React.ReactNode }) {
+function ToolButton({
+  label,
+  pressed,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  pressed?: boolean;
+  disabled?: boolean;
+  onClick(): void;
+  children: React.ReactNode;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -138,7 +169,11 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
           </ToolButton>
         ))}
         <span className="bg-border mx-1.5 h-5 w-px" />
-        <ToolButton label={ui.snap ? "Snapping to vertices and edges is on" : "Snapping to vertices and edges is off"} pressed={ui.snap} onClick={() => c.toggleSnap()}>
+        <ToolButton
+          label={ui.snap ? "Snapping to vertices and edges is on" : "Snapping to vertices and edges is off"}
+          pressed={ui.snap}
+          onClick={() => c.toggleSnap()}
+        >
           <Magnet />
         </ToolButton>
         <ToolButton label="Depth preview (ghost of the player)" pressed={ui.aids.ghost} onClick={() => setAid("ghost")}>
@@ -203,7 +238,11 @@ function EmptyBackground({ c }: { c: SceneTools }) {
   const images = c.editor.project.assets?.data.images ?? [];
   return (
     <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
-      <div className="bg-popover/95 pointer-events-auto flex items-center gap-2 rounded-md border px-3 py-2 text-[12px] shadow-md" role="group" aria-label="Background">
+      <div
+        className="bg-popover/95 pointer-events-auto flex items-center gap-2 rounded-md border px-3 py-2 text-[12px] shadow-md"
+        role="group"
+        aria-label="Background"
+      >
         <span className="text-muted-foreground">Drop an image or choose a background</span>
         <Select onValueChange={(v) => c.chooseBackground(v)}>
           <SelectTrigger size="sm" aria-label="Choose background" className="h-7 w-40 text-[12px]">
@@ -241,7 +280,19 @@ function EmptyBackground({ c }: { c: SceneTools }) {
  * A row in the Layers panel. Object rows can be dragged onto another row of the
  * Objects list to change draw order; every Objects row is a drop slot.
  */
-function LayerRowItem({ row, index, className, label, children }: { row: LayerRow; index: number; className: string; label: string; children: React.ReactNode }) {
+function LayerRowItem({
+  row,
+  index,
+  className,
+  label,
+  children,
+}: {
+  row: LayerRow;
+  index: number;
+  className: string;
+  label: string;
+  children: React.ReactNode;
+}) {
   const isObjects = LIST_LAYER[row.ref.list] === "objects";
   const drag = useDraggable({ id: `layer-row:${row.ref.list}:${row.ref.key}`, data: { kind: "layerObject", id: row.ref.key }, disabled: !row.draggable });
   const drop = useDroppable({ id: `object-slot:${row.ref.list}:${row.ref.key}`, data: { kind: "objectSlot", index }, disabled: !isObjects });
@@ -293,7 +344,11 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
               >
                 {locked ? <Lock /> : <LockOpen className="text-muted-foreground opacity-40 group-hover:opacity-100" />}
               </button>
-              <button className={cn("min-w-0 flex-1 truncate py-1 text-left font-semibold", hidden && "text-muted-foreground")} aria-current={active} onClick={() => c.setLayer(layer)}>
+              <button
+                className={cn("min-w-0 flex-1 truncate py-1 text-left font-semibold", hidden && "text-muted-foreground")}
+                aria-current={active}
+                onClick={() => c.setLayer(layer)}
+              >
                 {LAYER_LABEL[layer]}
               </button>
               <span className="text-muted-foreground pr-1">{rows[layer].length || ""}</span>
@@ -302,7 +357,13 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
               {rows[layer].map((row, index) => {
                 const selected = sameThing(sel, row.ref);
                 return (
-                  <LayerRowItem key={`${row.ref.list}:${row.ref.key}`} row={row} index={index} className={cn("group/row hover:bg-muted flex h-6 items-center gap-1 pr-1 pl-8", selected && "bg-selection hover:bg-selection")} label={`${LAYER_LABEL[layer]}: ${row.title}`}>
+                  <LayerRowItem
+                    key={`${row.ref.list}:${row.ref.key}`}
+                    row={row}
+                    index={index}
+                    className={cn("group/row hover:bg-muted flex h-6 items-center gap-1 pr-1 pl-8", selected && "bg-selection hover:bg-selection")}
+                    label={`${LAYER_LABEL[layer]}: ${row.title}`}
+                  >
                     <button
                       className={cn("min-w-0 flex-1 truncate text-left", (hidden || locked) && "text-muted-foreground")}
                       aria-selected={selected}
@@ -314,7 +375,13 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                       {row.title} <span className="text-muted-foreground ml-0.5">{row.detail}</span>
                     </button>
                     {row.deletable && (
-                      <Button variant="ghost" size="icon-xs" className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100" aria-label={`Delete ${row.title}`} onClick={() => onDelete(row.ref)}>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+                        aria-label={`Delete ${row.title}`}
+                        onClick={() => onDelete(row.ref)}
+                      >
                         <Trash2 />
                       </Button>
                     )}

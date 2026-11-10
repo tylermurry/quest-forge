@@ -22,7 +22,9 @@ function PresetItems({ playtest }: { playtest: Playtest }) {
   return (
     <>
       <DropdownMenuLabel className="text-muted-foreground text-[11px]">Start from preset</DropdownMenuLabel>
-      {list.length === 0 && <p className="text-muted-foreground max-w-56 px-2 pb-1 text-[12px]">No presets yet. Save one from the state panel while playing.</p>}
+      {list.length === 0 && (
+        <p className="text-muted-foreground max-w-56 px-2 pb-1 text-[12px]">No presets yet. Save one from the state panel while playing.</p>
+      )}
       {list.map((p) => (
         <DropdownMenuItem key={p.name} className="text-[13px]" onSelect={() => playtest.playPreset(p.name)}>
           {p.name}
@@ -33,10 +35,26 @@ function PresetItems({ playtest }: { playtest: Playtest }) {
 }
 
 /** A main action with a chevron that opens related ones. */
-function SplitButton(props: { label: string; title: string; icon: React.ReactNode; onClick(): void; disabled?: boolean; menuLabel: string; children: React.ReactNode }) {
+function SplitButton(props: {
+  label: string;
+  title: string;
+  icon: React.ReactNode;
+  onClick(): void;
+  disabled?: boolean;
+  menuLabel: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center rounded-md border">
-      <Button variant="ghost" size="xs" aria-label={props.label} title={props.title} disabled={props.disabled} onClick={props.onClick} className="gap-1 rounded-r-none px-2 text-[12px]">
+      <Button
+        variant="ghost"
+        size="xs"
+        aria-label={props.label}
+        title={props.title}
+        disabled={props.disabled}
+        onClick={props.onClick}
+        className="gap-1 rounded-r-none px-2 text-[12px]"
+      >
         {props.icon}
         {props.label}
       </Button>
@@ -86,7 +104,13 @@ export function PlayControls({ playtest, onShowWindow, className }: { playtest: 
       ) : (
         <>
           {playtest.stale && (
-            <Button variant="ghost" size="xs" className="text-warn gap-1 px-1.5 text-[12px]" title="The project changed since this run started" onClick={() => registry.run("play.restartScene")}>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-warn gap-1 px-1.5 text-[12px]"
+              title="The project changed since this run started"
+              onClick={() => registry.run("play.restartScene")}
+            >
               <TriangleAlert className="size-3.5" /> Restart scene to apply
             </Button>
           )}
@@ -103,7 +127,14 @@ export function PlayControls({ playtest, onShowWindow, className }: { playtest: 
             <DropdownMenuSeparator />
             <PresetItems playtest={playtest} />
           </SplitButton>
-          <Button variant="ghost" size="xs" aria-label="Stop" title="Stop (Shift+F5)" onClick={() => registry.run("play.stop")} className="gap-1 border px-2 text-[12px]">
+          <Button
+            variant="ghost"
+            size="xs"
+            aria-label="Stop"
+            title="Stop (Shift+F5)"
+            onClick={() => registry.run("play.stop")}
+            className="gap-1 border px-2 text-[12px]"
+          >
             <Square className="text-err size-3" /> Stop
           </Button>
           {onShowWindow && (

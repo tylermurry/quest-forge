@@ -63,8 +63,7 @@ export const formatProblem = (p: Problem) => `${p.breadcrumb}: ${p.message}`;
 
 export type FileKind = "game" | "flags" | "assets" | "scene" | "item" | "character" | "dialogue";
 
-const get = (v: unknown, key: string | number): unknown =>
-  typeof v === "object" && v !== null ? (v as Record<string | number, unknown>)[key] : undefined;
+const get = (v: unknown, key: string | number): unknown => (typeof v === "object" && v !== null ? (v as Record<string | number, unknown>)[key] : undefined);
 const str = (v: unknown) => (typeof v === "string" && v.length > 0 ? v : undefined);
 
 const ROOT_LABEL: Record<FileKind, (data: unknown, file: string) => string> = {

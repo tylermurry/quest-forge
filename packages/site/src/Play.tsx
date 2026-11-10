@@ -15,7 +15,8 @@ const fullscreenElement = () => document.fullscreenElement ?? (document as Fulls
 
 function describe(e: unknown, name: string): string[] {
   if (e instanceof QuestError) return [`${name} ${e.message}`];
-  if (e instanceof ProjectErrors) return [`${name} has problems that stop it from running:`, ...e.problems.filter((p) => p.severity === "error").map(formatProblem)];
+  if (e instanceof ProjectErrors)
+    return [`${name} has problems that stop it from running:`, ...e.problems.filter((p) => p.severity === "error").map(formatProblem)];
   return [`Couldn't open ${name}.`, String(e instanceof Error ? e.message : e)];
 }
 
@@ -140,7 +141,10 @@ export function Play() {
             ) : (
               <>
                 <h1>Play a quest</h1>
-                <p>Pick a <code>.quest</code> file made with Quest Forge’s Build Game, or drop one on this page. It runs here in your browser; nothing is uploaded.</p>
+                <p>
+                  Pick a <code>.quest</code> file made with Quest Forge’s Build Game, or drop one on this page. It runs here in your browser; nothing is
+                  uploaded.
+                </p>
               </>
             )}
             <QuestPicker className="btn btn-primary">{error ? "Choose another file" : "Choose a .quest file"}</QuestPicker>

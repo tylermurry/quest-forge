@@ -28,7 +28,12 @@ describe("segments", () => {
 });
 
 describe("polygons", () => {
-  const square: Polygon = [[0, 0], [100, 0], [100, 100], [0, 100]];
+  const square: Polygon = [
+    [0, 0],
+    [100, 0],
+    [100, 100],
+    [0, 100],
+  ];
 
   it("doubleArea is signed by winding order", () => {
     expect(doubleArea(square)).toBe(20000);
@@ -43,23 +48,105 @@ describe("polygons", () => {
   });
 
   it("polygonIssue names too few points, a straight line and a doubled-back edge", () => {
-    expect(polygonIssue([[0, 0], [10, 10]])).toBe("too_few_points");
-    expect(polygonIssue([[0, 0], [5, 5], [10, 10]])).toBe("no_area");
-    expect(polygonIssue([[0, 0], [100, 0], [100, 0], [100, 100]])).toBe("self_intersecting");
-    expect(polygonIssue([[0, 0], [100, 0], [50, 0], [50, 100]])).toBe("self_intersecting");
+    expect(
+      polygonIssue([
+        [0, 0],
+        [10, 10],
+      ]),
+    ).toBe("too_few_points");
+    expect(
+      polygonIssue([
+        [0, 0],
+        [5, 5],
+        [10, 10],
+      ]),
+    ).toBe("no_area");
+    expect(
+      polygonIssue([
+        [0, 0],
+        [100, 0],
+        [100, 0],
+        [100, 100],
+      ]),
+    ).toBe("self_intersecting");
+    expect(
+      polygonIssue([
+        [0, 0],
+        [100, 0],
+        [50, 0],
+        [50, 100],
+      ]),
+    ).toBe("self_intersecting");
   });
 
   it("polygonWithin allows a shape touching the outline", () => {
-    expect(polygonWithin([[0, 0], [50, 0], [50, 50], [0, 50]], square)).toBe(true);
-    expect(polygonWithin([[10, 10], [90, 10], [90, 90], [10, 90]], square)).toBe(true);
-    expect(polygonWithin([[50, 50], [150, 50], [150, 90], [50, 90]], square)).toBe(false);
+    expect(
+      polygonWithin(
+        [
+          [0, 0],
+          [50, 0],
+          [50, 50],
+          [0, 50],
+        ],
+        square,
+      ),
+    ).toBe(true);
+    expect(
+      polygonWithin(
+        [
+          [10, 10],
+          [90, 10],
+          [90, 90],
+          [10, 90],
+        ],
+        square,
+      ),
+    ).toBe(true);
+    expect(
+      polygonWithin(
+        [
+          [50, 50],
+          [150, 50],
+          [150, 90],
+          [50, 90],
+        ],
+        square,
+      ),
+    ).toBe(false);
   });
 
   it("polygonWithin rejects an edge that leaves a concave outline between two inside vertices", () => {
     // A U shape: both prongs are inside, but the straight edge between their tips crosses the gap.
-    const u: Polygon = [[0, 0], [100, 0], [100, 100], [70, 100], [70, 30], [30, 30], [30, 100], [0, 100]];
+    const u: Polygon = [
+      [0, 0],
+      [100, 0],
+      [100, 100],
+      [70, 100],
+      [70, 30],
+      [30, 30],
+      [30, 100],
+      [0, 100],
+    ];
     expect(polygonIssue(u)).toBeNull();
-    expect(polygonWithin([[10, 90], [90, 90], [90, 95]], u)).toBe(false);
-    expect(polygonWithin([[10, 10], [90, 10], [90, 20]], u)).toBe(true);
+    expect(
+      polygonWithin(
+        [
+          [10, 90],
+          [90, 90],
+          [90, 95],
+        ],
+        u,
+      ),
+    ).toBe(false);
+    expect(
+      polygonWithin(
+        [
+          [10, 10],
+          [90, 10],
+          [90, 20],
+        ],
+        u,
+      ),
+    ).toBe(true);
   });
 });

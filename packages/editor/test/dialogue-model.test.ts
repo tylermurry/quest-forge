@@ -43,7 +43,10 @@ async function withShop(): Promise<Project> {
 describe("dialogue commands", () => {
   it("a new dialogue starts with Start → End", async () => {
     const p = await withShop();
-    expect(nodes(p).map((n) => [n.id, n.type])).toEqual([["start", "start"], ["end", "end"]]);
+    expect(nodes(p).map((n) => [n.id, n.type])).toEqual([
+      ["start", "start"],
+      ["end", "end"],
+    ]);
     expect(errorsIn(p)).toEqual([]);
   });
 
@@ -119,7 +122,10 @@ describe("dialogue commands", () => {
     const r = addOption(p, D, "choices_1");
     p = setOption(r.project, D, "choices_1", r.id, { text: "Bye.", once: true });
     p = moveOption(p, D, "choices_1", r.id, 0);
-    expect(node(p, "choices_1", "choices").options.map((o) => [o.id, o.text, o.once])).toEqual([["option_2", "Bye.", true], ["option_1", "", false]]);
+    expect(node(p, "choices_1", "choices").options.map((o) => [o.id, o.text, o.once])).toEqual([
+      ["option_2", "Bye.", true],
+      ["option_1", "", false],
+    ]);
     p = removeOption(p, D, "choices_1", "option_1");
     expect(node(p, "choices_1", "choices").options.map((o) => o.id)).toEqual(["option_2"]);
     // Option IDs stay unique in the dialogue, even across nodes.
@@ -148,7 +154,9 @@ describe("dialogue commands", () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0]).project;
     p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.add(d, l, "has_item"));
-    p = createAndUse(p, "item", "Gold bar", (q, id) => editConditions(q, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: id })));
+    p = createAndUse(p, "item", "Gold bar", (q, id) =>
+      editConditions(q, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.setFields(d, l, 0, { item: id })),
+    );
     expect(p.items.some((i) => i.data.id === "gold_bar")).toBe(true);
     expect(node(p, "choices_1", "choices").options[0]!.if).toEqual([{ type: "has_item", item: "gold_bar" }]);
   });
@@ -198,7 +206,12 @@ describe("problems on the graph", () => {
     expect(opt.map((x) => x.code).sort()).toEqual(["dialogue_dead_end", "empty_text", "missing_reference"]);
     expect([...invalidKeys(opt, 2, ["options", 0, "if", 0])]).toEqual(["item"]);
     expect(by.get("end")!.map((x) => x.code)).toEqual(["dialogue_node_unreachable"]);
-    expect(by.get("line_1")!.map((x) => x.code).sort()).toEqual(["dialogue_dead_end", "dialogue_node_unreachable", "empty_text"]);
+    expect(
+      by
+        .get("line_1")!
+        .map((x) => x.code)
+        .sort(),
+    ).toEqual(["dialogue_dead_end", "dialogue_node_unreachable", "empty_text"]);
   });
 });
 
@@ -225,7 +238,9 @@ describe("the shopkeeper conversation, a gem standing in for the coin", () => {
     const buy = make("Add option", (p) => addOption(p, D, menu))!;
     run("Edit option", (p) => setOption(p, D, menu, buy, { text: "I'll buy the rod." }));
     run("Add condition", (p) => editConditions(p, D, { node: menu, option: buy }, (l, d) => conditions.add(d, l, "has_item")));
-    run("Create item and use it", (p) => createAndUse(p, "item", "Gem", (q, id) => editConditions(q, D, { node: menu, option: buy }, (l, d) => conditions.setFields(d, l, 0, { item: id }))));
+    run("Create item and use it", (p) =>
+      createAndUse(p, "item", "Gem", (q, id) => editConditions(q, D, { node: menu, option: buy }, (l, d) => conditions.setFields(d, l, 0, { item: id }))),
+    );
     const sell = make("Add Actions", (p) => addNode(p, D, "actions", [720, 100], { node: menu, port: `option:${buy}` }))!;
     run("Add action", (p) => editActions(p, D, sell, (l, d) => actions.add(d, l, "take_item")));
     run("Edit action", (p) => editActions(p, D, sell, (l, d) => actions.setFields(d, l, 0, { item: "gem" })));

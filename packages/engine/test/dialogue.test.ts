@@ -11,7 +11,15 @@ import { narrate, rule, testImages, testProject } from "./support/project.ts";
 // and a loop back to the main menu.
 
 type Raw = Record<string, unknown>;
-const line = (id: string, text: string, next: string | null, extra: Raw = {}) => ({ id, type: "line", pos: [0, 0], character: "gardener", text, next, ...extra });
+const line = (id: string, text: string, next: string | null, extra: Raw = {}) => ({
+  id,
+  type: "line",
+  pos: [0, 0],
+  character: "gardener",
+  text,
+  next,
+  ...extra,
+});
 const option = (id: string, text: string, next: string | null, extra: Raw = {}) => ({ id, text, if: [], once: false, next, ...extra });
 
 const SHOP = {
@@ -30,7 +38,16 @@ const SHOP = {
       ],
     },
     line("news", "Nothing ever happens here.", "menu"),
-    { id: "sell", type: "actions", pos: [0, 0], do: [{ type: "take_item", item: "key" }, { type: "give_item", item: "rod" }], next: "menu" },
+    {
+      id: "sell",
+      type: "actions",
+      pos: [0, 0],
+      do: [
+        { type: "take_item", item: "key" },
+        { type: "give_item", item: "rod" },
+      ],
+      next: "menu",
+    },
     { id: "done", type: "end", pos: [0, 0] },
   ],
 };
@@ -142,7 +159,15 @@ describe("dialogue graph at runtime", () => {
   it("a Choices node with every option hidden ends the dialogue", () => {
     const s = make({
       endRule: null,
-      dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], options: [option("buy", "Buy", null, { if: [{ type: "has_item", item: "key" }] })] }] }],
+      dialogues: [
+        {
+          id: "shop",
+          nodes: [
+            { id: "start", type: "start", pos: [0, 0], next: "menu" },
+            { id: "menu", type: "choices", pos: [0, 0], options: [option("buy", "Buy", null, { if: [{ type: "has_item", item: "key" }] })] },
+          ],
+        },
+      ],
     });
     talk(s);
     expect(s.choices).toBe(null);
@@ -195,7 +220,16 @@ describe("dialogue graph at runtime", () => {
       id: "shop",
       nodes: [
         { id: "start", type: "start", pos: [0, 0], next: "go" },
-        { id: "go", type: "actions", pos: [0, 0], do: [{ type: "change_scene", scene: "shed", spawn: "door" }, { type: "give_item", item: "key" }], next: "done" },
+        {
+          id: "go",
+          type: "actions",
+          pos: [0, 0],
+          do: [
+            { type: "change_scene", scene: "shed", spawn: "door" },
+            { type: "give_item", item: "key" },
+          ],
+          next: "done",
+        },
         { id: "done", type: "end", pos: [0, 0] },
       ],
     };
@@ -316,7 +350,19 @@ describe("the list box", () => {
 
   it("pages options that don't fit with More…", () => {
     const many = Array.from({ length: 14 }, (_, i) => option(`o${i}`, `Option ${i}`, "done"));
-    const s = make({ dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], options: many }, { id: "done", type: "end", pos: [0, 0] }] }], endRule: null });
+    const s = make({
+      dialogues: [
+        {
+          id: "shop",
+          nodes: [
+            { id: "start", type: "start", pos: [0, 0], next: "menu" },
+            { id: "menu", type: "choices", pos: [0, 0], options: many },
+            { id: "done", type: "end", pos: [0, 0] },
+          ],
+        },
+      ],
+      endRule: null,
+    });
     const ui = new PlayerUi(s);
     ui.setScale(1);
     talk(s);

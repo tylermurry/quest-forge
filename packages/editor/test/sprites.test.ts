@@ -2,7 +2,19 @@ import { MemoryFs, saveProject, serialize, validateProject, type Project } from 
 import { describe, expect, it } from "vitest";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { cellAt, effectiveOrigin, fitZoom, formatFrames, frameCountOf, originAt, parseFrames, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
+import {
+  cellAt,
+  effectiveOrigin,
+  fitZoom,
+  formatFrames,
+  frameCountOf,
+  originAt,
+  parseFrames,
+  setOrigin,
+  sheetFromCells,
+  sheetFromGrid,
+  sliceImage,
+} from "../src/model/sprites.ts";
 import { m1Project } from "./support/fixtures.ts";
 
 // Spritesheet slicing and origins.

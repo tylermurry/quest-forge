@@ -78,7 +78,11 @@ function findDoc(p: Project, kind: AssetKind, id: string): AnyDoc {
 /** Replaces one asset's data. */
 export function updateDoc<T>(p: Project, kind: AssetKind, id: string, f: (data: T) => T): Project {
   const doc = findDoc(p, kind, id);
-  return withDocs(p, kind, docsOf(p, kind).map((d) => (d === doc ? { ...d, data: f(d.data as T) as AnyDoc["data"] } : d)));
+  return withDocs(
+    p,
+    kind,
+    docsOf(p, kind).map((d) => (d === doc ? { ...d, data: f(d.data as T) as AnyDoc["data"] } : d)),
+  );
 }
 
 function setFlags(p: Project, f: (data: FlagsFile) => FlagsFile): Project {
@@ -224,10 +228,14 @@ export function relocateFolder(p: Project, section: Section, from: string, to: s
   };
   next = withFolder(next, full(to));
   if (isAssetKind(section)) {
-    return withDocs(next, section, docsOf(next, section).map((d) => {
-      const f = folderOf(d.path);
-      return inFolder(f, from) ? { ...d, path: assetPath(section, d.data.id, remap(f)) } : d;
-    }));
+    return withDocs(
+      next,
+      section,
+      docsOf(next, section).map((d) => {
+        const f = folderOf(d.path);
+        return inFolder(f, from) ? { ...d, path: assetPath(section, d.data.id, remap(f)) } : d;
+      }),
+    );
   }
   const list = assetList(section);
   return setAssets(next, (d) => ({
@@ -240,8 +248,7 @@ export function relocateFolder(p: Project, section: Section, from: string, to: s
 }
 
 /** Entries inside a folder, sub-folders included. */
-export const entriesInFolder = (p: Project, section: Section, folder: string) =>
-  sectionEntries(p, section).filter((e) => inFolder(e.folder, folder));
+export const entriesInFolder = (p: Project, section: Section, folder: string) => sectionEntries(p, section).filter((e) => inFolder(e.folder, folder));
 
 /** Deletes a folder and everything in it (after the user confirmed). */
 export function deleteFolder(p: Project, section: Section, folder: string): Project {
@@ -357,7 +364,6 @@ function retargetSelf(copy: AnyDoc, from: string, to: string) {
   }
 }
 
-
 function setAt(root: unknown, path: DataPath, value: unknown) {
   let cur = root as Record<string | number, unknown>;
   for (const key of path.slice(0, -1)) cur = cur[key] as Record<string | number, unknown>;
@@ -368,7 +374,11 @@ function setAt(root: unknown, path: DataPath, value: unknown) {
 export function deleteEntry(p: Project, section: Section, id: string): Project {
   if (isAssetKind(section)) {
     const doc = findDoc(p, section, id);
-    return withDocs(p, section, docsOf(p, section).filter((d) => d !== doc));
+    return withDocs(
+      p,
+      section,
+      docsOf(p, section).filter((d) => d !== doc),
+    );
   }
   if (section === "flag") return setFlags(p, (d) => ({ ...d, flags: d.flags.filter((f) => f.id !== id) }));
   const list = assetList(section);
@@ -420,10 +430,12 @@ export function summarizeReferences(refs: Reference[]): string | null {
   const files = new Map<Reference["fileKind"], Set<string>>();
   for (const r of refs) files.set(r.fileKind, (files.get(r.fileKind) ?? new Set()).add(r.location.file));
   const order: Reference["fileKind"][] = ["scene", "item", "character", "dialogue", "game", "flags", "assets"];
-  const where = [...files].sort(([a], [b]) => order.indexOf(a) - order.indexOf(b)).map(([kind, set]) => {
-    const [one, many] = FILE_NOUN[kind];
-    return kind === "game" || kind === "flags" || kind === "assets" ? one : plural(set.size, one, many);
-  });
+  const where = [...files]
+    .sort(([a], [b]) => order.indexOf(a) - order.indexOf(b))
+    .map(([kind, set]) => {
+      const [one, many] = FILE_NOUN[kind];
+      return kind === "game" || kind === "flags" || kind === "assets" ? one : plural(set.size, one, many);
+    });
   const list = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
   return `Used by ${list(what)} in ${list(where)}`;
 }

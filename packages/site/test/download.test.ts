@@ -45,8 +45,6 @@ describe("pickDownloads", () => {
   });
 
   it("links to the latest release's stable asset names", () => {
-    expect(downloadUrl("Quest-Forge-macos.dmg")).toBe(
-      "https://github.com/tylermurry/quest-forge/releases/latest/download/Quest-Forge-macos.dmg",
-    );
+    expect(downloadUrl("Quest-Forge-macos.dmg")).toBe("https://github.com/tylermurry/quest-forge/releases/latest/download/Quest-Forge-macos.dmg");
   });
 });

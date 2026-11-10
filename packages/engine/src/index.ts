@@ -5,7 +5,20 @@ export { loadQuest, assetType, type QuestBundle } from "./quest.ts";
 export { World, type Drawable, type LoadedImage, type Target, type WorldOptions } from "./world.ts";
 export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type SceneAssets, type SessionHooks, type SessionStart, type Verb } from "./session.ts";
 export { readState, sanitizeState, awardCatalog, type Sanitized } from "./restore.ts";
-export { SaveSlots, MemoryStore, SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, readSettings, writeSettings, savesKey, settingsKey, type KeyValueStore, type PlayerSettings, type SaveSlot } from "./saves.ts";
+export {
+  SaveSlots,
+  MemoryStore,
+  SLOT_COUNT,
+  VOLUME_STEPS,
+  DEFAULT_SETTINGS,
+  readSettings,
+  writeSettings,
+  savesKey,
+  settingsKey,
+  type KeyValueStore,
+  type PlayerSettings,
+  type SaveSlot,
+} from "./saves.ts";
 export { AudioSync, gainFor, sceneAudioIds, type AudioBackend, type AudioSource } from "./audio.ts";
 export { initialState, cloneState, score, objectVisible, type GameState, type Position } from "./state.ts";
 export { firstMatch, checkCondition, defaultResponse, ruleKey, triggerMatches, type RuleOwner } from "./rules.ts";
