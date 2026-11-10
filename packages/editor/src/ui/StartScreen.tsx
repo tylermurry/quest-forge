@@ -97,7 +97,7 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
             <ul className="mt-2 grid gap-0.5" aria-label="Project folders">
               {choosing.map((root) => (
                 <li key={root}>
-                  <button className="hover:bg-muted w-full rounded-sm px-2 py-1 text-left" onClick={() => onOpen(root)}>
+                  <button type="button" className="hover:bg-muted w-full rounded-sm px-2 py-1 text-left" onClick={() => onOpen(root)}>
                     {platform.displayPath(root)}
                   </button>
                 </li>
@@ -112,7 +112,12 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
               const gone = missing.has(r.root);
               return (
                 <li key={r.root} className="group hover:bg-muted flex items-center gap-2 rounded-sm px-2 py-1">
-                  <button className={cn("flex min-w-0 flex-1 flex-col text-left", gone && "opacity-50")} disabled={gone} onClick={() => onOpen(r.root)}>
+                  <button
+                    type="button"
+                    className={cn("flex min-w-0 flex-1 flex-col text-left", gone && "opacity-50")}
+                    disabled={gone}
+                    onClick={() => onOpen(r.root)}
+                  >
                     <strong className={cn("font-medium", gone && "line-through")}>{r.title}</strong>
                     <span className="text-muted-foreground truncate text-[12px]">
                       {platform.displayPath(r.root)}

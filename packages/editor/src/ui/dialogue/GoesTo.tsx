@@ -50,7 +50,7 @@ export function GoesTo({ editor, dialogue, doc, node }: { editor: Editor; dialog
   };
 
   return (
-    <div className="grid gap-2 border-t pt-3" role="group" aria-label="Goes to">
+    <fieldset className="grid min-w-0 gap-2 border-t pt-3" aria-label="Goes to">
       <span className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">Goes to</span>
       {ports.map((port, row) => {
         const label = portLabel(node, port.port);
@@ -61,6 +61,6 @@ export function GoesTo({ editor, dialogue, doc, node }: { editor: Editor; dialog
           </div>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

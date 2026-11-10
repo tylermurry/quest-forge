@@ -194,7 +194,12 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
           <ToolButton label="Zoom out" onClick={() => c.zoomOut()}>
             <ZoomOut />
           </ToolButton>
-          <button className="hover:bg-muted h-7 min-w-16 rounded-md px-1.5 text-[12px] tabular-nums" aria-label="Zoom to 1×" onClick={() => c.zoomActual()}>
+          <button
+            type="button"
+            className="hover:bg-muted h-7 min-w-16 rounded-md px-1.5 text-[12px] tabular-nums"
+            aria-label="Zoom to 1×"
+            onClick={() => c.zoomActual()}
+          >
             {zoomLabel(ui.zoom, t)}
           </button>
           <ToolButton label="Zoom in" onClick={() => c.zoomIn()}>
@@ -242,9 +247,8 @@ function EmptyBackground({ c }: { c: SceneTools }) {
   const images = c.editor.project.assets?.data.images ?? [];
   return (
     <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
-      <div
-        className="bg-popover/95 pointer-events-auto flex items-center gap-2 rounded-md border px-3 py-2 text-[12px] shadow-md"
-        role="group"
+      <fieldset
+        className="bg-popover/95 pointer-events-auto flex min-w-0 items-center gap-2 rounded-md border px-3 py-2 text-[12px] shadow-md"
         aria-label="Background"
       >
         <span className="text-muted-foreground">Drop an image or choose a background</span>
@@ -275,7 +279,7 @@ function EmptyBackground({ c }: { c: SceneTools }) {
             if (files.length) void readFiles(files).then((read) => c.dropFiles(read, null));
           }}
         />
-      </div>
+      </fieldset>
     </div>
   );
 }
@@ -333,6 +337,7 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
           <section key={layer} aria-label={`${LAYER_LABEL[layer]} layer`} className="mb-1">
             <div className={cn("group flex h-7 items-center gap-0.5 px-1", active && "bg-selection")}>
               <button
+                type="button"
                 className="hover:bg-muted flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
                 aria-label={`${hidden ? "Show" : "Hide"} ${LAYER_LABEL[layer]}`}
                 aria-pressed={!hidden}
@@ -341,6 +346,7 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                 {hidden ? <EyeOff className="text-muted-foreground" /> : <Eye />}
               </button>
               <button
+                type="button"
                 className="hover:bg-muted flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
                 aria-label={`${locked ? "Unlock" : "Lock"} ${LAYER_LABEL[layer]}`}
                 aria-pressed={locked}
@@ -349,6 +355,7 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                 {locked ? <Lock /> : <LockOpen className="text-muted-foreground opacity-40 group-hover:opacity-100" />}
               </button>
               <button
+                type="button"
                 className={cn("min-w-0 flex-1 truncate py-1 text-left font-semibold", hidden && "text-muted-foreground")}
                 aria-current={active}
                 onClick={() => c.setLayer(layer)}
@@ -369,8 +376,9 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                     label={`${LAYER_LABEL[layer]}: ${row.title}`}
                   >
                     <button
+                      type="button"
                       className={cn("min-w-0 flex-1 truncate text-left", (hidden || locked) && "text-muted-foreground")}
-                      aria-selected={selected}
+                      aria-current={selected}
                       onClick={() => {
                         c.setLayer(LIST_LAYER[row.ref.list]);
                         c.select(row.ref);

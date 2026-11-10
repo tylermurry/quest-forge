@@ -141,6 +141,7 @@ export function SceneCanvas({
   };
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: the scene canvas is pointer-only, a recorded UXA-2 exception (issue #12, "Standards exceptions" in docs/project/conventions.md).
     <div
       ref={(el) => {
         wrap.current = el;

@@ -306,6 +306,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         className="bg-background border-ring h-5 min-w-0 flex-1 rounded-sm border px-1 text-[13px] outline-none"
         aria-label={label}
         data-rename=""
+        // biome-ignore lint/a11y/noAutofocus: the box opens because the user chose Rename or New, so focus belongs in it.
         autoFocus
         value={editing.value}
         onChange={(e) => setEditing({ ...editing, value: e.target.value })}
@@ -338,7 +339,15 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           const isEditing = editing?.kind === "folder" && editing.section === f.section && editing.path === f.path;
           const Icon = isOpen ? FolderOpen : Folder;
           return (
-            <li key={`f:${f.path}`} role="treeitem" aria-expanded={isOpen} aria-selected={selected} aria-label={`Folder ${f.path}`} className="group/item">
+            <li
+              key={`f:${f.path}`}
+              role="treeitem"
+              tabIndex={-1}
+              aria-expanded={isOpen}
+              aria-selected={selected}
+              aria-label={`Folder ${f.path}`}
+              className="group/item"
+            >
               <DndRow
                 items={folderMenu(f.section, f.path)}
                 label={`Actions for folder ${f.path}`}
@@ -352,6 +361,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 onDoubleClick={() => ws.toggleFolder(f.section, f.path)}
               >
                 <button
+                  type="button"
                   className="text-muted-foreground flex size-4 shrink-0 items-center justify-center"
                   aria-label={isOpen ? "Collapse" : "Expand"}
                   onClick={(e) => {
@@ -364,7 +374,9 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <Icon className="text-muted-foreground size-3.5 shrink-0" />
                 {isEditing ? editBox("Folder name") : <span className="flex-1 truncate">{f.name}</span>}
               </DndRow>
-              {isOpen && <ul role="group">{renderFolder(f, depth + 1, searching)}</ul>}
+              {isOpen && ( // biome-ignore lint/a11y/useSemanticElements: the ARIA tree pattern nests treeitems in a role="group" list, not a fieldset.
+                <ul role="group">{renderFolder(f, depth + 1, searching)}</ul>
+              )}
             </li>
           );
         })}
@@ -373,7 +385,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
             const selected = sel?.kind === "entry" && sel.section === e.section && sel.id === e.id;
             const isEditing = editing?.kind === "entry" && editing.section === e.section && editing.id === e.id;
             return (
-              <li key={`e:${e.id}`} role="treeitem" aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
+              <li key={`e:${e.id}`} role="treeitem" tabIndex={-1} aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
                 <DndRow
                   items={entryMenu(e)}
                   move={moveChoices(e)}
@@ -434,20 +446,20 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           onChange={(e) => ws.setSearch(e.target.value)}
         />
       </div>
+      {/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: an ARIA tree is a role="tree" list of role="treeitem" items. */}
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
         {/* Game-level rules, default responses and score. */}
         {!searching && (
-          <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
-            <div
-              tabIndex={0}
-              className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
+          <li role="treeitem" tabIndex={-1} aria-selected={sel?.kind === "game"} aria-label="Game">
+            <button
+              type="button"
+              className={cn("flex h-6 w-full items-center gap-1.5 rounded-sm px-1 text-left outline-none", rowClass(sel?.kind === "game"))}
               onClick={() => ws.select({ kind: "game" })}
-              onKeyDown={(e) => e.key === "Enter" && ws.select({ kind: "game" })}
             >
               <Gamepad2 className="text-muted-foreground size-3.5" />
               <span className="flex-1">Game</span>
               <span className="text-muted-foreground text-[12px]">rules &amp; settings</span>
-            </div>
+            </button>
           </li>
         )}
         {trees.map(({ section, title, tree }) => {
@@ -455,7 +467,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
           return (
-            <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-1.5">
+            <li key={section} role="treeitem" tabIndex={-1} aria-expanded={open} aria-label={title} className="mt-1.5">
               <DndRow
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
@@ -465,6 +477,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 onClick={() => ws.toggleFolder(section, "")}
               >
                 <button
+                  type="button"
                   className="flex size-4 shrink-0 items-center justify-center"
                   aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
                   onClick={(e) => {
@@ -477,7 +490,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <span className="flex-1">{title}</span>
                 <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
               </DndRow>
-              {open && shown && <ul role="group">{renderFolder(shown, 1, searching)}</ul>}
+              {open &&
+                shown && ( // biome-ignore lint/a11y/useSemanticElements: the ARIA tree pattern nests treeitems in a role="group" list, not a fieldset.
+                  <ul role="group">{renderFolder(shown, 1, searching)}</ul>
+                )}
             </li>
           );
         })}

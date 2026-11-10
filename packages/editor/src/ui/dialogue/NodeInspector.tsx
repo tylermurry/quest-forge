@@ -88,7 +88,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
 
   return (
     <InspectorShell actions={actions} title={`${NODE_LABEL[node.type]} node`} subtitle={`${doc.data.name} · ${node.id}`}>
-      <div ref={root} className="grid gap-3" aria-label={`${NODE_LABEL[node.type]} node`}>
+      <section ref={root} className="grid gap-3" aria-label={`${NODE_LABEL[node.type]} node`}>
         <p className="text-muted-foreground text-[12px]">{HELP[node.type]}</p>
         <PartProblems problems={nodeLevel} />
 
@@ -102,9 +102,9 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
               const own = partProblems(problems, index, sub);
               const textProblems = own.filter((x) => x.location.path[4] === "text" || x.location.path[4] === "next");
               return (
-                <div
+                <fieldset
                   key={o.id}
-                  className={cn("bg-card grid gap-2 rounded-md border p-2", own.length > 0 && "border-err")}
+                  className={cn("bg-card grid min-w-0 gap-2 rounded-md border p-2", own.length > 0 && "border-err")}
                   data-path={JSON.stringify(sub)}
                   aria-label={`Option ${j + 1}`}
                 >
@@ -172,7 +172,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
                     />
                   </div>
                   <PartProblems problems={textProblems} />
-                </div>
+                </fieldset>
               );
             })}
             <div>
@@ -238,7 +238,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
             </Button>
           )}
         </div>
-      </div>
+      </section>
     </InspectorShell>
   );
 }

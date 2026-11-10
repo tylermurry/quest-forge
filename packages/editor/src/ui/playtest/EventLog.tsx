@@ -47,6 +47,7 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
         const cls = cn("block w-full truncate rounded-sm px-1 text-left", l.depth === 1 && "pl-4", TONE[l.tone]);
         return l.jump ? (
           <button
+            type="button"
             // biome-ignore lint/suspicious/noArrayIndexKey: the log only grows and a line never moves, so position is its identity
             key={i}
             title={`${l.text} (click to show the rule)`}

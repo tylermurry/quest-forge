@@ -37,13 +37,19 @@ export function PresetSection({ playtest }: { playtest: Playtest }) {
         {list.map((p) => (
           <li key={p.name} className="flex items-center gap-1">
             <button
+              type="button"
               className="hover:bg-muted min-w-0 flex-1 truncate rounded-sm px-1 py-0.5 text-left"
               title={`Start from "${p.name}"`}
               onClick={() => playtest.playPreset(p.name)}
             >
               {p.name}
             </button>
-            <button aria-label={`Delete preset ${p.name}`} className="hover:bg-muted rounded-sm p-1" onClick={() => void playtest.presets.remove(p.name)}>
+            <button
+              type="button"
+              aria-label={`Delete preset ${p.name}`}
+              className="hover:bg-muted rounded-sm p-1"
+              onClick={() => void playtest.presets.remove(p.name)}
+            >
               <Trash2 className="size-3" />
             </button>
           </li>
