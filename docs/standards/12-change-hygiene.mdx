@@ -18,6 +18,11 @@ cleanly.
 **Must.** A change does one thing. Unrelated fixes, tidying and features go in separate
 changes.
 
+One exception: when the owner asks for several planned items to ship together, they may
+share one change if each item is its own commit that links its request, and the
+description covers each item separately. Tidying or fixes that no item asked for still go
+in their own change.
+
 ### CHG-2: Explain it in plain language
 
 **Must.** The description says what changed, why, and how it was verified, in words a
