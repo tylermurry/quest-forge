@@ -66,6 +66,23 @@ describe("presets file (D126)", () => {
     dispose();
   });
 
+  it("a failed write shows a plain-English notice and keeps the preset in memory", async () => {
+    class ReadOnlyFs extends MemoryFs {
+      override async writeText(): Promise<void> {
+        throw new Error("EACCES");
+      }
+    }
+    const { playtest, editor, dispose } = await playtestEditor();
+    await playtest.presets.attach(new ReadOnlyFs());
+    playtest.play();
+    expect(editor.notice).toBe(null);
+    expect(await playtest.savePreset("Doomed")).toBe(true);
+    expect(editor.notice?.kind).toBe("error");
+    expect(editor.notice?.text).toMatch(/Couldn't save your playtest presets/);
+    expect(playtest.presets.find("Doomed")).toBeDefined();
+    dispose();
+  });
+
   it("a missing or broken file, or a broken entry, is skipped", () => {
     expect(readPresets(null)).toEqual([]);
     expect(readPresets("{not json")).toEqual([]);

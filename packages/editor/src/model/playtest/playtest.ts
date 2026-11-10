@@ -83,7 +83,9 @@ export class Playtest {
     private readonly editor: Editor,
     private readonly ws: WorkspaceState,
     private readonly options: PlaytestOptions = {},
-  ) {}
+  ) {
+    this.presets.onWriteError = (text) => editor.showNotice({ kind: "error", text });
+  }
 
   get run(): Run | null {
     return this._run;

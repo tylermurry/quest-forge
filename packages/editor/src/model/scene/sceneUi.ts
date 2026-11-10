@@ -169,6 +169,7 @@ export class SceneUiStore {
   /** Loads saved view state (missing or broken file: defaults) and saves future changes there. */
   async attach(fs: ProjectFs) {
     this.fs = fs;
+    // No view.json yet (first open), or it can't be read: start from defaults.
     const text = await fs.readText(VIEW_FILE).catch(() => null);
     if (text === null) return;
     try {
@@ -190,6 +191,8 @@ export class SceneUiStore {
   async flush() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
     this.saveTimer = null;
+    // Stays silent on purpose: view.json only holds zoom and layer toggles, which fall back to
+    // defaults next time, so an error notice on every pan or zoom would cost more than the loss.
     if (this.fs) await this.fs.writeText(VIEW_FILE, this.toJSON()).catch(() => undefined);
   }
 
