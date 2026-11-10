@@ -208,7 +208,8 @@ change.
   (problems by node and part). UI in `ui/dialogue/`: `DialogueEditor.tsx` (React Flow; local node state follows the
   file and a drag commits on drop; port dropped on empty space opens the create menu; registry handles `edit.delete`,
   `dialogue.layout`, `dialogue.fit`), `NodeCard.tsx`, `NodeInspector.tsx` (the Inspector page for a
-  `{ kind: "dialogueNode" }` selection). `ui/rules/PartRows.tsx` holds the condition/action rows both inspectors use.
+  `{ kind: "dialogueNode" }` selection), `GoesTo.tsx` (the Inspector's "Goes to" picker per port: the keyboard route
+  to connecting, changing, clearing and creating a node from a port). `ui/rules/PartRows.tsx` holds the condition/action rows both inspectors use.
   Play from This Node (`play.node`, Shift+F6) is `Playtest.playNode()`; the log and state panel read the engine's
   `dialogue_*` trace events. Dev page: `window.dialogueGraph` is the React Flow instance. The browser tool's instant
   drag doesn't start a React Flow connection: dispatch `mousedown` on the handle, a few `mousemove`s, then `mouseup`.

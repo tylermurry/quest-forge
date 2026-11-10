@@ -27,6 +27,7 @@ import { ActionRows, AddActionMenu, AddConditionMenu, ConditionRows, PartProblem
 import { Picker } from "../rules/Picker.tsx";
 import { TextField } from "../TextField.tsx";
 import { flashElement } from "../flash.ts";
+import { GoesTo } from "./GoesTo.tsx";
 
 const NARRATOR = "";
 
@@ -219,6 +220,8 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
             </div>
           </div>
         )}
+
+        <GoesTo editor={editor} dialogue={dialogue} doc={doc.data} node={node} />
 
         <div className="flex flex-wrap gap-1.5 border-t pt-3">
           <Button size="sm" variant="outline" className="h-7 text-[12px]" disabled={!registry.isEnabled("play.node")} onClick={() => registry.run("play.node")}>
