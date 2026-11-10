@@ -18,7 +18,7 @@ import { Session, linkedScenes, type SessionStart } from "./session.ts";
 import type { GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
 import { PlayerUi, type PointerKind } from "./ui/controller.ts";
-import { sheetFits } from "./sprite.ts";
+import { sheetProblem } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
 import { WebAudio } from "./webaudio.ts";
 import type { LoadedImage, World } from "./world.ts";
@@ -98,7 +98,10 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
 
   let session: Session | null = null;
   let ui: PlayerUi | null = null;
-  const images = new ImageCache(project, characters, bundle.assetUrl);
+  // Images load before the session exists, so their problems wait here until it can note them.
+  const earlyNotes: string[] = [];
+  const note = (m: string) => (session ? session.note(m) : earlyNotes.push(m));
+  const images = new ImageCache(project, characters, bundle.assetUrl, note);
   let viewport = fitViewport(canvas.width, canvas.height);
   const storage = options.storage !== undefined ? options.storage : pageStorage(view);
   const settings = readSettings(storage, game.id);
@@ -206,6 +209,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       ...(options.dialogue ? { dialogue: options.dialogue } : {}),
     };
     session = new Session(project, (id) => images.loaded.get(id), start, { ready: images.ready, prefetch: images.prefetch }, { ...(options.trace ? { trace: options.trace } : {}), ...(options.restart ? { restart: options.restart } : {}) });
+    for (const m of earlyNotes.splice(0)) session.note(m);
     ui = new PlayerUi(session, {
       slots: new SaveSlots(storage, game),
       settings,
@@ -279,6 +283,7 @@ class ImageCache {
     private readonly project: Project,
     private readonly characters: Map<string, CharacterFile>,
     private readonly assetUrl: (path: string) => string,
+    private readonly onProblem: (message: string) => void,
   ) {
     this.assets = new Map(project.assets!.data.images.map((a) => [a.id, a]));
   }
@@ -310,7 +315,8 @@ class ImageCache {
         el.src = this.assetUrl(asset.path);
         await el.decode();
         const size = { w: el.naturalWidth, h: el.naturalHeight };
-        if (!sheetFits(asset, size)) console.warn(`Image ${id}: its sheet is larger than the ${size.w}×${size.h} image.`);
+        const problem = sheetProblem(asset, size);
+        if (problem) this.onProblem(problem);
         this.loaded.set(id, { asset, size, el });
       }),
     );

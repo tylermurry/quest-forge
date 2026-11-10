@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Animation, CharacterFile, ImageAsset } from "@questforge/schema";
-import { facingFor, frameAt, frameRect, frameSize, originOf, resolveAnim, sheetFits, spriteRect } from "../src/sprite.ts";
+import { facingFor, frameAt, frameRect, frameSize, originOf, resolveAnim, sheetFits, sheetProblem, spriteRect } from "../src/sprite.ts";
 
 const sheet: ImageAsset = { id: "hero_sheet", path: "assets/images/hero.png", sheet: { columns: 8, rows: 4, cellWidth: 32, cellHeight: 48 } };
 const size = { w: 256, h: 192 };
@@ -20,6 +20,11 @@ describe("spritesheet slicing (D66)", () => {
   it("checks the sheet fits the decoded image", () => {
     expect(sheetFits(sheet, size)).toBe(true);
     expect(sheetFits(sheet, { w: 255, h: 192 })).toBe(false);
+  });
+  it("words the problem for a sheet that doesn't fit, for the playtest log", () => {
+    expect(sheetProblem(sheet, size)).toBeNull();
+    expect(sheetProblem({ id: "palm", path: "assets/images/palm.png" }, { w: 1, h: 1 })).toBeNull();
+    expect(sheetProblem(sheet, { w: 255, h: 192 })).toBe("Image hero_sheet: its sheet is larger than the 255×192 image.");
   });
   it("defaults the origin to bottom-center", () => {
     expect(originOf(sheet, { w: 32, h: 48 })).toEqual([16, 48]);
