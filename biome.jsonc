@@ -43,22 +43,13 @@
         // Deliberate exceptions carry a biome-ignore with their reason.
         "useExhaustiveDependencies": "error"
       },
+      "a11y": {
+        // Switch is Radix's switch button, so a <label> wrapping it is labelling a control.
+        "noLabelWithoutControl": { "level": "error", "options": { "inputComponents": ["Switch"] } }
+      },
       "suspicious": {
         // `then` is a dialogue graph port name in the schema, not a thenable (6).
         "noThenProperty": "off"
-      },
-      "a11y": {
-        // Real accessibility findings in the editor UI, existing, follow-up #30 (49 in total).
-        "useButtonType": "off", // 21
-        "useAriaPropsSupportedByRole": "off", // 7
-        "useSemanticElements": "off", // 6
-        "useFocusableInteractive": "off", // 4
-        "noStaticElementInteractions": "off", // 2
-        "noLabelWithoutControl": "off", // 2
-        "useMediaCaption": "off", // 1
-        "noNoninteractiveTabindex": "off", // 1
-        "noNoninteractiveElementToInteractiveRole": "off", // 1
-        "noAutofocus": "off" // 1
       }
     }
   },

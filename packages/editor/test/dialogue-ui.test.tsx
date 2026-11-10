@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { DialogueFile, MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
+import { addNode } from "../src/model/dialogue/commands.ts";
 import { Editor } from "../src/model/editor.ts";
 import type { Platform } from "../src/platform/platform.ts";
 import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
@@ -122,5 +123,95 @@ describe("dialogue graph tab", () => {
     expect(nodes(editor)[0]).toMatchObject({ next: null });
     fireEvent.click(screen.getByLabelText("Start node start"));
     expect(registry.isEnabled("edit.delete")).toBe(false);
+  });
+
+  // Drives a "Goes to" picker with the keyboard alone: focus it, open it, type to search, Enter to pick.
+  async function goesTo(user: ReturnType<typeof userEvent.setup>, name: string, search: string) {
+    const box = within(inspector()).getByRole("combobox", { name });
+    act(() => box.focus());
+    await user.keyboard("{Enter}");
+    await user.keyboard(search);
+    await user.keyboard("{Enter}");
+  }
+  const portOf = (ed: Editor, id: string) => nodes(ed).find((n) => n.id === id) as never as Record<string, unknown>;
+
+  it("Goes to connects, changes and clears a Line's next port from the keyboard, one undo step each", async () => {
+    const { editor } = await mount();
+    const user = userEvent.setup();
+    fireEvent.click(screen.getByLabelText("Line node hello"));
+    expect(within(inspector()).getByRole("combobox", { name: "Next goes to" }).textContent).toContain("Choices menu");
+    await goesTo(user, "Next goes to", "Nothing");
+    expect(portOf(editor, "hello").next).toBe(null);
+    expect(editor.history.undoLabel).toBe("Disconnect");
+    await goesTo(user, "Next goes to", "End end");
+    expect(portOf(editor, "hello").next).toBe("end");
+    expect(editor.history.undoLabel).toBe("Connect");
+    await goesTo(user, "Next goes to", "Choices menu");
+    expect(portOf(editor, "hello").next).toBe("menu");
+    editor.undo();
+    expect(portOf(editor, "hello").next).toBe("end");
+    editor.undo();
+    expect(portOf(editor, "hello").next).toBe(null);
+    editor.undo();
+    expect(portOf(editor, "hello").next).toBe("menu");
+  });
+
+  it("Goes to lists other nodes only: not this node, not Start", async () => {
+    await mount();
+    fireEvent.click(screen.getByLabelText("Line node hello"));
+    const user = userEvent.setup();
+    act(() => within(inspector()).getByRole("combobox", { name: "Next goes to" }).focus());
+    await user.keyboard("{Enter}");
+    const items = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(items).toContain("Choices menu");
+    expect(items.some((t) => t?.includes("Line hello"))).toBe(false);
+    expect(items.some((t) => t?.startsWith("Start"))).toBe(false);
+  });
+
+  it("Goes to creates a new node from a choice's port, to the right, connected, in one undo step", async () => {
+    const { editor } = await mount();
+    const user = userEvent.setup();
+    fireEvent.click(screen.getByLabelText("Choices node menu"));
+    await goesTo(user, "Option 1: Bye. goes to", "New line node");
+    const menu = portOf(editor, "menu") as { pos: number[]; options: { next: string }[] };
+    expect(menu.options[0]!.next).toBe("line_1");
+    expect(nodes(editor).find((n) => n.id === "line_1")).toMatchObject({ type: "line", pos: [900, 0], next: null });
+    expect(editor.history.undoLabel).toBe("Add Line node");
+    editor.undo();
+    expect(nodes(editor).some((n) => n.id === "line_1")).toBe(false);
+    expect(portOf(editor, "menu")).toMatchObject({ options: [{ next: "end" }] });
+  });
+
+  it("Goes to connects and clears a choice's port", async () => {
+    const { editor } = await mount();
+    const user = userEvent.setup();
+    fireEvent.click(screen.getByLabelText("Choices node menu"));
+    await goesTo(user, "Option 1: Bye. goes to", "Line hello");
+    expect(portOf(editor, "menu")).toMatchObject({ options: [{ next: "hello" }] });
+    await goesTo(user, "Option 1: Bye. goes to", "Nothing");
+    expect(portOf(editor, "menu")).toMatchObject({ options: [{ next: null }] });
+  });
+
+  it("Goes to wires both ports of a Branch, and a new node from the else port", async () => {
+    const { editor } = await mount();
+    const user = userEvent.setup();
+    act(() => void editor.applyWith("Add branch", (p) => addNode(p, "chat", "branch", [300, 300])));
+    const id = nodes(editor).find((n) => n.type === "branch")!.id;
+    fireEvent.click(screen.getByLabelText(`Branch node ${id}`));
+    await goesTo(user, "If true goes to", "End end");
+    expect(portOf(editor, id).then).toBe("end");
+    expect(editor.history.undoLabel).toBe("Connect");
+    await goesTo(user, "If false goes to", "New end node");
+    expect(portOf(editor, id).else).toBe("end_1");
+    expect(nodes(editor).find((n) => n.id === "end_1")).toMatchObject({ type: "end", pos: [600, 440] });
+    await goesTo(user, "If true goes to", "Nothing");
+    expect(portOf(editor, id).then).toBe(null);
+    expect(portOf(editor, id).else).toBe("end_1");
+  });
+
+  it("an End node has no Goes to fields", async () => {
+    await mount();
+    fireEvent.click(screen.getByLabelText("End node end"));
+    expect(within(inspector()).queryByText("Goes to")).toBe(null);
   });
 });

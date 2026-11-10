@@ -54,7 +54,7 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
   const unreachable = warnings.some((w) => w.code === "dialogue_node_unreachable");
   const speaker = n.type === "line" && n.character !== undefined ? p.characters.find((c) => c.data.id === n.character)?.data : undefined;
   return (
-    <div
+    <article
       key={data.flash}
       className={cn(
         "bg-card text-card-foreground w-60 rounded-md border text-[12px] shadow-sm",
@@ -139,6 +139,6 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
       )}
 
       {n.type === "end" && <div className="text-muted-foreground px-2 py-1">Ends the dialogue</div>}
-    </div>
+    </article>
   );
 }

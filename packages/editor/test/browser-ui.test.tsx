@@ -89,6 +89,53 @@ describe("project browser UI", () => {
     expect(sectionEntries(a.editor.project, "scene").find((e) => e.id === "garden")?.folder).toBe("New folder");
   });
 
+  it("moves an entry to another folder from the keyboard, in one undo step", async () => {
+    const a = await mount();
+    act(() => void a.newFolder("scene", ""));
+    const user = userEvent.setup();
+    const folderOf = (id: string) => sectionEntries(a.editor.project, "scene").find((e) => e.id === id)?.folder;
+    const openMoveTo = async () => {
+      screen.getByRole("button", { name: "Actions for scene garden" }).focus();
+      await user.keyboard("{Enter}");
+      // Walk to "Move to" with the arrow keys and open it with ArrowRight.
+      const trigger = screen.getByRole("menuitem", { name: "Move to" });
+      trigger.focus();
+      await user.keyboard("{ArrowRight}");
+      return screen.getByRole("menu", { name: "Move to" });
+    };
+
+    let menu = await openMoveTo();
+    expect(within(menu).getByRole("menuitem", { name: "Top level" }).getAttribute("aria-disabled")).toBe("true");
+    within(menu).getByRole("menuitem", { name: "New folder" }).focus();
+    await user.keyboard("{Enter}");
+    expect(folderOf("garden")).toBe("New folder");
+
+    // The current folder can't be picked; the section root can.
+    menu = await openMoveTo();
+    expect(within(menu).getByRole("menuitem", { name: "New folder" }).getAttribute("aria-disabled")).toBe("true");
+    within(menu).getByRole("menuitem", { name: "Top level" }).focus();
+    await user.keyboard("{Enter}");
+    expect(folderOf("garden")).toBe("");
+
+    // One undo per move.
+    act(() => void a.editor.undo());
+    expect(folderOf("garden")).toBe("New folder");
+    act(() => void a.editor.undo());
+    expect(folderOf("garden")).toBe("");
+  });
+
+  it("moves an image to a folder from the row menu", async () => {
+    const a = await mount();
+    act(() => void a.newFolder("image", ""));
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Actions for image garden_bg" }));
+    await user.keyboard("{ArrowDown}");
+    screen.getByRole("menuitem", { name: "Move to" }).focus();
+    await user.keyboard("{ArrowRight}");
+    await user.click(screen.getByRole("menuitem", { name: "New folder" }));
+    expect(sectionEntries(a.editor.project, "image").find((e) => e.id === "garden_bg")?.folder).toBe("New folder");
+  });
+
   it("delete warns with the references and can be cancelled", async () => {
     const a = await mount();
     const user = userEvent.setup();

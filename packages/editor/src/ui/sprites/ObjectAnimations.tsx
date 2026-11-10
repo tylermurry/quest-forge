@@ -73,7 +73,7 @@ export function ObjectAnimations({ actions, sceneId, object }: { actions: Action
         <h4 className={DT}>One-shot animations</h4>
         <p className="text-muted-foreground text-[12px]">Played once by a rule's “play animation”, then back to rest.</p>
         {(o.animations ?? []).map((a) => (
-          <div key={a.id} className="grid gap-1.5 rounded-md border p-2" aria-label={`Animation ${a.id}`} role="group">
+          <fieldset key={a.id} className="grid min-w-0 gap-1.5 rounded-md border p-2" aria-label={`Animation ${a.id}`}>
             <div className="flex items-center gap-1">
               <code className="selectable font-mono text-[12px]">{a.id}</code>
               <Button variant="ghost" size="xs" onClick={() => setRenaming(a.id)}>
@@ -96,7 +96,7 @@ export function ObjectAnimations({ actions, sceneId, object }: { actions: Action
               onPatch={(label, patch, merge) => editor.apply(label, (q) => patchObjectAnimation(q, sceneId, o.id, a.id, patch), merge)}
               onBlur={blur}
             />
-          </div>
+          </fieldset>
         ))}
         <Button
           variant="secondary"

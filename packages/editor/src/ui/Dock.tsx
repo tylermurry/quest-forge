@@ -9,6 +9,7 @@ function FilterToggle(props: { label: string; count: number; on: boolean; onTogg
   const Icon = props.icon;
   return (
     <button
+      type="button"
       aria-pressed={props.on}
       aria-label={`Show ${props.label.toLowerCase()}`}
       onClick={props.onToggle}
@@ -34,7 +35,7 @@ export function Dock({ actions }: { actions: Actions }) {
         {problems.length === 0 && <p className="text-ok px-2 py-1">No problems.</p>}
         {problems.length > 0 && (
           <>
-            <div className="flex flex-wrap items-center gap-1.5 px-2 py-1" role="group" aria-label="Severity filter">
+            <fieldset className="flex min-w-0 flex-wrap items-center gap-1.5 px-2 py-1" aria-label="Severity filter">
               <FilterToggle
                 label="Errors"
                 count={counts.error}
@@ -54,7 +55,7 @@ export function Dock({ actions }: { actions: Actions }) {
               <span className="text-muted-foreground text-[12px]">
                 {counts.error > 0 ? "Errors block playtest and export." : "Nothing blocks playtest."} Click one to jump to it.
               </span>
-            </div>
+            </fieldset>
             {shown.length === 0 && <p className="text-muted-foreground px-2 py-1 text-[12px]">All problems are filtered out.</p>}
             <ul aria-label="Problems">
               {shown.map((pr, i) => {
@@ -64,6 +65,7 @@ export function Dock({ actions }: { actions: Actions }) {
                   // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
                   <li key={i}>
                     <button
+                      type="button"
                       className={cn(
                         "hover:bg-muted flex w-full items-start gap-2 rounded-sm px-2 py-1 text-left disabled:opacity-60",
                         pr.severity === "error" ? "text-err" : "text-warn",

@@ -35,9 +35,10 @@ function DebugBar({ playtest }: { playtest: Playtest }) {
   return (
     <div role="toolbar" aria-label="Playtest" className="bg-panel flex h-10 shrink-0 items-center gap-2 border-b px-2">
       <Bug className="text-muted-foreground size-3.5" aria-hidden />
-      <div role="group" aria-label="Debug layers" className="flex items-center gap-0.5">
+      <fieldset aria-label="Debug layers" className="flex min-w-0 items-center gap-0.5">
         {LAYERS.map((l) => (
           <button
+            type="button"
             key={l.key}
             aria-pressed={playtest.debug[l.key]}
             onClick={() => {
@@ -49,7 +50,7 @@ function DebugBar({ playtest }: { playtest: Playtest }) {
             {l.label}
           </button>
         ))}
-      </div>
+      </fieldset>
     </div>
   );
 }

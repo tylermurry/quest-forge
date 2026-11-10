@@ -228,6 +228,34 @@ export class SceneTools extends SceneController {
   }
 
   /**
+   * Where an object is in the Objects list (front first), and how many rows
+   * the list has. Null when the scene or object is missing.
+   */
+  private objectPlace(objectId: string): { index: number; count: number } | null {
+    const scene = this.savedScene;
+    if (!scene) return null;
+    const order = drawOrderWithBaselines(scene, this.host.images);
+    const back = order.findIndex((x) => x.ref.list === "objects" && x.ref.key === objectId);
+    return back < 0 ? null : { index: order.length - 1 - back, count: order.length };
+  }
+
+  /** Whether `moveObjectForward(objectId, steps)` would change anything. */
+  canMoveObject(objectId: string, steps: number): boolean {
+    const at = this.objectPlace(objectId);
+    return !!at && steps !== 0 && at.index - steps >= 0 && at.index - steps < at.count;
+  }
+
+  /**
+   * Moves an object `steps` rows towards the front of the Objects list (negative
+   * towards the back), one undo step. Does nothing past either end.
+   */
+  moveObjectForward(objectId: string, steps: number): boolean {
+    const at = this.objectPlace(objectId);
+    if (!at || !this.canMoveObject(objectId, steps)) return false;
+    return this.reorder(objectId, at.index - steps);
+  }
+
+  /**
    * Files dropped from the OS onto the canvas, or picked with "Import
    * background…" (`screen` null). They're imported; the first image becomes
    * the background when the Background layer is active or the scene has none,

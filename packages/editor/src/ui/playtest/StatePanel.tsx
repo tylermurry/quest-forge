@@ -30,7 +30,7 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
     playtest.changed();
   };
   return (
-    <div className="h-full overflow-auto text-[12px]" aria-label="Game state">
+    <section className="h-full overflow-auto text-[12px]" aria-label="Game state">
       <Section title="Scene">
         <div className="flex items-center gap-1.5">
           <Picker label="Go to scene" value={v.scene.id} options={v.scenes} onPick={(scene) => edit({ kind: "goToScene", scene })} />
@@ -42,7 +42,12 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
           {v.inventory.map((i) => (
             <li key={i.id} className="bg-muted flex items-center gap-1 rounded-sm py-0.5 pr-0.5 pl-1.5">
               {i.label}
-              <button aria-label={`Remove ${i.label}`} className="hover:bg-background rounded-sm p-0.5" onClick={() => edit({ kind: "takeItem", item: i.id })}>
+              <button
+                type="button"
+                aria-label={`Remove ${i.label}`}
+                className="hover:bg-background rounded-sm p-0.5"
+                onClick={() => edit({ kind: "takeItem", item: i.id })}
+              >
                 <X className="size-3" />
               </button>
             </li>
@@ -105,7 +110,7 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
         </ul>
       </Section>
       <Section title="Dialogue">
-        <p aria-label="Dialogue playing">
+        <p>
           {v.dialogue ? (
             <>
               {v.dialogue.name}
@@ -148,6 +153,6 @@ export function StatePanel({ playtest, project, footer }: { playtest: Playtest; 
         </ul>
       </Section>
       {footer}
-    </div>
+    </section>
   );
 }

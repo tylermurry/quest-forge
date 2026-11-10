@@ -40,6 +40,7 @@ export function EditorTabs({ actions }: { actions: Actions }) {
               )}
             >
               <button
+                type="button"
                 role="tab"
                 aria-selected={selected}
                 onClick={() => ws.activate(t)}
@@ -49,6 +50,7 @@ export function EditorTabs({ actions }: { actions: Actions }) {
                 {name}
               </button>
               <button
+                type="button"
                 className="hover:bg-muted ml-1 flex size-5 items-center justify-center rounded-sm opacity-60 hover:opacity-100"
                 aria-label={`Close ${name}`}
                 onClick={() => ws.close(t)}

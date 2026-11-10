@@ -132,6 +132,7 @@ function ImagePreview({ path, actions }: { path: string; actions: Actions }) {
 function AudioPreview({ path, actions }: { path: string; actions: Actions }) {
   const url = actions.assetUrl?.(path);
   if (!url || !actions.editor.project.files.includes(path)) return null;
+  // biome-ignore lint/a11y/useMediaCaption: a preview of the user's own sound file; it has no captions to offer.
   return <audio className="mt-3 h-8 w-full" controls preload="none" src={url} aria-label="Listen" />;
 }
 
@@ -154,6 +155,7 @@ export function References({ actions, refs }: { actions: Actions; refs: Referenc
                   <li key={i}>
                     {jump ? (
                       <button
+                        type="button"
                         className="text-primary block cursor-pointer text-left underline-offset-2 hover:underline"
                         title="Show where it's used"
                         onClick={() => actions.ws.jumpTo(jump, "log")}

@@ -70,6 +70,7 @@ export function CharacterAnimations({ actions, character }: { actions: Actions; 
                 return (
                   <td key={d}>
                     <button
+                      type="button"
                       aria-label={`Slot ${s}`}
                       aria-pressed={s === slot}
                       onClick={() => setSlotSel(s)}
@@ -192,7 +193,7 @@ function SlotEditor({ actions, character, slot, images }: { actions: Actions; ch
                 patch("Pick animation frames", { image: asset.id, frames });
               }}
             />
-            <p className="text-muted-foreground text-[11px]" aria-label="Frames">
+            <p className="text-muted-foreground text-[11px]">
               {own ? `Frames ${own.frames.join(", ")}` : "No frames yet"} · click a frame, shift-click for a run,{" "}
               {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}-click to add or remove one
             </p>

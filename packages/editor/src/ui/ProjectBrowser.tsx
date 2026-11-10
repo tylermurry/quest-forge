@@ -10,18 +10,72 @@ import {
   isAssetKind,
   opensTab,
   sectionEntries,
+  sectionFolders,
   type Entry,
   type FolderNode,
   type Section,
 } from "../model/browser.ts";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "./components/ui/context-menu.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
 import { ConfirmDelete, MenuItems, Prompt, type MenuItem, type MenuParts } from "./Dialogs.tsx";
 import { cn } from "./lib/utils.ts";
 
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
+
+/** The "Move to" submenu's pieces, for the context menu and the dropdown. */
+const CONTEXT_SUB = { Sub: ContextMenuSub, Trigger: ContextMenuSubTrigger, Content: ContextMenuSubContent };
+const DROPDOWN_SUB = { Sub: DropdownMenuSub, Trigger: DropdownMenuSubTrigger, Content: DropdownMenuSubContent };
+
+/** Where an entry can be moved to: one choice per folder; `""` is the section root. */
+interface MoveChoice {
+  folder: string;
+  label: string;
+  disabled: boolean;
+  onSelect(): void;
+}
+
+/** An item list, with a "Move to" submenu placed before the first separated item (Delete). */
+function MenuBody({ items, move, parts, sub }: { items: MenuItem[]; move?: MoveChoice[]; parts: MenuParts; sub: typeof DROPDOWN_SUB }) {
+  if (!move) return <MenuItems items={items} parts={parts} />;
+  const cut = items.findIndex((i) => i.separated);
+  const at = cut < 0 ? items.length : cut;
+  return (
+    <>
+      <MenuItems items={items.slice(0, at)} parts={parts} />
+      <sub.Sub>
+        <sub.Trigger disabled={move.every((m) => m.disabled)}>Move to</sub.Trigger>
+        <sub.Content className="max-h-72 min-w-40 overflow-auto">
+          {move.map((m) => (
+            <parts.Item key={m.folder} disabled={m.disabled} onSelect={() => m.onSelect()}>
+              {m.label}
+            </parts.Item>
+          ))}
+        </sub.Content>
+      </sub.Sub>
+      <MenuItems items={items.slice(at)} parts={parts} />
+    </>
+  );
+}
 
 type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
@@ -36,12 +90,20 @@ async function importInto(actions: Actions, section: Section, folder: string, fi
 /** A row with a right-click menu and a "⋯" button showing the same items. */
 function MenuRow({
   items,
+  move,
   label,
   className,
   children,
   rowRef,
   ...rest
-}: { items: MenuItem[]; label: string; className?: string; children: ReactNode; rowRef?: Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>) {
+}: {
+  items: MenuItem[];
+  move?: MoveChoice[];
+  label: string;
+  className?: string;
+  children: ReactNode;
+  rowRef?: Ref<HTMLDivElement>;
+} & React.HTMLAttributes<HTMLDivElement>) {
   // When a menu closes, an inline rename box it opened gets focus instead of the row.
   const keepFocus = (e: Event) => {
     const box = document.querySelector<HTMLInputElement>("input[data-rename]");
@@ -71,13 +133,13 @@ function MenuRow({
               <Ellipsis className="size-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
-              <MenuItems items={items} parts={DROPDOWN} />
+              <MenuBody items={items} move={move} parts={DROPDOWN} sub={DROPDOWN_SUB} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
-        <MenuItems items={items} parts={CONTEXT} />
+        <MenuBody items={items} move={move} parts={CONTEXT} sub={CONTEXT_SUB} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -171,6 +233,15 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     },
   ];
 
+  /** Every folder of the entry's section, the root first; its own folder can't be picked. */
+  const moveChoices = (e: Entry): MoveChoice[] =>
+    ["", ...sectionFolders(project, e.section)].map((folder) => ({
+      folder,
+      label: folder || "Top level",
+      disabled: folder === e.folder,
+      onSelect: () => void actions.drop({ section: e.section, kind: "entry", id: e.id }, e.section, folder),
+    }));
+
   const folderMenu = (section: Section, path: string): MenuItem[] => [
     { label: "New folder", onSelect: () => startNewFolder(section, path) },
     ...(section !== "image" && section !== "audio" ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
@@ -235,6 +306,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         className="bg-background border-ring h-5 min-w-0 flex-1 rounded-sm border px-1 text-[13px] outline-none"
         aria-label={label}
         data-rename=""
+        // biome-ignore lint/a11y/noAutofocus: the box opens because the user chose Rename or New, so focus belongs in it.
         autoFocus
         value={editing.value}
         onChange={(e) => setEditing({ ...editing, value: e.target.value })}
@@ -267,7 +339,15 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           const isEditing = editing?.kind === "folder" && editing.section === f.section && editing.path === f.path;
           const Icon = isOpen ? FolderOpen : Folder;
           return (
-            <li key={`f:${f.path}`} role="treeitem" aria-expanded={isOpen} aria-selected={selected} aria-label={`Folder ${f.path}`} className="group/item">
+            <li
+              key={`f:${f.path}`}
+              role="treeitem"
+              tabIndex={-1}
+              aria-expanded={isOpen}
+              aria-selected={selected}
+              aria-label={`Folder ${f.path}`}
+              className="group/item"
+            >
               <DndRow
                 items={folderMenu(f.section, f.path)}
                 label={`Actions for folder ${f.path}`}
@@ -281,6 +361,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 onDoubleClick={() => ws.toggleFolder(f.section, f.path)}
               >
                 <button
+                  type="button"
                   className="text-muted-foreground flex size-4 shrink-0 items-center justify-center"
                   aria-label={isOpen ? "Collapse" : "Expand"}
                   onClick={(e) => {
@@ -293,7 +374,9 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <Icon className="text-muted-foreground size-3.5 shrink-0" />
                 {isEditing ? editBox("Folder name") : <span className="flex-1 truncate">{f.name}</span>}
               </DndRow>
-              {isOpen && <ul role="group">{renderFolder(f, depth + 1, searching)}</ul>}
+              {isOpen && ( // biome-ignore lint/a11y/useSemanticElements: the ARIA tree pattern nests treeitems in a role="group" list, not a fieldset.
+                <ul role="group">{renderFolder(f, depth + 1, searching)}</ul>
+              )}
             </li>
           );
         })}
@@ -302,9 +385,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
             const selected = sel?.kind === "entry" && sel.section === e.section && sel.id === e.id;
             const isEditing = editing?.kind === "entry" && editing.section === e.section && editing.id === e.id;
             return (
-              <li key={`e:${e.id}`} role="treeitem" aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
+              <li key={`e:${e.id}`} role="treeitem" tabIndex={-1} aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
                 <DndRow
                   items={entryMenu(e)}
+                  move={moveChoices(e)}
                   label={`Actions for ${NOUN[e.section]} ${e.id}`}
                   className={rowClass(selected)}
                   style={indent(depth + 1.15)}
@@ -362,20 +446,20 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           onChange={(e) => ws.setSearch(e.target.value)}
         />
       </div>
+      {/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: an ARIA tree is a role="tree" list of role="treeitem" items. */}
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
         {/* Game-level rules, default responses and score. */}
         {!searching && (
-          <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
-            <div
-              tabIndex={0}
-              className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
+          <li role="treeitem" tabIndex={-1} aria-selected={sel?.kind === "game"} aria-label="Game">
+            <button
+              type="button"
+              className={cn("flex h-6 w-full items-center gap-1.5 rounded-sm px-1 text-left outline-none", rowClass(sel?.kind === "game"))}
               onClick={() => ws.select({ kind: "game" })}
-              onKeyDown={(e) => e.key === "Enter" && ws.select({ kind: "game" })}
             >
               <Gamepad2 className="text-muted-foreground size-3.5" />
               <span className="flex-1">Game</span>
               <span className="text-muted-foreground text-[12px]">rules &amp; settings</span>
-            </div>
+            </button>
           </li>
         )}
         {trees.map(({ section, title, tree }) => {
@@ -383,7 +467,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
           return (
-            <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-1.5">
+            <li key={section} role="treeitem" tabIndex={-1} aria-expanded={open} aria-label={title} className="mt-1.5">
               <DndRow
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
@@ -393,6 +477,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 onClick={() => ws.toggleFolder(section, "")}
               >
                 <button
+                  type="button"
                   className="flex size-4 shrink-0 items-center justify-center"
                   aria-label={open ? `Collapse ${title}` : `Expand ${title}`}
                   onClick={(e) => {
@@ -405,7 +490,10 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <span className="flex-1">{title}</span>
                 <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
               </DndRow>
-              {open && shown && <ul role="group">{renderFolder(shown, 1, searching)}</ul>}
+              {open &&
+                shown && ( // biome-ignore lint/a11y/useSemanticElements: the ARIA tree pattern nests treeitems in a role="group" list, not a fieldset.
+                  <ul role="group">{renderFolder(shown, 1, searching)}</ul>
+                )}
             </li>
           );
         })}

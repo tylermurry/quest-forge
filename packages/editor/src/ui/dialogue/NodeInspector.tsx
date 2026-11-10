@@ -27,6 +27,7 @@ import { ActionRows, AddActionMenu, AddConditionMenu, ConditionRows, PartProblem
 import { Picker } from "../rules/Picker.tsx";
 import { TextField } from "../TextField.tsx";
 import { flashElement } from "../flash.ts";
+import { GoesTo } from "./GoesTo.tsx";
 
 const NARRATOR = "";
 
@@ -87,7 +88,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
 
   return (
     <InspectorShell actions={actions} title={`${NODE_LABEL[node.type]} node`} subtitle={`${doc.data.name} · ${node.id}`}>
-      <div ref={root} className="grid gap-3" aria-label={`${NODE_LABEL[node.type]} node`}>
+      <section ref={root} className="grid gap-3" aria-label={`${NODE_LABEL[node.type]} node`}>
         <p className="text-muted-foreground text-[12px]">{HELP[node.type]}</p>
         <PartProblems problems={nodeLevel} />
 
@@ -101,9 +102,9 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
               const own = partProblems(problems, index, sub);
               const textProblems = own.filter((x) => x.location.path[4] === "text" || x.location.path[4] === "next");
               return (
-                <div
+                <fieldset
                   key={o.id}
-                  className={cn("bg-card grid gap-2 rounded-md border p-2", own.length > 0 && "border-err")}
+                  className={cn("bg-card grid min-w-0 gap-2 rounded-md border p-2", own.length > 0 && "border-err")}
                   data-path={JSON.stringify(sub)}
                   aria-label={`Option ${j + 1}`}
                 >
@@ -171,7 +172,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
                     />
                   </div>
                   <PartProblems problems={textProblems} />
-                </div>
+                </fieldset>
               );
             })}
             <div>
@@ -220,6 +221,8 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
           </div>
         )}
 
+        <GoesTo editor={editor} dialogue={dialogue} doc={doc.data} node={node} />
+
         <div className="flex flex-wrap gap-1.5 border-t pt-3">
           <Button size="sm" variant="outline" className="h-7 text-[12px]" disabled={!registry.isEnabled("play.node")} onClick={() => registry.run("play.node")}>
             <Play className="size-3.5" /> Play from this node
@@ -235,7 +238,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
             </Button>
           )}
         </div>
-      </div>
+      </section>
     </InspectorShell>
   );
 }
