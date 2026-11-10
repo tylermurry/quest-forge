@@ -34,7 +34,16 @@ async function withShop(started = true): Promise<Project> {
         ],
       },
       { id: "news", type: "line", pos: [900, -100], character: "gardener", text: "Nothing at all.", next: "menu" },
-      { id: "sell", type: "actions", pos: [900, 100], do: [{ type: "take_item", item: "fish" }, { type: "give_item", item: "rod" }], next: "menu" },
+      {
+        id: "sell",
+        type: "actions",
+        pos: [900, 100],
+        do: [
+          { type: "take_item", item: "fish" },
+          { type: "give_item", item: "rod" },
+        ],
+        next: "menu",
+      },
       { id: "done", type: "end", pos: [900, 300] },
     ],
   });
@@ -44,7 +53,15 @@ async function withShop(started = true): Promise<Project> {
     scenes: p.scenes.map((d) => {
       if (!started || d.data.id !== "garden") return d;
       const characters = d.data.characters.map((c) =>
-        c.character === "gardener" ? { ...c, rules: [{ id: "rule_9", when: { type: "talk" as const }, if: [], do: [{ type: "start_dialogue" as const, dialogue: "chat" }], once: false }, ...c.rules] } : c,
+        c.character === "gardener"
+          ? {
+              ...c,
+              rules: [
+                { id: "rule_9", when: { type: "talk" as const }, if: [], do: [{ type: "start_dialogue" as const, dialogue: "chat" }], once: false },
+                ...c.rules,
+              ],
+            }
+          : c,
       );
       return { ...d, data: { ...d.data, characters } };
     }),
@@ -78,7 +95,10 @@ describe("Play from this node", () => {
     tick();
     expect(session().text?.text).toBe("Welcome!");
     playtest.stop();
-    editor.apply("Break", (q) => ({ ...q, dialogues: q.dialogues.map((d) => ({ ...d, data: { ...d.data, nodes: d.data.nodes.map((n) => (n.id === "hello" ? { ...n, text: "" } : n)) } })) }));
+    editor.apply("Break", (q) => ({
+      ...q,
+      dialogues: q.dialogues.map((d) => ({ ...d, data: { ...d.data, nodes: d.data.nodes.map((n) => (n.id === "hello" ? { ...n, text: "" } : n)) } })),
+    }));
     expect(playtest.playNode()).toBe(false);
     expect(playtest.playing).toBe(false);
     dispose();

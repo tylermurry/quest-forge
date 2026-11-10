@@ -28,7 +28,10 @@ function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef
           return (
             <div key={verb} className="grid gap-1">
               <span className="text-muted-foreground text-[12px]">{QUICK_LABEL[verb]}</span>
-              <button className="text-primary w-fit cursor-pointer text-left text-[13px] underline-offset-2 hover:underline" onClick={() => ws.flash({ file: own.file, path: [...own.path, i] })}>
+              <button
+                className="text-primary w-fit cursor-pointer text-left text-[13px] underline-offset-2 hover:underline"
+                onClick={() => ws.flash({ file: own.file, path: [...own.path, i] })}
+              >
                 Set by rule {q.number}
               </button>
             </div>
@@ -39,7 +42,9 @@ function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef
             key={verb}
             multiline
             label={QUICK_LABEL[verb]}
-            placeholder={verb === "look" ? "What the player sees…" : verb === "hand" ? "What happens when they touch it…" : "What happens when they talk to it…"}
+            placeholder={
+              verb === "look" ? "What the player sees…" : verb === "hand" ? "What happens when they touch it…" : "What happens when they talk to it…"
+            }
             value={q.state === "plain" ? q.text : ""}
             valid={() => true}
             onChange={(v) => editor.apply(`Edit ${verb} text`, (p) => setQuickText(p, owner, verb, v), `${ok}/quick/${verb}`)}

@@ -23,39 +23,92 @@ const gardener = CharacterFile.parse({
 });
 
 const look = (text: string) => ({ when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
-const scene = SceneFile.parse(withRuleIds({
-  schemaVersion: 2,
-  id: "yard",
-  name: "Yard",
-  background: "bg",
-  depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
-  walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [[[280, 280], [360, 280], [360, 320], [280, 320]]] },
-  spawns: { default: { x: 100, y: 380, facing: "up" } },
-  objects: [
-    // A foreground tree: walk above y=330 and you're behind it.
-    { id: "tree", name: "tree", image: "tree_img", x: 480, y: 100, baseline: 330, visible: true, rules: [look("A tall tree.")] },
-    // No baseline: sorts by its bottom edge (y + height = 260).
-    { id: "rock", name: "rock", image: "rock_img", x: 100, y: 230, visible: true, rules: [] },
-    { id: "boulder", image: "rock_img", x: 0, y: 0, visible: true, obstacle: [[0, 250], [640, 250], [640, 260], [0, 260]], rules: [] },
-  ],
-  characters: [{ character: "gardener", x: 560, y: 380, facing: "left", visible: true, rules: [look("A busy gardener.")] }],
-  hotspots: [
-    {
-      id: "pond",
-      name: "pond",
-      shape: [[280, 280], [360, 280], [360, 320], [280, 320]],
-      walkTo: { x: 320, y: 340, facing: "up" },
-      rules: [
-        { when: { type: "look" }, if: [{ type: "first_time" }], do: [{ type: "narrate", text: "Conditional." }], once: true },
-        { when: { type: "hand" }, if: [], do: [{ type: "narrate", text: "Wet." }], once: false },
-        { when: { type: "look" }, if: [], do: [{ type: "narrate", text: "A still pond." }, { type: "narrate", text: "Fish dart about." }], once: false },
+const scene = SceneFile.parse(
+  withRuleIds({
+    schemaVersion: 2,
+    id: "yard",
+    name: "Yard",
+    background: "bg",
+    depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
+    walkable: {
+      outer: [
+        [0, 200],
+        [640, 200],
+        [640, 400],
+        [0, 400],
+      ],
+      holes: [
+        [
+          [280, 280],
+          [360, 280],
+          [360, 320],
+          [280, 320],
+        ],
       ],
     },
-    { id: "sky", name: "sky", shape: [[0, 0], [640, 0], [640, 100], [0, 100]], rules: [] },
-  ],
-  regions: [],
-  rules: [],
-}));
+    spawns: { default: { x: 100, y: 380, facing: "up" } },
+    objects: [
+      // A foreground tree: walk above y=330 and you're behind it.
+      { id: "tree", name: "tree", image: "tree_img", x: 480, y: 100, baseline: 330, visible: true, rules: [look("A tall tree.")] },
+      // No baseline: sorts by its bottom edge (y + height = 260).
+      { id: "rock", name: "rock", image: "rock_img", x: 100, y: 230, visible: true, rules: [] },
+      {
+        id: "boulder",
+        image: "rock_img",
+        x: 0,
+        y: 0,
+        visible: true,
+        obstacle: [
+          [0, 250],
+          [640, 250],
+          [640, 260],
+          [0, 260],
+        ],
+        rules: [],
+      },
+    ],
+    characters: [{ character: "gardener", x: 560, y: 380, facing: "left", visible: true, rules: [look("A busy gardener.")] }],
+    hotspots: [
+      {
+        id: "pond",
+        name: "pond",
+        shape: [
+          [280, 280],
+          [360, 280],
+          [360, 320],
+          [280, 320],
+        ],
+        walkTo: { x: 320, y: 340, facing: "up" },
+        rules: [
+          { when: { type: "look" }, if: [{ type: "first_time" }], do: [{ type: "narrate", text: "Conditional." }], once: true },
+          { when: { type: "hand" }, if: [], do: [{ type: "narrate", text: "Wet." }], once: false },
+          {
+            when: { type: "look" },
+            if: [],
+            do: [
+              { type: "narrate", text: "A still pond." },
+              { type: "narrate", text: "Fish dart about." },
+            ],
+            once: false,
+          },
+        ],
+      },
+      {
+        id: "sky",
+        name: "sky",
+        shape: [
+          [0, 0],
+          [640, 0],
+          [640, 100],
+          [0, 100],
+        ],
+        rules: [],
+      },
+    ],
+    regions: [],
+    rules: [],
+  }),
+);
 
 const img = (asset: ImageAsset, w: number, h: number): LoadedImage => ({ asset, size: { w, h } });
 const images = new Map<string, LoadedImage>([
@@ -64,7 +117,16 @@ const images = new Map<string, LoadedImage>([
   ["rock_img", img({ id: "rock_img", path: "assets/r.png" }, 60, 30)],
 ]);
 
-const make = () => new World(scene, new Map([["hero", hero], ["gardener", gardener]]), (id) => images.get(id), { player: "hero", spawn: scene.spawns.default! });
+const make = () =>
+  new World(
+    scene,
+    new Map([
+      ["hero", hero],
+      ["gardener", gardener],
+    ]),
+    (id) => images.get(id),
+    { player: "hero", spawn: scene.spawns.default! },
+  );
 const run = (w: World, seconds: number) => {
   for (let i = 0; i < seconds * 60; i++) w.tick(1 / 60);
 };
@@ -209,12 +271,20 @@ describe("approach and actors", () => {
   });
 
   it("starts objects and NPCs from overrides", () => {
-    const w = new World(scene, new Map([["hero", hero], ["gardener", gardener]]), (id) => images.get(id), {
-      player: "hero",
-      spawn: { x: 50, y: 390, facing: "right" },
-      objectVisible: (id) => id !== "tree",
-      characterPosition: (id) => (id === "gardener" ? { x: 400, y: 300, facing: "down" } : undefined),
-    });
+    const w = new World(
+      scene,
+      new Map([
+        ["hero", hero],
+        ["gardener", gardener],
+      ]),
+      (id) => images.get(id),
+      {
+        player: "hero",
+        spawn: { x: 50, y: 390, facing: "right" },
+        objectVisible: (id) => id !== "tree",
+        characterPosition: (id) => (id === "gardener" ? { x: 400, y: 300, facing: "down" } : undefined),
+      },
+    );
     expect(w.player.pos).toEqual([50, 390]);
     expect(w.isObjectVisible("tree")).toBe(false);
     expect(w.npcs[0]!.pos).toEqual([400, 300]);

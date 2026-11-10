@@ -104,14 +104,20 @@ export class SceneTools extends SceneController {
       return "Click a hotspot to choose it, then click where the player should stand";
     }
     if (ui.tool === "select") {
-      if (this.selection && this.hasVertices(this.selection)) return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
+      if (this.selection && this.hasVertices(this.selection))
+        return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
       return "Click to select · drag to move";
     }
     return "";
   }
 
   private hasVertices(ref: ThingRef) {
-    return ref.list === "walkable" || ref.list === "hotspots" || ref.list === "regions" || (ref.list === "objects" && !!this.scene?.objects.find((o) => o.id === ref.key)?.obstacle);
+    return (
+      ref.list === "walkable" ||
+      ref.list === "hotspots" ||
+      ref.list === "regions" ||
+      (ref.list === "objects" && !!this.scene?.objects.find((o) => o.id === ref.key)?.obstacle)
+    );
   }
 
   override get cursor(): string {
@@ -251,7 +257,7 @@ export class SceneTools extends SceneController {
         outcome = { ...outcome, kind: "background" };
         return setBackground(r.project, id, img.id);
       }
-      const size = first ? imageSize(first.bytes) ?? undefined : undefined;
+      const size = first ? (imageSize(first.bytes) ?? undefined) : undefined;
       const placed = placeImage(r.project, id, img.id, at!, size);
       outcome = { ...outcome, kind: "object", id: placed.id };
       return placed.project;
@@ -261,7 +267,10 @@ export class SceneTools extends SceneController {
     if (o.kind === "object" && o.id) this.selectThing({ list: "objects", key: o.id });
     const notes: string[] = [];
     if (o.sounds) notes.push(`Imported ${o.sounds === 1 ? "a sound" : `${o.sounds} sounds`}; find ${o.sounds === 1 ? "it" : "them"} under Audio.`);
-    if (refused.length) notes.push(`Only PNG, JPG and WebP images and MP3, OGG and WAV sounds can be imported, so ${refused.join(", ")} ${refused.length === 1 ? "was" : "were"} skipped.`);
+    if (refused.length)
+      notes.push(
+        `Only PNG, JPG and WebP images and MP3, OGG and WAV sounds can be imported, so ${refused.join(", ")} ${refused.length === 1 ? "was" : "were"} skipped.`,
+      );
     if (notes.length) this.editor.showNotice({ kind: refused.length ? "error" : "info", text: notes.join(" ") });
     return ok;
   }
@@ -561,7 +570,9 @@ export class SceneTools extends SceneController {
       if (ui.aids.path && path && path.length > 1) f.path = path;
       if (ui.aids.ghost) {
         const character = this.playerCharacter();
-        const ghost = character ? { id: `${GHOST}${character.id}`, character, pos: feet, facing: "down" as const, kind: "idle" as const, animTime: this.clock } : null;
+        const ghost = character
+          ? { id: `${GHOST}${character.id}`, character, pos: feet, facing: "down" as const, kind: "idle" as const, animTime: this.clock }
+          : null;
         const sprites = ghost ? this.sprites(f.scene, [ghost]) : f.sprites;
         if (ghost && sprites.some((s) => s.ghost)) f.sprites = sprites;
         else {

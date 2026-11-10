@@ -42,7 +42,11 @@ export function ImageEditor({ actions, imageId }: { actions: Actions; imageId: s
   const typingOrigin = useRef<ImageAsset["origin"] | null | undefined>(undefined);
   if (!asset) return null;
   if (!loaded) {
-    return <p className="text-muted-foreground">{p.files.includes(asset.path) || p.pendingFiles[asset.path] ? "Loading image…" : `${asset.path} isn't in the project folder.`}</p>;
+    return (
+      <p className="text-muted-foreground">
+        {p.files.includes(asset.path) || p.pendingFiles[asset.path] ? "Loading image…" : `${asset.path} isn't in the project folder.`}
+      </p>
+    );
   }
   const image: LoadedImage = { ...loaded, asset };
   const size = image.size;
@@ -87,13 +91,45 @@ export function ImageEditor({ actions, imageId }: { actions: Actions; imageId: s
           <div className="flex items-end gap-3">
             {mode === "grid" ? (
               <>
-                <NumberField label="Columns" integer min={1} value={sheet.columns} onBlur={blur} onChange={(n) => slice(() => sheetFromGrid(size, n, sheet.rows))} className="w-24" />
-                <NumberField label="Rows" integer min={1} value={sheet.rows} onBlur={blur} onChange={(n) => slice(() => sheetFromGrid(size, sheet.columns, n))} className="w-24" />
+                <NumberField
+                  label="Columns"
+                  integer
+                  min={1}
+                  value={sheet.columns}
+                  onBlur={blur}
+                  onChange={(n) => slice(() => sheetFromGrid(size, n, sheet.rows))}
+                  className="w-24"
+                />
+                <NumberField
+                  label="Rows"
+                  integer
+                  min={1}
+                  value={sheet.rows}
+                  onBlur={blur}
+                  onChange={(n) => slice(() => sheetFromGrid(size, sheet.columns, n))}
+                  className="w-24"
+                />
               </>
             ) : (
               <>
-                <NumberField label="Frame width" integer min={1} value={sheet.cellWidth} onBlur={blur} onChange={(n) => slice(() => sheetFromCells(size, n, sheet.cellHeight))} className="w-24" />
-                <NumberField label="Frame height" integer min={1} value={sheet.cellHeight} onBlur={blur} onChange={(n) => slice(() => sheetFromCells(size, sheet.cellWidth, n))} className="w-24" />
+                <NumberField
+                  label="Frame width"
+                  integer
+                  min={1}
+                  value={sheet.cellWidth}
+                  onBlur={blur}
+                  onChange={(n) => slice(() => sheetFromCells(size, n, sheet.cellHeight))}
+                  className="w-24"
+                />
+                <NumberField
+                  label="Frame height"
+                  integer
+                  min={1}
+                  value={sheet.cellHeight}
+                  onBlur={blur}
+                  onChange={(n) => slice(() => sheetFromCells(size, sheet.cellWidth, n))}
+                  className="w-24"
+                />
               </>
             )}
             <p className="text-muted-foreground pb-1.5 text-[12px]" role="status" aria-label="Sheet summary">
@@ -109,14 +145,28 @@ export function ImageEditor({ actions, imageId }: { actions: Actions; imageId: s
           <p className="text-[12px]">
             Frame {shown}. Click to set the feet point{asset.origin ? "" : " (now bottom-centre)"}.
           </p>
-          <FramePreview
-            image={image}
-            frame={shown}
-            onPick={(o) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, originAt(o, f)))}
-          />
+          <FramePreview image={image} frame={shown} onPick={(o) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, originAt(o, f)))} />
           <div className="flex items-end gap-2">
-            <NumberField label="Origin x" integer min={0} max={f.w} value={origin[0]} onBlur={blur} onChange={(x) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, [x, Math.round(origin[1])]), `origin:${imageId}`)} className="w-20" />
-            <NumberField label="Origin y" integer min={0} max={f.h} value={origin[1]} onBlur={blur} onChange={(y) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, [Math.round(origin[0]), y]), `origin:${imageId}`)} className="w-20" />
+            <NumberField
+              label="Origin x"
+              integer
+              min={0}
+              max={f.w}
+              value={origin[0]}
+              onBlur={blur}
+              onChange={(x) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, [x, Math.round(origin[1])]), `origin:${imageId}`)}
+              className="w-20"
+            />
+            <NumberField
+              label="Origin y"
+              integer
+              min={0}
+              max={f.h}
+              value={origin[1]}
+              onBlur={blur}
+              onChange={(y) => editor.apply("Set origin", (q) => setOrigin(q, imageId, size, [Math.round(origin[0]), y]), `origin:${imageId}`)}
+              className="w-20"
+            />
             <Button variant="ghost" size="sm" disabled={!asset.origin} onClick={() => editor.apply("Reset origin", (q) => setOrigin(q, imageId, size, null))}>
               Bottom-centre
             </Button>

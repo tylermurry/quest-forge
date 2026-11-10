@@ -49,7 +49,13 @@ describe("objectDrawable", () => {
 
   it("is what sceneDrawables draws for the pose it's given", () => {
     const scene = testProject({ yard: yardWith([torch]) }).scenes[0]!.data;
-    const list = sceneDrawables(scene, testImages, () => true, [], () => ({ time: 0.25 }));
+    const list = sceneDrawables(
+      scene,
+      testImages,
+      () => true,
+      [],
+      () => ({ time: 0.25 }),
+    );
     expect(list.find((d) => d.id === "torch")!.src.x).toBe(16);
   });
 });

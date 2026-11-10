@@ -5,7 +5,12 @@ import { dist, type Vec } from "../src/vec.ts";
 
 // Spec 04 pathfinding acceptance tests.
 
-const rect = (x0: number, y0: number, x1: number, y1: number): Polygon => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+const rect = (x0: number, y0: number, x1: number, y1: number): Polygon => [
+  [x0, y0],
+  [x1, y0],
+  [x1, y1],
+  [x0, y1],
+];
 
 /** Every segment of the path stays walkable, and it ends where expected. */
 function expectValid(nav: NavMesh, path: Vec[], from: Vec, to: Vec) {
@@ -32,7 +37,16 @@ describe("NavMesh.findPath", () => {
 
   it("goes the long way through a U-shaped room", () => {
     // Two arms joined along the bottom.
-    const u: Polygon = [[0, 0], [40, 0], [40, 160], [160, 160], [160, 0], [200, 0], [200, 200], [0, 200]];
+    const u: Polygon = [
+      [0, 0],
+      [40, 0],
+      [40, 160],
+      [160, 160],
+      [160, 0],
+      [200, 0],
+      [200, 200],
+      [0, 200],
+    ];
     const nav = new NavMesh(u, []);
     const from: Vec = [20, 20];
     const to: Vec = [180, 20];
@@ -43,7 +57,10 @@ describe("NavMesh.findPath", () => {
 
   it("goes straight when start and end share a convex area", () => {
     const nav = new NavMesh(rect(0, 240, 640, 400), [rect(300, 300, 360, 340)]);
-    expect(nav.findPath([20, 260], [600, 280])).toEqual([[20, 260], [600, 280]]);
+    expect(nav.findPath([20, 260], [600, 280])).toEqual([
+      [20, 260],
+      [600, 280],
+    ]);
   });
 
   it("walks to the nearest point when the target is outside the walkable area", () => {
@@ -93,7 +110,16 @@ describe("obstacles tied to object visibility", () => {
   // A corridor from a lower field up to a far area, plugged by a boulder.
   const scene = {
     walkable: {
-      outer: [[0, 400], [0, 300], [280, 300], [280, 160], [360, 160], [360, 300], [640, 300], [640, 400]],
+      outer: [
+        [0, 400],
+        [0, 300],
+        [280, 300],
+        [280, 160],
+        [360, 160],
+        [360, 300],
+        [640, 300],
+        [640, 400],
+      ],
       holes: [],
     },
     objects: [

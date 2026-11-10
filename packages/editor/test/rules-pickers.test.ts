@@ -9,7 +9,8 @@ import { sceneEditor } from "./support/scene.ts";
 
 const POND: RuleOwnerRef = { kind: "thing", scene: "garden", list: "hotspots", key: "pond" };
 const rule = (p: Project, id: string) => ownerRules(p, POND)!.rules.find((r) => r.id === id)!;
-const pickField = (parts: readonly (string | Field)[], key: string) => parts.find((x): x is Extract<Field, { kind: "pick" }> => typeof x !== "string" && x.kind === "pick" && x.key === key)!;
+const pickField = (parts: readonly (string | Field)[], key: string) =>
+  parts.find((x): x is Extract<Field, { kind: "pick" }> => typeof x !== "string" && x.kind === "pick" && x.key === key)!;
 
 describe("picker options", () => {
   it("lists each kind, with names where there are names", async () => {
@@ -30,8 +31,13 @@ describe("picker options", () => {
 
   it("scopes spawns and objects to the part's scene, and animations to the target", async () => {
     const p = await m1Project();
-    expect(fieldPick({ type: "change_scene", scene: "shed", spawn: "door" }, pickField(ACTION_PARTS.change_scene, "spawn"))).toEqual({ pick: "spawn", scope: "shed" });
-    expect(fieldPick({ type: "object_visible", scene: "garden", object: "boulder", visible: true }, pickField(CONDITION_PARTS.object_visible, "object"))).toEqual({ pick: "object", scope: "garden" });
+    expect(fieldPick({ type: "change_scene", scene: "shed", spawn: "door" }, pickField(ACTION_PARTS.change_scene, "spawn"))).toEqual({
+      pick: "spawn",
+      scope: "shed",
+    });
+    expect(
+      fieldPick({ type: "object_visible", scene: "garden", object: "boulder", visible: true }, pickField(CONDITION_PARTS.object_visible, "object")),
+    ).toEqual({ pick: "object", scope: "garden" });
     const anim = pickField(ACTION_PARTS.play_animation, "animation");
     expect(fieldPick({ target: { kind: "character", character: "hero" } }, anim)).toEqual({ pick: "slot", scope: "hero" });
     expect(fieldPick({ target: { kind: "object", scene: "garden", object: "boulder" } }, anim)).toEqual({ pick: "animation", scope: "garden/boulder" });

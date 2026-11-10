@@ -13,7 +13,8 @@ async function problemsAfter(edit: (p: Project) => void): Promise<Problem[]> {
   return validateProject(project);
 }
 const scene = (p: Project, id: string) => p.scenes.find((s) => s.data.id === id)!.data;
-const summary = (ps: Problem[]) => ps.map((p) => ({ severity: p.severity, code: p.code, file: p.location.file, path: p.location.path.join("."), text: formatProblem(p) }));
+const summary = (ps: Problem[]) =>
+  ps.map((p) => ({ severity: p.severity, code: p.code, file: p.location.file, path: p.location.path.join("."), text: formatProblem(p) }));
 const BEACH = "scenes/outdoors/beach.scene.yaml";
 
 describe("warnings", () => {
@@ -23,7 +24,13 @@ describe("warnings", () => {
       for (const r of scene(p, "path").regions) r.rules = r.rules.filter((x) => !x.do.some((a) => a.type === "change_scene" && a.scene === "shop"));
     });
     expect(summary(problems)).toEqual([
-      { severity: "warning", code: "scene_unreachable", file: "scenes/shop.scene.yaml", path: "", text: "The Shop: can't be reached: no Change scene leads here from the start scene." },
+      {
+        severity: "warning",
+        code: "scene_unreachable",
+        file: "scenes/shop.scene.yaml",
+        path: "",
+        text: "The Shop: can't be reached: no Change scene leads here from the start scene.",
+      },
     ]);
     expect(hasBlockingErrors(problems)).toBe(false);
   });
@@ -51,31 +58,62 @@ describe("warnings", () => {
       for (const t of [...path.objects, ...path.characters, ...path.hotspots]) for (const r of t.rules) r.do = r.do.filter((a) => a.type !== "give_item");
     });
     expect(summary(problems)).toEqual([
-      { severity: "warning", code: "item_never_given", file: "items/light/matches.item.yaml", path: "", text: 'Item "matches": is never given to the player: no rule or dialogue gives it.' },
+      {
+        severity: "warning",
+        code: "item_never_given",
+        file: "items/light/matches.item.yaml",
+        path: "",
+        text: 'Item "matches": is never given to the player: no rule or dialogue gives it.',
+      },
     ]);
   });
 
   it("a flag never read, never set, or not used at all", async () => {
     const never = (p: Project, keep: (t: string) => boolean) => {
       for (const s of p.scenes) {
-        const lists = [s.data.rules, ...s.data.objects.map((o) => o.rules), ...s.data.characters.map((c) => c.rules), ...s.data.hotspots.map((h) => h.rules), ...s.data.regions.map((r) => r.rules)];
-        for (const rules of lists) for (const r of rules) {
-          r.if = r.if.filter((c) => keep(c.type));
-          r.do = r.do.filter((a) => keep(a.type));
-        }
+        const lists = [
+          s.data.rules,
+          ...s.data.objects.map((o) => o.rules),
+          ...s.data.characters.map((c) => c.rules),
+          ...s.data.hotspots.map((h) => h.rules),
+          ...s.data.regions.map((r) => r.rules),
+        ];
+        for (const rules of lists)
+          for (const r of rules) {
+            r.if = r.if.filter((c) => keep(c.type));
+            r.do = r.do.filter((a) => keep(a.type));
+          }
       }
     };
     const unread = await problemsAfter((p) => never(p, (t) => t !== "flag_is"));
     expect(summary(unread)).toEqual([
-      { severity: "warning", code: "flag_never_read", file: "flags.yaml", path: "flags.0", text: 'Flags › Flag "talked_to_villager": is changed but never checked: no condition uses this flag.' },
+      {
+        severity: "warning",
+        code: "flag_never_read",
+        file: "flags.yaml",
+        path: "flags.0",
+        text: 'Flags › Flag "talked_to_villager": is changed but never checked: no condition uses this flag.',
+      },
     ]);
     const unset = await problemsAfter((p) => never(p, (t) => t !== "add_to_counter"));
     expect(summary(unset)).toEqual([
-      { severity: "warning", code: "flag_never_set", file: "flags.yaml", path: "flags.1", text: 'Flags › Flag "shop_visits": is checked but never changed, so it stays 0: no rule uses Add to counter on it.' },
+      {
+        severity: "warning",
+        code: "flag_never_set",
+        file: "flags.yaml",
+        path: "flags.1",
+        text: 'Flags › Flag "shop_visits": is checked but never changed, so it stays 0: no rule uses Add to counter on it.',
+      },
     ]);
     const unused = await problemsAfter((p) => p.flags!.data.flags.push({ id: "spare", type: "bool", initial: true }));
     expect(summary(unused)).toEqual([
-      { severity: "warning", code: "flag_unused", file: "flags.yaml", path: "flags.2", text: 'Flags › Flag "spare": isn\'t used anywhere: no rule checks or changes this flag.' },
+      {
+        severity: "warning",
+        code: "flag_unused",
+        file: "flags.yaml",
+        path: "flags.2",
+        text: 'Flags › Flag "spare": isn\'t used anywhere: no rule checks or changes this flag.',
+      },
     ]);
   });
 
@@ -85,8 +123,20 @@ describe("warnings", () => {
       if (menu.type === "choices") menu.options = menu.options.filter((o) => o.id !== "buy");
     });
     expect(summary(problems)).toEqual([
-      { severity: "warning", code: "dialogue_node_unreachable", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.4", text: 'Dialogue "Shopkeeper" › Node "sell": can\'t be reached from the Start node.' },
-      { severity: "warning", code: "dialogue_node_unreachable", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.5", text: 'Dialogue "Shopkeeper" › Node "thanks": can\'t be reached from the Start node.' },
+      {
+        severity: "warning",
+        code: "dialogue_node_unreachable",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.4",
+        text: 'Dialogue "Shopkeeper" › Node "sell": can\'t be reached from the Start node.',
+      },
+      {
+        severity: "warning",
+        code: "dialogue_node_unreachable",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.5",
+        text: 'Dialogue "Shopkeeper" › Node "thanks": can\'t be reached from the Start node.',
+      },
     ]);
   });
 
@@ -108,8 +158,20 @@ describe("warnings", () => {
         path: "nodes.2.options.2.next",
         text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "bye": This option isn\'t connected, so the dialogue ends there. Connect it, or to end on purpose, connect it to an End node.',
       },
-      { severity: "warning", code: "dialogue_node_unreachable", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.6", text: 'Dialogue "Shopkeeper" › Node "done": can\'t be reached from the Start node.' },
-      { severity: "warning", code: "dialogue_no_options", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.7.options", text: 'Dialogue "Shopkeeper" › Node "empty": has no options, so the dialogue ends when it gets here.' },
+      {
+        severity: "warning",
+        code: "dialogue_node_unreachable",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.6",
+        text: 'Dialogue "Shopkeeper" › Node "done": can\'t be reached from the Start node.',
+      },
+      {
+        severity: "warning",
+        code: "dialogue_no_options",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.7.options",
+        text: 'Dialogue "Shopkeeper" › Node "empty": has no options, so the dialogue ends when it gets here.',
+      },
     ]);
   });
 
@@ -140,8 +202,20 @@ describe("warnings", () => {
       if (menu.type === "choices") menu.options[0]!.text = "";
     });
     expect(summary(problems)).toEqual([
-      { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.1.text", text: 'Dialogue "Shopkeeper" › Node "hello": says nothing. Type the line.' },
-      { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.options.0.text", text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "ask_cave": is an option with no text. Type what the player can say.' },
+      {
+        severity: "error",
+        code: "empty_text",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.1.text",
+        text: 'Dialogue "Shopkeeper" › Node "hello": says nothing. Type the line.',
+      },
+      {
+        severity: "error",
+        code: "empty_text",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.2.options.0.text",
+        text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "ask_cave": is an option with no text. Type what the player can say.',
+      },
     ]);
   });
 
@@ -152,7 +226,13 @@ describe("warnings", () => {
       p.game!.data.rules[0]!.do.push({ type: "give_item", item: "coin" }, { type: "award_points", points: 2, award: "found_coin" });
     });
     expect(summary(problems)).toEqual([
-      { severity: "warning", code: "hotspot_no_rules", file: BEACH, path: "hotspots.0.rules", text: 'Sunny Beach › Hotspot "shell": has no rules, so clicking it only gives the default responses.' },
+      {
+        severity: "warning",
+        code: "hotspot_no_rules",
+        file: BEACH,
+        path: "hotspots.0.rules",
+        text: 'Sunny Beach › Hotspot "shell": has no rules, so clicking it only gives the default responses.',
+      },
     ]);
   });
 
@@ -161,7 +241,13 @@ describe("warnings", () => {
       p.game!.data.maxScore = 10;
     });
     expect(summary(off)).toEqual([
-      { severity: "warning", code: "award_total_mismatch", file: "game.yaml", path: "maxScore", text: "Game settings: The max score is 10, but the awards add up to 7 (3 awards)." },
+      {
+        severity: "warning",
+        code: "award_total_mismatch",
+        file: "game.yaml",
+        path: "maxScore",
+        text: "Game settings: The max score is 10, but the awards add up to 7 (3 awards).",
+      },
     ]);
     // Giving the same award again doesn't change the total.
     const again = await problemsAfter((p) => {
@@ -196,8 +282,20 @@ describe("empty rule text", () => {
       if (sell?.type === "actions") sell.do.push({ type: "die", message: "" });
     });
     expect(summary(problems)).toEqual([
-      { severity: "error", code: "empty_text", file: BEACH, path: "hotspots.0.rules.0.do.4.text", text: 'Sunny Beach › Hotspot "shell" › Rule 1 › Action 5: narrates nothing. Type what the narrator says.' },
-      { severity: "error", code: "empty_text", file: BEACH, path: "hotspots.0.rules.0.do.5.text", text: 'Sunny Beach › Hotspot "shell" › Rule 1 › Action 6: has Hero say nothing. Type the line.' },
+      {
+        severity: "error",
+        code: "empty_text",
+        file: BEACH,
+        path: "hotspots.0.rules.0.do.4.text",
+        text: 'Sunny Beach › Hotspot "shell" › Rule 1 › Action 5: narrates nothing. Type what the narrator says.',
+      },
+      {
+        severity: "error",
+        code: "empty_text",
+        file: BEACH,
+        path: "hotspots.0.rules.0.do.5.text",
+        text: 'Sunny Beach › Hotspot "shell" › Rule 1 › Action 6: has Hero say nothing. Type the line.',
+      },
       {
         severity: "error",
         code: "empty_text",

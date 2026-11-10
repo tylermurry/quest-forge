@@ -27,7 +27,12 @@ export async function snapshot(dir: string): Promise<Record<string, string>> {
   for (const e of entries) {
     if (!e.isFile()) continue;
     const full = join(e.parentPath, e.name);
-    out[full.slice(dir.length + 1).split("\\").join("/")] = (await readFile(full)).toString("base64");
+    out[
+      full
+        .slice(dir.length + 1)
+        .split("\\")
+        .join("/")
+    ] = (await readFile(full)).toString("base64");
   }
   return out;
 }

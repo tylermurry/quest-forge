@@ -3,8 +3,7 @@ import { CanvasPos, Id, Text, schemaVersion } from "./common.ts";
 import { Action, Condition, RuleText } from "./rules.ts";
 
 // Dialogue graph. `next` is null while a port is unconnected.
-const node = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
-  z.strictObject({ id: Id, type: z.literal(type), pos: CanvasPos, ...shape });
+const node = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) => z.strictObject({ id: Id, type: z.literal(type), pos: CanvasPos, ...shape });
 const Next = Id.nullable();
 
 /** A player option. Its text may be `""` while authoring: an error, not a parse failure. */

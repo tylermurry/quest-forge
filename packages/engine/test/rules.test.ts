@@ -23,7 +23,15 @@ const yard = SceneFile.parse({
   name: "Yard",
   background: "bg",
   depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
-  walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [] },
+  walkable: {
+    outer: [
+      [0, 200],
+      [640, 200],
+      [640, 400],
+      [0, 400],
+    ],
+    holes: [],
+  },
   spawns: { default: { x: 100, y: 380, facing: "up" } },
   objects: [{ id: "key", image: "k", x: 0, y: 0, visible: false, rules: [] }],
   characters: [],
@@ -33,12 +41,23 @@ const yard = SceneFile.parse({
 });
 
 const ctx = (): RuleContext => ({
-  state: initialState({ schemaVersion: 2, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 2 }] }, "yard", { x: 0, y: 0, facing: "up" }),
+  state: initialState(
+    {
+      schemaVersion: 2,
+      flags: [
+        { id: "open", type: "bool", initial: false },
+        { id: "n", type: "counter", initial: 2 },
+      ],
+    },
+    "yard",
+    { x: 0, y: 0, facing: "up" },
+  ),
   scene: (id) => (id === "yard" ? yard : undefined),
 });
 const say = (text: string) => [{ type: "narrate", text }];
 let nextId = 0;
-const rule = (when: Trigger, cond: Condition[], text: string, once = false) => InteractRule.parse({ id: `rule_${++nextId}`, when, if: cond, do: say(text), once });
+const rule = (when: Trigger, cond: Condition[], text: string, once = false) =>
+  InteractRule.parse({ id: `rule_${++nextId}`, when, if: cond, do: say(text), once });
 const owner: RuleOwner = { kind: "hotspot", scene: "yard", id: "door" };
 const look: Trigger = { type: "look" };
 const text = (m: { rule: { do: unknown[] } } | null) => (m ? (m.rule.do[0] as { text: string }).text : null);
@@ -118,7 +137,16 @@ describe("first match", () => {
   });
 
   it("all conditions must pass", () => {
-    const rules = [rule(look, [{ type: "has_item", item: "a" }, { type: "has_item", item: "b" }], "both")];
+    const rules = [
+      rule(
+        look,
+        [
+          { type: "has_item", item: "a" },
+          { type: "has_item", item: "b" },
+        ],
+        "both",
+      ),
+    ];
     const c = ctx();
     giveItem(c.state, "a");
     expect(firstMatch(rules, owner, look, c)).toBe(null);

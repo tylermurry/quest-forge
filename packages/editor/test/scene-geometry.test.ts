@@ -44,7 +44,11 @@ describe("shapes helpers", () => {
     expect(samePoly(null, obstacle)).toBe(false);
     expect(getPolygon(scene, obstacle)).toEqual(withObstacle.obstacle);
     expect(getPolygon(scene, plain)).toBeUndefined();
-    const tri: [number, number][] = [[0, 0], [10, 0], [0, 10]];
+    const tri: [number, number][] = [
+      [0, 0],
+      [10, 0],
+      [0, 10],
+    ];
     expect(withPolygon(scene, plain, tri)).toBe(scene);
     expect(withPolygon(scene, { ref: { list: "walkable", key: "hole:99" } }, tri)).toBe(scene);
     expect(withPolygon(scene, { ref: { list: "hotspots", key: "nope" } }, tri)).toEqual(scene);
@@ -87,7 +91,8 @@ describe("hitTest", () => {
     expect(scene.background).toBeDefined();
     // A spot no polygon covers (found by search, so the test doesn't depend on exact coordinates).
     let empty: [number, number] | null = null;
-    for (let y = 3; y < 400 && !empty; y += 7) for (let x = 3; x < 640 && !empty; x += 7) if (hitTest([x, y], ctx(scene, uiWith({ layer: "walkable" }), null)) === null) empty = [x, y];
+    for (let y = 3; y < 400 && !empty; y += 7)
+      for (let x = 3; x < 640 && !empty; x += 7) if (hitTest([x, y], ctx(scene, uiWith({ layer: "walkable" }), null)) === null) empty = [x, y];
     if (!empty) throw new Error("fixture scene has no empty spot");
     expect(hitTest(empty, ctx(scene, uiWith({ layer: "walkable" }), null))).toBeNull();
     expect(hitTest(empty, ctx(scene, uiWith({ layer: "background" }), null))).toEqual({ kind: "background", ref: { list: "background", key: "background" } });
@@ -100,7 +105,8 @@ describe("snapPoint", () => {
     expect(snapPoint([10.4, 20.6], scene, uiWith({ snap: false }), 2)).toEqual({ point: [10, 21], kind: "pixel" });
     // Far from every vertex and edge: only the pixel grid.
     let far: [number, number] | null = null;
-    for (let y = 3.3; y < 400 && !far; y += 7) for (let x = 3.3; x < 640 && !far; x += 7) if (snapPoint([x, y], scene, uiWith({ snap: true }), 2).kind === "pixel") far = [x, y];
+    for (let y = 3.3; y < 400 && !far; y += 7)
+      for (let x = 3.3; x < 640 && !far; x += 7) if (snapPoint([x, y], scene, uiWith({ snap: true }), 2).kind === "pixel") far = [x, y];
     if (!far) throw new Error("fixture scene has no spot clear of shapes");
     expect(snapPoint(far, scene, uiWith({ snap: true }), 2)).toEqual({ point: [Math.round(far[0]), Math.round(far[1])], kind: "pixel" });
   });

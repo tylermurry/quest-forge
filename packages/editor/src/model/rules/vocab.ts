@@ -91,7 +91,13 @@ export const CONDITION_PARTS: Record<ConditionType, Part[]> = {
     { kind: "int", key: "value", label: "Number" },
   ],
   visited: [pick("scene", "scene", "Scene")],
-  object_visible: [pick("object", "object", "Object", "scene"), "in", pick("scene", "scene", "Scene"), "is", { kind: "bool", key: "visible", label: "Shown", on: "visible", off: "hidden" }],
+  object_visible: [
+    pick("object", "object", "Object", "scene"),
+    "in",
+    pick("scene", "scene", "Scene"),
+    "is",
+    { kind: "bool", key: "visible", label: "Shown", on: "visible", off: "hidden" },
+  ],
   first_time: [],
 };
 
@@ -146,7 +152,15 @@ export const ACTION_PARTS: Record<ActionType, Part[]> = {
   show_object: [pick("object", "object", "Object", "scene"), "in", pick("scene", "scene", "Scene")],
   hide_object: [pick("object", "object", "Object", "scene"), "in", pick("scene", "scene", "Scene")],
   play_animation: [{ kind: "animTarget", label: "On" }, pick("animation", "animation", "Animation")],
-  set_character_position: [pick("character", "character", "Character"), "to", pick("scene", "scene", "Scene"), "at", { kind: "point", label: "Point", sceneKey: "scene" }, "facing", facing],
+  set_character_position: [
+    pick("character", "character", "Character"),
+    "to",
+    pick("scene", "scene", "Scene"),
+    "at",
+    { kind: "point", label: "Point", sceneKey: "scene" },
+    "facing",
+    facing,
+  ],
   play_sound: [pick("sound", "audio", "Sound")],
   play_music: [pick("music", "audio", "Music")],
   stop_music: [],

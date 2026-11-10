@@ -369,7 +369,7 @@ export class PlayerUi {
       return;
     }
     if (button === "act") {
-      if (this.slotActionEnabled) (this.panel === "save" ? this.saveTo(this.slot!) : this.loadFrom(this.slot!));
+      if (this.slotActionEnabled) this.panel === "save" ? this.saveTo(this.slot!) : this.loadFrom(this.slot!);
       return;
     }
     const r = L.rows.findIndex((row) => inRect(p, row));

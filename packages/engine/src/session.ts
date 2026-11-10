@@ -1,19 +1,23 @@
-import { pointInPolygon, type Action, type AnyRule, type CharacterFile, type DialogueFile, type DialogueNode, type Facing, type GameFile, type ItemFile, type Project, type SceneFile, type Trigger } from "@questforge/schema";
+import {
+  pointInPolygon,
+  type Action,
+  type AnyRule,
+  type CharacterFile,
+  type DialogueFile,
+  type DialogueNode,
+  type Facing,
+  type GameFile,
+  type ItemFile,
+  type Project,
+  type SceneFile,
+  type Trigger,
+} from "@questforge/schema";
 import { DialogueRun, type ChoiceList, type DialogueHost } from "./dialogue.ts";
 import { defaultResponse, firstMatch, type RuleContext, type RuleOwner } from "./rules.ts";
 import { sanitizeState } from "./restore.ts";
 import { Sequence, type Done } from "./sequence.ts";
 import type { Trace } from "./trace.ts";
-import {
-  cloneState,
-  initialState,
-  markFired,
-  markVisited,
-  setCharacterPosition,
-  setObjectVisible,
-  type GameState,
-  type Position,
-} from "./state.ts";
+import { cloneState, initialState, markFired, markVisited, setCharacterPosition, setObjectVisible, type GameState, type Position } from "./state.ts";
 import { narrateBox, sayBox, type TextBox } from "./ui/textbox.ts";
 import type { Vec } from "./vec.ts";
 import { World, type ImageLookup, type Target } from "./world.ts";
@@ -462,7 +466,13 @@ export class Session implements DialogueHost {
   private match(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): { matched: boolean; actions: readonly Action[] | null } {
     const trace = this.trace;
     trace?.({ type: "trigger", owner, trigger });
-    const m = firstMatch(rules, owner, trigger, this.ctx, trace && ((rule, index, key, verdict) => trace({ type: "rule", owner, trigger, rule, index, key, verdict })));
+    const m = firstMatch(
+      rules,
+      owner,
+      trigger,
+      this.ctx,
+      trace && ((rule, index, key, verdict) => trace({ type: "rule", owner, trigger, rule, index, key, verdict })),
+    );
     if (m) {
       markFired(this.state, m.key);
       return { matched: true, actions: m.rule.do };
@@ -603,7 +613,8 @@ export class Session implements DialogueHost {
       // Objects in other scenes or hidden ones don't animate.
       const length = target.scene === this.scene.id ? this.world.playObjectAnimation(target.object, animation) : null;
       if (length === null) {
-        const why = target.scene !== this.scene.id ? "isn't in this scene" : !this.world.isObjectVisible(target.object) ? "is hidden" : `has no animation ${animation}`;
+        const why =
+          target.scene !== this.scene.id ? "isn't in this scene" : !this.world.isObjectVisible(target.object) ? "is hidden" : `has no animation ${animation}`;
         this.note(`Object ${target.object} ${why}, so it can't play ${animation}.`);
         return null;
       }
@@ -658,10 +669,11 @@ export class Session implements DialogueHost {
     this._dialogue = run;
     for (const n of d.nodes) {
       if (n.type !== "actions") continue;
-      for (const a of n.do) if (a.type === "change_scene") {
-        const next = this.scenes.get(a.scene);
-        if (next) this.assets.prefetch(next);
-      }
+      for (const a of n.do)
+        if (a.type === "change_scene") {
+          const next = this.scenes.get(a.scene);
+          if (next) this.assets.prefetch(next);
+        }
     }
     run.begin(node);
     this.settleDialogue();

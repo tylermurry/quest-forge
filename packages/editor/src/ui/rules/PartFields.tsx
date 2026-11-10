@@ -48,7 +48,19 @@ function SmallSelect(props: { label: string; value: string; options: { value: st
 const targetValue = (t: AnimTarget) => (t.kind === "character" ? `c:${t.character}` : `o:${t.scene}/${t.object}`);
 
 /** One field of a rule sentence. */
-function FieldInput({ project, field, value, h, invalid }: { project: Project; field: Field; value: Record<string, unknown>; h: PartHandlers; invalid: boolean }) {
+function FieldInput({
+  project,
+  field,
+  value,
+  h,
+  invalid,
+}: {
+  project: Project;
+  field: Field;
+  value: Record<string, unknown>;
+  h: PartHandlers;
+  invalid: boolean;
+}) {
   switch (field.kind) {
     case "pick": {
       const { pick, scope } = fieldPick(value, field);
@@ -106,12 +118,40 @@ function FieldInput({ project, field, value, h, invalid }: { project: Project; f
         />
       );
     case "enum":
-      return <SmallSelect label={field.label} value={String(value[field.key])} options={field.options} invalid={invalid} onChange={(v) => h.patch({ [field.key]: v })} />;
+      return (
+        <SmallSelect
+          label={field.label}
+          value={String(value[field.key])}
+          options={field.options}
+          invalid={invalid}
+          onChange={(v) => h.patch({ [field.key]: v })}
+        />
+      );
     case "point":
       return (
         <span className="inline-flex items-end gap-1">
-          <NumberField compact className="w-14" label="X" integer min={0} max={640} value={Number(value.x)} onChange={(n) => h.patch({ x: n }, "x")} onBlur={h.blur} />
-          <NumberField compact className="w-14" label="Y" integer min={0} max={400} value={Number(value.y)} onChange={(n) => h.patch({ y: n }, "y")} onBlur={h.blur} />
+          <NumberField
+            compact
+            className="w-14"
+            label="X"
+            integer
+            min={0}
+            max={640}
+            value={Number(value.x)}
+            onChange={(n) => h.patch({ x: n }, "x")}
+            onBlur={h.blur}
+          />
+          <NumberField
+            compact
+            className="w-14"
+            label="Y"
+            integer
+            min={0}
+            max={400}
+            value={Number(value.y)}
+            onChange={(n) => h.patch({ y: n }, "y")}
+            onBlur={h.blur}
+          />
           {(h.pickPoint || h.pickDisabled) && (
             <Button
               variant={h.picking ? "default" : "outline"}
@@ -154,7 +194,19 @@ function FieldInput({ project, field, value, h, invalid }: { project: Project; f
 }
 
 /** The fields of a trigger, condition or action as a sentence. `invalidKeys` are fields with problems. */
-export function PartFields({ project, parts, value, h, invalidKeys }: { project: Project; parts: readonly Part[]; value: Record<string, unknown>; h: PartHandlers; invalidKeys: ReadonlySet<string> }) {
+export function PartFields({
+  project,
+  parts,
+  value,
+  h,
+  invalidKeys,
+}: {
+  project: Project;
+  parts: readonly Part[];
+  value: Record<string, unknown>;
+  h: PartHandlers;
+  invalidKeys: ReadonlySet<string>;
+}) {
   return (
     <>
       {parts.map((part, i) =>

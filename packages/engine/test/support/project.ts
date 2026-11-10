@@ -27,7 +27,13 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
     rules: [],
     ...over.game,
   });
-  const flags = FlagsFile.parse({ schemaVersion: 2, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 0 }] });
+  const flags = FlagsFile.parse({
+    schemaVersion: 2,
+    flags: [
+      { id: "open", type: "bool", initial: false },
+      { id: "n", type: "counter", initial: 0 },
+    ],
+  });
   const hero = CharacterFile.parse({
     schemaVersion: 2,
     id: "hero",
@@ -42,7 +48,15 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
     schemaVersion: 2,
     background: "bg",
     depth: { far: { y: 200, scale: 1 }, near: { y: 400, scale: 1 } },
-    walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [] },
+    walkable: {
+      outer: [
+        [0, 200],
+        [640, 200],
+        [640, 400],
+        [0, 400],
+      ],
+      holes: [],
+    },
     objects: [],
     characters: [],
     hotspots: [],
@@ -56,10 +70,36 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
     spawns: { default: { x: 100, y: 380, facing: "up" }, from_shed: { x: 600, y: 300, facing: "left" } },
     objects: [
       { id: "rock", name: "rock", image: "rock_img", x: 200, y: 200, visible: true, rules: [] },
-      { id: "boulder", image: "rock_img", x: 400, y: 200, visible: true, obstacle: [[380, 240], [460, 240], [460, 260], [380, 260]], rules: [] },
+      {
+        id: "boulder",
+        image: "rock_img",
+        x: 400,
+        y: 200,
+        visible: true,
+        obstacle: [
+          [380, 240],
+          [460, 240],
+          [460, 260],
+          [380, 260],
+        ],
+        rules: [],
+      },
     ],
     characters: [{ character: "gardener", x: 500, y: 380, facing: "left", visible: true, rules: [] }],
-    hotspots: [{ id: "pot", name: "flowerpot", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], walkTo: { x: 320, y: 360, facing: "up" }, rules: [] }],
+    hotspots: [
+      {
+        id: "pot",
+        name: "flowerpot",
+        shape: [
+          [300, 300],
+          [340, 300],
+          [340, 340],
+          [300, 340],
+        ],
+        walkTo: { x: 320, y: 360, facing: "up" },
+        rules: [],
+      },
+    ],
     ...over.yard,
   });
   const shed = SceneFile.parse({ ...base, id: "shed", name: "Shed", spawns: { door: { x: 50, y: 380, facing: "right" } }, ...over.shed });
@@ -70,7 +110,10 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
   p.flags = { path: "flags.yaml", data: flags };
   p.scenes = [yard, shed].map((s) => ({ path: `scenes/${s.id}.scene.yaml`, data: s }));
   p.characters = [hero, gardener].map((c) => ({ path: `characters/${c.id}.character.yaml`, data: c }));
-  p.items = [item("key", "key"), item("stick", "stick"), item("string", "string"), item("rod", "fishing rod")].map((i) => ({ path: `items/${i.id}.item.yaml`, data: i }));
+  p.items = [item("key", "key"), item("stick", "stick"), item("string", "string"), item("rod", "fishing rod")].map((i) => ({
+    path: `items/${i.id}.item.yaml`,
+    data: i,
+  }));
   p.dialogues = (over.dialogues ?? []).map((d) => {
     const data = DialogueFile.parse({ schemaVersion: 2, name: "Chat", ...d });
     return { path: `dialogues/${data.id}.dialogue.yaml`, data };

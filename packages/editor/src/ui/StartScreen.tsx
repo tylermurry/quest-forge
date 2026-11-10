@@ -58,11 +58,11 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
   return (
     <div className="flex h-full flex-col">
       <TitleBar>
-        <span className="text-muted-foreground text-[13px]">Questforge</span>
+        <span className="text-muted-foreground text-[13px]">Quest Forge</span>
       </TitleBar>
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="mx-auto max-w-xl px-6 py-12">
-          <h1 className="text-2xl font-semibold tracking-tight">Questforge</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Quest Forge</h1>
           <p className="text-muted-foreground mt-1">Build a point-and-click adventure without writing code.</p>
           {error && (
             <p className="text-err mt-4" role="alert">
@@ -77,7 +77,14 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
               void create();
             }}
           >
-            <Input ref={titleRef} className="h-8 w-64" aria-label="Game title" placeholder="Game title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              ref={titleRef}
+              className="h-8 w-64"
+              aria-label="Game title"
+              placeholder="Game title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
             <Button type="submit" size="sm" disabled={!title.trim()}>
               <Plus /> Create blank project
             </Button>
@@ -112,7 +119,13 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
                       {gone && " (folder not found)"}
                     </span>
                   </button>
-                  <Button variant="ghost" size="icon-xs" className="opacity-0 group-hover:opacity-100" aria-label={`Remove ${r.title} from recent projects`} onClick={() => onForget(r.root)}>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="opacity-0 group-hover:opacity-100"
+                    aria-label={`Remove ${r.title} from recent projects`}
+                    onClick={() => onForget(r.root)}
+                  >
                     <X />
                   </Button>
                 </li>

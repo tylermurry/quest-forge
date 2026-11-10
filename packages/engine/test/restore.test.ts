@@ -25,7 +25,13 @@ describe("readState", () => {
   });
 
   it("fills missing fields and repairs bad positions and facings", () => {
-    const s = readState({ scene: "yard", player: { x: 5, y: NaN, facing: "sideways" }, characters: { "yard/gardener": { x: 1, y: 2, facing: "up" }, "yard/bad": 7 }, music: 4, fired: ["a", 1] })!;
+    const s = readState({
+      scene: "yard",
+      player: { x: 5, y: NaN, facing: "sideways" },
+      characters: { "yard/gardener": { x: 1, y: 2, facing: "up" }, "yard/bad": 7 },
+      music: 4,
+      fired: ["a", 1],
+    })!;
     expect(s.player).toEqual({ x: 5, y: 0, facing: "down" });
     expect(s.characters).toEqual({ "yard/gardener": { x: 1, y: 2, facing: "up" } });
     expect(s.music).toBeNull();
@@ -73,7 +79,11 @@ describe("awardCatalog", () => {
     const p = testProject({
       yard: {
         rules: [
-          rule({ type: "scene_enter" }, [{ type: "award_points", award: "a", points: 3 }, { type: "award_points", award: "a", points: 9 }, { type: "award_points", award: "b", points: 1 }]),
+          rule({ type: "scene_enter" }, [
+            { type: "award_points", award: "a", points: 3 },
+            { type: "award_points", award: "a", points: 9 },
+            { type: "award_points", award: "b", points: 1 },
+          ]),
         ],
       },
     });

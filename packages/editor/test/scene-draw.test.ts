@@ -21,13 +21,22 @@ describe("Polygon tool", () => {
     click([600, 200]);
     click([600, 390]);
     expect(c.isDrawing).toBe(true);
-    expect(c.frame()!.drawing!.points).toEqual([[40, 200], [600, 200], [600, 390]]);
+    expect(c.frame()!.drawing!.points).toEqual([
+      [40, 200],
+      [600, 200],
+      [600, 390],
+    ]);
     expect(editor.history.size).toBe(steps);
     expect(scene().walkable.outer).toEqual([]);
     click([40, 390]);
     // Double-click closes (its second click adds no point).
     click([40, 390], { clicks: 2 });
-    expect(scene().walkable.outer).toEqual([[40, 200], [600, 200], [600, 390], [40, 390]]);
+    expect(scene().walkable.outer).toEqual([
+      [40, 200],
+      [600, 200],
+      [600, 390],
+      [40, 390],
+    ]);
     expect(editor.history.size).toBe(steps + 1);
     expect(editor.history.undoLabel).toBe("Draw walkable area");
     expect(c.selection).toEqual({ list: "walkable", key: "outer" });
@@ -36,7 +45,13 @@ describe("Polygon tool", () => {
     click([350, 260]);
     click([300, 330]);
     click([250.5, 260.5]);
-    expect(scene().walkable.holes).toEqual([[[250, 260], [350, 260], [300, 330]]]);
+    expect(scene().walkable.holes).toEqual([
+      [
+        [250, 260],
+        [350, 260],
+        [300, 330],
+      ],
+    ]);
     expect(c.selection).toEqual({ list: "walkable", key: "hole:0" });
     dispose();
   });
@@ -83,17 +98,35 @@ describe("Polygon tool", () => {
     const { c, ws, scene, click, dispose } = await sceneEditor();
     c.setLayer("hotspots");
     c.setTool("polygon");
-    for (const [x, y] of [[20, 20], [60, 20], [60, 60]] as const) click([x, y]);
+    for (const [x, y] of [
+      [20, 20],
+      [60, 20],
+      [60, 60],
+    ] as const)
+      click([x, y]);
     c.finish();
-    for (const [x, y] of [[100, 20], [140, 20], [140, 60]] as const) click([x, y]);
+    for (const [x, y] of [
+      [100, 20],
+      [140, 20],
+      [140, 60],
+    ] as const)
+      click([x, y]);
     c.finish();
     const made = scene().hotspots.slice(-2);
-    expect(made.map((h) => [h.id, h.name])).toEqual([["hotspot", "Hotspot"], ["hotspot_2", "Hotspot 2"]]);
+    expect(made.map((h) => [h.id, h.name])).toEqual([
+      ["hotspot", "Hotspot"],
+      ["hotspot_2", "Hotspot 2"],
+    ]);
     expect(made[0]!.rules).toEqual([]);
     expect(ws.takeFocusRequest()).toBe("name");
     c.setLayer("regions");
     c.setTool("polygon");
-    for (const [x, y] of [[20, 100], [60, 100], [60, 140]] as const) click([x, y]);
+    for (const [x, y] of [
+      [20, 100],
+      [60, 100],
+      [60, 140],
+    ] as const)
+      click([x, y]);
     c.finish();
     expect(scene().regions.at(-1)!.id).toBe("region");
     dispose();
@@ -107,9 +140,20 @@ describe("Polygon tool", () => {
     click([10, 10]);
     expect(editor.notice?.text).toContain("Select an object first");
     c.select({ list: "objects", key: "rock" });
-    for (const [x, y] of [[440, 290], [500, 290], [500, 300], [440, 300]] as const) click([x, y]);
+    for (const [x, y] of [
+      [440, 290],
+      [500, 290],
+      [500, 300],
+      [440, 300],
+    ] as const)
+      click([x, y]);
     c.finish();
-    expect(scene().objects.find((o) => o.id === "rock")!.obstacle).toEqual([[440, 290], [500, 290], [500, 300], [440, 300]]);
+    expect(scene().objects.find((o) => o.id === "rock")!.obstacle).toEqual([
+      [440, 290],
+      [500, 290],
+      [500, 300],
+      [440, 300],
+    ]);
     expect(editor.history.undoLabel).toBe("Draw obstacle");
     dispose();
   });
@@ -133,7 +177,12 @@ describe("Rectangle tool", () => {
     c.setTool("rect");
     const steps = editor.history.size;
     drag([20.4, 210], [620, 395.6]);
-    expect(scene().walkable.outer).toEqual([[20, 210], [620, 210], [620, 396], [20, 396]]);
+    expect(scene().walkable.outer).toEqual([
+      [20, 210],
+      [620, 210],
+      [620, 396],
+      [20, 396],
+    ]);
     expect(editor.history.size).toBe(steps + 1);
     // A zero-area drag makes nothing.
     drag([100, 300], [100, 350]);

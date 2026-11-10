@@ -69,9 +69,20 @@ export function PlaytestArea({ playtest, actions }: { playtest: Playtest; action
   return (
     <div className="flex h-full min-h-0 flex-col text-[13px]">
       <DebugBar playtest={playtest} />
-      <ResizablePanelGroup orientation="vertical" id="questforge.playtest.rows" defaultLayout={outer.defaultLayout} onLayoutChanged={outer.onLayoutChanged} className="min-h-0 flex-1">
+      <ResizablePanelGroup
+        orientation="vertical"
+        id="questforge.playtest.rows"
+        defaultLayout={outer.defaultLayout}
+        onLayoutChanged={outer.onLayoutChanged}
+        className="min-h-0 flex-1"
+      >
         <ResizablePanel id="top" minSize="30%">
-          <ResizablePanelGroup orientation="horizontal" id="questforge.playtest.columns" defaultLayout={inner.defaultLayout} onLayoutChanged={inner.onLayoutChanged}>
+          <ResizablePanelGroup
+            orientation="horizontal"
+            id="questforge.playtest.columns"
+            defaultLayout={inner.defaultLayout}
+            onLayoutChanged={inner.onLayoutChanged}
+          >
             <ResizablePanel id="state" defaultSize="300px" minSize="220px" maxSize="50%" className="bg-panel">
               <StatePanel playtest={playtest} project={editor.project} footer={<PresetSection playtest={playtest} />} />
             </ResizablePanel>

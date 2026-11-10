@@ -95,14 +95,33 @@ describe("buildQuest / readQuest", () => {
 
   it("says which asset file it couldn't read", async () => {
     const p = await load();
-    await expect(buildQuest(p, async (path) => (path.endsWith(".png") ? Promise.reject(new Error("gone")) : disk(path)))).rejects.toThrow(/Couldn't read assets\/images\/.*\.png: gone/);
+    await expect(buildQuest(p, async (path) => (path.endsWith(".png") ? Promise.reject(new Error("gone")) : disk(path)))).rejects.toThrow(
+      /Couldn't read assets\/images\/.*\.png: gone/,
+    );
   });
 
   it("rejects files that aren't games", async () => {
     await expect(readQuest(new Uint8Array([1, 2, 3]))).rejects.toThrow(QuestError);
     const noGame = await writeZip([{ name: "x.txt", data: new Uint8Array([1]) }]);
     await expect(readQuest(noGame)).rejects.toThrow("no game.json");
-    const newer = await writeZip([{ name: QUEST_GAME_ENTRY, data: new TextEncoder().encode(JSON.stringify({ format: "questforge-game", formatVersion: 99, game: {}, flags: {}, assets: {}, scenes: [], items: [], characters: [], dialogues: [] })) }]);
+    const newer = await writeZip([
+      {
+        name: QUEST_GAME_ENTRY,
+        data: new TextEncoder().encode(
+          JSON.stringify({
+            format: "questforge-game",
+            formatVersion: 99,
+            game: {},
+            flags: {},
+            assets: {},
+            scenes: [],
+            items: [],
+            characters: [],
+            dialogues: [],
+          }),
+        ),
+      },
+    ]);
     await expect(readQuest(newer)).rejects.toThrow("newer version");
   });
 

@@ -2,7 +2,20 @@ import type { LoadedImage } from "@questforge/engine";
 import type { Animation, AnimationSlot, CharacterFile } from "@questforge/schema";
 import { useEffect, useRef, useState } from "react";
 import type { Actions } from "../../model/actions.ts";
-import { SLOT_DIRS, SLOT_KINDS, defaultSlotImage, patchSlot, pickFrames, rowFrames, setMirrorLeft, setSlot, slotLabel, slotOf, slotView, splitSlot } from "../../model/animations.ts";
+import {
+  SLOT_DIRS,
+  SLOT_KINDS,
+  defaultSlotImage,
+  patchSlot,
+  pickFrames,
+  rowFrames,
+  setMirrorLeft,
+  setSlot,
+  slotLabel,
+  slotOf,
+  slotView,
+  splitSlot,
+} from "../../model/animations.ts";
 import { cellAt, fitZoom } from "../../model/sprites.ts";
 import { Button } from "../components/ui/button.tsx";
 import { Label } from "../components/ui/label.tsx";
@@ -150,7 +163,12 @@ function SlotEditor({ actions, character, slot, images }: { actions: Actions; ch
             className="w-28"
           />
           <label className="flex h-7 items-center gap-2 text-[13px]">
-            <input type="checkbox" className="accent-primary size-3.5" checked={own?.loop ?? true} onChange={(e) => patch(e.target.checked ? "Loop animation" : "Play animation once", { loop: e.target.checked })} />
+            <input
+              type="checkbox"
+              className="accent-primary size-3.5"
+              checked={own?.loop ?? true}
+              onChange={(e) => patch(e.target.checked ? "Loop animation" : "Play animation once", { loop: e.target.checked })}
+            />
             Loop
           </label>
         </div>
@@ -174,7 +192,8 @@ function SlotEditor({ actions, character, slot, images }: { actions: Actions; ch
               }}
             />
             <p className="text-muted-foreground text-[11px]" aria-label="Frames">
-              {own ? `Frames ${own.frames.join(", ")}` : "No frames yet"} · click a frame, shift-click for a run, {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}-click to add or remove one
+              {own ? `Frames ${own.frames.join(", ")}` : "No frames yet"} · click a frame, shift-click for a run,{" "}
+              {navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}-click to add or remove one
             </p>
           </>
         )}
@@ -189,7 +208,15 @@ function SlotEditor({ actions, character, slot, images }: { actions: Actions; ch
 }
 
 /** The sheet with the slot's frames outlined; clicks pick frames. */
-function FramePicker({ image, frames, onPick }: { image: LoadedImage; frames: number[]; onPick(cell: number, mods: { range: boolean; toggle: boolean }): void }) {
+function FramePicker({
+  image,
+  frames,
+  onPick,
+}: {
+  image: LoadedImage;
+  frames: number[];
+  onPick(cell: number, mods: { range: boolean; toggle: boolean }): void;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const zoom = fitZoom(image.size, PICKER_BOX);
   const w = Math.round(image.size.w * zoom);

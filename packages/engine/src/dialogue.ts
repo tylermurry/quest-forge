@@ -176,7 +176,13 @@ export class DialogueRun {
           const failed = n.if.findIndex((c) => !checkCondition(c, this.host.ctx, key));
           markFired(this.state, key);
           const result = failed < 0;
-          this.host.trace?.({ type: "dialogue_branch", dialogue: this.id, node: n.id, result, ...(failed >= 0 && { failed: { index: failed, condition: n.if[failed]! } }) });
+          this.host.trace?.({
+            type: "dialogue_branch",
+            dialogue: this.id,
+            node: n.id,
+            result,
+            ...(failed >= 0 && { failed: { index: failed, condition: n.if[failed]! } }),
+          });
           this.follow(result ? n.then : n.else);
           break;
         }

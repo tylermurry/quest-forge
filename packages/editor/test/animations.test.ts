@@ -21,7 +21,20 @@ describe("slot commands", () => {
     const p = await m1Project();
     const next = patchSlot(patchSlot(p, "hero", "talk_right", {}), "hero", "idle_up", {});
     const keys = Object.keys(char(next, "hero").animations);
-    const order = ["idle_down", "idle_up", "idle_left", "idle_right", "walk_down", "walk_up", "walk_left", "walk_right", "talk_down", "talk_up", "talk_left", "talk_right"];
+    const order = [
+      "idle_down",
+      "idle_up",
+      "idle_left",
+      "idle_right",
+      "walk_down",
+      "walk_up",
+      "walk_left",
+      "walk_right",
+      "talk_down",
+      "talk_up",
+      "talk_left",
+      "talk_right",
+    ];
     expect(keys).toEqual(order.filter((k) => keys.includes(k)));
     expect(serialize(char(next, "hero"))).toContain("animations:\n  idle_down:");
   });

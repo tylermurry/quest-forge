@@ -77,9 +77,9 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
   const menu = await Menu.new({
     items: [
       await Submenu.new({
-        text: "Questforge",
+        text: "Quest Forge",
         items: [
-          await PredefinedMenuItem.new({ item: { About: { name: "Questforge" } } }),
+          await PredefinedMenuItem.new({ item: { About: { name: "Quest Forge" } } }),
           await sep(),
           await PredefinedMenuItem.new({ item: "Services" }),
           await sep(),
@@ -108,7 +108,12 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
       await Submenu.new({ text: "Play", items: await ours("play") }),
       await Submenu.new({
         text: "Window",
-        items: [await PredefinedMenuItem.new({ item: "Minimize" }), await PredefinedMenuItem.new({ item: "Maximize" }), await sep(), await PredefinedMenuItem.new({ item: "CloseWindow" })],
+        items: [
+          await PredefinedMenuItem.new({ item: "Minimize" }),
+          await PredefinedMenuItem.new({ item: "Maximize" }),
+          await sep(),
+          await PredefinedMenuItem.new({ item: "CloseWindow" }),
+        ],
       }),
     ],
   });
@@ -125,7 +130,7 @@ async function installMenu(registry: CommandRegistry): Promise<() => void> {
 export const tauriPlatform: Platform = {
   kind: "tauri",
   async openFolder() {
-    const picked = await open({ directory: true, multiple: false, title: "Open a Questforge project folder" });
+    const picked = await open({ directory: true, multiple: false, title: "Open a Quest Forge project folder" });
     return typeof picked === "string" ? picked : null;
   },
   async chooseParent() {

@@ -94,7 +94,15 @@ export function blankProject(title: string): Project {
         name: "First Scene",
         background: "first_scene_bg",
         depth: { far: { y: 200, scale: 0.5 }, near: { y: 400, scale: 1 } },
-        walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [] },
+        walkable: {
+          outer: [
+            [0, 200],
+            [640, 200],
+            [640, 400],
+            [0, 400],
+          ],
+          holes: [],
+        },
         spawns: { default: { x: 320, y: 360, facing: "down" } },
         objects: [],
         characters: [],

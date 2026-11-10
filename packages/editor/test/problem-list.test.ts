@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { Problem } from "@questforge/schema";
 import { ALL_SEVERITIES, problemCounts, visibleProblems } from "../src/model/problemList.ts";
 
-const pr = (severity: Problem["severity"], message: string): Problem => ({ severity, code: "missing_reference", breadcrumb: "X", message, location: { file: "f", path: [] } });
+const pr = (severity: Problem["severity"], message: string): Problem => ({
+  severity,
+  code: "missing_reference",
+  breadcrumb: "X",
+  message,
+  location: { file: "f", path: [] },
+});
 
 describe("Problems list", () => {
   it("counts per severity, filters, and lists errors first", () => {

@@ -67,9 +67,46 @@ function wav(notes: [number, number][], beat: number, volume = 0.25): Buffer {
 }
 
 const [C4, D4, E4, F4, G4, A4, B4, C5, E5] = [262, 294, 330, 349, 392, 440, 494, 523, 659];
-const gardenTheme = () => wav([[C4, 1], [E4, 1], [G4, 1], [E4, 1], [F4, 1], [A4, 1], [G4, 2], [E4, 1], [D4, 1], [C4, 2], [0, 2]], 0.3);
-const shedTheme = () => wav([[A4 / 2, 2], [C4, 2], [E4, 2], [D4, 2], [A4 / 2, 2], [B4 / 2, 2], [C4, 4]], 0.35, 0.2);
-const pickup = () => wav([[C5, 0.5], [E5, 1]], 0.08, 0.35);
+const gardenTheme = () =>
+  wav(
+    [
+      [C4, 1],
+      [E4, 1],
+      [G4, 1],
+      [E4, 1],
+      [F4, 1],
+      [A4, 1],
+      [G4, 2],
+      [E4, 1],
+      [D4, 1],
+      [C4, 2],
+      [0, 2],
+    ],
+    0.3,
+  );
+const shedTheme = () =>
+  wav(
+    [
+      [A4 / 2, 2],
+      [C4, 2],
+      [E4, 2],
+      [D4, 2],
+      [A4 / 2, 2],
+      [B4 / 2, 2],
+      [C4, 4],
+    ],
+    0.35,
+    0.2,
+  );
+const pickup = () =>
+  wav(
+    [
+      [C5, 0.5],
+      [E5, 1],
+    ],
+    0.08,
+    0.35,
+  );
 
 // ── Tiny RGBA canvas + PNG writer (no dependencies) ─────────────────────────
 
@@ -77,7 +114,10 @@ type RGBA = [number, number, number, number];
 
 class Bitmap {
   readonly data: Uint8Array;
-  constructor(readonly w: number, readonly h: number) {
+  constructor(
+    readonly w: number,
+    readonly h: number,
+  ) {
     this.data = new Uint8Array(w * h * 4);
   }
   set(x: number, y: number, c: RGBA) {
@@ -136,18 +176,49 @@ class Bitmap {
 
 const mix = (a: RGBA, b: RGBA, t: number): RGBA => a.map((v, i) => Math.round(v + (b[i]! - v) * t)) as RGBA;
 const shade = (c: RGBA, k: number): RGBA => [Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k), c[3]];
-const noise = (x: number, y: number) => ((Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1 + 1) % 1;
+const noise = (x: number, y: number) => (((Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1) + 1) % 1;
 
 // ── Scene geometry ──────────────────────────────────────────────────────────
 
 const WALKABLE: Polygon = [
-  [20, 395], [620, 395], [540, 240], [360, 240], [360, 175], [470, 175], [470, 150],
-  [190, 150], [190, 175], [300, 175], [300, 240], [100, 240],
+  [20, 395],
+  [620, 395],
+  [540, 240],
+  [360, 240],
+  [360, 175],
+  [470, 175],
+  [470, 150],
+  [190, 150],
+  [190, 175],
+  [300, 175],
+  [300, 240],
+  [100, 240],
 ];
-const POND: Polygon = [[230, 300], [330, 290], [390, 320], [330, 350], [240, 345]];
-const PALM_OBSTACLE: Polygon = [[58, 356], [84, 356], [84, 366], [58, 366]];
-const ROCK_OBSTACLE: Polygon = [[446, 288], [504, 288], [504, 300], [446, 300]];
-const BOULDER_OBSTACLE: Polygon = [[294, 222], [366, 222], [366, 248], [294, 248]];
+const POND: Polygon = [
+  [230, 300],
+  [330, 290],
+  [390, 320],
+  [330, 350],
+  [240, 345],
+];
+const PALM_OBSTACLE: Polygon = [
+  [58, 356],
+  [84, 356],
+  [84, 366],
+  [58, 366],
+];
+const ROCK_OBSTACLE: Polygon = [
+  [446, 288],
+  [504, 288],
+  [504, 300],
+  [446, 300],
+];
+const BOULDER_OBSTACLE: Polygon = [
+  [294, 222],
+  [366, 222],
+  [366, 248],
+  [294, 248],
+];
 
 // ── Art ─────────────────────────────────────────────────────────────────────
 
@@ -232,14 +303,19 @@ function figureSheet(tunic: RGBA, hat: RGBA | null, rows: number, cols: number):
   return b;
 }
 
-const SHED_WALKABLE: Polygon = [[20, 395], [620, 395], [560, 250], [80, 250]];
+const SHED_WALKABLE: Polygon = [
+  [20, 395],
+  [620, 395],
+  [560, 250],
+  [80, 250],
+];
 
 function shedBackground(): Bitmap {
   const b = new Bitmap(640, 400);
   for (let y = 0; y < 400; y++) {
     for (let x = 0; x < 640; x++) {
       // Plank walls above, floorboards below.
-      const plank = y < 250 ? (x % 48 < 2 ? 0.7 : 1) : (y % 18 < 2 ? 0.75 : 1);
+      const plank = y < 250 ? (x % 48 < 2 ? 0.7 : 1) : y % 18 < 2 ? 0.75 : 1;
       const base: RGBA = y < 250 ? [120, 85, 55, 255] : [150, 110, 70, 255];
       b.set(x, y, shade(base, plank * (0.92 + noise(x, y) * 0.12)));
     }
@@ -256,7 +332,15 @@ function shedBackground(): Bitmap {
 
 function flowerpot(): Bitmap {
   const b = new Bitmap(30, 30);
-  b.polygon([[3, 8], [27, 8], [23, 30], [7, 30]], (x, y) => shade([190, 95, 55, 255], 1 - (x - 3) / 60 - (y < 12 ? 0.1 : 0)));
+  b.polygon(
+    [
+      [3, 8],
+      [27, 8],
+      [23, 30],
+      [7, 30],
+    ],
+    (x, y) => shade([190, 95, 55, 255], 1 - (x - 3) / 60 - (y < 12 ? 0.1 : 0)),
+  );
   b.rect(1, 6, 28, 4, [210, 110, 65, 255]);
   b.ellipse(15, 6, 10, 3, [80, 55, 35, 255]);
   b.ellipse(12, 2, 3, 3, [60, 150, 60, 255]);
@@ -301,7 +385,14 @@ function iconRod(): Bitmap {
 function iconFish(): Bitmap {
   const b = new Bitmap(24, 24);
   b.ellipse(10, 12, 8, 5, (dx, dy) => shade([120, 160, 200, 255], 1.1 - dy * 0.3 + dx * 0.05));
-  b.polygon([[17, 12], [23, 6], [23, 18]], [100, 140, 180, 255]);
+  b.polygon(
+    [
+      [17, 12],
+      [23, 6],
+      [23, 18],
+    ],
+    [100, 140, 180, 255],
+  );
   b.set(6, 11, [20, 20, 30, 255]);
   return b;
 }
@@ -315,7 +406,15 @@ function iconCoin(): Bitmap {
 
 function iconLantern(): Bitmap {
   const b = new Bitmap(24, 24);
-  b.polygon([[8, 7], [16, 7], [17, 20], [7, 20]], [60, 60, 70, 255]);
+  b.polygon(
+    [
+      [8, 7],
+      [16, 7],
+      [17, 20],
+      [7, 20],
+    ],
+    [60, 60, 70, 255],
+  );
   b.ellipse(12, 14, 3, 4, [250, 210, 90, 255]);
   b.ellipse(12, 4, 3, 2, [60, 60, 70, 255]);
   return b;
@@ -330,31 +429,33 @@ const narrate = (text: string) => ({ type: "narrate", text });
 const say = (character: string, text: string) => ({ type: "say", character, text });
 const anim = (image: string, frames: number[], fps = 8) => ({ image, frames, fps, loop: true });
 
-const game = GameFile.parse(withRuleIds({
-  schemaVersion: SCHEMA_VERSION,
-  id: "m1_fixture",
-  title: "M1 Engine Fixture",
-  version: 1,
-  startScene: "garden",
-  startSpawn: "default",
-  player: "hero",
-  maxScore: 25,
-  defaultResponses: {
-    look: "You see nothing special.",
-    hand: "You can't do that.",
-    talk: "Nobody answers.",
-    use_item: "That doesn't work.",
-    combine: "Those don't go together.",
-  },
-  rules: [
-    rule({ type: "combine", item: "stick", with: "string" }, [
-      { type: "take_item", item: "stick" },
-      { type: "take_item", item: "string" },
-      { type: "give_item", item: "rod" },
-      narrate("You tie the string to the stick. A fishing rod!"),
-    ]),
-  ],
-}));
+const game = GameFile.parse(
+  withRuleIds({
+    schemaVersion: SCHEMA_VERSION,
+    id: "m1_fixture",
+    title: "M1 Engine Fixture",
+    version: 1,
+    startScene: "garden",
+    startSpawn: "default",
+    player: "hero",
+    maxScore: 25,
+    defaultResponses: {
+      look: "You see nothing special.",
+      hand: "You can't do that.",
+      talk: "Nobody answers.",
+      use_item: "That doesn't work.",
+      combine: "Those don't go together.",
+    },
+    rules: [
+      rule({ type: "combine", item: "stick", with: "string" }, [
+        { type: "take_item", item: "stick" },
+        { type: "take_item", item: "string" },
+        { type: "give_item", item: "rod" },
+        narrate("You tie the string to the stick. A fishing rod!"),
+      ]),
+    ],
+  }),
+);
 
 const flags = FlagsFile.parse({ schemaVersion: SCHEMA_VERSION, flags: [{ id: "path_open", type: "bool", initial: false }] });
 
@@ -420,150 +521,284 @@ const npc = (id: string, name: string) =>
     animations: { idle_down: anim("gardener_sheet", [0, 0, 0, 1], 2) },
   });
 
-const garden = SceneFile.parse(withRuleIds({
-  schemaVersion: SCHEMA_VERSION,
-  id: "garden",
-  name: "Garden",
-  background: "garden_bg",
-  music: "garden_theme",
-  depth: { far: { y: 150, scale: 0.35 }, near: { y: 395, scale: 1 } },
-  walkable: { outer: WALKABLE, holes: [POND] },
-  spawns: { default: { x: 200, y: 380, facing: "up" }, from_shed: { x: 555, y: 370, facing: "left" } },
-  objects: [
-    { id: "boulder", name: "boulder", image: "boulder_img", x: 288, y: 186, baseline: 248, visible: true, obstacle: BOULDER_OBSTACLE, rules: [look("A huge boulder blocks the narrow path.")] },
-    {
-      id: "flowerpot",
-      name: "flowerpot",
-      image: "flowerpot_img",
-      x: 140,
-      y: 290,
-      baseline: 318,
-      visible: true,
-      obstacle: [[142, 312], [168, 312], [168, 319], [142, 319]],
-      rules: [
-        rule({ type: "hand" }, [narrate("You tip the pot. Underneath is a straight, springy stick."), { type: "play_sound", sound: "pickup" }, { type: "give_item", item: "stick" }, { type: "award_points", points: 5, award: "found_stick" }], [], true),
-        rule({ type: "hand" }, [narrate("Nothing else under there.")]),
-        look("A terracotta flowerpot with a sprig of something green."),
-      ],
-    },
-    { id: "rock", name: "rock", image: "rock_img", x: 440, y: 262, baseline: 296, visible: true, obstacle: ROCK_OBSTACLE, rules: [look("A mossy rock.")] },
-    { id: "palm", name: "palm tree", image: "palm_img", x: 20, y: 40, baseline: 362, visible: true, obstacle: PALM_OBSTACLE, rules: [look("A palm tree, swaying gently.")] },
-  ],
-  characters: [
-    {
-      character: "gardener",
-      x: 560,
-      y: 330,
-      facing: "left",
-      visible: true,
-      rules: [
-        look("The gardener is busy pulling weeds."),
-        // Gated on the fish: the end-to-end puzzle sequence.
-        rule({ type: "talk" }, [
-          say("gardener", "A fish! For my supper? You're too kind."),
-          { type: "take_item", item: "fish" },
-          { type: "award_points", points: 10, award: "fed_gardener" },
-          say("gardener", "Let me get that boulder out of your way."),
-          { type: "walk_player_to", x: 250, y: 370 },
-          { type: "face", facing: "up" },
-          { type: "set_character_position", character: "gardener", scene: "garden", x: 372, y: 262, facing: "left" },
-          { type: "wait", seconds: 1 },
-          { type: "hide_object", scene: "garden", object: "boulder" },
-          { type: "set_flag", flag: "path_open", value: true },
-          narrate("With a grunt, the gardener rolls the boulder aside. The path to the ledge is open."),
-        ], [{ type: "has_item", item: "fish" }]),
-        rule({ type: "talk" }, [say("gardener", "I'm too busy to talk. Unless you've got something for my supper?")], [{ type: "first_time" }]),
-        rule({ type: "use_item", item: "fish" }, [say("gardener", "Don't wave it at me. Just tell me about it!")]),
-        rule({ type: "talk" }, [say("gardener", "Still no fish? The pond is full of them.")], [{ type: "flag_is", flag: "path_open", value: false }]),
-        rule({ type: "talk" }, [say("gardener", "Enjoy the view from the ledge!")]),
-      ],
-    },
-  ],
-  hotspots: [
-    {
-      id: "pond",
-      name: "pond",
-      shape: POND,
-      walkTo: { x: 300, y: 372, facing: "up" },
-      rules: [
-        look("A still pond. Tiny fish dart about."),
-        rule({ type: "use_item", item: "rod" }, [narrate("You dangle the string in the water. Something bites! You pull out a small fish."), { type: "give_item", item: "fish" }, { type: "award_points", points: 5, award: "caught_fish" }], [], true),
-        rule({ type: "use_item", item: "rod" }, [narrate("One fish is plenty.")]),
-        rule({ type: "hand" }, [narrate("The fish are far too quick for your hands.")]),
-      ],
-    },
-    { id: "sky", name: "sky", shape: [[0, 0], [640, 0], [640, 120], [0, 120]], rules: [look("A clear blue sky.")] },
-  ],
-  regions: [
-    { id: "exit_shed", shape: [[590, 330], [640, 330], [640, 400], [590, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])] },
-    { id: "ledge", shape: [[190, 150], [470, 150], [470, 176], [190, 176]], rules: [rule({ type: "enter_region" }, [narrate("From the ledge you can see the whole valley."), { type: "award_points", points: 5, award: "saw_view" }], [], true)] },
-  ],
-  rules: [],
-}));
+const garden = SceneFile.parse(
+  withRuleIds({
+    schemaVersion: SCHEMA_VERSION,
+    id: "garden",
+    name: "Garden",
+    background: "garden_bg",
+    music: "garden_theme",
+    depth: { far: { y: 150, scale: 0.35 }, near: { y: 395, scale: 1 } },
+    walkable: { outer: WALKABLE, holes: [POND] },
+    spawns: { default: { x: 200, y: 380, facing: "up" }, from_shed: { x: 555, y: 370, facing: "left" } },
+    objects: [
+      {
+        id: "boulder",
+        name: "boulder",
+        image: "boulder_img",
+        x: 288,
+        y: 186,
+        baseline: 248,
+        visible: true,
+        obstacle: BOULDER_OBSTACLE,
+        rules: [look("A huge boulder blocks the narrow path.")],
+      },
+      {
+        id: "flowerpot",
+        name: "flowerpot",
+        image: "flowerpot_img",
+        x: 140,
+        y: 290,
+        baseline: 318,
+        visible: true,
+        obstacle: [
+          [142, 312],
+          [168, 312],
+          [168, 319],
+          [142, 319],
+        ],
+        rules: [
+          rule(
+            { type: "hand" },
+            [
+              narrate("You tip the pot. Underneath is a straight, springy stick."),
+              { type: "play_sound", sound: "pickup" },
+              { type: "give_item", item: "stick" },
+              { type: "award_points", points: 5, award: "found_stick" },
+            ],
+            [],
+            true,
+          ),
+          rule({ type: "hand" }, [narrate("Nothing else under there.")]),
+          look("A terracotta flowerpot with a sprig of something green."),
+        ],
+      },
+      { id: "rock", name: "rock", image: "rock_img", x: 440, y: 262, baseline: 296, visible: true, obstacle: ROCK_OBSTACLE, rules: [look("A mossy rock.")] },
+      {
+        id: "palm",
+        name: "palm tree",
+        image: "palm_img",
+        x: 20,
+        y: 40,
+        baseline: 362,
+        visible: true,
+        obstacle: PALM_OBSTACLE,
+        rules: [look("A palm tree, swaying gently.")],
+      },
+    ],
+    characters: [
+      {
+        character: "gardener",
+        x: 560,
+        y: 330,
+        facing: "left",
+        visible: true,
+        rules: [
+          look("The gardener is busy pulling weeds."),
+          // Gated on the fish: the end-to-end puzzle sequence.
+          rule(
+            { type: "talk" },
+            [
+              say("gardener", "A fish! For my supper? You're too kind."),
+              { type: "take_item", item: "fish" },
+              { type: "award_points", points: 10, award: "fed_gardener" },
+              say("gardener", "Let me get that boulder out of your way."),
+              { type: "walk_player_to", x: 250, y: 370 },
+              { type: "face", facing: "up" },
+              { type: "set_character_position", character: "gardener", scene: "garden", x: 372, y: 262, facing: "left" },
+              { type: "wait", seconds: 1 },
+              { type: "hide_object", scene: "garden", object: "boulder" },
+              { type: "set_flag", flag: "path_open", value: true },
+              narrate("With a grunt, the gardener rolls the boulder aside. The path to the ledge is open."),
+            ],
+            [{ type: "has_item", item: "fish" }],
+          ),
+          rule({ type: "talk" }, [say("gardener", "I'm too busy to talk. Unless you've got something for my supper?")], [{ type: "first_time" }]),
+          rule({ type: "use_item", item: "fish" }, [say("gardener", "Don't wave it at me. Just tell me about it!")]),
+          rule({ type: "talk" }, [say("gardener", "Still no fish? The pond is full of them.")], [{ type: "flag_is", flag: "path_open", value: false }]),
+          rule({ type: "talk" }, [say("gardener", "Enjoy the view from the ledge!")]),
+        ],
+      },
+    ],
+    hotspots: [
+      {
+        id: "pond",
+        name: "pond",
+        shape: POND,
+        walkTo: { x: 300, y: 372, facing: "up" },
+        rules: [
+          look("A still pond. Tiny fish dart about."),
+          rule(
+            { type: "use_item", item: "rod" },
+            [
+              narrate("You dangle the string in the water. Something bites! You pull out a small fish."),
+              { type: "give_item", item: "fish" },
+              { type: "award_points", points: 5, award: "caught_fish" },
+            ],
+            [],
+            true,
+          ),
+          rule({ type: "use_item", item: "rod" }, [narrate("One fish is plenty.")]),
+          rule({ type: "hand" }, [narrate("The fish are far too quick for your hands.")]),
+        ],
+      },
+      {
+        id: "sky",
+        name: "sky",
+        shape: [
+          [0, 0],
+          [640, 0],
+          [640, 120],
+          [0, 120],
+        ],
+        rules: [look("A clear blue sky.")],
+      },
+    ],
+    regions: [
+      {
+        id: "exit_shed",
+        shape: [
+          [590, 330],
+          [640, 330],
+          [640, 400],
+          [590, 400],
+        ],
+        rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "shed", spawn: "door" }])],
+      },
+      {
+        id: "ledge",
+        shape: [
+          [190, 150],
+          [470, 150],
+          [470, 176],
+          [190, 176],
+        ],
+        rules: [
+          rule(
+            { type: "enter_region" },
+            [narrate("From the ledge you can see the whole valley."), { type: "award_points", points: 5, award: "saw_view" }],
+            [],
+            true,
+          ),
+        ],
+      },
+    ],
+    rules: [],
+  }),
+);
 
-const shed = SceneFile.parse(withRuleIds({
-  schemaVersion: SCHEMA_VERSION,
-  id: "shed",
-  name: "Garden shed",
-  background: "shed_bg",
-  music: "shed_theme",
-  depth: { far: { y: 250, scale: 0.8 }, near: { y: 395, scale: 1.1 } },
-  walkable: { outer: SHED_WALKABLE, holes: [] },
-  spawns: { door: { x: 100, y: 370, facing: "right" } },
-  objects: [
-    {
-      id: "workbench",
-      name: "workbench",
-      image: "workbench_img",
-      x: 400,
-      y: 200,
-      baseline: 268,
-      visible: true,
-      obstacle: [[400, 256], [560, 256], [560, 268], [400, 268]],
-      rules: [
-        look("A sturdy workbench, covered in sawdust."),
-        rule({ type: "hand" }, [narrate("Under the sawdust you find a coin."), { type: "play_sound", sound: "pickup" }, { type: "give_item", item: "coin" }], [], true),
-        rule({ type: "hand" }, [narrate("Just sawdust now.")]),
-      ],
-    },
-    {
-      id: "string",
-      name: "string",
-      image: "string_img",
-      x: 470,
-      y: 184,
-      baseline: 269,
-      visible: true,
-      rules: [
-        look("A coil of garden string."),
-        rule({ type: "hand" }, [{ type: "hide_object", scene: "shed", object: "string" }, { type: "give_item", item: "string" }, narrate("You take the string.")]),
-      ],
-    },
-  ],
-  characters: [
-    {
-      character: "visitor",
-      x: 230,
-      y: 300,
-      facing: "right",
-      visible: true,
-      rules: [look("A traveller with a pack full of odds and ends."), rule({ type: "talk" }, [{ type: "start_dialogue", dialogue: "shop" }])],
-    },
-  ],
-  hotspots: [
-    { id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] },
-    // A death: Restore · Restart · Try again.
-    {
-      id: "saw",
-      name: "saw",
-      shape: [[100, 120], [180, 120], [180, 180], [100, 180]],
-      walkTo: { x: 140, y: 290, facing: "up" },
-      rules: [look("A rusty saw hangs on the wall. Its teeth look sharp."), rule({ type: "hand" }, [narrate("You grab the saw by the blade."), { type: "die", message: "Ouch! Gardening is a dangerous hobby. Maybe hold sharp things by the handle." }])],
-    },
-  ],
-  regions: [{ id: "exit_garden", shape: [[0, 320], [55, 320], [55, 400], [0, 400]], rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])] }],
-  rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
-}));
+const shed = SceneFile.parse(
+  withRuleIds({
+    schemaVersion: SCHEMA_VERSION,
+    id: "shed",
+    name: "Garden shed",
+    background: "shed_bg",
+    music: "shed_theme",
+    depth: { far: { y: 250, scale: 0.8 }, near: { y: 395, scale: 1.1 } },
+    walkable: { outer: SHED_WALKABLE, holes: [] },
+    spawns: { door: { x: 100, y: 370, facing: "right" } },
+    objects: [
+      {
+        id: "workbench",
+        name: "workbench",
+        image: "workbench_img",
+        x: 400,
+        y: 200,
+        baseline: 268,
+        visible: true,
+        obstacle: [
+          [400, 256],
+          [560, 256],
+          [560, 268],
+          [400, 268],
+        ],
+        rules: [
+          look("A sturdy workbench, covered in sawdust."),
+          rule(
+            { type: "hand" },
+            [narrate("Under the sawdust you find a coin."), { type: "play_sound", sound: "pickup" }, { type: "give_item", item: "coin" }],
+            [],
+            true,
+          ),
+          rule({ type: "hand" }, [narrate("Just sawdust now.")]),
+        ],
+      },
+      {
+        id: "string",
+        name: "string",
+        image: "string_img",
+        x: 470,
+        y: 184,
+        baseline: 269,
+        visible: true,
+        rules: [
+          look("A coil of garden string."),
+          rule({ type: "hand" }, [
+            { type: "hide_object", scene: "shed", object: "string" },
+            { type: "give_item", item: "string" },
+            narrate("You take the string."),
+          ]),
+        ],
+      },
+    ],
+    characters: [
+      {
+        character: "visitor",
+        x: 230,
+        y: 300,
+        facing: "right",
+        visible: true,
+        rules: [look("A traveller with a pack full of odds and ends."), rule({ type: "talk" }, [{ type: "start_dialogue", dialogue: "shop" }])],
+      },
+    ],
+    hotspots: [
+      {
+        id: "window",
+        name: "window",
+        shape: [
+          [260, 60],
+          [380, 60],
+          [380, 140],
+          [260, 140],
+        ],
+        walkTo: { x: 320, y: 270, facing: "up" },
+        rules: [look("Sunlight and cobwebs.")],
+      },
+      // A death: Restore · Restart · Try again.
+      {
+        id: "saw",
+        name: "saw",
+        shape: [
+          [100, 120],
+          [180, 120],
+          [180, 180],
+          [100, 180],
+        ],
+        walkTo: { x: 140, y: 290, facing: "up" },
+        rules: [
+          look("A rusty saw hangs on the wall. Its teeth look sharp."),
+          rule({ type: "hand" }, [
+            narrate("You grab the saw by the blade."),
+            { type: "die", message: "Ouch! Gardening is a dangerous hobby. Maybe hold sharp things by the handle." },
+          ]),
+        ],
+      },
+    ],
+    regions: [
+      {
+        id: "exit_garden",
+        shape: [
+          [0, 320],
+          [55, 320],
+          [55, 400],
+          [0, 400],
+        ],
+        rules: [rule({ type: "enter_region" }, [{ type: "change_scene", scene: "garden", spawn: "from_shed" }])],
+      },
+    ],
+    rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
+  }),
+);
 
 // The visitor's shop, laid out left to right like auto-layout.
 const option = (id: string, text: string, next: string, extra: Raw = {}) => ({ id, text, if: [], once: false, next, ...extra });
@@ -585,7 +820,16 @@ const shop = DialogueFile.parse({
       ],
     },
     { id: "travels", type: "line", pos: [960, -200], character: "visitor", text: "Over the hills, once the rain stops.", next: "menu" },
-    { id: "sell", type: "actions", pos: [960, -40], do: [{ type: "take_item", item: "coin" }, { type: "give_item", item: "lantern" }], next: "thanks" },
+    {
+      id: "sell",
+      type: "actions",
+      pos: [960, -40],
+      do: [
+        { type: "take_item", item: "coin" },
+        { type: "give_item", item: "lantern" },
+      ],
+      next: "thanks",
+    },
     { id: "thanks", type: "line", pos: [1280, -40], character: "visitor", text: "Mind the oil. Anything else?", next: "menu" },
     { id: "done", type: "end", pos: [960, 120] },
   ],
@@ -606,19 +850,21 @@ const stressObjects = Array.from({ length: 15 }, (_, i) => {
     rules: [],
   };
 });
-const stress = SceneFile.parse(withRuleIds({
-  ...garden,
-  id: "stress",
-  name: "Stress test",
-  walkable: { outer: WALKABLE, holes: [] },
-  objects: stressObjects,
-  characters: [
-    { character: "gardener", x: 560, y: 360, facing: "left", visible: true, rules: [] },
-    { character: "visitor", x: 140, y: 300, facing: "right", visible: true, rules: [] },
-  ],
-  hotspots: [],
-  regions: [],
-}));
+const stress = SceneFile.parse(
+  withRuleIds({
+    ...garden,
+    id: "stress",
+    name: "Stress test",
+    walkable: { outer: WALKABLE, holes: [] },
+    objects: stressObjects,
+    characters: [
+      { character: "gardener", x: 560, y: 360, facing: "left", visible: true, rules: [] },
+      { character: "visitor", x: 140, y: 300, facing: "right", visible: true, rules: [] },
+    ],
+    hotspots: [],
+    regions: [],
+  }),
+);
 
 const files: Record<string, string | Buffer> = {
   "game.yaml": serialize(game),

@@ -4,8 +4,7 @@ import { Facing, Id, SceneX, SceneY } from "./common.ts";
 // Rule vocabulary. Every trigger, condition and action is a map
 // tagged by `type`. This closed set is everything a designer can express.
 
-const tag = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
-  z.strictObject({ type: z.literal(type), ...shape });
+const tag = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) => z.strictObject({ type: z.literal(type), ...shape });
 
 /** An object reference always names its scene. */
 const objectRef = { scene: Id, object: Id };
@@ -24,10 +23,7 @@ export const InteractTrigger = z.discriminatedUnion("type", [
 export const RegionTrigger = z.discriminatedUnion("type", [tag("enter_region", {})]);
 export const SceneTrigger = z.discriminatedUnion("type", [tag("scene_enter", {}), tag("scene_exit", {})]);
 /** Game-level rules live in game.yaml. */
-export const GameTrigger = z.discriminatedUnion("type", [
-  tag("combine", { item: Id, with: Id }),
-  tag("dialogue_end", { dialogue: Id }),
-]);
+export const GameTrigger = z.discriminatedUnion("type", [tag("combine", { item: Id, with: Id }), tag("dialogue_end", { dialogue: Id })]);
 
 // ── Conditions ──────────────────────────────────────────────────────────────
 
@@ -115,8 +111,7 @@ export type GameRule = z.infer<typeof GameRule>;
 export type AnyRule = InteractRule | RegionRule | SceneRule | GameRule;
 export type Trigger = AnyRule["when"];
 
-const typesOf = (u: { options: readonly { shape: { type: { value: string } } }[] }) =>
-  u.options.map((o) => o.shape.type.value);
+const typesOf = (u: { options: readonly { shape: { type: { value: string } } }[] }) => u.options.map((o) => o.shape.type.value);
 
 /** Dropdown vocabularies for the rule inspector. */
 export const CONDITION_TYPES = typesOf(Condition);

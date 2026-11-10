@@ -55,6 +55,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
 
   // Jump-to: scroll to and flash the exact part.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when the rule changes would flash again
   useEffect(() => {
     if (!highlight) return;
     const where = locateInRules(highlight.location, own);
@@ -64,12 +65,16 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when the rule changes would flash again
+  }, [highlight?.seq]);
 
-  const handlers = (where: "when" | `if/${number}` | `do/${number}`, apply: (patch: Record<string, unknown>) => (p: Project) => Project): Omit<PartHandlers, "animTarget"> => ({
+  const handlers = (
+    where: "when" | `if/${number}` | `do/${number}`,
+    apply: (patch: Record<string, unknown>) => (p: Project) => Project,
+  ): Omit<PartHandlers, "animTarget"> => ({
     patch: (patch, field) => run("Edit rule", apply(patch), field && `${where}/${field}`),
     blur,
-    create: (pick: PickKind, name: string, key: string) => run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => apply({ [key]: id })(r))),
+    create: (pick: PickKind, name: string, key: string) =>
+      run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => apply({ [key]: id })(r))),
   });
 
   // "Pick on canvas" for an action's point.
@@ -97,14 +102,24 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
       aria-label={`Rule ${index + 1}`}
     >
       <div className="flex items-center gap-1">
-        <button className="text-muted-foreground hover:text-foreground cursor-grab touch-none" aria-label={`Drag rule ${index + 1}`} {...sortable.attributes} {...sortable.listeners}>
+        <button
+          className="text-muted-foreground hover:text-foreground cursor-grab touch-none"
+          aria-label={`Drag rule ${index + 1}`}
+          {...sortable.attributes}
+          {...sortable.listeners}
+        >
           <GripVertical className="size-4" />
         </button>
         <span className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">Rule {index + 1}</span>
         <span className="flex-1" />
         <label className="text-muted-foreground flex items-center gap-1.5 text-[12px]" title="Only ever runs once">
           Once
-          <Switch size="sm" checked={rule.once} aria-label="Once" onCheckedChange={(v) => run(v ? "Make rule run once" : "Let rule run again", (q) => setOnce(q, owner, rule.id, v))} />
+          <Switch
+            size="sm"
+            checked={rule.once}
+            aria-label="Once"
+            onCheckedChange={(v) => run(v ? "Make rule run once" : "Let rule run again", (q) => setOnce(q, owner, rule.id, v))}
+          />
         </label>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

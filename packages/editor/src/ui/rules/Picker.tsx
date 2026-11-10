@@ -42,7 +42,9 @@ export function Picker(props: {
             aria-invalid={missing || props.invalid || undefined}
             className={cn("h-7 max-w-full min-w-0 justify-between gap-1 px-2 text-[13px] font-normal", (missing || props.invalid) && "border-err text-err")}
           >
-            <span className={cn("truncate", empty && "text-muted-foreground")}>{current ? current.label : empty ? props.placeholder : `${props.value} (missing)`}</span>
+            <span className={cn("truncate", empty && "text-muted-foreground")}>
+              {current ? current.label : empty ? props.placeholder : `${props.value} (missing)`}
+            </span>
             <ChevronsUpDown className="size-3 shrink-0 opacity-60" />
           </Button>
         </PopoverTrigger>

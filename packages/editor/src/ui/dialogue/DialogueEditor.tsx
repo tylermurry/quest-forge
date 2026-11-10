@@ -40,7 +40,9 @@ const edgeId = (node: string, port: string) => `${node}|${port}`;
 function edgesOf(d: DialogueFile): Edge[] {
   const ids = new Set(d.nodes.map((n) => n.id));
   return d.nodes.flatMap((n) =>
-    nodePorts(n).flatMap((p) => (p.next !== null && ids.has(p.next) ? [{ id: edgeId(n.id, p.port), source: n.id, sourceHandle: p.port, target: p.next, type: "default" }] : [])),
+    nodePorts(n).flatMap((p) =>
+      p.next !== null && ids.has(p.next) ? [{ id: edgeId(n.id, p.port), source: n.id, sourceHandle: p.port, target: p.next, type: "default" }] : [],
+    ),
   );
 }
 
@@ -90,7 +92,13 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
           position: { x: n.pos[0], y: n.pos[1] },
           deletable: n.type !== "start",
           selected: n.id === selectedNode || (selectedNode === null && !!was?.selected),
-          data: { node: n, project, problems: byNode.get(n.id) ?? [], flash: flash?.node === n.id ? flash.seq : 0, flashLog: flash?.node === n.id && flash.log },
+          data: {
+            node: n,
+            project,
+            problems: byNode.get(n.id) ?? [],
+            flash: flash?.node === n.id ? flash.seq : 0,
+            flashLog: flash?.node === n.id && flash.log,
+          },
         };
       });
     });
@@ -102,6 +110,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
 
   // Jump-to: centre the node the problem points at and flash it.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when other values change would re-centre the view
   useEffect(() => {
     if (!highlight || !doc || highlight.location.file !== doc.path) return;
     const i = highlight.location.path[1];
@@ -109,7 +118,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     if (!n) return;
     setFlash({ node: n.id, seq: highlight.seq, log: highlight.tone === "log" });
     void rf.setCenter(n.pos[0] + 120, n.pos[1] + 40, { zoom: Math.max(rf.getZoom(), 0.8), duration: 300 });
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when other values change would re-centre the view
+  }, [highlight?.seq]);
 
   const run = (label: string, f: (p: Project) => Project): boolean => editor.apply(label, f);
   const selectNode = (node: string) => ws.select({ kind: "dialogueNode", dialogue: dialogueId, node });
@@ -138,6 +147,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
   // Registry: Delete, Auto-layout, Fit. Delete takes selected nodes, else selected edges.
   const live = useRef({ nodes, edges });
   live.current = { nodes, edges };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the handlers read the latest values through refs and `run`; re-registering on every change would only churn the command registry
   useEffect(() => {
     const selectedNodes = () => live.current.nodes.filter((n) => n.selected && n.data.node.type !== "start").map((n) => n.id);
     const selectedEdges = () => live.current.edges.filter((e) => e.selected);
@@ -150,7 +160,10 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
             return;
           }
           const es = selectedEdges();
-          if (es.length) run(es.length === 1 ? "Disconnect" : `Disconnect ${es.length}`, (p) => es.reduce((q, e) => connect(q, dialogueId, e.source, e.sourceHandle!, null), p));
+          if (es.length)
+            run(es.length === 1 ? "Disconnect" : `Disconnect ${es.length}`, (p) =>
+              es.reduce((q, e) => connect(q, dialogueId, e.source, e.sourceHandle!, null), p),
+            );
         },
         enabled: () => selectedNodes().length > 0 || selectedEdges().length > 0,
       },
@@ -162,7 +175,6 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
       "dialogue.fit": { run: () => void rf.fitView({ duration: 300, padding: 0.15, maxZoom: 1 }) },
     } satisfies Partial<Record<CommandId, unknown>>);
     return off;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the handlers read the latest values through refs and `run`; re-registering on every change would only churn the command registry
   }, [registry, dialogueId, rf]);
   useEffect(() => registry.changed(), [nodes, edges, registry]);
 
@@ -172,8 +184,25 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
 
   if (!d) return null;
 
-  const onNodesChange = (changes: NodeChange<FlowNode>[]) => setNodes((ns) => applyNodeChanges(changes.filter((c) => c.type !== "remove"), ns));
-  const onEdgesChange = (changes: EdgeChange[]) => setEdges((es) => applyEdgeChanges(changes.filter((c) => c.type !== "remove"), es));
+  const onNodesChange = (changes: NodeChange<FlowNode>[]) => {
+    setNodes((ns) =>
+      applyNodeChanges(
+        changes.filter((c) => c.type !== "remove"),
+        ns,
+      ),
+    );
+    // Space/Enter on a focused node only marks it selected in React Flow; open it in the Inspector like a click does.
+    // The sync above sets `selected` on local state directly and never emits changes, so this cannot loop.
+    const picked = changes.flatMap((c) => (c.type === "select" && c.selected ? [c.id] : []));
+    if (picked.length === 1 && picked[0] !== selectedNode) selectNode(picked[0]!);
+  };
+  const onEdgesChange = (changes: EdgeChange[]) =>
+    setEdges((es) =>
+      applyEdgeChanges(
+        changes.filter((c) => c.type !== "remove"),
+        es,
+      ),
+    );
 
   const onConnect = (c: Connection) => {
     if (!c.sourceHandle || c.source === c.target) return;
@@ -188,7 +217,11 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     const pt = "changedTouches" in event ? event.changedTouches[0]! : event;
     const box = wrapper.current!.getBoundingClientRect();
     const pos = rf.screenToFlowPosition({ x: pt.clientX, y: pt.clientY });
-    setMenu({ at: { x: pt.clientX - box.left, y: pt.clientY - box.top }, pos: [pos.x, pos.y - 20], from: { node: state.fromNode.id, port: state.fromHandle.id } });
+    setMenu({
+      at: { x: pt.clientX - box.left, y: pt.clientY - box.top },
+      pos: [pos.x, pos.y - 20],
+      from: { node: state.fromNode.id, port: state.fromHandle.id },
+    });
   };
 
   return (
@@ -218,7 +251,14 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
         <span className="text-muted-foreground hidden truncate text-[12px] xl:inline" title="Drag from a port to empty space to add a node">
           Drag from a port to empty space to add a node
         </span>
-        <Button variant="outline" size="sm" className="ml-2 h-7 text-[12px]" disabled={!registry.isEnabled("play.node")} onClick={() => registry.run("play.node")} title="Play from the selected node (Shift+F6)">
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-2 h-7 text-[12px]"
+          disabled={!registry.isEnabled("play.node")}
+          onClick={() => registry.run("play.node")}
+          title="Play from the selected node (Shift+F6)"
+        >
           <Play className="size-3.5" /> Play from node
         </Button>
       </div>

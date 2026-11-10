@@ -150,7 +150,13 @@ export function moveAction(p: Project, owner: RuleOwnerRef, id: string, from: nu
 }
 
 /** Applies a list edit (parts.ts) to a rule's conditions or actions; for shared UI rows. */
-export function editRuleList<K extends "if" | "do">(p: Project, owner: RuleOwnerRef, id: string, key: K, f: (list: AnyRule[K], d: RuleDefaults) => AnyRule[K]): Project {
+export function editRuleList<K extends "if" | "do">(
+  p: Project,
+  owner: RuleOwnerRef,
+  id: string,
+  key: K,
+  f: (list: AnyRule[K], d: RuleDefaults) => AnyRule[K],
+): Project {
   const d = defaults(p, owner);
   return updateRule(p, owner, id, (r) => ({ ...r, [key]: f(r[key], d) }) as AnyRule);
 }

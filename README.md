@@ -1,6 +1,6 @@
-# Questforge
+# Quest Forge
 
-Questforge is a no-code desktop editor for classic point-and-click adventures. A storyteller or artist who has never programmed can import art, layer it into scenes, draw clickable areas, give them rules, playtest in the editor, and build a game that runs on desktop and mobile.
+Quest Forge is a no-code desktop editor for classic point-and-click adventures. A storyteller or artist who has never programmed can import art, layer it into scenes, draw clickable areas, give them rules, playtest in the editor, and build a game that runs on desktop and mobile.
 
 ## What is in this repository
 
@@ -46,3 +46,9 @@ corepack pnpm --filter @questforge/editor tauri dev
 - [`docs/standards/`](docs/standards/index.mdx): the engineering standards every change is held to.
 - [`docs/project/`](docs/project/conventions.md): how the code is organised and the conventions for working in it.
 - [Milestones and issues](https://github.com/tylermurry/quest-forge/milestones): what is planned next.
+
+## Licence
+
+Quest Forge is free software, released under the [GPL-3.0-or-later](LICENSE).
+
+Games you make with Quest Forge are yours. A built `.quest` file holds your own art, writing and rules; it is not a derivative of the editor, and you can license or sell it however you like.

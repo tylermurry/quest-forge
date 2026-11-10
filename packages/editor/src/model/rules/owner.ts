@@ -7,10 +7,7 @@ import { sceneOf, updateScene } from "../scene/commands.ts";
 /** Scene things that have rules. */
 type RuleThingList = "objects" | "characters" | "hotspots" | "regions";
 
-export type RuleOwnerRef =
-  | { kind: "thing"; scene: string; list: RuleThingList; key: string }
-  | { kind: "scene"; scene: string }
-  | { kind: "game" };
+export type RuleOwnerRef = { kind: "thing"; scene: string; list: RuleThingList; key: string } | { kind: "scene"; scene: string } | { kind: "game" };
 
 const RULE_THING_LISTS: readonly RuleThingList[] = ["objects", "characters", "hotspots", "regions"];
 const isRuleThingList = (list: string): list is RuleThingList => (RULE_THING_LISTS as readonly string[]).includes(list);

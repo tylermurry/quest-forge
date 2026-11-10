@@ -3,7 +3,16 @@ import { CommandRegistry } from "../model/appCommands.ts";
 import { Editor, projectTitle } from "../model/editor.ts";
 import { addRecent, removeRecent, type RecentProject } from "../model/recent.ts";
 import { createBlankProject, folderNameFor } from "../model/template.ts";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./components/ui/alert-dialog.tsx";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./components/ui/alert-dialog.tsx";
 import { StartScreen } from "./StartScreen.tsx";
 import { Workspace } from "./Workspace.tsx";
 import { CommandsContext, usePlatform, useShortcutKeys } from "./hooks.ts";

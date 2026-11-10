@@ -13,20 +13,7 @@ import type { SceneFile } from "./scene.ts";
  * `animation` (an object's one-shot) to `<scene>/<object>`; `slot` (a character's
  * animation slot played by `play_animation`) to the character.
  */
-export type RefKind =
-  | "scene"
-  | "item"
-  | "character"
-  | "dialogue"
-  | "flag"
-  | "counter"
-  | "image"
-  | "audio"
-  | "spawn"
-  | "object"
-  | "node"
-  | "animation"
-  | "slot";
+export type RefKind = "scene" | "item" | "character" | "dialogue" | "flag" | "counter" | "image" | "audio" | "spawn" | "object" | "node" | "animation" | "slot";
 
 export interface Reference {
   kind: RefKind;
@@ -191,8 +178,7 @@ function characterRefs(c: CharacterFile, push: Push) {
 export function collectReferences(project: Project): Reference[] {
   const refs: Reference[] = [];
   for (const { kind: fileKind, doc } of allDocs(project)) {
-    const push: Push = (kind, id, path, scope) =>
-      refs.push({ kind, id, ...(scope !== undefined && { scope }), fileKind, location: { file: doc.path, path } });
+    const push: Push = (kind, id, path, scope) => refs.push({ kind, id, ...(scope !== undefined && { scope }), fileKind, location: { file: doc.path, path } });
     const data = doc.data;
     if (fileKind === "game") gameRefs(data as GameFile, push);
     else if (fileKind === "scene") sceneRefs(data as SceneFile, push);
@@ -270,16 +256,12 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
 
   const next: Project = { ...project };
   next.game = project.game && edit(project.game);
-  next.flags =
-    project.flags &&
-    edit(project.flags, kind === "flag" ? (d) => d.flags.forEach((f) => f.id === from && (f.id = to)) : undefined);
+  next.flags = project.flags && edit(project.flags, kind === "flag" ? (d) => d.flags.forEach((f) => f.id === from && (f.id = to)) : undefined);
   next.assets =
     project.assets &&
     edit(
       project.assets,
-      kind === "image" || kind === "audio"
-        ? (d) => d[kind === "image" ? "images" : "audio"].forEach((a) => a.id === from && (a.id = to))
-        : undefined,
+      kind === "image" || kind === "audio" ? (d) => d[kind === "image" ? "images" : "audio"].forEach((a) => a.id === from && (a.id = to)) : undefined,
     );
   for (const assetKind of Object.keys(ASSET_LAYOUT) as AssetKind[]) {
     const list = ASSET_LAYOUT[assetKind].list;
@@ -309,7 +291,13 @@ export function renameSceneId(project: Project, sceneId: string, kind: SceneIdKi
   if (!doc) throw new RenameError(`No scene with ID ${sceneId}`);
   const s = doc.data;
   const ids =
-    kind === "spawn" ? Object.keys(s.spawns) : kind === "object" ? s.objects.map((o) => o.id) : kind === "hotspot" ? s.hotspots.map((h) => h.id) : s.regions.map((r) => r.id);
+    kind === "spawn"
+      ? Object.keys(s.spawns)
+      : kind === "object"
+        ? s.objects.map((o) => o.id)
+        : kind === "hotspot"
+          ? s.hotspots.map((h) => h.id)
+          : s.regions.map((r) => r.id);
   if (!ids.includes(from)) throw new RenameError(`No ${kind} with ID ${from}`);
   if (from === to) return project;
   if (ids.includes(to)) throw new RenameError(`This scene already has a ${kind} with ID ${to}`);
@@ -375,8 +363,7 @@ export function renameObjectAnimation(project: Project, sceneId: string, objectI
     extra?.(data);
     return { ...d, data };
   };
-  const define = (data: SceneFile) =>
-    data.objects.find((o) => o.id === objectId)!.animations!.forEach((a) => a.id === from && (a.id = to));
+  const define = (data: SceneFile) => data.objects.find((o) => o.id === objectId)!.animations!.forEach((a) => a.id === from && (a.id = to));
   const next: Project = { ...project };
   next.game = project.game && edit(project.game);
   next.scenes = project.scenes.map((d) => edit(d, d.data.id === sceneId ? define : undefined));

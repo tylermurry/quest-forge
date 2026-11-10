@@ -152,7 +152,11 @@ export function References({ actions, refs }: { actions: Actions; refs: Referenc
                 return (
                   <li key={i}>
                     {jump ? (
-                      <button className="text-primary block cursor-pointer text-left underline-offset-2 hover:underline" title="Show where it's used" onClick={() => actions.ws.jumpTo(jump, "log")}>
+                      <button
+                        className="text-primary block cursor-pointer text-left underline-offset-2 hover:underline"
+                        title="Show where it's used"
+                        onClick={() => actions.ws.jumpTo(jump, "log")}
+                      >
                         {it.text}
                       </button>
                     ) : (

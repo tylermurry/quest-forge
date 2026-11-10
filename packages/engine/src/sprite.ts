@@ -16,8 +16,7 @@ export interface Rect {
 }
 
 /** Size of one frame: a sheet cell, or the whole image when unsliced. */
-export const frameSize = (img: ImageAsset, imageSize: Size): Size =>
-  img.sheet ? { w: img.sheet.cellWidth, h: img.sheet.cellHeight } : imageSize;
+export const frameSize = (img: ImageAsset, imageSize: Size): Size => (img.sheet ? { w: img.sheet.cellWidth, h: img.sheet.cellHeight } : imageSize);
 
 /** Source rectangle of a frame; cells are counted row by row from the top-left. */
 export function frameRect(img: ImageAsset, imageSize: Size, frame: number): Rect {

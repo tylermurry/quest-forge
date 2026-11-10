@@ -51,15 +51,43 @@ describe("blocking errors", () => {
   });
 
   it.each([
-    ["scene", (p: Project) => (scene(p, "beach").regions[0]!.rules[0]!.do[0] = { type: "change_scene", scene: "cave", spawn: "default" }), "uses scene cave, which doesn't exist."],
-    ["flag", (p: Project) => (scene(p, "path").characters[0]!.rules[0]!.if[0] = { type: "flag_is", flag: "talked_to_villagr", value: false }), "uses flag talked_to_villagr, which doesn't exist. Did you mean talked_to_villager?"],
-    ["character", (p: Project) => (scene(p, "path").characters[0]!.rules[1]!.do[0] = { type: "say", character: "vilager", text: "Hi" }), "uses character vilager, which doesn't exist. Did you mean villager?"],
+    [
+      "scene",
+      (p: Project) => (scene(p, "beach").regions[0]!.rules[0]!.do[0] = { type: "change_scene", scene: "cave", spawn: "default" }),
+      "uses scene cave, which doesn't exist.",
+    ],
+    [
+      "flag",
+      (p: Project) => (scene(p, "path").characters[0]!.rules[0]!.if[0] = { type: "flag_is", flag: "talked_to_villagr", value: false }),
+      "uses flag talked_to_villagr, which doesn't exist. Did you mean talked_to_villager?",
+    ],
+    [
+      "character",
+      (p: Project) => (scene(p, "path").characters[0]!.rules[1]!.do[0] = { type: "say", character: "vilager", text: "Hi" }),
+      "uses character vilager, which doesn't exist. Did you mean villager?",
+    ],
     ["audio", (p: Project) => (scene(p, "beach").music = "sea_theme"), "uses sound sea_theme, which doesn't exist."],
-    ["dialogue", (p: Project) => (scene(p, "shop").characters[0]!.rules[0]!.do[0] = { type: "start_dialogue", dialogue: "shop_chat" }), "uses dialogue shop_chat, which doesn't exist."],
+    [
+      "dialogue",
+      (p: Project) => (scene(p, "shop").characters[0]!.rules[0]!.do[0] = { type: "start_dialogue", dialogue: "shop_chat" }),
+      "uses dialogue shop_chat, which doesn't exist.",
+    ],
     ["image", (p: Project) => (scene(p, "beach").background = "beach_bgg"), "uses image beach_bgg, which doesn't exist. Did you mean beach_bg?"],
-    ["spawn", (p: Project) => (scene(p, "beach").regions[0]!.rules[0]!.do[0] = { type: "change_scene", scene: "path", spawn: "from_beech" }), "uses spawn point from_beech in Village Path, which doesn't exist. Did you mean from_beach?"],
-    ["object", (p: Project) => (scene(p, "path").characters[0]!.rules[0]!.do[1] = { type: "hide_object", scene: "path", object: "bouldr" }), "uses object bouldr in Village Path, which doesn't exist. Did you mean boulder?"],
-    ["flag used as counter", (p: Project) => (scene(p, "shop").rules[0]!.do[0] = { type: "add_to_counter", counter: "talked_to_villager", amount: 1 }), "uses talked_to_villager as a counter, but it's a flag."],
+    [
+      "spawn",
+      (p: Project) => (scene(p, "beach").regions[0]!.rules[0]!.do[0] = { type: "change_scene", scene: "path", spawn: "from_beech" }),
+      "uses spawn point from_beech in Village Path, which doesn't exist. Did you mean from_beach?",
+    ],
+    [
+      "object",
+      (p: Project) => (scene(p, "path").characters[0]!.rules[0]!.do[1] = { type: "hide_object", scene: "path", object: "bouldr" }),
+      "uses object bouldr in Village Path, which doesn't exist. Did you mean boulder?",
+    ],
+    [
+      "flag used as counter",
+      (p: Project) => (scene(p, "shop").rules[0]!.do[0] = { type: "add_to_counter", counter: "talked_to_villager", amount: 1 }),
+      "uses talked_to_villager as a counter, but it's a flag.",
+    ],
   ])("missing reference: %s", async (_kind, edit, message) => {
     const problems = await errorsAfter(edit);
     expect(problems.map((x) => [x.code, x.message])).toEqual([["missing_reference", message]]);
@@ -71,7 +99,12 @@ describe("blocking errors", () => {
       if (sell.type === "actions") sell.next = "thank_you";
     });
     expect(summary(problems)).toEqual([
-      { code: "missing_reference", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.4.next", text: 'Dialogue "Shopkeeper" › Node "sell": connects to node thank_you, which doesn\'t exist.' },
+      {
+        code: "missing_reference",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.4.next",
+        text: 'Dialogue "Shopkeeper" › Node "sell": connects to node thank_you, which doesn\'t exist.',
+      },
     ]);
   });
 
@@ -90,8 +123,18 @@ describe("blocking errors", () => {
       scene(p, "shop").spawns.default = { x: 10, y: 10, facing: "up" };
     });
     expect(summary(problems)).toEqual([
-      { code: "spawn_outside_walkable", file: "scenes/outdoors/beach.scene.yaml", path: "spawns.default", text: 'Sunny Beach › Spawn "default": is at (330, 320), outside the walkable area.' },
-      { code: "spawn_outside_walkable", file: "scenes/shop.scene.yaml", path: "spawns.default", text: 'The Shop › Spawn "default": is at (10, 10), outside the walkable area.' },
+      {
+        code: "spawn_outside_walkable",
+        file: "scenes/outdoors/beach.scene.yaml",
+        path: "spawns.default",
+        text: 'Sunny Beach › Spawn "default": is at (330, 320), outside the walkable area.',
+      },
+      {
+        code: "spawn_outside_walkable",
+        file: "scenes/shop.scene.yaml",
+        path: "spawns.default",
+        text: 'The Shop › Spawn "default": is at (10, 10), outside the walkable area.',
+      },
     ]);
   });
 
@@ -109,7 +152,12 @@ describe("blocking errors", () => {
       p.dialogues[0]!.data.nodes = p.dialogues[0]!.data.nodes.filter((n) => n.type !== "start");
     });
     expect(summary(none)).toEqual([
-      { code: "dialogue_without_start", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes", text: 'Dialogue "Shopkeeper": has no Start node, so it can never begin.' },
+      {
+        code: "dialogue_without_start",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes",
+        text: 'Dialogue "Shopkeeper": has no Start node, so it can never begin.',
+      },
     ]);
     const two = await errorsAfter((p) => {
       p.dialogues[0]!.data.nodes.push({ id: "start2", type: "start", pos: [0, 0], next: null });
@@ -118,22 +166,74 @@ describe("blocking errors", () => {
   });
 
   it.each<[string, Point[], string]>([
-    ["fewer than 3 points", [[0, 0], [10, 10]], "has fewer than 3 points."],
-    ["a bow-tie", [[0, 0], [10, 10], [10, 0], [0, 10]], "crosses itself."],
-    ["a doubled-back edge", [[0, 0], [10, 0], [5, 0], [5, 10]], "crosses itself."],
-    ["a repeated vertex", [[0, 0], [10, 0], [10, 0], [10, 10]], "crosses itself."],
-    ["no area", [[0, 0], [5, 5], [10, 10]], "is flat (it has no area)."],
+    [
+      "fewer than 3 points",
+      [
+        [0, 0],
+        [10, 10],
+      ],
+      "has fewer than 3 points.",
+    ],
+    [
+      "a bow-tie",
+      [
+        [0, 0],
+        [10, 10],
+        [10, 0],
+        [0, 10],
+      ],
+      "crosses itself.",
+    ],
+    [
+      "a doubled-back edge",
+      [
+        [0, 0],
+        [10, 0],
+        [5, 0],
+        [5, 10],
+      ],
+      "crosses itself.",
+    ],
+    [
+      "a repeated vertex",
+      [
+        [0, 0],
+        [10, 0],
+        [10, 0],
+        [10, 10],
+      ],
+      "crosses itself.",
+    ],
+    [
+      "no area",
+      [
+        [0, 0],
+        [5, 5],
+        [10, 10],
+      ],
+      "is flat (it has no area).",
+    ],
   ])("invalid polygon: %s", async (_name, shape, message) => {
     const problems = await errorsAfter((p) => {
       scene(p, "beach").hotspots[1]!.shape = shape;
     });
     expect(summary(problems)).toEqual([
-      { code: "invalid_polygon", file: "scenes/outdoors/beach.scene.yaml", path: "hotspots.1.shape", text: `Sunny Beach › Hotspot "sea": The shape ${message}` },
+      {
+        code: "invalid_polygon",
+        file: "scenes/outdoors/beach.scene.yaml",
+        path: "hotspots.1.shape",
+        text: `Sunny Beach › Hotspot "sea": The shape ${message}`,
+      },
     ]);
   });
 
   it("invalid polygon: walkable outline, holes, obstacles and regions are all checked", async () => {
-    const bowtie: Point[] = [[0, 0], [10, 10], [10, 0], [0, 10]];
+    const bowtie: Point[] = [
+      [0, 0],
+      [10, 10],
+      [10, 0],
+      [0, 10],
+    ];
     const problems = await errorsAfter((p) => {
       scene(p, "beach").walkable.holes[0] = bowtie;
       scene(p, "path").objects[0]!.obstacle = bowtie;
@@ -150,7 +250,12 @@ describe("blocking errors", () => {
 
   it("invalid polygon: a hole that sticks out of the walkable outline", async () => {
     const out = await errorsAfter((p) => {
-      scene(p, "beach").walkable.holes[0] = [[300, 200], [360, 200], [360, 340], [300, 340]];
+      scene(p, "beach").walkable.holes[0] = [
+        [300, 200],
+        [360, 200],
+        [360, 340],
+        [300, 340],
+      ];
     });
     expect(summary(out)).toEqual([
       {
@@ -162,7 +267,12 @@ describe("blocking errors", () => {
     ]);
     // Touching the outline from inside is fine.
     const touching = await errorsAfter((p) => {
-      scene(p, "beach").walkable.holes[0] = [[300, 240], [360, 240], [360, 340], [300, 340]];
+      scene(p, "beach").walkable.holes[0] = [
+        [300, 240],
+        [360, 240],
+        [360, 340],
+        [300, 340],
+      ];
     });
     expect(touching).toEqual([]);
   });
@@ -177,11 +287,36 @@ describe("blocking errors", () => {
       scene(p, "beach").hotspots[0]!.rules[1]!.id = "rule_1";
     });
     expect(summary(problems)).toEqual([
-      { code: "duplicate_id", file: "items/old/coin.item.yaml", path: "id", text: 'Item "gold coin": uses the ID coin, which items/coin.item.yaml already uses. IDs must be unique.' },
-      { code: "duplicate_id", file: "flags.yaml", path: "flags.2.id", text: 'Flags › Flag "shop_visits": uses the ID shop_visits, which another flag or counter already uses. IDs must be unique.' },
-      { code: "duplicate_id", file: "scenes/outdoors/beach.scene.yaml", path: "hotspots.1.id", text: 'Sunny Beach › Hotspot "shell": uses the ID shell, which another hotspot in this scene already uses. IDs must be unique.' },
-      { code: "duplicate_id", file: "scenes/outdoors/beach.scene.yaml", path: "hotspots.0.rules.1.id", text: 'Sunny Beach › Hotspot "shell" › Rule 2: uses the ID rule_1, which another rule in this list already uses. IDs must be unique.' },
-      { code: "duplicate_id", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.options.2.id", text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "buy": uses the ID buy, which another choice in this dialogue already uses. IDs must be unique.' },
+      {
+        code: "duplicate_id",
+        file: "items/old/coin.item.yaml",
+        path: "id",
+        text: 'Item "gold coin": uses the ID coin, which items/coin.item.yaml already uses. IDs must be unique.',
+      },
+      {
+        code: "duplicate_id",
+        file: "flags.yaml",
+        path: "flags.2.id",
+        text: 'Flags › Flag "shop_visits": uses the ID shop_visits, which another flag or counter already uses. IDs must be unique.',
+      },
+      {
+        code: "duplicate_id",
+        file: "scenes/outdoors/beach.scene.yaml",
+        path: "hotspots.1.id",
+        text: 'Sunny Beach › Hotspot "shell": uses the ID shell, which another hotspot in this scene already uses. IDs must be unique.',
+      },
+      {
+        code: "duplicate_id",
+        file: "scenes/outdoors/beach.scene.yaml",
+        path: "hotspots.0.rules.1.id",
+        text: 'Sunny Beach › Hotspot "shell" › Rule 2: uses the ID rule_1, which another rule in this list already uses. IDs must be unique.',
+      },
+      {
+        code: "duplicate_id",
+        file: "dialogues/shopkeeper_chat.dialogue.yaml",
+        path: "nodes.2.options.2.id",
+        text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "buy": uses the ID buy, which another choice in this dialogue already uses. IDs must be unique.',
+      },
     ]);
   });
 
@@ -190,7 +325,12 @@ describe("blocking errors", () => {
       p.files = p.files.filter((f) => f !== "assets/images/palm_img.png");
     });
     expect(summary(problems)).toEqual([
-      { code: "missing_image_file", file: "assets.yaml", path: "images.3.path", text: 'Assets › Image "palm_img": points to assets/images/palm_img.png, which isn\'t in the project folder.' },
+      {
+        code: "missing_image_file",
+        file: "assets.yaml",
+        path: "images.3.path",
+        text: 'Assets › Image "palm_img": points to assets/images/palm_img.png, which isn\'t in the project folder.',
+      },
     ]);
   });
 
@@ -232,11 +372,29 @@ describe("validation acceptance: deleting an item used in 3 places", () => {
 });
 
 describe("geometry helpers", () => {
-  const square: Point[] = [[0, 0], [100, 0], [100, 100], [0, 100]];
-  const hole: Point[] = [[40, 40], [60, 40], [60, 60], [40, 60]];
+  const square: Point[] = [
+    [0, 0],
+    [100, 0],
+    [100, 100],
+    [0, 100],
+  ];
+  const hole: Point[] = [
+    [40, 40],
+    [60, 40],
+    [60, 60],
+    [40, 60],
+  ];
   it("accepts simple polygons, including concave ones", () => {
     expect(polygonIssue(square)).toBe(null);
-    expect(polygonIssue([[0, 0], [100, 0], [100, 100], [50, 50], [0, 100]])).toBe(null);
+    expect(
+      polygonIssue([
+        [0, 0],
+        [100, 0],
+        [100, 100],
+        [50, 50],
+        [0, 100],
+      ]),
+    ).toBe(null);
   });
   it("treats the outline and hole edges as walkable, hole interiors as not", () => {
     expect(inWalkable([0, 50], square, [hole])).toBe(true);

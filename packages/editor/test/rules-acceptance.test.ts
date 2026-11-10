@@ -18,7 +18,7 @@ describe("rule inspector acceptance", () => {
     const { editor, c, drag, scene, dispose } = await sceneEditor();
     const typed: string[] = [];
     /** A dropdown or picker choice: the value must be one the control offers. */
-    const choose = <T,>(offered: readonly T[], value: T) => {
+    const choose = <T>(offered: readonly T[], value: T) => {
       expect(offered).toContain(value);
       return value;
     };
@@ -48,13 +48,42 @@ describe("rule inspector acceptance", () => {
     const through = editor.applyWith("Add rule", (p) => addRule(p, DOOR, "walk"))!.id;
     editor.apply("Add condition", (p) => addCondition(p, DOOR, through, "flag_is"));
     editor.apply("Add action", (p) => addAction(p, DOOR, through, "change_scene"));
-    editor.apply("Edit rule", (p) => setActionFields(p, DOOR, through, 0, { scene: choose(pickerOptions(editor.project, "scene").map((o) => o.id), "shed") }));
-    editor.apply("Edit rule", (p) => setActionFields(p, DOOR, through, 0, { spawn: choose(pickerOptions(editor.project, "spawn", "shed").map((o) => o.id), "door") }));
+    editor.apply("Edit rule", (p) =>
+      setActionFields(p, DOOR, through, 0, {
+        scene: choose(
+          pickerOptions(editor.project, "scene").map((o) => o.id),
+          "shed",
+        ),
+      }),
+    );
+    editor.apply("Edit rule", (p) =>
+      setActionFields(p, DOOR, through, 0, {
+        spawn: choose(
+          pickerOptions(editor.project, "spawn", "shed").map((o) => o.id),
+          "door",
+        ),
+      }),
+    );
 
     const rules = ownerRules(editor.project, DOOR)!.rules;
     expect(rules).toEqual([
-      { id: unlock, when: { type: "use_item", item: "rod" }, if: [{ type: "flag_is", flag: "path_open", value: false }], do: [{ type: "say", character: "hero", text: "Click! The door unlocks." }, { type: "set_flag", flag: "path_open", value: true }], once: false },
-      { id: through, when: { type: "walk" }, if: [{ type: "flag_is", flag: "path_open", value: true }], do: [{ type: "change_scene", scene: "shed", spawn: "door" }], once: false },
+      {
+        id: unlock,
+        when: { type: "use_item", item: "rod" },
+        if: [{ type: "flag_is", flag: "path_open", value: false }],
+        do: [
+          { type: "say", character: "hero", text: "Click! The door unlocks." },
+          { type: "set_flag", flag: "path_open", value: true },
+        ],
+        once: false,
+      },
+      {
+        id: through,
+        when: { type: "walk" },
+        if: [{ type: "flag_is", flag: "path_open", value: true }],
+        do: [{ type: "change_scene", scene: "shed", spawn: "door" }],
+        once: false,
+      },
     ]);
     expect(typed).toEqual(["Click! The door unlocks."]);
     const doorProblems = validateProject(editor.project).filter((x) => x.location.file === "scenes/garden.scene.yaml" && x.location.path[0] === "hotspots");
@@ -99,7 +128,11 @@ describe("validation acceptance in the editor", () => {
     const GAME: RuleOwnerRef = { kind: "game" };
     const POT: RuleOwnerRef = { kind: "thing", scene: "garden", list: "objects", key: "flowerpot" };
     // Each jumps to the owner of its rule…
-    expect(problems.map((x) => locate(p, x.location)!.target)).toEqual([{ kind: "game" }, { kind: "game" }, { kind: "sceneThing", scene: "garden", list: "objects", key: "flowerpot" }]);
+    expect(problems.map((x) => locate(p, x.location)!.target)).toEqual([
+      { kind: "game" },
+      { kind: "game" },
+      { kind: "sceneThing", scene: "garden", list: "objects", key: "flowerpot" },
+    ]);
     // …and each lands on a red part of a rule card there.
     const game = ruleProblems(problems, ownerRules(p, GAME)!);
     const combine = ownerRules(p, GAME)!.rules[0]!.id;

@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  AssetsFile,
-  CharacterFile,
-  FlagsFile,
-  Id,
-  ItemFile,
-  Placement,
-  Point,
-} from "../src/index.ts";
+import { AssetsFile, CharacterFile, FlagsFile, Id, ItemFile, Placement, Point } from "../src/index.ts";
 
 const item = {
   schemaVersion: 2,
@@ -44,14 +36,7 @@ describe("geometry", () => {
     expect(Point.safeParse([0, 0]).success).toBe(true);
     expect(Point.safeParse([640, 400]).success).toBe(true);
   });
-  it.each([
-    [[1.5, 2]],
-    [[-1, 2]],
-    [[641, 2]],
-    [[2, 401]],
-    [[1, 2, 3]],
-    [["1", 2]],
-  ])("rejects %j", (p) => {
+  it.each([[[1.5, 2]], [[-1, 2]], [[641, 2]], [[2, 401]], [[1, 2, 3]], [["1", 2]]])("rejects %j", (p) => {
     expect(Point.safeParse(p).success).toBe(false);
   });
   it("requires a known facing", () => {
@@ -113,8 +98,7 @@ describe("file schemas", () => {
   });
 
   it("rejects asset paths outside assets/", () => {
-    const bad = (path: string) =>
-      AssetsFile.safeParse({ schemaVersion: 2, images: [{ id: "x", path }], audio: [] }).success;
+    const bad = (path: string) => AssetsFile.safeParse({ schemaVersion: 2, images: [{ id: "x", path }], audio: [] }).success;
     expect(bad("images/beach.png")).toBe(false);
     expect(bad("assets/../game.yaml")).toBe(false);
     expect(bad("assets\\images\\beach.png")).toBe(false);

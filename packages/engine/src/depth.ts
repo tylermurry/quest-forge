@@ -28,4 +28,7 @@ export interface Sortable {
  * Stable, so ties keep their layer order (objects in file order, then characters).
  */
 export const sortByBaseline = <T extends Sortable>(items: readonly T[]): T[] =>
-  items.map((item, i) => ({ item, i })).sort((a, b) => a.item.baseline - b.item.baseline || a.i - b.i).map((x) => x.item);
+  items
+    .map((item, i) => ({ item, i }))
+    .sort((a, b) => a.item.baseline - b.item.baseline || a.i - b.i)
+    .map((x) => x.item);

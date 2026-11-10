@@ -18,7 +18,10 @@ describe("ProjectFs folder and binary operations", () => {
       await fs.makeFolder("scenes/x/y");
       expect(await fs.listFolders(), name).toEqual(expect.arrayContaining(["scenes", "scenes/x", "scenes/x/y"]));
       await fs.writeText("scenes/x/y/.keep", "");
-      expect((await fs.list()).some((f) => f.endsWith(".keep")), name).toBe(false);
+      expect(
+        (await fs.list()).some((f) => f.endsWith(".keep")),
+        name,
+      ).toBe(false);
 
       await fs.writeBytes("assets/images/new.png", new Uint8Array([1, 2, 3]));
       await fs.move("assets/images/new.png", "assets/images/deep/new.png");
@@ -141,7 +144,10 @@ describe("flag folders", () => {
   it("rejects folder paths that escape or hide", async () => {
     for (const bad of ["../x", ".git", "a//b", "a/"]) {
       const { problems } = await loadProject(new MemoryFs({ "flags.yaml": `schemaVersion: 2\nfolders:\n  - "${bad}"\nflags: []\n` }));
-      expect(problems.some((p) => p.code === "invalid_data"), bad).toBe(true);
+      expect(
+        problems.some((p) => p.code === "invalid_data"),
+        bad,
+      ).toBe(true);
     }
   });
 });

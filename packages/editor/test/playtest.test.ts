@@ -13,10 +13,14 @@ const editScene = (p: Project, id: string, f: (s: SceneFile) => SceneFile): Proj
   ...p,
   scenes: p.scenes.map((d) => (d.data.id === id ? { ...d, data: f(d.data) } : d)),
 });
-const pondLook = (text: string) => (s: SceneFile): SceneFile => ({
-  ...s,
-  hotspots: s.hotspots.map((h) => (h.id === "pond" ? { ...h, rules: h.rules.map((r) => (r.id === "rule_1" ? { ...r, do: [{ type: "narrate" as const, text }] } : r)) } : h)),
-});
+const pondLook =
+  (text: string) =>
+  (s: SceneFile): SceneFile => ({
+    ...s,
+    hotspots: s.hotspots.map((h) =>
+      h.id === "pond" ? { ...h, rules: h.rules.map((r) => (r.id === "rule_1" ? { ...r, do: [{ type: "narrate" as const, text }] } : r)) } : h,
+    ),
+  });
 
 describe("Play and the validation gate", () => {
   it("Play starts at the game start", async () => {
@@ -29,7 +33,15 @@ describe("Play and the validation gate", () => {
 
   it("errors block Play: Problems opens with a notice and nothing runs", async () => {
     const { playtest, editor, ws, dispose } = await playtestEditor();
-    editor.apply("Break", (p) => editScene(p, "garden", (s) => ({ ...s, hotspots: s.hotspots.map((h) => ({ ...h, rules: h.rules.map((r) => ({ ...r, do: r.do.map((a) => (a.type === "give_item" ? { ...a, item: "nope" } : a)) })) })) })));
+    editor.apply("Break", (p) =>
+      editScene(p, "garden", (s) => ({
+        ...s,
+        hotspots: s.hotspots.map((h) => ({
+          ...h,
+          rules: h.rules.map((r) => ({ ...r, do: r.do.map((a) => (a.type === "give_item" ? { ...a, item: "nope" } : a)) })),
+        })),
+      })),
+    );
     const before = ws.dockRequest;
     expect(playtest.play()).toBe(false);
     expect(playtest.playing).toBe(false);

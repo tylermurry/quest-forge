@@ -69,18 +69,46 @@ describe("dialogue graph tab", () => {
     await user.click(within(inspector()).getByRole("switch", { name: "Option 1 once" }));
     await user.click(within(inspector()).getByRole("button", { name: /^Option$/ }));
     const menu = nodes(editor).find((n) => n.id === "menu");
-    expect(menu).toMatchObject({ options: [{ id: "bye", text: "See you.", once: true }, { id: "option_1", text: "" }] });
+    expect(menu).toMatchObject({
+      options: [
+        { id: "bye", text: "See you.", once: true },
+        { id: "option_1", text: "" },
+      ],
+    });
     expect(editor.history.undoLabel).toBe("Add option");
     editor.undo();
     editor.undo();
     expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ options: [{ text: "See you.", once: false }] });
   });
 
+  it("selecting a node from the keyboard opens it in the Inspector like a click", async () => {
+    await mount();
+    const card = screen.getByLabelText("Choices node menu");
+    const node = card.closest(".react-flow__node") as HTMLElement;
+    expect(node.getAttribute("tabindex")).toBe("0");
+    fireEvent.keyDown(node, { key: "Enter", code: "Enter" });
+    expect(within(inspector()).getByText("Choices node")).toBeTruthy();
+    fireEvent.keyDown(screen.getByLabelText("Line node hello").closest(".react-flow__node")!, { key: " ", code: "Space" });
+    expect(within(inspector()).getByText("Line node")).toBeTruthy();
+  });
+
   it("a Line picks its speaker; the narrator has no animation field", async () => {
     const { editor } = await mount();
     fireEvent.click(screen.getByLabelText("Line node hello"));
     expect(within(inspector()).getByRole("combobox", { name: "Animation" })).toBeTruthy();
-    act(() => void editor.apply("Narrator", (p) => ({ ...p, dialogues: p.dialogues.map((d) => ({ ...d, data: { ...d.data, nodes: d.data.nodes.map((n) => (n.id === "hello" && n.type === "line" ? { id: n.id, type: n.type, pos: n.pos, text: n.text, next: n.next } : n)) } })) })));
+    act(
+      () =>
+        void editor.apply("Narrator", (p) => ({
+          ...p,
+          dialogues: p.dialogues.map((d) => ({
+            ...d,
+            data: {
+              ...d.data,
+              nodes: d.data.nodes.map((n) => (n.id === "hello" && n.type === "line" ? { id: n.id, type: n.type, pos: n.pos, text: n.text, next: n.next } : n)),
+            },
+          })),
+        })),
+    );
     expect(within(inspector()).queryByRole("combobox", { name: "Animation" })).toBe(null);
     expect(within(inspector()).getByRole("combobox", { name: "Speaker" }).textContent).toContain("Narrator");
   });

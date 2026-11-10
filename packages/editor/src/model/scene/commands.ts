@@ -1,6 +1,17 @@
 // Scene-editing commands: pure Project → Project functions, each run as
 // one undo step through Editor.apply. Geometry stays integer.
-import { RenameError, SCENE_HEIGHT, SCENE_WIDTH, renameSceneId, type Facing, type Placement, type Point, type Polygon, type Project, type SceneFile } from "@questforge/schema";
+import {
+  RenameError,
+  SCENE_HEIGHT,
+  SCENE_WIDTH,
+  renameSceneId,
+  type Facing,
+  type Placement,
+  type Point,
+  type Polygon,
+  type Project,
+  type SceneFile,
+} from "@questforge/schema";
 import { CommandError, uniqueId, updateDoc } from "../commands.ts";
 import { getPolygon, withPolygon, type PolyRef } from "./shapes.ts";
 import { holeIndex, holeKey, type ThingRef } from "./things.ts";
@@ -106,7 +117,11 @@ export function moveVertex(p: Project, sceneId: string, pr: PolyRef, index: numb
   return updateScene(p, sceneId, (s) => {
     const poly = needPolygon(s, pr);
     if (!poly[index]) throw gone();
-    return withPolygon(s, pr, poly.map((v, i) => (i === index ? [clampX(to[0]), clampY(to[1])] : v)));
+    return withPolygon(
+      s,
+      pr,
+      poly.map((v, i) => (i === index ? [clampX(to[0]), clampY(to[1])] : v)),
+    );
   });
 }
 
@@ -115,7 +130,11 @@ export function deleteVertex(p: Project, sceneId: string, pr: PolyRef, index: nu
   return updateScene(p, sceneId, (s) => {
     const poly = needPolygon(s, pr);
     if (poly.length <= 3) throw new CommandError("A shape needs at least 3 points. Delete the whole shape instead.");
-    return withPolygon(s, pr, poly.filter((_, i) => i !== index));
+    return withPolygon(
+      s,
+      pr,
+      poly.filter((_, i) => i !== index),
+    );
   });
 }
 
@@ -221,12 +240,7 @@ export function setBaseline(p: Project, sceneId: string, id: string, y: number |
 // ── New shapes ────────────────────────────────────────────────────────
 
 /** What a closed polygon becomes, decided by the active layer. */
-export type DrawTarget =
-  | { kind: "outline" }
-  | { kind: "hole" }
-  | { kind: "hotspot" }
-  | { kind: "region" }
-  | { kind: "obstacle"; object: string };
+export type DrawTarget = { kind: "outline" } | { kind: "hole" } | { kind: "hotspot" } | { kind: "region" } | { kind: "obstacle"; object: string };
 
 export const DRAW_LABEL: Record<DrawTarget["kind"], string> = {
   outline: "Draw walkable area",
@@ -328,7 +342,8 @@ export function placeImage(p: Project, sceneId: string, imageId: string, at: Poi
 /** Places a character with its feet at the drop point. The player and repeats are refused. */
 export function placeCharacter(p: Project, sceneId: string, character: string, at: Point): Project {
   if (!p.characters.some((c) => c.data.id === character)) throw new CommandError(`There's no character with ID ${character}.`);
-  if (p.game?.data.player === character) throw new CommandError("The player appears at spawn points, so they aren't placed in scenes. Add a spawn point instead.");
+  if (p.game?.data.player === character)
+    throw new CommandError("The player appears at spawn points, so they aren't placed in scenes. Add a spawn point instead.");
   return updateScene(p, sceneId, (s) => {
     if (s.characters.some((c) => c.character === character)) throw new CommandError(`${character} is already in this scene. Move them instead.`);
     return { ...s, characters: [...s.characters, { character, x: clampX(at[0]), y: clampY(at[1]), facing: "down", visible: true, rules: [] }] };
@@ -448,7 +463,22 @@ export function addObstacle(p: Project, sceneId: string, id: string, size: { w: 
     const x0 = clampX(o.x);
     const x1 = clampX(o.x + size.w);
     if (x1 - x0 < 1 || base - top < 1) throw new CommandError("This object is outside the scene, so it can't block walking here.");
-    return { ...s, objects: s.objects.map((x) => (x === o ? { ...o, obstacle: [[x0, top], [x1, top], [x1, base], [x0, base]] } : x)) };
+    return {
+      ...s,
+      objects: s.objects.map((x) =>
+        x === o
+          ? {
+              ...o,
+              obstacle: [
+                [x0, top],
+                [x1, top],
+                [x1, base],
+                [x0, base],
+              ],
+            }
+          : x,
+      ),
+    };
   });
 }
 

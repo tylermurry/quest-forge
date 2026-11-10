@@ -103,13 +103,13 @@ jobs:
           b=packages/editor/src-tauri/target
           case "${{ matrix.name }}" in
             macos)
-              cp $b/universal-apple-darwin/release/bundle/dmg/*.dmg out/Questforge-macos.dmg ;;
+              cp $b/universal-apple-darwin/release/bundle/dmg/*.dmg out/Quest-Forge-macos.dmg ;;
             windows)
-              cp $b/release/bundle/nsis/*-setup.exe out/Questforge-windows-setup.exe
-              cp $b/release/bundle/msi/*.msi out/Questforge-windows.msi ;;
+              cp $b/release/bundle/nsis/*-setup.exe out/Quest-Forge-windows-setup.exe
+              cp $b/release/bundle/msi/*.msi out/Quest-Forge-windows.msi ;;
             linux)
-              cp $b/release/bundle/appimage/*.AppImage out/Questforge-linux.AppImage
-              cp $b/release/bundle/deb/*.deb out/Questforge-linux.deb ;;
+              cp $b/release/bundle/appimage/*.AppImage out/Quest-Forge-linux.AppImage
+              cp $b/release/bundle/deb/*.deb out/Quest-Forge-linux.deb ;;
           esac
           ls -la out
       - uses: actions/upload-artifact@v5
@@ -138,6 +138,6 @@ jobs:
           gh release create "v$VERSION" out/* \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "Questforge $VERSION" \
+            --title "Quest Forge $VERSION" \
             --generate-notes \
             --latest

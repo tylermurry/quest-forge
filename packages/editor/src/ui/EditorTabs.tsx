@@ -14,7 +14,9 @@ import { TextField } from "./TextField.tsx";
 import { cn } from "./lib/utils.ts";
 
 const docData = (p: Project, ref: EntryRef) => {
-  const list = { scene: p.scenes, item: p.items, character: p.characters, dialogue: p.dialogues }[ref.section as "scene"] as { data: { id: string; name: string } }[] | undefined;
+  const list = { scene: p.scenes, item: p.items, character: p.characters, dialogue: p.dialogues }[ref.section as "scene"] as
+    | { data: { id: string; name: string } }[]
+    | undefined;
   return list?.find((d) => d.data.id === ref.id)?.data;
 };
 
@@ -37,10 +39,20 @@ export function EditorTabs({ actions }: { actions: Actions }) {
                 selected ? "bg-background text-foreground" : "bg-muted/50 text-muted-foreground border-transparent",
               )}
             >
-              <button role="tab" aria-selected={selected} onClick={() => ws.activate(t)} onMouseDown={(e) => e.button === 1 && ws.close(t)} className="whitespace-nowrap">
+              <button
+                role="tab"
+                aria-selected={selected}
+                onClick={() => ws.activate(t)}
+                onMouseDown={(e) => e.button === 1 && ws.close(t)}
+                className="whitespace-nowrap"
+              >
                 {name}
               </button>
-              <button className="hover:bg-muted ml-1 flex size-5 items-center justify-center rounded-sm opacity-60 hover:opacity-100" aria-label={`Close ${name}`} onClick={() => ws.close(t)}>
+              <button
+                className="hover:bg-muted ml-1 flex size-5 items-center justify-center rounded-sm opacity-60 hover:opacity-100"
+                aria-label={`Close ${name}`}
+                onClick={() => ws.close(t)}
+              >
                 <X className="size-3" />
               </button>
             </div>
@@ -82,7 +94,10 @@ function TabContent({ actions, entry }: { actions: Actions; entry: EntryRef }) {
   return (
     <div className={cn("flex flex-col gap-4", entry.section !== "character" && "max-w-2xl")}>
       <h2 className="text-lg font-semibold">
-        {(data as { name: string }).name} <span className="text-muted-foreground ml-1 text-[13px] font-normal">{NOUN[entry.section]} · {entry.id}</span>
+        {(data as { name: string }).name}{" "}
+        <span className="text-muted-foreground ml-1 text-[13px] font-normal">
+          {NOUN[entry.section]} · {entry.id}
+        </span>
       </h2>
       {nameField}
       {entry.section === "item" && <ItemForm actions={actions} item={data as ItemFile} />}

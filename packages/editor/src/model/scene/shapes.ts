@@ -58,6 +58,7 @@ export function scenePolygons(scene: SceneFile): { pr: PolyRef; poly: Polygon; l
   for (const h of [...scene.hotspots].reverse()) out.push({ pr: { ref: { list: "hotspots", key: h.id } }, poly: h.shape, layer: "hotspots" });
   scene.walkable.holes.forEach((h, i) => out.push({ pr: { ref: { list: "walkable", key: holeKey(i) } }, poly: h, layer: "walkable" }));
   if (scene.walkable.outer.length) out.push({ pr: { ref: { list: "walkable", key: "outer" } }, poly: scene.walkable.outer, layer: "walkable" });
-  for (const o of [...scene.objects].reverse()) if (o.obstacle) out.push({ pr: { ref: { list: "objects", key: o.id }, obstacle: true }, poly: o.obstacle, layer: "objects" });
+  for (const o of [...scene.objects].reverse())
+    if (o.obstacle) out.push({ pr: { ref: { list: "objects", key: o.id }, obstacle: true }, poly: o.obstacle, layer: "objects" });
   return out;
 }

@@ -65,19 +65,22 @@ const DT = 1 / 60;
 describe("sequences", () => {
   it("runs instant actions in one tick and in order", () => {
     const h = fakeHost();
-    const s = new Sequence(h, acts(
-      { type: "give_item", item: "coin" },
-      { type: "set_flag", flag: "door", value: true },
-      { type: "add_to_counter", counter: "n", amount: 4 },
-      { type: "award_points", points: 5, award: "coin" },
-      { type: "award_points", points: 5, award: "coin" },
-      { type: "face", facing: "left" },
-      { type: "hide_object", scene: "yard", object: "rock" },
-      { type: "set_character_position", character: "bob", scene: "yard", x: 10, y: 20, facing: "down" },
-      { type: "play_music", music: "theme" },
-      { type: "play_sound", sound: "ding" },
-      { type: "take_item", item: "coin" },
-    ));
+    const s = new Sequence(
+      h,
+      acts(
+        { type: "give_item", item: "coin" },
+        { type: "set_flag", flag: "door", value: true },
+        { type: "add_to_counter", counter: "n", amount: 4 },
+        { type: "award_points", points: 5, award: "coin" },
+        { type: "award_points", points: 5, award: "coin" },
+        { type: "face", facing: "left" },
+        { type: "hide_object", scene: "yard", object: "rock" },
+        { type: "set_character_position", character: "bob", scene: "yard", x: 10, y: 20, facing: "down" },
+        { type: "play_music", music: "theme" },
+        { type: "play_sound", sound: "ding" },
+        { type: "take_item", item: "coin" },
+      ),
+    );
     expect(s.done).toBe(false);
     s.tick(DT);
     expect(s.done).toBe(true);
@@ -130,11 +133,10 @@ describe("sequences", () => {
   it("blocks on one-shot animations but not looping ones", () => {
     const h = fakeHost();
     const target = { kind: "character", character: "bob" };
-    const s = new Sequence(h, acts(
-      { type: "play_animation", target, animation: "loop" },
-      { type: "play_animation", target, animation: "wave" },
-      { type: "give_item", item: "x" },
-    ));
+    const s = new Sequence(
+      h,
+      acts({ type: "play_animation", target, animation: "loop" }, { type: "play_animation", target, animation: "wave" }, { type: "give_item", item: "x" }),
+    );
     s.tick(DT);
     expect(h.log).toEqual(["anim character loop", "anim character wave"]);
     s.tick(DT);

@@ -71,7 +71,13 @@ export function SceneCanvas({
       if (!raf) raf = requestAnimationFrame(draw);
     };
     request();
-    const offs = [c.subscribe(request), c.editor.subscribe(request), c.host.ws.subscribe(request), c.host.ws.sceneUi.subscribe(request), ...(redraw ? [redraw(request)] : [])];
+    const offs = [
+      c.subscribe(request),
+      c.editor.subscribe(request),
+      c.host.ws.subscribe(request),
+      c.host.ws.sceneUi.subscribe(request),
+      ...(redraw ? [redraw(request)] : []),
+    ];
     return () => {
       if (raf) cancelAnimationFrame(raf);
       offs.forEach((off) => off());

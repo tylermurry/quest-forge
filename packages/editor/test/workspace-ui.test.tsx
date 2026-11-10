@@ -49,11 +49,15 @@ describe("workspace", () => {
     expect(row.textContent).toContain(`${hotspot.rules.length} rule`);
     fireEvent.click(within(row).getByRole("button", { name: /^Delete/ }));
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
-    expect(within(screen.getByRole("region", { name: "Hotspots layer" })).queryByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeNull();
+    expect(
+      within(screen.getByRole("region", { name: "Hotspots layer" })).queryByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` }),
+    ).toBeNull();
 
     fireEvent.keyDown(window, { key: "z", ...mod() });
     expect(garden(ed).hotspots.find((h) => h.id === hotspot.id)).toEqual(hotspot);
-    expect(within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` })).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("listitem", { name: `Hotspots: ${hotspot.name} (${hotspot.id})` }),
+    ).toBeTruthy();
     fireEvent.keyDown(window, { key: "z", ...mod(), shiftKey: true });
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
@@ -97,7 +101,9 @@ describe("workspace", () => {
     ed.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") }));
     act(() => ed.validateNow());
     const list = await screen.findByRole("list", { name: "Problems" });
-    const first = within(list).getAllByRole("button").find((b) => !b.hasAttribute("disabled") && b.textContent?.includes("Garden"))!;
+    const first = within(list)
+      .getAllByRole("button")
+      .find((b) => !b.hasAttribute("disabled") && b.textContent?.includes("Garden"))!;
     fireEvent.click(first);
     expect(screen.getByRole("tab", { name: "Garden" }).getAttribute("aria-selected")).toBe("true");
     // It selects the exact hotspot or object whose rule uses the item, not just the scene.

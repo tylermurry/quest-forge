@@ -31,8 +31,14 @@ export const SceneObject = z.strictObject({
   animation: ObjectAnimation.optional(),
   /** One-shots played by `play_animation`, then back to rest. */
   animations: z.array(NamedObjectAnimation).optional(),
-  x: z.int().min(-SCENE_WIDTH).max(SCENE_WIDTH * 2),
-  y: z.int().min(-SCENE_HEIGHT).max(SCENE_HEIGHT * 2),
+  x: z
+    .int()
+    .min(-SCENE_WIDTH)
+    .max(SCENE_WIDTH * 2),
+  y: z
+    .int()
+    .min(-SCENE_HEIGHT)
+    .max(SCENE_HEIGHT * 2),
   /** Occlusion sort line; defaults to the image's bottom edge at runtime. */
   baseline: SceneY.optional(),
   visible: z.boolean(),

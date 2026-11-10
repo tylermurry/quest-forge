@@ -361,6 +361,12 @@ function drawCursor(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefin
     return;
   }
   // Dark outline so it reads on any background.
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) drawIcon(ctx, s.verb, { ...r, x: r.x + dx, y: r.y + dy }, "#000");
+  for (const [dx, dy] of [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ] as const)
+    drawIcon(ctx, s.verb, { ...r, x: r.x + dx, y: r.y + dy }, "#000");
   drawIcon(ctx, s.verb, r, "#fff");
 }

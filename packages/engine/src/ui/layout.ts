@@ -158,7 +158,13 @@ export function computeLayout(cssScale: number): Layout {
     inventory: { panel, cells, buttons: invButtons },
     settings: { panel: sPanel, buttons: sButtons },
     slots: { panel: slotsPanel, rows: slotRows, perPage, pages, buttons: slotButtons },
-    volume: { panel: volPanel, music: { x: barX, y: volRow(0), w: barW, h: u }, sfx: { x: barX, y: volRow(1), w: barW, h: u }, labelX: volPanel.x + pad, buttons: volButtons },
+    volume: {
+      panel: volPanel,
+      music: { x: barX, y: volRow(0), w: barW, h: u },
+      sfx: { x: barX, y: volRow(1), w: barW, h: u },
+      labelX: volPanel.x + pad,
+      buttons: volButtons,
+    },
     ending: {
       panel: ePanel,
       message,

@@ -56,10 +56,35 @@ describe("scene Inspector", () => {
     fireEvent.blur(name);
     expect(garden(editor).hotspots.find((h) => h.id === "pond")!.name).toBe("lily pond");
     // Make the pond's shape cross itself: the Inspector says so.
-    act(() => void editor.apply("break", (p) => ({
-      ...p,
-      scenes: p.scenes.map((s) => (s.data.id === "garden" ? { ...s, data: { ...s.data, hotspots: s.data.hotspots.map((h) => (h.id === "pond" ? { ...h, shape: [[0, 0], [10, 10], [10, 0], [0, 10]] } : h)) } } : s)),
-    })));
+    act(
+      () =>
+        void editor.apply("break", (p) => ({
+          ...p,
+          scenes: p.scenes.map((s) =>
+            s.data.id === "garden"
+              ? {
+                  ...s,
+                  data: {
+                    ...s.data,
+                    hotspots: s.data.hotspots.map((h) =>
+                      h.id === "pond"
+                        ? {
+                            ...h,
+                            shape: [
+                              [0, 0],
+                              [10, 10],
+                              [10, 0],
+                              [0, 10],
+                            ],
+                          }
+                        : h,
+                    ),
+                  },
+                }
+              : s,
+          ),
+        })),
+    );
     act(() => editor.validateNow());
     expect(within(screen.getByLabelText("Inspector")).getByRole("list", { name: "Problems with this" }).textContent).toContain("crosses itself");
   });

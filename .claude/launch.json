@@ -4,71 +4,37 @@
     {
       "name": "engine-dev",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/engine",
-        "dev"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/engine", "dev"],
       "port": 5174
     },
     {
       "name": "engine-dev-alt",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/engine",
-        "dev",
-        "--port",
-        "5176"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/engine", "dev", "--port", "5176"],
       "port": 5176
     },
     {
       "name": "editor-dev",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/editor",
-        "dev"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/editor", "dev"],
       "port": 5175
     },
     {
       "name": "editor-dev-alt",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/editor",
-        "dev",
-        "--port",
-        "5177"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/editor", "dev", "--port", "5177"],
       "port": 5177
     },
     {
       "name": "site-dev",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/site",
-        "dev"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/site", "dev"],
       "port": 5178
     },
     {
       "name": "docs-dev",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": [
-        "pnpm",
-        "--filter",
-        "@questforge/docs",
-        "dev"
-      ],
+      "runtimeArgs": ["pnpm", "--filter", "@questforge/docs", "dev"],
       "port": 5179
     }
   ]

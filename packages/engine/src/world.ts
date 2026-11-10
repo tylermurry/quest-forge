@@ -1,4 +1,13 @@
-import { ANIMATION_SLOTS, pointInPolygon, type Animation, type AnimationSlot, type CharacterFile, type Facing, type ObjectAnimation, type SceneFile } from "@questforge/schema";
+import {
+  ANIMATION_SLOTS,
+  pointInPolygon,
+  type Animation,
+  type AnimationSlot,
+  type CharacterFile,
+  type Facing,
+  type ObjectAnimation,
+  type SceneFile,
+} from "@questforge/schema";
 import { scaleAt, walkSpeedAt } from "./depth.ts";
 import { actorDrawable, sceneDrawables, type Drawable, type ImageLookup, type LoadedImage, type ObjectPose } from "./drawables.ts";
 import { NavMesh, sceneNav } from "./nav.ts";
@@ -325,7 +334,13 @@ export class World {
   /** Every visible sprite, back to front (sorted by baseline). */
   drawList(): Drawable[] {
     const actors = [...this.npcs, this.player].filter((a) => a.visible);
-    return sceneDrawables(this.scene, this.images, (id) => this.isObjectVisible(id), actors, (id) => this.objectPose(id));
+    return sceneDrawables(
+      this.scene,
+      this.images,
+      (id) => this.isObjectVisible(id),
+      actors,
+      (id) => this.objectPose(id),
+    );
   }
 
   /** What's under a scene point: hotspots first, then named sprites, topmost first. */

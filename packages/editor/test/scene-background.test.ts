@@ -21,8 +21,14 @@ describe("backgrounds and empty scenes", () => {
     const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc0, 0, 11, 8, 0x01, 0x2c, 0x01, 0xf4, 3, 0, 0, 0]);
     expect(imageSize(jpeg)).toEqual({ w: 500, h: 300 });
     const webp = new Uint8Array(30);
-    webp.set([...("RIFF" as string)].map((c) => c.charCodeAt(0)), 0);
-    webp.set([..."WEBPVP8X"].map((c) => c.charCodeAt(0)), 8);
+    webp.set(
+      [...("RIFF" as string)].map((c) => c.charCodeAt(0)),
+      0,
+    );
+    webp.set(
+      [..."WEBPVP8X"].map((c) => c.charCodeAt(0)),
+      8,
+    );
     webp.set([639 & 0xff, 639 >> 8, 0, 399 & 0xff, 399 >> 8, 0], 24);
     expect(imageSize(webp)).toEqual({ w: 640, h: 400 });
     expect(imageSize(new Uint8Array([1, 2, 3]))).toBeNull();
@@ -69,7 +75,13 @@ describe("backgrounds and empty scenes", () => {
 
   it("sounds are only imported, and other files are refused, with a notice", async () => {
     const { c, editor, scene, at, dispose } = await sceneEditor(blankProject("T"), "first_scene");
-    c.dropFiles([{ name: "waves.ogg", bytes: new Uint8Array([1]) }, { name: "notes.txt", bytes: new Uint8Array([1]) }], at([10, 10]).screen);
+    c.dropFiles(
+      [
+        { name: "waves.ogg", bytes: new Uint8Array([1]) },
+        { name: "notes.txt", bytes: new Uint8Array([1]) },
+      ],
+      at([10, 10]).screen,
+    );
     expect(editor.project.assets!.data.audio.map((a) => a.id)).toEqual(["waves"]);
     expect(scene().background).toBe("first_scene_bg");
     expect(editor.notice?.text).toContain("notes.txt");

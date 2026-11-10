@@ -5,7 +5,20 @@ import { testImages, testProject } from "./support/project.ts";
 
 // Playtest debug layers: each toggle draws only its own shapes.
 
-const region = { regions: [{ id: "exit", shape: [[600, 300], [640, 300], [640, 400], [600, 400]], rules: [] }] };
+const region = {
+  regions: [
+    {
+      id: "exit",
+      shape: [
+        [600, 300],
+        [640, 300],
+        [640, 400],
+        [600, 400],
+      ],
+      rules: [],
+    },
+  ],
+};
 const make = () => new Session(testProject({ yard: region }), testImages);
 const layers = (s: Session, on: Partial<typeof DEBUG_OFF>) => new Set(debugShapes(s.world, { ...DEBUG_OFF, ...on }).map((sh) => sh.layer));
 

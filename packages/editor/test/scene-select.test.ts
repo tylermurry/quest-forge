@@ -74,7 +74,14 @@ describe("Select/Move", () => {
     click([300, 320]);
     // Midway along the edge [330,350] → [240,345].
     click([285, 347.5], { clicks: 2 });
-    expect(scene().walkable.holes[0]).toEqual([[230, 300], [330, 290], [390, 320], [330, 350], [285, 348], [240, 345]]);
+    expect(scene().walkable.holes[0]).toEqual([
+      [230, 300],
+      [330, 290],
+      [390, 320],
+      [330, 350],
+      [285, 348],
+      [240, 345],
+    ]);
     dispose();
   });
 

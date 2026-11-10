@@ -177,15 +177,26 @@ function checkDuplicates(project: Project, out: Collector) {
   ] as const;
   for (const [kind, docs] of lists) {
     const all = docs as readonly Doc<{ id: string }>[];
-    dupes([...all], (d) => d.data.id, (d, _i, f) => {
-      out.error("duplicate_id", kind, d.path, ["id"], `uses the ID ${d.data.id}, which ${all[f]!.path} already uses. IDs must be unique.`, []);
-    });
+    dupes(
+      [...all],
+      (d) => d.data.id,
+      (d, _i, f) => {
+        out.error("duplicate_id", kind, d.path, ["id"], `uses the ID ${d.data.id}, which ${all[f]!.path} already uses. IDs must be unique.`, []);
+      },
+    );
   }
 
   const inList = (fileKind: FileKind, file: string, listPath: DataPath, items: { id: string }[], noun: string) =>
-    dupes(items, (t) => t.id, (t, i) => {
-      out.error("duplicate_id", fileKind, file, [...listPath, i, "id"], `uses the ID ${t.id}, which another ${noun} already uses. IDs must be unique.`, [...listPath, i]);
-    });
+    dupes(
+      items,
+      (t) => t.id,
+      (t, i) => {
+        out.error("duplicate_id", fileKind, file, [...listPath, i, "id"], `uses the ID ${t.id}, which another ${noun} already uses. IDs must be unique.`, [
+          ...listPath,
+          i,
+        ]);
+      },
+    );
 
   if (project.flags) inList("flags", project.flags.path, ["flags"], project.flags.data.flags, "flag or counter");
   if (project.assets) {
@@ -197,9 +208,13 @@ function checkDuplicates(project: Project, out: Collector) {
     inList("scene", path, ["hotspots"], data.hotspots, "hotspot in this scene");
     inList("scene", path, ["regions"], data.regions, "region in this scene");
     data.objects.forEach((o, i) => inList("scene", path, ["objects", i, "animations"], o.animations ?? [], "animation of this object"));
-    dupes(data.characters, (c) => c.character, (c, i) => {
-      out.error("duplicate_id", "scene", path, ["characters", i, "character"], `places ${c.character} in this scene twice.`, ["characters", i]);
-    });
+    dupes(
+      data.characters,
+      (c) => c.character,
+      (c, i) => {
+        out.error("duplicate_id", "scene", path, ["characters", i, "character"], `places ${c.character} in this scene twice.`, ["characters", i]);
+      },
+    );
   }
   // Rule IDs are unique within their list, so fired keys stay unique.
   if (project.game) inList("game", project.game.path, ["rules"], project.game.data.rules, "rule in this list");
@@ -212,10 +227,21 @@ function checkDuplicates(project: Project, out: Collector) {
   for (const { path, data } of project.dialogues) {
     inList("dialogue", path, ["nodes"], data.nodes, "node in this dialogue");
     const options = data.nodes.flatMap((n, i) => (n.type === "choices" ? n.options.map((o, j) => ({ id: o.id, at: [i, j] as const })) : []));
-    dupes(options, (o) => o.id, (o) => {
-      const at = ["nodes", o.at[0], "options", o.at[1]];
-      out.error("duplicate_id", "dialogue", path, [...at, "id"], `uses the ID ${o.id}, which another choice in this dialogue already uses. IDs must be unique.`, at);
-    });
+    dupes(
+      options,
+      (o) => o.id,
+      (o) => {
+        const at = ["nodes", o.at[0], "options", o.at[1]];
+        out.error(
+          "duplicate_id",
+          "dialogue",
+          path,
+          [...at, "id"],
+          `uses the ID ${o.id}, which another choice in this dialogue already uses. IDs must be unique.`,
+          at,
+        );
+      },
+    );
   }
 }
 
@@ -243,7 +269,11 @@ function checkScene(doc: Doc<SceneFile>, out: Collector) {
     const ok = polygon(h, ["walkable", "holes", i], "This hole", ["walkable", "holes", i]);
     // A hole must sit inside the outline, or walking around it makes no sense.
     if (ok && outerOk && !polygonWithin(h, data.walkable.outer)) {
-      out.error("invalid_polygon", "scene", file, ["walkable", "holes", i], "This hole sticks out of the walkable area. Move its points inside the outline.", ["walkable", "holes", i]);
+      out.error("invalid_polygon", "scene", file, ["walkable", "holes", i], "This hole sticks out of the walkable area. Move its points inside the outline.", [
+        "walkable",
+        "holes",
+        i,
+      ]);
     }
   });
   data.objects.forEach((o, i) => {
@@ -276,7 +306,10 @@ function checkImageFiles(project: Project, out: Collector) {
   const files = filesAfterSave(project);
   project.assets.data.images.forEach((img, i) => {
     if (!files.has(img.path)) {
-      out.error("missing_image_file", "assets", project.assets!.path, ["images", i, "path"], `points to ${img.path}, which isn't in the project folder.`, ["images", i]);
+      out.error("missing_image_file", "assets", project.assets!.path, ["images", i, "path"], `points to ${img.path}, which isn't in the project folder.`, [
+        "images",
+        i,
+      ]);
     }
   });
 }

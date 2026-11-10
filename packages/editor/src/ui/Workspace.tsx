@@ -60,11 +60,33 @@ function SaveStatus({ editor }: { editor: Editor }) {
   );
 }
 
-function IconButton({ label, onClick, disabled, active, className, children }: { label: string; onClick(): void; disabled?: boolean; active?: boolean; className?: string; children: React.ReactNode }) {
+function IconButton({
+  label,
+  onClick,
+  disabled,
+  active,
+  className,
+  children,
+}: {
+  label: string;
+  onClick(): void;
+  disabled?: boolean;
+  active?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-xs" aria-label={label} aria-pressed={active} disabled={disabled} onClick={onClick} className={cn(active === false && "text-muted-foreground", className)}>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={label}
+          aria-pressed={active}
+          disabled={disabled}
+          onClick={onClick}
+          className={cn(active === false && "text-muted-foreground", className)}
+        >
           {children}
         </Button>
       </TooltipTrigger>
@@ -138,6 +160,7 @@ export function Workspace({ root, editor, onClose }: Props) {
   // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up.
   const playing = useSyncExternalStore(playtest.subscribe, () => playtest.playing);
   const hiddenForPlay = useRef<("browser" | "inspector")[] | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   useEffect(() => {
     if (playing) {
       const up = (["browser", "inspector"] as const).filter((n) => shown(n === "browser" ? browser : inspector));
@@ -148,7 +171,6 @@ export function Workspace({ root, editor, onClose }: Props) {
       hiddenForPlay.current = null;
     }
     setTick((t) => t + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   }, [playing]);
 
   // Notices (outside reloads, refused imports, command errors) show as toasts.
@@ -254,77 +276,109 @@ export function Workspace({ root, editor, onClose }: Props) {
 
   return (
     <TooltipProvider delayDuration={500}>
-    {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases. */}
-    <CanvasImagesContext.Provider value={images}>
-    <DndContext sensors={sensors} collisionDetection={pointerWithin}>
-    <div className="flex h-full flex-col">
-      <TitleBar>
-        <IconButton label="Back to project selector" onClick={onClose}>
-          <ArrowLeft />
-        </IconButton>
-        <span className="truncate text-[13px] font-semibold">{projectTitle(ed.project)}</span>
-        <div className="flex items-center">
-          <IconButton label={ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo"} disabled={!ed.history.canUndo} onClick={() => ed.undo()}>
-            <Undo2 />
-          </IconButton>
-          <IconButton label={ed.history.redoLabel ? `Redo ${ed.history.redoLabel}` : "Redo"} disabled={!ed.history.canRedo} onClick={() => ed.redo()}>
-            <Redo2 />
-          </IconButton>
-        </div>
-        <Button variant="ghost" size="xs" disabled={ed.status.state === "saved" || ed.status.state === "saving"} onClick={() => void saveNow(ed)}>
-          <Save /> Save
-        </Button>
-        <SaveStatus editor={ed} />
-        <div className="ml-auto flex items-center gap-0.5">
-          <PlayControls playtest={playtest} />
-          <span className="bg-border mx-2 h-4 w-px" aria-hidden />
-          <IconButton label="Show project browser" active={shown(browser)} onClick={() => toggle(browser)}>
-            <PanelLeft />
-          </IconButton>
-          <IconButton label="Show problems" active={shown(dock)} onClick={() => toggle(dock)}>
-            <PanelBottom />
-          </IconButton>
-          <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
-            <PanelRight />
-          </IconButton>
-        </div>
-      </TitleBar>
-      <ResizablePanelGroup orientation="horizontal" id="questforge.columns" defaultLayout={columns.defaultLayout} onLayoutChanged={columns.onLayoutChanged} className="min-h-0 flex-1">
-        <ResizablePanel id="browser" panelRef={browser} defaultSize="260px" minSize="180px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-          <aside aria-label="Project browser" className="h-full">
-            <ProjectBrowser actions={actions} />
-          </aside>
-        </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel id="center" minSize="30%">
-          {playing ? (
-            <PlaytestArea playtest={playtest} actions={actions} />
-          ) : (
-            <ResizablePanelGroup orientation="vertical" id="questforge.rows" defaultLayout={rows.defaultLayout} onLayoutChanged={rows.onLayoutChanged}>
-              <ResizablePanel id="tabs" minSize="25%">
-                <main className="h-full">
-                  <EditorTabs actions={actions} />
-                </main>
+      {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases. */}
+      <CanvasImagesContext.Provider value={images}>
+        <DndContext sensors={sensors} collisionDetection={pointerWithin}>
+          <div className="flex h-full flex-col">
+            <TitleBar>
+              <IconButton label="Back to project selector" onClick={onClose}>
+                <ArrowLeft />
+              </IconButton>
+              <span className="truncate text-[13px] font-semibold">{projectTitle(ed.project)}</span>
+              <div className="flex items-center">
+                <IconButton label={ed.history.undoLabel ? `Undo ${ed.history.undoLabel}` : "Undo"} disabled={!ed.history.canUndo} onClick={() => ed.undo()}>
+                  <Undo2 />
+                </IconButton>
+                <IconButton label={ed.history.redoLabel ? `Redo ${ed.history.redoLabel}` : "Redo"} disabled={!ed.history.canRedo} onClick={() => ed.redo()}>
+                  <Redo2 />
+                </IconButton>
+              </div>
+              <Button variant="ghost" size="xs" disabled={ed.status.state === "saved" || ed.status.state === "saving"} onClick={() => void saveNow(ed)}>
+                <Save /> Save
+              </Button>
+              <SaveStatus editor={ed} />
+              <div className="ml-auto flex items-center gap-0.5">
+                <PlayControls playtest={playtest} />
+                <span className="bg-border mx-2 h-4 w-px" aria-hidden />
+                <IconButton label="Show project browser" active={shown(browser)} onClick={() => toggle(browser)}>
+                  <PanelLeft />
+                </IconButton>
+                <IconButton label="Show problems" active={shown(dock)} onClick={() => toggle(dock)}>
+                  <PanelBottom />
+                </IconButton>
+                <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
+                  <PanelRight />
+                </IconButton>
+              </div>
+            </TitleBar>
+            <ResizablePanelGroup
+              orientation="horizontal"
+              id="questforge.columns"
+              defaultLayout={columns.defaultLayout}
+              onLayoutChanged={columns.onLayoutChanged}
+              className="min-h-0 flex-1"
+            >
+              <ResizablePanel
+                id="browser"
+                panelRef={browser}
+                defaultSize="260px"
+                minSize="180px"
+                maxSize="45%"
+                collapsible
+                className="bg-panel"
+                onResize={() => setTick((t) => t + 1)}
+              >
+                <aside aria-label="Project browser" className="h-full">
+                  <ProjectBrowser actions={actions} />
+                </aside>
               </ResizablePanel>
               <ResizableHandle />
-              <ResizablePanel id="dock" panelRef={dock} defaultSize="28%" minSize="80px" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-                <footer className="flex h-full flex-col">
-                  <Dock actions={actions} />
-                </footer>
+              <ResizablePanel id="center" minSize="30%">
+                {playing ? (
+                  <PlaytestArea playtest={playtest} actions={actions} />
+                ) : (
+                  <ResizablePanelGroup orientation="vertical" id="questforge.rows" defaultLayout={rows.defaultLayout} onLayoutChanged={rows.onLayoutChanged}>
+                    <ResizablePanel id="tabs" minSize="25%">
+                      <main className="h-full">
+                        <EditorTabs actions={actions} />
+                      </main>
+                    </ResizablePanel>
+                    <ResizableHandle />
+                    <ResizablePanel
+                      id="dock"
+                      panelRef={dock}
+                      defaultSize="28%"
+                      minSize="80px"
+                      collapsible
+                      className="bg-panel"
+                      onResize={() => setTick((t) => t + 1)}
+                    >
+                      <footer className="flex h-full flex-col">
+                        <Dock actions={actions} />
+                      </footer>
+                    </ResizablePanel>
+                  </ResizablePanelGroup>
+                )}
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel
+                id="inspector"
+                panelRef={inspector}
+                defaultSize="280px"
+                minSize="200px"
+                maxSize="45%"
+                collapsible
+                className="bg-panel"
+                onResize={() => setTick((t) => t + 1)}
+              >
+                <aside aria-label="Inspector" className="h-full overflow-auto px-3 pb-3">
+                  <Inspector actions={actions} />
+                </aside>
               </ResizablePanel>
             </ResizablePanelGroup>
-          )}
-        </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel id="inspector" panelRef={inspector} defaultSize="280px" minSize="200px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-          <aside aria-label="Inspector" className="h-full overflow-auto px-3 pb-3">
-            <Inspector actions={actions} />
-          </aside>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
-    </DndContext>
-    </CanvasImagesContext.Provider>
+          </div>
+        </DndContext>
+      </CanvasImagesContext.Provider>
     </TooltipProvider>
   );
 }

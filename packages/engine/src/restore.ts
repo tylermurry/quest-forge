@@ -97,22 +97,58 @@ export function sanitizeState(p: Project, saved: GameState): Sanitized {
       s.player = { x: spawn.x, y: spawn.y, facing: spawn.facing };
     }
   }
-  s.inventory = keep(s.inventory, (i) => items.has(i), (i) => `item ${i}`);
-  keepKeys(s.flags, (k) => bools.has(k), (k) => `flag ${k}`);
-  keepKeys(s.counters, (k) => counters.has(k), (k) => `counter ${k}`);
+  s.inventory = keep(
+    s.inventory,
+    (i) => items.has(i),
+    (i) => `item ${i}`,
+  );
+  keepKeys(
+    s.flags,
+    (k) => bools.has(k),
+    (k) => `flag ${k}`,
+  );
+  keepKeys(
+    s.counters,
+    (k) => counters.has(k),
+    (k) => `counter ${k}`,
+  );
   for (const [id, initial] of bools) if (!(id in s.flags)) s.flags[id] = initial;
   for (const [id, initial] of counters) if (!(id in s.counters)) s.counters[id] = initial;
-  keepKeys(s.awards, (k) => awards.has(k), (k) => `award ${k}`);
-  s.visited = keep(s.visited, (v) => scenes.has(v), (v) => `visited scene ${v}`);
+  keepKeys(
+    s.awards,
+    (k) => awards.has(k),
+    (k) => `award ${k}`,
+  );
+  s.visited = keep(
+    s.visited,
+    (v) => scenes.has(v),
+    (v) => `visited scene ${v}`,
+  );
   const [sceneOf, idOf] = [(k: string) => k.slice(0, k.indexOf("/")), (k: string) => k.slice(k.indexOf("/") + 1)];
-  keepKeys(s.objects, (k) => !!scenes.get(sceneOf(k))?.objects.some((o) => o.id === idOf(k)), (k) => `object ${k}`);
-  keepKeys(s.characters, (k) => scenes.has(sceneOf(k)) && characters.has(idOf(k)), (k) => `character position ${k}`);
+  keepKeys(
+    s.objects,
+    (k) => !!scenes.get(sceneOf(k))?.objects.some((o) => o.id === idOf(k)),
+    (k) => `object ${k}`,
+  );
+  keepKeys(
+    s.characters,
+    (k) => scenes.has(sceneOf(k)) && characters.has(idOf(k)),
+    (k) => `character position ${k}`,
+  );
   // Fired rules of a deleted scene or dialogue can never matter again; drop them quietly.
   const dialogueIds = new Set(p.dialogues.map((d) => d.data.id));
-  s.fired = s.fired.filter((k) => (k.startsWith("dialogue:") ? dialogueIds.has(sceneOf(k.slice("dialogue:".length))) : k.startsWith("game/") || scenes.has(sceneOf(k))));
+  s.fired = s.fired.filter((k) =>
+    k.startsWith("dialogue:") ? dialogueIds.has(sceneOf(k.slice("dialogue:".length))) : k.startsWith("game/") || scenes.has(sceneOf(k)),
+  );
   // Once-only options are keyed `<dialogue>/<node>/<option>`.
-  const options = new Set(p.dialogues.flatMap((d) => d.data.nodes.flatMap((n) => (n.type === "choices" ? n.options.map((o) => `${d.data.id}/${n.id}/${o.id}`) : []))));
-  s.dialogueChoices = keep(s.dialogueChoices, (k) => options.has(k), (k) => `dialogue choice ${k}`);
+  const options = new Set(
+    p.dialogues.flatMap((d) => d.data.nodes.flatMap((n) => (n.type === "choices" ? n.options.map((o) => `${d.data.id}/${n.id}/${o.id}`) : []))),
+  );
+  s.dialogueChoices = keep(
+    s.dialogueChoices,
+    (k) => options.has(k),
+    (k) => `dialogue choice ${k}`,
+  );
   if (s.music !== null && !audio.has(s.music)) {
     dropped.push(`music ${s.music}`);
     s.music = null;

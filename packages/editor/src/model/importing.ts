@@ -24,7 +24,12 @@ const extOf = (name: string) => (name.includes(".") ? name.split(".").pop()!.toL
 /** A file name safe to put in a project folder: no separators or leading dots, lowercase extension. */
 function safeFileName(name: string): string {
   const ext = extOf(name);
-  const stem = name.slice(0, name.length - ext.length - 1).replace(/[/\\:*?"<>|\u0000-\u001f]+/g, "_").replace(/^\.+/, "").trim() || "file";
+  const stem =
+    name
+      .slice(0, name.length - ext.length - 1)
+      .replace(/[/\\:*?"<>|\u0000-\u001f]+/g, "_")
+      .replace(/^\.+/, "")
+      .trim() || "file";
   return `${stem}.${ext}`;
 }
 

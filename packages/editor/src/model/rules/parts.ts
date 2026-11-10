@@ -45,7 +45,8 @@ function moveIn<T>(list: readonly T[], from: number, to: number): T[] {
 export const conditions = {
   add: (d: RuleDefaults, list: readonly Condition[], type: ConditionType): Condition[] => [...list, d.condition(type)],
   /** Swaps a condition for a fresh one of another type. */
-  setType: (d: RuleDefaults, list: readonly Condition[], i: number, type: ConditionType): Condition[] => listEdit(list, i, (old) => (old.type === type ? old : d.condition(type))),
+  setType: (d: RuleDefaults, list: readonly Condition[], i: number, type: ConditionType): Condition[] =>
+    listEdit(list, i, (old) => (old.type === type ? old : d.condition(type))),
   /** Changes some fields; the result must still be a valid condition. */
   setFields: (d: RuleDefaults, list: readonly Condition[], i: number, patch: Record<string, unknown>): Condition[] =>
     listEdit(list, i, (old) => parsed<Condition>(Condition, fixUp(d, old as Part, { ...(old as Part), ...patch, type: old.type }))),

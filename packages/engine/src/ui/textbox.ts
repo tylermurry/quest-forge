@@ -16,7 +16,7 @@ export interface TextBox {
   kind: "narrate" | "say";
   text: string;
   /** Speaker (say only). */
-  speaker?: { id: string; name: string; color: string; /** Sprite bounds, if on screen. */ anchor: Rect | null };
+  speaker?: { id: string; name: string; color: string /** Sprite bounds, if on screen. */; anchor: Rect | null };
   /** Seconds until it closes by itself. */
   timeLeft: number;
 }

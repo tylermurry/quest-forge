@@ -3,8 +3,8 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Questforge docs",
-  tagline: "Engineering standards and the Questforge project specs",
+  title: "Quest Forge docs",
+  tagline: "Engineering standards and the Quest Forge project specs",
   // PLACEHOLDER: replace with the production domain of the Cloudflare site.
   url: "https://questforge.example.com",
   // Served under /docs/ of the Cloudflare site (the build is copied into the site's assets).
@@ -56,7 +56,7 @@ const config = {
 
   themeConfig: {
     navbar: {
-      title: "Questforge docs",
+      title: "Quest Forge docs",
       items: [
         { to: "/standards/", label: "Standards", position: "left", activeBaseRegex: "/standards/" },
         { to: "/project/conventions/", label: "Project", position: "left", activeBaseRegex: "/project/" },

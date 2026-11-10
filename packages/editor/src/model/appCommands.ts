@@ -170,4 +170,9 @@ export function commandForKey(e: KeyPress, mac: boolean, inTextField: boolean, o
 
 /** Tauri accelerator form of a shortcut: `Mod+Shift+Z` → `CmdOrCtrl+Shift+Z`. */
 export const accelerator = (shortcut: string) =>
-  shortcut.replace("Mod", "CmdOrCtrl").replace(/^Ctrl\+/, "Control+").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash");
+  shortcut
+    .replace("Mod", "CmdOrCtrl")
+    .replace(/^Ctrl\+/, "Control+")
+    .replace(/\+=$/, "+Equal")
+    .replace(/\+-$/, "+Minus")
+    .replace(/\+\\$/, "+Backslash");
