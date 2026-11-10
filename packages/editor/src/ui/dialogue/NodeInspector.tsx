@@ -59,7 +59,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when other values change would flash again
 
   if (!doc || !node) return null;
   const problems = problemsByNode(editor.problems, doc.path, doc.data).get(node.id) ?? [];

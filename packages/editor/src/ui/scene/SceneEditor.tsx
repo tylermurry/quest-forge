@@ -98,7 +98,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
       offs.forEach((o) => o());
       off();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the handlers close over the controller `c`; re-registering on other values would only churn the command registry
   }, [c, registry, ws]);
 
   // Browser rows dropped on the canvas place objects and characters (spec 09); Objects rows reorder (D95).

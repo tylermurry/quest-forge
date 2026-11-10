@@ -148,7 +148,7 @@ export function Workspace({ root, editor, onClose }: Props) {
       hiddenForPlay.current = null;
     }
     setTick((t) => t + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   }, [playing]);
 
   // Notices (outside reloads, refused imports, command errors) show as toasts.

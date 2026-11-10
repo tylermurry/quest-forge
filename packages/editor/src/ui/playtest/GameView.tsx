@@ -36,6 +36,7 @@ export function GameView({ playtest, run }: { playtest: Playtest; run: Run }) {
       return;
     }
     game.current = g;
+    // Debug handle for the dev page and tests (`window.game`); Window has no such field, so the cast is deliberate.
     (window as unknown as { game?: Game }).game = g;
     g.ready.then(
       () => g.session && playtest.attach(run, g.session),

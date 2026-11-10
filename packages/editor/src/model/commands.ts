@@ -350,6 +350,7 @@ export function duplicateEntry(p: Project, section: Section, id: string): { proj
 
 /** In a duplicated scene, references to the original scene point at the copy instead (D86). */
 function retargetSelf(copy: AnyDoc, from: string, to: string) {
+  // `copy` is a scene here (the caller checked the section), but AnyDoc is a union, so TypeScript can't tell.
   const solo: Project = { ...emptyProject(), scenes: [copy as unknown as Doc<SceneFile>] };
   for (const ref of collectReferences(solo)) {
     if (ref.kind === "scene" && ref.id === from) setAt(copy.data, ref.location.path, to);
