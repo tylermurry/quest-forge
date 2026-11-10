@@ -38,22 +38,22 @@
       "style": {
         // Deliberate style: with noUncheckedIndexedAccess the code asserts non-null where an invariant guarantees it (854 uses).
         "noNonNullAssertion": "off",
-        // Existing findings, follow-up issue to be filed (17).
+        // Existing findings, follow-up #32 (17).
         "useImportType": "off",
         "useTemplate": "off",
         "useExponentiationOperator": "off",
-        // Existing findings in CSS, follow-up issue to be filed (6).
+        // Existing findings in CSS, follow-up #32 (6).
         "noDescendingSpecificity": "off"
       },
       "correctness": {
-        // Kept visible but not blocking: 8 effects have no suppression and need a decision each, follow-up issue to be filed.
+        // Kept visible but not blocking: 8 effects have no suppression and need a decision each, follow-up #31.
         // The 7 deliberate exceptions carry a biome-ignore with their reason.
         "useExhaustiveDependencies": "warn",
-        // Existing finding in a test helper that calls a mocked hook, follow-up issue to be filed (2).
+        // Existing finding in a test helper that calls a mocked hook, follow-up #32 (2).
         "useHookAtTopLevel": "off"
       },
       "suspicious": {
-        // Existing findings, follow-up issue to be filed.
+        // Existing findings, follow-up #32.
         "useIterableCallbackReturn": "off", // 28
         "noArrayIndexKey": "off", // 14
         "noAssignInExpressions": "off", // 10
@@ -63,7 +63,7 @@
         "noThenProperty": "off"
       },
       "complexity": {
-        // Existing findings, follow-up issue to be filed.
+        // Existing findings, follow-up #32.
         "noCommaOperator": "off", // 6
         "useOptionalChain": "off", // 3
         "noUselessFragments": "off", // 1
@@ -71,7 +71,7 @@
         "noAdjacentSpacesInRegex": "off" // 1
       },
       "a11y": {
-        // Real accessibility findings in the editor UI, existing, follow-up issue to be filed (49 in total).
+        // Real accessibility findings in the editor UI, existing, follow-up #30 (49 in total).
         "useButtonType": "off", // 21
         "useAriaPropsSupportedByRole": "off", // 7
         "useSemanticElements": "off", // 6
