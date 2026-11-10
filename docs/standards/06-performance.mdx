@@ -1,0 +1,44 @@
+---
+title: Performance
+sidebar_position: 6
+description: Stay fast enough for the user, and prove it by measuring.
+---
+
+# Performance
+
+Performance matters where the user can feel it. Elsewhere, clear code wins.
+
+**Applies to:** any change to code that runs often, handles inputs that can be large, or
+affects start-up or loading.
+
+## Rules
+
+### PRF-1: Keep to the stated targets
+
+**Must.** Where the project states a performance target or budget, the change does not
+break it.
+
+### PRF-2: Scale sensibly with input
+
+**Must.** The time and memory the change uses grow reasonably as its input grows. Nothing
+grows without limit, and nothing becomes unusable at an input size the product allows.
+
+### PRF-3: Measure before optimising
+
+**Should.** An optimisation that makes the code harder to read comes with a measurement
+showing the problem and the improvement.
+
+### PRF-4: Do repeated work once
+
+**Should.** Code that runs for every frame, request, keystroke or item does not redo work
+whose result could be computed once and kept.
+
+### PRF-5: Never freeze the interface
+
+**Should.** A slow operation does not block the user interface. It runs in the background
+or shows progress.
+
+### PRF-6: Release what you acquire
+
+**Should.** Files, connections, timers, listeners and memory the change acquires are
+released when no longer needed.

@@ -1,0 +1,60 @@
+---
+title: Security
+sidebar_position: 5
+description: Protect users, their data and the project's own infrastructure.
+---
+
+# Security
+
+Assume that anything from outside the system may be hostile, and give every part only the
+access it needs.
+
+**Applies to:** any change that handles outside input, files, the network, credentials,
+permissions, or the project's build and automation.
+
+## Rules
+
+### SEC-1: No secrets in the repository
+
+**Must.** Passwords, keys and tokens never appear in source, tests, examples, logs or
+commit history. They come from a secret store at run time.
+
+### SEC-2: Untrusted input never becomes code
+
+**Must.** Input from outside the system is validated or escaped before it reaches a
+command, a query, a file path, or markup that will be displayed.
+
+### SEC-3: Least privilege
+
+**Must.** Code, credentials and automation get only the access the task needs, for only as
+long as it needs it.
+
+### SEC-4: Stay inside the intended scope
+
+**Must.** File and network access is confined to the locations the feature is meant to
+reach. Input cannot steer it elsewhere.
+
+### SEC-5: Check permission on every protected action
+
+**Must.** Each action that needs permission checks it, in a part of the system the user
+cannot tamper with.
+
+### SEC-6: Never switch off a safeguard to make something work
+
+**Must.** The change does not disable or bypass verification, sandboxing, validation or any
+other security control.
+
+### SEC-7: Untrusted content cannot direct automation
+
+**Must.** Automation, including AI, treats content from untrusted sources as data. Such
+content cannot cause a privileged action or reach a secret.
+
+### SEC-8: Keep sensitive data out of messages and logs
+
+**Should.** Error messages and logs do not reveal secrets, personal data or internal
+details that would help an attacker.
+
+### SEC-9: Test the refusal
+
+**Should.** Security-relevant behaviour has tests, including at least one case where access
+is correctly refused.

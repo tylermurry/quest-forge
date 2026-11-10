@@ -1,0 +1,51 @@
+---
+title: Maintainability
+sidebar_position: 7
+description: Write code the next author can read and change safely.
+---
+
+# Maintainability
+
+Code is read far more often than it is written, and the next author will not have this
+change's context.
+
+**Applies to:** any change that adds or edits code.
+
+## Rules
+
+### MNT-1: Names tell the truth
+
+**Must.** A name says what the thing is or does. No name is misleading, and a thing whose
+purpose changes is renamed.
+
+### MNT-2: Follow the project's conventions
+
+**Must.** The change follows the project's existing conventions, style and formatting. A
+deliberate departure is recorded as a decision.
+
+### MNT-3: Explain every suppression
+
+**Must.** A warning, type check or lint rule is silenced only with the reason written next
+to it.
+
+### MNT-4: No duplicated logic
+
+**Should.** The same logic is not written twice. It is shared, subject to SIM-5.
+
+### MNT-5: Comments say why
+
+**Should.** A comment explains why the code is the way it is, not what it does. Comments
+the change makes untrue are fixed or removed.
+
+### MNT-6: Name special values
+
+**Should.** A number or string with a special meaning gets a name that says what it means.
+
+### MNT-7: Mark temporary workarounds
+
+**Should.** A workaround says what it works around and what would allow its removal.
+
+### MNT-8: Leave touched code no worse
+
+**Should.** The code the change touches is at least as clear afterwards as before.
+Unrelated tidying goes in its own change (CHG-1).

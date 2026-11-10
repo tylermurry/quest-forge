@@ -1,0 +1,49 @@
+---
+title: Compatibility
+sidebar_position: 9
+description: What worked before the change still works after it.
+---
+
+# Compatibility
+
+Users keep their data and their habits across versions. A change must not take either away
+by accident.
+
+**Applies to:** any change that touches saved data, a file format, a public interface, or
+behaviour that differs between platforms.
+
+## Rules
+
+### CMP-1: Existing data keeps working
+
+**Must.** Data and files made with earlier versions still load. A change to a stored format
+ships with a migration, and the migration is tested.
+
+### CMP-2: Do not break a public interface silently
+
+**Must.** A breaking change to anything others rely on (a file format, an API, a command,
+a link) needs a recorded decision and a version change that signals it.
+
+### CMP-3: Work on every supported platform
+
+**Must.** The change works in every environment the project says it supports, not only the
+one it was written on.
+
+### CMP-4: Refuse newer data clearly
+
+**Must.** When an older version meets data written by a newer one, it refuses with a clear
+message. It never guesses, and never overwrites the data.
+
+### CMP-5: Deprecate before removing
+
+**Should.** Something others rely on is marked as going away, with its replacement named,
+for at least one release before it is removed.
+
+### CMP-6: Prefer additive format changes
+
+**Should.** A stored format changes by adding optional parts where possible, not by
+changing the meaning of existing ones.
+
+### CMP-7: Keep published names stable
+
+**Should.** Names, paths and addresses that others link to do not change without need.

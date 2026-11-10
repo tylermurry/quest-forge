@@ -1,0 +1,66 @@
+---
+title: Engineering standards
+slug: /
+sidebar_position: 0
+description: The rules every change is written to and reviewed against.
+---
+
+# Engineering standards
+
+These are the rules every change is held to. The author of a change reads them before
+writing it. The reviewer checks the change against the same rules and cites a rule ID for
+every finding. Nothing here depends on a programming language, a framework or a particular
+project.
+
+## How to read a rule
+
+Every rule has an ID and a severity.
+
+- **ID**: a page prefix and a number, such as `TST-1`. IDs never change and are never
+  reused. A retired rule keeps its number and is marked "Retired".
+- **Must**: a change that breaks the rule is not ready to merge.
+- **Should**: a change that breaks the rule gets a comment. It can still merge.
+
+The project owner can accept a specific `Must` finding on a specific change by giving a
+written reason. The reason is recorded with the change. Nobody else can do this.
+
+## The pages
+
+| Page | Prefix | Read it when the change… |
+|---|---|---|
+| [Simplicity](./01-simplicity.mdx) | `SIM` | adds or restructures code |
+| [Architecture](./02-architecture.mdx) | `ARC` | adds a file or module, moves code, or makes one part depend on another |
+| [Correctness](./03-correctness.mdx) | `COR` | changes behaviour |
+| [Testing](./04-testing.mdx) | `TST` | changes behaviour or touches tests |
+| [Security](./05-security.mdx) | `SEC` | handles outside input, files, the network, credentials, permissions or automation |
+| [Performance](./06-performance.mdx) | `PRF` | touches code that runs often, handles large inputs, or affects start-up or loading |
+| [Maintainability](./07-maintainability.mdx) | `MNT` | adds or edits code |
+| [Dependencies](./08-dependencies.mdx) | `DEP` | adds, removes or upgrades a third-party package or tool |
+| [Compatibility](./09-compatibility.mdx) | `CMP` | touches saved data, a file format, a public interface or platform-specific behaviour |
+| [UX and accessibility](./10-ux-accessibility.mdx) | `UXA` | changes anything a user sees, reads or operates |
+| [Documentation](./11-documentation.mdx) | `DOC` | changes behaviour, structure, commands or conventions that are written down |
+| [Change hygiene](./12-change-hygiene.mdx) | `CHG` | every change |
+| [AI collaboration](./13-ai-collaboration.mdx) | `AIC` | every change written or reviewed by an AI |
+
+When unsure whether a page applies, read it. Each page takes a few minutes.
+
+## For the author
+
+1. Before starting, read **Change hygiene**, **AI collaboration** (if you are an AI) and
+   every page whose row matches the change.
+2. Write the change to those rules.
+3. Before asking for review, go through the same pages again and check each rule.
+
+## For the reviewer
+
+1. Read the same pages the author should have read.
+2. Report each violation with its rule ID, where it is, why it matters and what would fix
+   it, in plain language.
+3. Do not invent rules. A problem that no rule covers is reported separately as a
+   suggestion for these standards, and it does not block the change.
+
+## Changing the standards
+
+A change to these pages contains nothing else ([CHG-4](./12-change-hygiene.mdx)), and the
+owner approves it like any other change. This stops a change from relaxing the rule it
+breaks. Add a rule when a real problem got through, not in advance.

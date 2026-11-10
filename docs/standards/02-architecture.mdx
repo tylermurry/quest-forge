@@ -1,0 +1,50 @@
+---
+title: Architecture
+sidebar_position: 2
+description: Keep the structure of the system intact and written down.
+---
+
+# Architecture
+
+A project stays understandable when each part has one job, and the parts depend on each
+other in one documented direction.
+
+**Applies to:** any change that adds a file or module, moves code, or makes one part of the
+system depend on another.
+
+## Rules
+
+### ARC-1: Respect the documented boundaries
+
+**Must.** The change follows the project's documented modules and the direction in which
+they may depend on each other. It adds no dependency cycle.
+
+### ARC-2: One source of truth
+
+**Must.** Each data shape, rule and constant is defined in one place. The change does not
+redefine or copy something another part of the system owns.
+
+### ARC-3: Keep logic apart from input, output and display
+
+**Must.** Where the project separates its logic from files, the network, the screen or the
+platform, the change keeps that separation, so the logic can be tested without them.
+
+### ARC-4: Record structural changes as decisions
+
+**Must.** A new module, a new boundary, or a new pattern that other code is expected to
+follow is recorded in the project's decision log in the same change.
+
+### ARC-5: Put code where a reader would look for it
+
+**Should.** New code goes in the place the documented structure suggests. If no existing
+place fits, that is a structural change (ARC-4).
+
+### ARC-6: Use public interfaces
+
+**Should.** One module uses another through what that module deliberately exposes, not by
+reaching into its internals.
+
+### ARC-7: Keep side effects contained
+
+**Should.** Shared mutable state and side effects are limited to a few clearly named
+places. Everything else takes inputs and returns results.
