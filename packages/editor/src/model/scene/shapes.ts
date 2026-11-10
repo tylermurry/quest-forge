@@ -56,7 +56,9 @@ export function scenePolygons(scene: SceneFile): { pr: PolyRef; poly: Polygon; l
   // Later entries draw on top, so they're listed first.
   for (const r of [...scene.regions].reverse()) out.push({ pr: { ref: { list: "regions", key: r.id } }, poly: r.shape, layer: "regions" });
   for (const h of [...scene.hotspots].reverse()) out.push({ pr: { ref: { list: "hotspots", key: h.id } }, poly: h.shape, layer: "hotspots" });
-  scene.walkable.holes.forEach((h, i) => out.push({ pr: { ref: { list: "walkable", key: holeKey(i) } }, poly: h, layer: "walkable" }));
+  scene.walkable.holes.forEach((h, i) => {
+    out.push({ pr: { ref: { list: "walkable", key: holeKey(i) } }, poly: h, layer: "walkable" });
+  });
   if (scene.walkable.outer.length) out.push({ pr: { ref: { list: "walkable", key: "outer" } }, poly: scene.walkable.outer, layer: "walkable" });
   for (const o of [...scene.objects].reverse())
     if (o.obstacle) out.push({ pr: { ref: { list: "objects", key: o.id }, obstacle: true }, poly: o.obstacle, layer: "objects" });

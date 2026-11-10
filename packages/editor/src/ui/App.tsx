@@ -29,6 +29,7 @@ export function App() {
   const titleInput = useRef<HTMLInputElement>(null);
   const native = !!platform.installMenu;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per platform; `open` is recreated every render, and re-running would reload the recent list and relaunch the project
   useEffect(() => {
     let live = true;
     void (async () => {
@@ -41,7 +42,6 @@ export function App() {
     return () => {
       live = false;
     };
-    // Runs once per platform; `open` is recreated every render.
   }, [platform]);
 
   // The native menu bar (app) or page shortcuts (dev page) run the same commands.
@@ -50,7 +50,10 @@ export function App() {
     if (!platform.installMenu) return;
     let remove: (() => void) | null = null;
     let live = true;
-    void platform.installMenu(registry).then((r) => (live ? (remove = r) : r()));
+    void platform.installMenu(registry).then((r) => {
+      if (live) remove = r;
+      else r();
+    });
     return () => {
       live = false;
       remove?.();
@@ -135,6 +138,7 @@ export function App() {
       }),
     [registry, platform],
   );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `editor` is a trigger: opening or closing a project changes which commands are enabled
   useEffect(() => registry.changed(), [registry, editor]);
 
   return (

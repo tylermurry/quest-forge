@@ -211,10 +211,12 @@ export function PartFields({
     <>
       {parts.map((part, i) =>
         typeof part === "string" ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: rule parts have no ids and are addressed by position (data-part), so position is their identity
           <span key={i} className="text-muted-foreground text-[12px]">
             {part}
           </span>
         ) : (
+          // biome-ignore lint/suspicious/noArrayIndexKey: rule parts have no ids and are addressed by position (data-part), so position is their identity
           <FieldInput key={i} project={project} field={part} value={value} h={h} invalid={invalidKeys.has(fieldKey(part))} />
         ),
       )}

@@ -118,6 +118,7 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
           <ol className="grid gap-0.5 px-2 pt-1">
             {n.do.length === 0 && <li className="text-muted-foreground italic">Nothing yet</li>}
             {n.do.map((a, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: rule parts have no ids and are addressed by position (data-part), so position is their identity
               <li key={i} className="truncate">
                 {i + 1}. {clip(actionText(p, a), 48)}
               </li>

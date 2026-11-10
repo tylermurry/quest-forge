@@ -17,7 +17,9 @@ import { navigate, pageFor, usePath } from "../src/router.ts";
 function fakeBrowser(start: string) {
   const location = { pathname: start };
   const handlers = new Map<string, Set<() => void>>();
-  const pushState = vi.fn((_state: unknown, _title: string, path: string) => void (location.pathname = path));
+  const pushState = vi.fn((_state: unknown, _title: string, path: string) => {
+    location.pathname = path;
+  });
   const scrollTo = vi.fn();
   vi.stubGlobal("location", location);
   vi.stubGlobal("history", { pushState });

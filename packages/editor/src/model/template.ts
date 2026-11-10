@@ -17,6 +17,7 @@ import { Bitmap, type RGBA } from "./png.ts";
 /** A folder name made from a title: no path separators or reserved characters, not hidden. */
 export function folderNameFor(title: string): string {
   const name = title
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are not allowed in file names, so they are stripped on purpose
     .replace(/[/\\:*?"<>|\u0000-\u001f]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()

@@ -21,10 +21,12 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
   usePlaytest(playtest);
   const run = playtest.run;
   const count = playtest.events.length;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `count` is a trigger: playtest.events grows in place, so the log is rebuilt when its length changes
   const lines = useMemo(() => (run ? formatLog(playtest.events, run.project, project) : []), [playtest, run, project, count]);
   const box = useRef<HTMLDivElement | null>(null);
   const pinned = useRef(true);
   // Follow new lines unless the user scrolled up to read.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `lines` is a trigger: scroll to the bottom whenever the log is rebuilt
   useEffect(() => {
     const el = box.current;
     if (el && pinned.current) el.scrollTop = el.scrollHeight;
@@ -45,6 +47,7 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
         const cls = cn("block w-full truncate rounded-sm px-1 text-left", l.depth === 1 && "pl-4", TONE[l.tone]);
         return l.jump ? (
           <button
+            // biome-ignore lint/suspicious/noArrayIndexKey: the log only grows and a line never moves, so position is its identity
             key={i}
             title={`${l.text} (click to show the rule)`}
             className={cn(cls, "hover:bg-muted hover:underline")}
@@ -53,6 +56,7 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
             {l.text}
           </button>
         ) : (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the log only grows and a line never moves, so position is its identity
           <div key={i} title={l.text} className={cls}>
             {l.text}
           </div>

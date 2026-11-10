@@ -1,4 +1,4 @@
-import { type Project, type SceneFile } from "@questforge/schema";
+import type { Project, SceneFile } from "@questforge/schema";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   addObjectAnimation,

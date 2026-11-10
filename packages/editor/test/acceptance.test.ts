@@ -4,7 +4,7 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { type SceneFile } from "@questforge/schema";
+import type { SceneFile } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { Actions } from "../src/model/actions.ts";
 import { sectionEntries, sectionFolders } from "../src/model/browser.ts";

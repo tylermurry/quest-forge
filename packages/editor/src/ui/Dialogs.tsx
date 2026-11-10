@@ -28,6 +28,7 @@ export function ConfirmDelete({ warning, onConfirm, onCancel }: { warning: Delet
           <>
             <ul className="max-h-48 list-disc overflow-auto pl-5 text-[13px]">
               {warning.lines.map((l, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
                 <li key={i}>{l}</li>
               ))}
             </ul>
@@ -60,7 +61,13 @@ export function Prompt(props: {
   const [value, setValue] = useState(props.initial);
   return (
     <Dialog open onOpenChange={(open) => !open && props.onCancel()}>
-      <DialogContent className="max-w-md" onOpenAutoFocus={(e) => (e.preventDefault(), document.getElementById("prompt-input")?.focus())}>
+      <DialogContent
+        className="max-w-md"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          document.getElementById("prompt-input")?.focus();
+        }}
+      >
         <form
           className="grid gap-4"
           onSubmit={(e) => {

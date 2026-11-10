@@ -80,7 +80,9 @@ export function SceneCanvas({
     ];
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      offs.forEach((off) => off());
+      offs.forEach((off) => {
+        off();
+      });
     };
   }, [c, redraw]);
 

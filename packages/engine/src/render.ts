@@ -81,7 +81,9 @@ function drawTextBox(ctx: Ctx, box: TextBox) {
     ctx.strokeRect(l.x + 4.5, l.y + 4.5, l.w - 9, l.h - 9);
     ctx.fillStyle = "#000";
     ctx.textAlign = "center";
-    l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
+    l.lines.forEach((line, i) => {
+      ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE);
+    });
     return;
   }
   const color = box.speaker?.color ?? "#fff";
@@ -96,7 +98,9 @@ function drawTextBox(ctx: Ctx, box: TextBox) {
     ctx.fillText(l.name, l.x + l.w / 2, l.textY - TEXT_LINE);
     ctx.font = FONT;
   }
-  l.lines.forEach((line, i) => ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE));
+  l.lines.forEach((line, i) => {
+    ctx.fillText(line, l.x + l.w / 2, l.textY + i * TEXT_LINE);
+  });
 }
 
 function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {
@@ -106,7 +110,10 @@ function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {
     switch (sh.kind) {
       case "poly": {
         ctx.beginPath();
-        sh.points.forEach(([x, y], i) => (i ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5)));
+        sh.points.forEach(([x, y], i) => {
+          if (i) ctx.lineTo(x + 0.5, y + 0.5);
+          else ctx.moveTo(x + 0.5, y + 0.5);
+        });
         ctx.closePath();
         if (sh.fill) {
           ctx.fillStyle = sh.fill;
@@ -126,7 +133,10 @@ function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {
         ctx.strokeStyle = sh.stroke;
         ctx.setLineDash(sh.dashed ? [4, 4] : []);
         ctx.beginPath();
-        sh.points.forEach(([x, y], i) => (i ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5)));
+        sh.points.forEach(([x, y], i) => {
+          if (i) ctx.lineTo(x + 0.5, y + 0.5);
+          else ctx.moveTo(x + 0.5, y + 0.5);
+        });
         ctx.stroke();
         ctx.setLineDash([]);
         break;

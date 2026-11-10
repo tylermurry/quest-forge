@@ -25,6 +25,6 @@ export function dialogueContext(p: Project, dialogue: string): DialogueContext |
   }
   const g = p.game?.data;
   const start = g && p.scenes.find((s) => s.data.id === g.startScene)?.data;
-  if (!g || !start || !start.spawns[g.startSpawn]) return null;
+  if (!g || !start?.spawns[g.startSpawn]) return null;
   return { scene: start.id, spawn: g.startSpawn, started: false };
 }

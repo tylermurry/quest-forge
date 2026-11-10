@@ -27,6 +27,7 @@ function safeFileName(name: string): string {
   const stem =
     name
       .slice(0, name.length - ext.length - 1)
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are not allowed in file names, so they are stripped on purpose
       .replace(/[/\\:*?"<>|\u0000-\u001f]+/g, "_")
       .replace(/^\.+/, "")
       .trim() || "file";

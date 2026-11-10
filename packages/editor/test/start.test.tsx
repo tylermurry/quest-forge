@@ -28,7 +28,9 @@ function memoryPlatform(): Platform & { disks: Map<string, MemoryFs> } {
     host: (root) => ({ fs: disks.get(root)! }),
     assetUrl: (_r, p) => p,
     loadRecent: async () => recent,
-    saveRecent: async (l) => void (recent = l),
+    saveRecent: async (l) => {
+      recent = l;
+    },
     listProjects: async () => [...disks.keys()],
     saveBuild: async () => null,
     displayPath: (r) => r,

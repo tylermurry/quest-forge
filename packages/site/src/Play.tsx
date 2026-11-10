@@ -135,6 +135,7 @@ export function Play() {
             {error ? (
               <div className="play-error" role="alert">
                 {error.map((line, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
                   <p key={i}>{line}</p>
                 ))}
               </div>

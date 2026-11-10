@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryFs, saveProject, type SceneFile } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
@@ -35,7 +34,11 @@ const inspector = () => screen.getByLabelText("Inspector");
 /** Rules live on their own Inspector tab; Radix tabs switch on mouse down. */
 const rulesTab = () => fireEvent.mouseDown(within(inspector()).getByRole("tab", { name: /^Rules/ }));
 
-describe("rule inspector", () => {
+// Each test mounts the whole Workspace in jsdom and queries it by role, which costs ~0.1-0.5s on a quiet machine and
+// ten times that when the whole workspace runs in parallel on a busy one. The tests wait on nothing (no timers, no
+// debounce: validation is called directly), so the only way to fail on time is the default 5s limit, which measures
+// the machine, not the code (TST-4). The limit is generous for that reason; a real hang still fails.
+describe("rule inspector", { timeout: 60_000 }, () => {
   it("a quick field types one plain rule as one undo step, and clearing it deletes the rule", async () => {
     const editor = await mount();
     selectHotspot(/^pond/);
@@ -56,31 +59,53 @@ describe("rule inspector", () => {
     expect(hotspot(editor, "pond").rules).toHaveLength(4);
   });
 
-  it("shows rule cards as sentences; Add rule, Once and the action menu each make one undo step", async () => {
+  // One behaviour per test, driven with fireEvent (user-event adds a timer and pointer checks to every click).
+  async function mountPondRules() {
     const editor = await mount();
-    const user = userEvent.setup();
     selectHotspot(/^pond/);
     rulesTab();
-    const cards = within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ });
+    return editor;
+  }
+  const ruleCards = () => within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ });
+
+  it("shows rule cards as sentences", async () => {
+    await mountPondRules();
+    const cards = ruleCards();
     expect(cards).toHaveLength(4);
     // "When [Use ▾] with [fishing rod ▾]"
     expect(within(cards[1]!).getAllByRole("combobox", { name: "Item" })[0]!.textContent).toContain("fishing rod");
-    await user.click(within(inspector()).getByRole("button", { name: "Add rule" }));
+  });
+
+  it("Add rule adds a rule above the quick fields' plain rules as one undo step", async () => {
+    const editor = await mountPondRules();
+    fireEvent.click(within(inspector()).getByRole("button", { name: "Add rule" }));
     expect(editor.history.undoLabel).toBe("Add rule");
-    // Added above the quick fields' plain rules.
     expect(hotspot(editor, "pond").rules.map((r) => r.id)).toEqual(["rule_5", "rule_1", "rule_2", "rule_3", "rule_4"]);
-    const first = within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ })[0]!;
-    await user.click(within(first).getByRole("switch", { name: "Once" }));
+    editor.undo();
+    expect(hotspot(editor, "pond").rules).toHaveLength(4);
+  });
+
+  it("the Once switch is one undo step", async () => {
+    const editor = await mountPondRules();
+    fireEvent.click(within(ruleCards()[0]!).getByRole("switch", { name: "Once" }));
     expect(hotspot(editor, "pond").rules[0]!.once).toBe(true);
-    const addAction = within(first).getByRole("button", { name: "Action" });
+    expect(editor.history.undoLabel).toBeTruthy();
+    editor.undo();
+    expect(hotspot(editor, "pond").rules[0]!.once).toBe(false);
+  });
+
+  it("the Action menu adds an action, an empty one is an error on the card, and filling it clears the error", async () => {
+    const editor = await mountPondRules();
+    fireEvent.click(within(inspector()).getByRole("button", { name: "Add rule" }));
+    const addAction = within(ruleCards()[0]!).getByRole("button", { name: "Action" });
     // (The real pane opens it on pointer down; in jsdom the keyboard is reliable.)
     addAction.focus();
-    await user.keyboard("{Enter}");
-    await user.click(screen.getByRole("menuitem", { name: "Narrate" }));
+    fireEvent.keyDown(addAction, { key: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Narrate" }));
     expect(hotspot(editor, "pond").rules[0]!.do).toEqual([{ type: "narrate", text: "" }]);
     // Empty text is an error, shown on the card.
     act(() => editor.validateNow());
-    const card = within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ })[0]!;
+    const card = ruleCards()[0]!;
     expect(within(card).getByRole("list", { name: "Problems with this part" }).textContent).toContain("narrates nothing");
     const text = within(card).getByLabelText("Narration");
     fireEvent.focus(text);

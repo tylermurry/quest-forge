@@ -308,8 +308,17 @@ a:focus-visible {
   padding-bottom: clamp(64px, 10vw, 120px);
 }
 
-.feature:nth-child(even) .feature-text {
-  order: 2;
+.feature-text {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.feature-n {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
 }
 
 /* Wide editor screenshots get the full measure, with the words above them. */
@@ -327,21 +336,12 @@ a:focus-visible {
   grid-column: 1 / -1;
 }
 
+.feature:nth-child(even) .feature-text {
+  order: 2;
+}
+
 .feature-wide:nth-child(even) .feature-text {
   order: 0;
-}
-
-.feature-text {
-  display: grid;
-  gap: 16px;
-  justify-items: start;
-}
-
-.feature-n {
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  color: var(--accent);
-  letter-spacing: 0.04em;
 }
 
 .feature h2 {
@@ -480,12 +480,12 @@ a:focus-visible {
   text-decoration: none;
 }
 
-.download-list li a:hover .dl-system {
-  color: var(--accent);
-}
-
 .dl-system {
   font-weight: 550;
+}
+
+.download-list li a:hover .dl-system {
+  color: var(--accent);
 }
 
 .dl-kind {
@@ -526,6 +526,7 @@ a:focus-visible {
   gap: 8px 22px;
 }
 
+/* biome-ignore lint/style/noDescendingSpecificity: the footer is outside .download-list, so these rules never match the same element and their order does not matter */
 .foot a {
   text-decoration: none;
 }
@@ -538,6 +539,7 @@ a:focus-visible {
   margin-top: 20px;
 }
 
+/* biome-ignore lint/style/noDescendingSpecificity: the footer is outside .download-list, so these rules never match the same element and their order does not matter */
 .foot-note a {
   text-decoration: underline;
 }

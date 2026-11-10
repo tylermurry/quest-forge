@@ -580,7 +580,7 @@ export class Session implements DialogueHost {
       return;
     }
     const next = this.scenes.get(scene);
-    if (!next || !next.spawns[spawn]) {
+    if (!next?.spawns[spawn]) {
       this.note(`Scene ${scene} has no spawn point ${spawn}.`);
       return;
     }

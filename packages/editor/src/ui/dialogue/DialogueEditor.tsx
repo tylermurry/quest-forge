@@ -138,6 +138,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
 
   // After auto-layout, fit once the new positions are on screen.
   const fitAfterSync = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `nodes` is a trigger: the fit runs after the synced positions render, not when only `rf` changes
   useEffect(() => {
     if (!fitAfterSync.current) return;
     fitAfterSync.current = false;
@@ -176,6 +177,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     } satisfies Partial<Record<CommandId, unknown>>);
     return off;
   }, [registry, dialogueId, rf]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `nodes` and `edges` are triggers: selection changes which commands (Delete) are enabled
   useEffect(() => registry.changed(), [nodes, edges, registry]);
 
   useEffect(() => {

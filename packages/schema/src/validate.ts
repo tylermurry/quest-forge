@@ -207,7 +207,9 @@ function checkDuplicates(project: Project, out: Collector) {
     inList("scene", path, ["objects"], data.objects, "object in this scene");
     inList("scene", path, ["hotspots"], data.hotspots, "hotspot in this scene");
     inList("scene", path, ["regions"], data.regions, "region in this scene");
-    data.objects.forEach((o, i) => inList("scene", path, ["objects", i, "animations"], o.animations ?? [], "animation of this object"));
+    data.objects.forEach((o, i) => {
+      inList("scene", path, ["objects", i, "animations"], o.animations ?? [], "animation of this object");
+    });
     dupes(
       data.characters,
       (c) => c.character,
@@ -221,7 +223,9 @@ function checkDuplicates(project: Project, out: Collector) {
   for (const { path, data } of project.scenes) {
     inList("scene", path, ["rules"], data.rules, "rule in this list");
     for (const list of ["objects", "characters", "hotspots", "regions"] as const) {
-      data[list].forEach((t, i) => inList("scene", path, [list, i, "rules"], t.rules, "rule in this list"));
+      data[list].forEach((t, i) => {
+        inList("scene", path, [list, i, "rules"], t.rules, "rule in this list");
+      });
     }
   }
   for (const { path, data } of project.dialogues) {
@@ -279,8 +283,12 @@ function checkScene(doc: Doc<SceneFile>, out: Collector) {
   data.objects.forEach((o, i) => {
     if (o.obstacle) polygon(o.obstacle, ["objects", i, "obstacle"], "The obstacle", ["objects", i, "obstacle"]);
   });
-  data.hotspots.forEach((h, i) => polygon(h.shape, ["hotspots", i, "shape"], "The shape", ["hotspots", i]));
-  data.regions.forEach((r, i) => polygon(r.shape, ["regions", i, "shape"], "The shape", ["regions", i]));
+  data.hotspots.forEach((h, i) => {
+    polygon(h.shape, ["hotspots", i, "shape"], "The shape", ["hotspots", i]);
+  });
+  data.regions.forEach((r, i) => {
+    polygon(r.shape, ["regions", i, "shape"], "The shape", ["regions", i]);
+  });
 
   if (outerOk) {
     for (const [id, s] of Object.entries(data.spawns)) {
@@ -351,7 +359,9 @@ function checkSprites(project: Project, out: Collector) {
   for (const { path, data } of project.scenes) {
     data.objects.forEach((o, i) => {
       if (o.animation) frames("scene", path, ["objects", i, "animation"], ["objects", i], "its looping animation", o.animation);
-      o.animations?.forEach((a, j) => frames("scene", path, ["objects", i, "animations", j], ["objects", i], `animation ${a.id}`, a));
+      o.animations?.forEach((a, j) => {
+        frames("scene", path, ["objects", i, "animations", j], ["objects", i], `animation ${a.id}`, a);
+      });
     });
   }
 }
@@ -379,8 +389,12 @@ export function validateProject(project: Project): Problem[] {
   const out = new Collector(project);
   checkDuplicates(project, out);
   checkReferences(project, out);
-  project.scenes.forEach((s) => checkScene(s, out));
-  project.dialogues.forEach((d) => checkDialogue(d, out));
+  project.scenes.forEach((s) => {
+    checkScene(s, out);
+  });
+  project.dialogues.forEach((d) => {
+    checkDialogue(d, out);
+  });
   checkImageFiles(project, out);
   checkSprites(project, out);
   checkFlagFolders(project, out);

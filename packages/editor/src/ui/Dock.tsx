@@ -61,6 +61,7 @@ export function Dock({ actions }: { actions: Actions }) {
                 const target = locate(editor.project, pr.location);
                 const Icon = pr.severity === "error" ? CircleX : TriangleAlert;
                 return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: problems are re-derived from the project on every render and have no identity or state of their own, so position is the key
                   <li key={i}>
                     <button
                       className={cn(

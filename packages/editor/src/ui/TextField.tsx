@@ -25,6 +25,7 @@ export function TextField(props: {
   const [focused, setFocused] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   // Compact boxes fit their text up to three lines; focusing one shows all of it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `text` is a trigger: the box is re-measured whenever its content changes
   useLayoutEffect(() => {
     const el = area.current;
     if (!props.compact || !el) return;

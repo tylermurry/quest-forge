@@ -98,8 +98,14 @@ function actionRefs(a: Action, at: DataPath, push: Push) {
   }
 }
 
-const conditionsRefs = (cs: Condition[], at: DataPath, push: Push) => cs.forEach((c, i) => conditionRefs(c, [...at, i], push));
-const actionsRefs = (as: Action[], at: DataPath, push: Push) => as.forEach((a, i) => actionRefs(a, [...at, i], push));
+const conditionsRefs = (cs: Condition[], at: DataPath, push: Push) =>
+  cs.forEach((c, i) => {
+    conditionRefs(c, [...at, i], push);
+  });
+const actionsRefs = (as: Action[], at: DataPath, push: Push) =>
+  as.forEach((a, i) => {
+    actionRefs(a, [...at, i], push);
+  });
 
 function rulesRefs(rules: AnyRule[], at: DataPath, push: Push) {
   rules.forEach((r, i) => {
@@ -115,15 +121,21 @@ function sceneRefs(s: SceneFile, push: Push) {
   s.objects.forEach((o, i) => {
     push("image", o.image, ["objects", i, "image"]);
     if (o.animation) push("image", o.animation.image, ["objects", i, "animation", "image"]);
-    o.animations?.forEach((a, j) => push("image", a.image, ["objects", i, "animations", j, "image"]));
+    o.animations?.forEach((a, j) => {
+      push("image", a.image, ["objects", i, "animations", j, "image"]);
+    });
     rulesRefs(o.rules, ["objects", i, "rules"], push);
   });
   s.characters.forEach((c, i) => {
     push("character", c.character, ["characters", i, "character"]);
     rulesRefs(c.rules, ["characters", i, "rules"], push);
   });
-  s.hotspots.forEach((h, i) => rulesRefs(h.rules, ["hotspots", i, "rules"], push));
-  s.regions.forEach((r, i) => rulesRefs(r.rules, ["regions", i, "rules"], push));
+  s.hotspots.forEach((h, i) => {
+    rulesRefs(h.rules, ["hotspots", i, "rules"], push);
+  });
+  s.regions.forEach((r, i) => {
+    rulesRefs(r.rules, ["regions", i, "rules"], push);
+  });
   rulesRefs(s.rules, ["rules"], push);
 }
 
@@ -135,28 +147,33 @@ function dialogueRefs(d: DialogueFile, push: Push) {
     const at = ["nodes", i];
     switch (n.type) {
       case "start":
-        return next(n.next, [...at, "next"]);
+        next(n.next, [...at, "next"]);
+        break;
       case "line":
         if (n.character !== undefined) {
           push("character", n.character, [...at, "character"]);
           // The speaker's slot; a narrator line has no one to animate.
           if (n.animation !== undefined) push("slot", n.animation, [...at, "animation"], n.character);
         }
-        return next(n.next, [...at, "next"]);
+        next(n.next, [...at, "next"]);
+        break;
       case "choices":
-        return n.options.forEach((o, j) => {
+        n.options.forEach((o, j) => {
           conditionsRefs(o.if, [...at, "options", j, "if"], push);
           next(o.next, [...at, "options", j, "next"]);
         });
+        break;
       case "actions":
         actionsRefs(n.do, [...at, "do"], push);
-        return next(n.next, [...at, "next"]);
+        next(n.next, [...at, "next"]);
+        break;
       case "branch":
         conditionsRefs(n.if, [...at, "if"], push);
         next(n.then, [...at, "then"]);
-        return next(n.else, [...at, "else"]);
+        next(n.else, [...at, "else"]);
+        break;
       case "end":
-        return;
+        break;
     }
   });
 }
@@ -256,12 +273,27 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
 
   const next: Project = { ...project };
   next.game = project.game && edit(project.game);
-  next.flags = project.flags && edit(project.flags, kind === "flag" ? (d) => d.flags.forEach((f) => f.id === from && (f.id = to)) : undefined);
+  next.flags =
+    project.flags &&
+    edit(
+      project.flags,
+      kind === "flag"
+        ? (d) =>
+            d.flags.forEach((f) => {
+              if (f.id === from) f.id = to;
+            })
+        : undefined,
+    );
   next.assets =
     project.assets &&
     edit(
       project.assets,
-      kind === "image" || kind === "audio" ? (d) => d[kind === "image" ? "images" : "audio"].forEach((a) => a.id === from && (a.id = to)) : undefined,
+      kind === "image" || kind === "audio"
+        ? (d) =>
+            d[kind === "image" ? "images" : "audio"].forEach((a) => {
+              if (a.id === from) a.id = to;
+            })
+        : undefined,
     );
   for (const assetKind of Object.keys(ASSET_LAYOUT) as AssetKind[]) {
     const list = ASSET_LAYOUT[assetKind].list;
@@ -323,7 +355,9 @@ export function renameSceneId(project: Project, sceneId: string, kind: SceneIdKi
       data.spawns = Object.fromEntries(Object.entries(data.spawns).map(([k, v]) => [k === from ? to : k, v]));
     } else {
       const list = (kind === "object" ? data.objects : kind === "hotspot" ? data.hotspots : data.regions) as { id: string }[];
-      list.forEach((x) => x.id === from && (x.id = to));
+      list.forEach((x) => {
+        if (x.id === from) x.id = to;
+      });
     }
   };
   const next: Project = { ...project };
@@ -363,7 +397,13 @@ export function renameObjectAnimation(project: Project, sceneId: string, objectI
     extra?.(data);
     return { ...d, data };
   };
-  const define = (data: SceneFile) => data.objects.find((o) => o.id === objectId)!.animations!.forEach((a) => a.id === from && (a.id = to));
+  const define = (data: SceneFile) => {
+    data.objects
+      .find((o) => o.id === objectId)!
+      .animations!.forEach((a) => {
+        if (a.id === from) a.id = to;
+      });
+  };
   const next: Project = { ...project };
   next.game = project.game && edit(project.game);
   next.scenes = project.scenes.map((d) => edit(d, d.data.id === sceneId ? define : undefined));
