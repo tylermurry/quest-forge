@@ -93,10 +93,6 @@ export function setObjectVisible(s: GameState, scene: string, object: string, vi
   s.objects[objectKey(scene, object)] = visible;
 }
 
-export function characterPosition(s: GameState, scene: string, character: string): Position | undefined {
-  return s.characters[objectKey(scene, character)];
-}
-
 export function setCharacterPosition(s: GameState, scene: string, character: string, p: Position) {
   s.characters[objectKey(scene, character)] = { x: p.x, y: p.y, facing: p.facing };
 }
