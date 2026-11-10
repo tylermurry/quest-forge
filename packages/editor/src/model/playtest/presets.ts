@@ -6,7 +6,7 @@ import { cloneState, readState, type GameState } from "@questforge/engine";
 import type { ProjectFs } from "@questforge/schema";
 
 // Reading and sanitizing a stored state is the engine's, shared with save slots (spec 07).
-export { readState, sanitizeState, type Sanitized } from "@questforge/engine";
+export { readState, sanitizeState } from "@questforge/engine";
 
 export const PRESETS_FILE = ".editor/presets.json";
 
@@ -29,6 +29,7 @@ export function readPresets(text: string | null): Preset[] {
       return state ? [{ name: p.name, state }] : [];
     });
   } catch {
+    // A broken presets.json (hand-edited, half-written) is treated as "no presets"; the next save rewrites it.
     return [];
   }
 }
@@ -44,6 +45,8 @@ export class PresetStore {
   private fs: ProjectFs | null = null;
   private listeners = new Set<() => void>();
   private _version = 0;
+  /** Told, in plain English, when presets.json could not be written, so the author knows a preset may be lost. */
+  onWriteError: ((message: string) => void) | null = null;
 
   get version() {
     return this._version;
@@ -62,6 +65,7 @@ export class PresetStore {
 
   async attach(fs: ProjectFs) {
     this.fs = fs;
+    // The file does not exist until the first preset is saved, and ProjectFs reports that as a throw; either way, start empty.
     this._list = readPresets(await fs.readText(PRESETS_FILE).catch(() => null));
     this.changed();
   }
@@ -96,6 +100,11 @@ export class PresetStore {
   }
 
   private async write() {
-    if (this.fs) await this.fs.writeText(PRESETS_FILE, this.toJSON()).catch(() => undefined);
+    if (!this.fs) return;
+    try {
+      await this.fs.writeText(PRESETS_FILE, this.toJSON());
+    } catch {
+      this.onWriteError?.("Couldn't save your playtest presets to the project folder. They are kept until you close the editor, then lost. Check that the folder is writable.");
+    }
   }
 }

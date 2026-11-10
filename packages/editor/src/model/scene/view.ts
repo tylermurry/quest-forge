@@ -5,13 +5,13 @@ import { SCENE_HEIGHT, SCENE_WIDTH, type Point } from "@questforge/schema";
 import type { Vec } from "@questforge/engine";
 
 /** Fixed zoom steps (spec 09: 1×–8×). */
-export const ZOOM_STEPS = [1, 2, 3, 4, 6, 8] as const;
-export const MIN_ZOOM = 1;
-export const MAX_ZOOM = 8;
+const ZOOM_STEPS = [1, 2, 3, 4, 6, 8] as const;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 8;
 /** The pixel grid shows at this zoom and above (spec 09). */
-export const GRID_ZOOM = 4;
+const GRID_ZOOM = 4;
 /** Space kept around the scene when fitting, in CSS px. */
-export const FIT_MARGIN = 16;
+const FIT_MARGIN = 16;
 
 /** Zoom state saved per scene (D101): fitted to the canvas, or a fixed scale with a pan. */
 export type Zoom = { fit: true } | { fit: false; scale: number; pan: Vec };

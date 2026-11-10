@@ -11,7 +11,7 @@ import { gridVisible, toScreen, type Transform } from "../../model/scene/view.ts
 
 type Ctx = CanvasRenderingContext2D;
 
-export const COLORS = {
+const COLORS = {
   walkable: "#4ade80",
   hole: "#f87171",
   hotspot: "#22d3ee",

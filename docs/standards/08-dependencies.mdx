@@ -1,0 +1,53 @@
+---
+title: Dependencies
+sidebar_position: 8
+description: Every third-party package is a deliberate, justified choice.
+---
+
+# Dependencies
+
+Each dependency is code the project did not write and must still trust, update and answer
+for.
+
+**Applies to:** any change that adds, removes or upgrades a third-party package, service or
+tool.
+
+## Rules
+
+### DEP-1: Justify every new dependency
+
+**Must.** The description says what the dependency is for, and why the project's own code
+or the platform is not enough.
+
+### DEP-2: Check the licence
+
+**Must.** The dependency's licence is compatible with how the project is licensed and
+distributed.
+
+### DEP-3: Pin versions
+
+**Must.** Exact versions are fixed by a committed lock file, and the lock file matches the
+declared dependencies.
+
+### DEP-4: Trusted source, no known serious flaws
+
+**Must.** A dependency comes from its official source and has no known serious
+vulnerability that remains unfixed.
+
+### DEP-5: Prefer maintained and small
+
+**Should.** Choose a dependency that is actively maintained and widely used, and that
+brings in little beyond what is needed.
+
+### DEP-6: Wrap what is used widely
+
+**Should.** A dependency used in many places is used through one module of the project's
+own, so it can be replaced in one place.
+
+### DEP-7: Remove what is unused
+
+**Should.** A dependency the change makes unused is removed in the same change.
+
+### DEP-8: Upgrade separately
+
+**Should.** A dependency upgrade is its own change, not mixed into a feature.

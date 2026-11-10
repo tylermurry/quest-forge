@@ -26,13 +26,13 @@ export function useCommands(): CommandRegistry {
 }
 
 /** True when keyboard focus is in something that edits text. */
-export function inTextField(el: Element | null = document.activeElement): boolean {
+function inTextField(el: Element | null = document.activeElement): boolean {
   const h = el as HTMLElement | null;
   return !!h && (h.tagName === "INPUT" || h.tagName === "TEXTAREA" || h.isContentEditable);
 }
 
 /** True when the event comes from the playtest game, which keeps plain keys to itself (D131). */
-export function inPlaytestGame(el: Element | null): boolean {
+function inPlaytestGame(el: Element | null): boolean {
   return !!el?.closest?.("[data-playtest-game]");
 }
 

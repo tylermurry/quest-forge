@@ -31,7 +31,7 @@ export interface RuleContext {
   scene(id: string): SceneFile | undefined;
 }
 
-export const hasFired = (state: GameState, key: string) => state.fired.includes(key);
+const hasFired = (state: GameState, key: string) => state.fired.includes(key);
 
 export function checkCondition(c: Condition, ctx: RuleContext, key: string): boolean {
   const { state } = ctx;

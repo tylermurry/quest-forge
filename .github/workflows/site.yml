@@ -1,4 +1,4 @@
-# Deploys packages/site (the splash page and /play) to Cloudflare on every push to main (D157).
+# Deploys packages/site (the splash page and /play) and the docs (/docs/) to Cloudflare on every push to main (D157).
 # Needs the repository secrets CLOUDFLARE_API_TOKEN (Workers Scripts: Edit) and CLOUDFLARE_ACCOUNT_ID.
 name: Site
 
@@ -11,6 +11,9 @@ concurrency:
   group: site
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,6 +22,12 @@ jobs:
       - uses: ./.github/actions/setup
       - run: corepack pnpm check
       - run: corepack pnpm --filter @questforge/site build
+      # The docs are served from /docs/ of the same Workers assets (baseUrl "/docs/", trailingSlash true).
+      - run: corepack pnpm --filter @questforge/docs build
+      - name: Add the docs to the site assets
+        run: |
+          rm -rf packages/site/dist/docs
+          cp -R docs/build packages/site/dist/docs
       - name: Deploy to Cloudflare
         working-directory: packages/site
         env:

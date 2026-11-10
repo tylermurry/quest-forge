@@ -10,9 +10,9 @@ import { sameThing, type ThingRef } from "./things.ts";
 
 /** Handle sizes in screen px. */
 export const VERTEX_PX = 7;
-export const EDGE_PX = 5;
-export const POINT_PX = 9;
-export const LINE_PX = 5;
+const EDGE_PX = 5;
+const POINT_PX = 9;
+const LINE_PX = 5;
 
 export type Hit =
   /** A polygon vertex (of the selected thing's polygon). */
@@ -47,7 +47,7 @@ export interface HitContext {
 const dist = (a: Vec, b: Vec) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
 /** The baseline handle's knob sits just right of the sprite, as drawn. */
-export const baselineKnob = (d: Drawable, scale: number): Vec => [d.dest.x + d.dest.w + 9 / scale, d.baseline];
+const baselineKnob = (d: Drawable, scale: number): Vec => [d.dest.x + d.dest.w + 9 / scale, d.baseline];
 
 /** Handles of the selected thing: vertices, then the baseline (it often lies on an obstacle edge), then edges. */
 function handleHits(p: Vec, c: HitContext): Hit | null {

@@ -159,6 +159,7 @@ export const tauriPlatform: Platform = {
     try {
       return parseRecent(JSON.parse(await ok(commands.recentLoad())));
     } catch {
+      // A missing or unreadable recent-projects file is the same as having none; the Start screen still works.
       return [];
     }
   },

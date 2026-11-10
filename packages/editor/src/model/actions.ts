@@ -37,8 +37,6 @@ export const NOUN: Record<Section, string> = {
   audio: "sound",
 };
 
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
-
 /** What a delete would break, for the confirm dialog (spec 08). Null: nothing uses it. */
 export interface DeleteWarning {
   title: string;
@@ -232,5 +230,3 @@ export class Actions {
     return ok;
   }
 }
-
-export const sectionLabel = (s: Section) => cap(NOUN[s]);

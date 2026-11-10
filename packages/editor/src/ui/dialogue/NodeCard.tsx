@@ -8,7 +8,7 @@ import { cn } from "../lib/utils.ts";
 // One node on the dialogue graph (spec 11): a summary card with an input on the left
 // and one output port per way on (D62 positions; editing happens in the Inspector).
 
-export interface NodeCardData extends Record<string, unknown> {
+interface NodeCardData extends Record<string, unknown> {
   node: DialogueNode;
   project: Project;
   problems: readonly Problem[];

@@ -7,7 +7,7 @@ import { samePoly, scenePolygons, type PolyRef } from "./shapes.ts";
 import { snapPixel } from "./view.ts";
 
 /** Snap radius in screen px (D102). */
-export const SNAP_PX = 6;
+const SNAP_PX = 6;
 
 export interface Snapped {
   point: Point;

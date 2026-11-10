@@ -8,19 +8,19 @@ import type { Rect } from "../sprite.ts";
 /** Spec 06 minimum hit size. */
 export const MIN_HIT_CSS = 44;
 /** Design size of a control in scene px when the screen is big enough (D76). */
-export const DESIGN_UNIT = 32;
+const DESIGN_UNIT = 32;
 const GAP = 4;
 
 /** Side of a square control in scene px at `cssScale` CSS px per scene px. */
 export const unitFor = (cssScale: number) => Math.max(DESIGN_UNIT, Math.ceil(MIN_HIT_CSS / cssScale));
 
-export type BarButtonId = "walk" | "look" | "hand" | "talk" | "item" | "inventory" | "settings";
-export const BAR_BUTTONS: readonly BarButtonId[] = ["walk", "look", "hand", "talk", "item", "inventory", "settings"];
+type BarButtonId = "walk" | "look" | "hand" | "talk" | "item" | "inventory" | "settings";
+const BAR_BUTTONS: readonly BarButtonId[] = ["walk", "look", "hand", "talk", "item", "inventory", "settings"];
 export type InventoryButtonId = "look" | "select" | "item" | "ok";
-export type SettingsButtonId = "restart" | "save" | "load" | "volume" | "close";
-export type SlotsButtonId = "act" | "more" | "cancel";
-export type VolumeButtonId = "music_down" | "music_up" | "sfx_down" | "sfx_up" | "ok";
-export type EndingButtonId = "restore" | "restart" | "try_again";
+type SettingsButtonId = "restart" | "save" | "load" | "volume" | "close";
+type SlotsButtonId = "act" | "more" | "cancel";
+type VolumeButtonId = "music_down" | "music_up" | "sfx_down" | "sfx_up" | "ok";
+type EndingButtonId = "restore" | "restart" | "try_again";
 
 export interface Button<Id extends string = string> {
   id: Id;

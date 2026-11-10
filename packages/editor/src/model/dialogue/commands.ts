@@ -50,20 +50,20 @@ function updateNode(p: Project, dialogue: string, id: string, f: (n: DialogueNod
 const round = (pos: Pos): Pos => [Math.round(pos[0]), Math.round(pos[1])];
 
 /** Defaults for conditions and actions in a dialogue: its scene context (D142), else game-level. */
-export function dialogueDefaults(p: Project, dialogue: string): RuleDefaults {
+function dialogueDefaults(p: Project, dialogue: string): RuleDefaults {
   const ctx = dialogueContext(p, dialogue);
   const owner: RuleOwnerRef = ctx?.started ? { kind: "scene", scene: ctx.scene } : { kind: "game" };
   return new RuleDefaults(p, owner);
 }
 
 /** A free node ID for a type: `line_1`, `line_2`, … */
-export function newNodeId(d: DialogueFile, type: NodeType): string {
+function newNodeId(d: DialogueFile, type: NodeType): string {
   const taken = new Set(d.nodes.map((n) => n.id));
   for (let i = 1; ; i++) if (!taken.has(`${type}_${i}`)) return `${type}_${i}`;
 }
 
 /** A free option ID, unique in the whole dialogue (validation wants that). */
-export function newOptionId(d: DialogueFile): string {
+function newOptionId(d: DialogueFile): string {
   const taken = new Set(d.nodes.flatMap((n) => (n.type === "choices" ? n.options.map((o) => o.id) : [])));
   for (let i = 1; ; i++) if (!taken.has(`option_${i}`)) return `option_${i}`;
 }

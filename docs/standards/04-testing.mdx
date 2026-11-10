@@ -1,0 +1,53 @@
+---
+title: Testing
+sidebar_position: 4
+description: Automated tests prove each behaviour and keep it proven.
+---
+
+# Testing
+
+Automated tests are how the project knows a change works today and still works after the
+next change. Nobody checks by hand.
+
+**Applies to:** any change to behaviour, and any change that touches tests.
+
+## Rules
+
+### TST-1: Test every behaviour change
+
+**Must.** A change to behaviour comes with automated tests that fail without the change and
+pass with it.
+
+### TST-2: Reproduce a bug before fixing it
+
+**Must.** A bug fix includes a test that reproduces the bug and fails before the fix.
+
+### TST-3: All checks pass, honestly
+
+**Must.** Every automated check the project runs passes. No test or check is skipped,
+deleted or weakened to get there. If a test was wrong, the description says why.
+
+### TST-4: Tests give the same result every time
+
+**Must.** A test does not depend on the real clock, random values, the network, the
+machine it runs on, or the order tests run in.
+
+### TST-5: Test behaviour, not internals
+
+**Should.** Tests check what the code does through its public interface, so they keep
+passing when the internals are rewritten and the behaviour is unchanged.
+
+### TST-6: Test the failures too
+
+**Should.** Tests cover error cases and the edges of the input (COR-2), not only the
+expected path.
+
+### TST-7: A test reads as a statement of behaviour
+
+**Should.** A test's name says what is expected in plain words, and its body makes the
+setup, the action and the expected result easy to tell apart.
+
+### TST-8: Keep the suite fast
+
+**Should.** The tests are quick enough to run on every change. A slow test is made faster
+or justified in the description.

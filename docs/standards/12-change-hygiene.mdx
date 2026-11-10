@@ -1,0 +1,57 @@
+---
+title: Change hygiene
+sidebar_position: 12
+description: Each change is small, single-purpose and explained.
+---
+
+# Change hygiene
+
+A change that does one thing and explains itself can be decided on quickly and undone
+cleanly.
+
+**Applies to:** every change.
+
+## Rules
+
+### CHG-1: One purpose per change
+
+**Must.** A change does one thing. Unrelated fixes, tidying and features go in separate
+changes.
+
+### CHG-2: Explain it in plain language
+
+**Must.** The description says what changed, why, and how it was verified, in words a
+reader who does not program can follow.
+
+### CHG-3: Link the request
+
+**Must.** The change links to the request, issue or plan item it fulfils.
+
+### CHG-4: Standards change alone
+
+**Must.** A change to these standards contains nothing else, and a change to anything else
+does not touch these standards.
+
+### CHG-5: Commit only what belongs
+
+**Must.** The change contains no generated output, local settings, debugging leftovers or
+files unrelated to its purpose.
+
+### CHG-6: The main branch always works
+
+**Must.** Every change passes the project's checks by itself, so the main branch could be
+released after any merge.
+
+### CHG-7: Small enough to review in one sitting
+
+**Should.** Large work is split into changes that each stand alone and can each be
+reviewed in one sitting.
+
+### CHG-8: Commit messages explain why
+
+**Should.** A commit message states what the commit does as an instruction ("Add…",
+"Fix…") and explains why.
+
+### CHG-9: Track follow-ups where they are visible
+
+**Should.** Work left for later is recorded as an issue, not only as a note in the code.

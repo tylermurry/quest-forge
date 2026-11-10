@@ -57,6 +57,7 @@ export function App() {
     setError(null);
     try {
       const ed = await Editor.open(platform.host(root), { autosave: false });
+      // Debug handle for the dev page and tests (`window.editor`); Window has no such field, so the cast is deliberate.
       (window as unknown as { editor: Editor }).editor = ed;
       remember(addRecent(known, { root, title: projectTitle(ed.project), openedAt: Date.now() }));
       setEditor((old) => {

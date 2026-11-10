@@ -30,7 +30,7 @@ export function GameInspector({ actions }: { actions: Actions }) {
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when the game settings change would flash again
 
   if (!game) return <p className="text-muted-foreground">This project has no game.yaml.</p>;
   const g = game.data;

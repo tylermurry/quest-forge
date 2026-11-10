@@ -1,0 +1,54 @@
+---
+title: Correctness
+sidebar_position: 3
+description: The change does what was asked, including when things go wrong.
+---
+
+# Correctness
+
+A change is correct when it does what was asked for every input it can receive, and fails
+safely when it cannot.
+
+**Applies to:** any change to behaviour.
+
+## Rules
+
+### COR-1: Do what the request says
+
+**Must.** The change meets the request or specification it links to, including every
+acceptance criterion stated there.
+
+### COR-2: Handle the edges of the input
+
+**Must.** The change behaves sensibly for empty, missing, largest, invalid and repeated
+input, not only the typical case.
+
+### COR-3: Never swallow an error
+
+**Must.** Every error is handled, or passed on deliberately to something that handles it.
+No failure is silently ignored.
+
+### COR-4: Never lose or corrupt the user's data
+
+**Must.** A failure part-way through an operation leaves stored data as it was or fully
+updated, never half-written. Nothing the user made is destroyed without them asking.
+
+### COR-5: Validate at the boundary
+
+**Must.** Data that comes from outside the system (a user, a file, the network, another
+program) is checked where it enters, before the rest of the code relies on it.
+
+### COR-6: State known limits
+
+**Must.** If the change knowingly leaves a case unhandled or a bug unfixed, its description
+says so. Nothing known to be wrong ships unmentioned.
+
+### COR-7: Reject invalid states early
+
+**Should.** Design data so that an invalid state cannot be expressed, or is rejected once
+at the point it is created, in place of repeated checks throughout the code.
+
+### COR-8: Do not depend on lucky timing
+
+**Should.** The change still behaves correctly when events arrive in a different order,
+arrive twice, or arrive while an earlier one is still being handled.

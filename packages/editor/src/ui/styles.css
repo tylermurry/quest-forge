@@ -134,3 +134,37 @@
   animation: qf-flash-log 1.6s ease-out;
   border-radius: 6px;
 }
+
+/*
+ * Reduced motion (UXA-9): no fade. The highlight still shows for the same time, then
+ * switches off at once. A static style would be wrong here: nothing removes the class,
+ * so it would stay highlighted forever.
+ */
+@keyframes qf-flash-hold {
+  from {
+    box-shadow: 0 0 0 2px var(--err);
+    background-color: color-mix(in oklch, var(--err) 18%, transparent);
+  }
+  to {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+@keyframes qf-flash-log-hold {
+  from {
+    box-shadow: 0 0 0 2px var(--primary);
+    background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+  to {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qf-flash {
+    animation: qf-flash-hold 1.6s steps(1, end) forwards;
+  }
+  .qf-flash-log {
+    animation: qf-flash-log-hold 1.6s steps(1, end) forwards;
+  }
+}

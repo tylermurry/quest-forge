@@ -1,0 +1,43 @@
+---
+title: Simplicity
+sidebar_position: 1
+description: Build only what is needed, in the plainest way that works.
+---
+
+# Simplicity
+
+The simplest change that meets the need is the easiest to review, test and change later.
+
+**Applies to:** any change that adds or restructures code.
+
+## Rules
+
+### SIM-1: Do only what was asked
+
+**Must.** The change contains only what the request needs. It adds no features, options,
+settings or extension points for needs that nobody has stated.
+
+### SIM-2: No dead code
+
+**Must.** The change leaves no unused code, commented-out code or branches that can never
+run. Code that the change makes unused is removed in the same change.
+
+### SIM-3: Choose the simplest solution that works
+
+**Should.** When a simpler approach meets the requirement, use it. If the change takes a
+more complex route, its description says what the simpler one failed to do.
+
+### SIM-4: Reuse before adding
+
+**Should.** Use what the project already has before writing something new. The change does
+not add a second way to do a thing the project already does.
+
+### SIM-5: Abstract after the second real use
+
+**Should.** A shared helper, base type or generic mechanism is introduced once at least two
+real callers need it, not in anticipation of them.
+
+### SIM-6: Keep units small enough to describe
+
+**Should.** A function or module does one thing that can be stated in one sentence. One
+that needs "and" to describe is split.

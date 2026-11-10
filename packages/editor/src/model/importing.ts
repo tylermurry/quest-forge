@@ -5,7 +5,7 @@ import { slugify, uniqueId } from "./commands.ts";
 import type { Section } from "./browser.ts";
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
-export const AUDIO_EXTENSIONS = ["mp3", "ogg", "wav"];
+const AUDIO_EXTENSIONS = ["mp3", "ogg", "wav"];
 
 export interface ImportFile {
   name: string;

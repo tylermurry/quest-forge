@@ -105,7 +105,7 @@ function defaultImage(p: Project, hint: RegExp): string {
 }
 
 /** Starting data for a new asset of each kind (dangling picks show as problems until set). */
-export function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
+function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
   switch (kind) {
     case "scene":
       // An empty scene: no background, no walkable area yet, a default spawn (D97).
@@ -350,6 +350,7 @@ export function duplicateEntry(p: Project, section: Section, id: string): { proj
 
 /** In a duplicated scene, references to the original scene point at the copy instead (D86). */
 function retargetSelf(copy: AnyDoc, from: string, to: string) {
+  // `copy` is a scene here (the caller checked the section), but AnyDoc is a union, so TypeScript can't tell.
   const solo: Project = { ...emptyProject(), scenes: [copy as unknown as Doc<SceneFile>] };
   for (const ref of collectReferences(solo)) {
     if (ref.kind === "scene" && ref.id === from) setAt(copy.data, ref.location.path, to);

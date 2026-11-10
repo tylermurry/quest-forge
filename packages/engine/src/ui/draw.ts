@@ -241,6 +241,7 @@ const savedAt = (ms: number) => {
   try {
     return new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   } catch {
+    // An unsupported locale makes toLocaleString throw. The slot is still drawn, just without a time.
     return "";
   }
 };

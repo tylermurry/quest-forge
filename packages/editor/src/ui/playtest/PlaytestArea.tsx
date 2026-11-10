@@ -24,12 +24,13 @@ function layoutStorage() {
   try {
     return window.localStorage;
   } catch {
+    // Blocked storage (the property getter can throw): panel sizes just aren't remembered.
     return undefined;
   }
 }
 
 /** The debug bar: the debug layer toggles (D132). Play controls stay in the title bar. */
-export function DebugBar({ playtest }: { playtest: Playtest }) {
+function DebugBar({ playtest }: { playtest: Playtest }) {
   usePlaytest(playtest);
   return (
     <div role="toolbar" aria-label="Playtest" className="bg-panel flex h-10 shrink-0 items-center gap-2 border-b px-2">

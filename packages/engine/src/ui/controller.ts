@@ -12,10 +12,10 @@ import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type In
 export type PointerKind = "mouse" | "touch" | "pen";
 
 /** Mouse at the very top opens the bar (D79). */
-export const REVEAL_CSS = 8;
+const REVEAL_CSS = 8;
 /** Tap-and-hold (D79). */
-export const HOLD_SECONDS = 0.4;
-export const HOLD_SLOP_CSS = 10;
+const HOLD_SECONDS = 0.4;
+const HOLD_SLOP_CSS = 10;
 
 /** `save` / `load` are the slot list (D149); `volume` the volume panel (D150). */
 export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | null;

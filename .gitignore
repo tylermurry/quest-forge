@@ -6,4 +6,5 @@ coverage/
 .editor/
 .idea
 .wrangler/
-specs/
+docs/.docusaurus/
+docs/build/

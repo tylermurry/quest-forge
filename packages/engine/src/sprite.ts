@@ -30,6 +30,10 @@ export function frameRect(img: ImageAsset, imageSize: Size, frame: number): Rect
 export const sheetFits = (img: ImageAsset, imageSize: Size) =>
   !img.sheet || (img.sheet.columns * img.sheet.cellWidth <= imageSize.w && img.sheet.rows * img.sheet.cellHeight <= imageSize.h);
 
+/** The playtest note for a sheet that doesn't fit its image, or null when it fits (or isn't a sheet). */
+export const sheetProblem = (img: ImageAsset, imageSize: Size): string | null =>
+  sheetFits(img, imageSize) ? null : `Image ${img.id}: its sheet is larger than the ${imageSize.w}×${imageSize.h} image.`;
+
 /** The feet point inside a frame; bottom-center unless set (spec 05). */
 export const originOf = (img: ImageAsset, frame: Size): Vec => (img.origin ? img.origin : [frame.w / 2, frame.h]);
 

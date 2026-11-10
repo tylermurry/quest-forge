@@ -4,7 +4,7 @@
 import type { Project } from "@questforge/schema";
 
 /** Spec 08 asks for at least 200 steps per session (D84). */
-export const HISTORY_LIMIT = 500;
+const HISTORY_LIMIT = 500;
 /** Edits with the same merge key closer together than this are one step (typing, D84). */
 export const MERGE_WINDOW_MS = 1000;
 
@@ -15,8 +15,9 @@ const DISK_KEYS = ["files", "saved", "savedFolders", "trash"] as const satisfies
 export function sameContent(a: Project, b: Project): boolean {
   if (a === b) return true;
   const disk = new Set<string>(DISK_KEYS);
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-  for (const k of keys) if (!disk.has(k) && (a as unknown as Record<string, unknown>)[k] !== (b as unknown as Record<string, unknown>)[k]) return false;
+  // Object.keys returns plain strings; these are Project's own keys, so narrowing them is safe.
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)] as (keyof Project)[]);
+  for (const k of keys) if (!disk.has(k) && a[k] !== b[k]) return false;
   return true;
 }
 

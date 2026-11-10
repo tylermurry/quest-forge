@@ -15,7 +15,7 @@ async function call<T>(op: string, args: Record<string, unknown>): Promise<T> {
 }
 
 /** ProjectFs over HTTP to the dev server's sandbox. */
-export class HttpFs implements ProjectFs {
+class HttpFs implements ProjectFs {
   constructor(readonly root: string) {}
   private op<T>(op: string, args: Record<string, unknown> = {}) {
     return call<T>(op, { root: this.root, ...args });
@@ -78,6 +78,7 @@ export const browserPlatform: Platform = {
     try {
       return parseRecent(JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"));
     } catch {
+      // Blocked storage or a corrupt list: show the Start screen with no recent projects rather than fail to start.
       return [];
     }
   },

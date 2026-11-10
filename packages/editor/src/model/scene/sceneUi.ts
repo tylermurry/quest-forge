@@ -17,7 +17,7 @@ export const LAYER_LABEL: Record<Layer, string> = {
   background: "Background",
 };
 
-export const TOOLS = ["select", "polygon", "rect", "spawn", "walkto"] as const;
+const TOOLS = ["select", "polygon", "rect", "spawn", "walkto"] as const;
 export type Tool = (typeof TOOLS)[number];
 
 export const TOOL_LABEL: Record<Tool, string> = {
@@ -57,7 +57,7 @@ export interface SceneUi {
   zoom: Zoom;
 }
 
-export const defaultSceneUi = (): SceneUi => ({
+const defaultSceneUi = (): SceneUi => ({
   layer: "walkable",
   tool: "select",
   hidden: [],
@@ -169,6 +169,7 @@ export class SceneUiStore {
   /** Loads saved view state (missing or broken file: defaults) and saves future changes there. */
   async attach(fs: ProjectFs) {
     this.fs = fs;
+    // No view.json yet (first open), or it can't be read: start from defaults.
     const text = await fs.readText(VIEW_FILE).catch(() => null);
     if (text === null) return;
     try {
@@ -190,6 +191,8 @@ export class SceneUiStore {
   async flush() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
     this.saveTimer = null;
+    // Stays silent on purpose: view.json only holds zoom and layer toggles, which fall back to
+    // defaults next time, so an error notice on every pan or zoom would cost more than the loss.
     if (this.fs) await this.fs.writeText(VIEW_FILE, this.toJSON()).catch(() => undefined);
   }
 
@@ -201,7 +204,7 @@ export class SceneUiStore {
 
 const toggle = <T>(list: T[], x: T) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
 
-export const isHiddenLayer = (ui: SceneUi, layer: Layer) => ui.hidden.includes(layer);
-export const isLockedLayer = (ui: SceneUi, layer: Layer) => ui.locked.includes(layer);
+const isHiddenLayer = (ui: SceneUi, layer: Layer) => ui.hidden.includes(layer);
+const isLockedLayer = (ui: SceneUi, layer: Layer) => ui.locked.includes(layer);
 /** A layer whose contents can be clicked and edited. */
 export const isEditable = (ui: SceneUi, layer: Layer) => !isHiddenLayer(ui, layer) && !isLockedLayer(ui, layer);
