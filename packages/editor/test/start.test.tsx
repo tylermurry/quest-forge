@@ -44,7 +44,7 @@ describe("start screen (spec 08)", () => {
         <App />
       </PlatformContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "From demo template" })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: "From demo template" })).toBeNull();
     fireEvent.change(screen.getByLabelText("Game title"), { target: { value: "Cave Story" } });
     fireEvent.click(screen.getByRole("button", { name: "Create blank project" }));
     await waitFor(() => expect(screen.getByText("Cave Story")).toBeTruthy());

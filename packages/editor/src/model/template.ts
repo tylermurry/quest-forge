@@ -1,5 +1,4 @@
-// New projects (spec 08, D87). "Blank" is the smallest project that validates and
-// plays; the demo template arrives with M9.
+// New projects. "Blank" is the smallest project that validates and plays.
 import {
   AssetsFile,
   CharacterFile,

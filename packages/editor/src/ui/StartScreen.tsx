@@ -81,9 +81,6 @@ export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRe
             <Button type="submit" size="sm" disabled={!title.trim()}>
               <Plus /> Create blank project
             </Button>
-            <Button type="button" size="sm" variant="outline" disabled title="The demo template arrives with milestone M9">
-              From demo template
-            </Button>
           </form>
           <Heading>Open</Heading>
           <Button size="sm" variant="outline" onClick={() => void open()}>
