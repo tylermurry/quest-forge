@@ -4,7 +4,8 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
 
 ## Read first
 - The work is planned as GitHub issues in milestones on `tylermurry/quest-forge` (currently **1.0.0**). Work one
-  issue per session; read it with `gh issue view <n>` and do what its Scope and Done-when say. If an issue is
+  issue per session, unless the owner runs the `implement-ready-work` skill, which ships the project board's Ready
+  column as one PR with one commit per issue (CHG-1's batch exception). Read each issue with `gh issue view <n>` and do what its Scope and Done-when say. If an issue is
   ambiguous or seems wrong, stop and ask instead of guessing.
 - `docs/standards/index.mdx`: the engineering standards' table of contents. Before starting any change,
   read Change hygiene, AI collaboration and every page whose row matches the change, and write to those rules.
