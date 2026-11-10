@@ -10,7 +10,6 @@ Questforge is a no-code desktop editor for classic point-and-click adventures. A
 | `packages/engine` | The web runtime that plays a game (Canvas 2D). |
 | `packages/editor` | The desktop editor (Tauri and React). |
 | `packages/site` | The public web site: the home page and the `.quest` player. |
-| `templates/demo` | "The Lantern", the demo game, made only in the editor. |
 | `docs` | The documentation site (Docusaurus), which renders `docs/standards` and `docs/project`. |
 
 ## Getting started
@@ -45,4 +44,5 @@ corepack pnpm --filter @questforge/editor tauri dev
 ## Documentation
 
 - [`docs/standards/`](docs/standards/index.mdx): the engineering standards every change is held to.
-- [`docs/project/`](docs/project/README.md): what Questforge is and how it is built (the vision, the specs and the decision log).
+- [`docs/project/`](docs/project/conventions.md): how the code is organised and the conventions for working in it.
+- [Milestones and issues](https://github.com/tylermurry/quest-forge/milestones): what is planned next.
