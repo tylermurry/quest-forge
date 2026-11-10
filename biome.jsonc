@@ -46,9 +46,8 @@
         "noDescendingSpecificity": "off"
       },
       "correctness": {
-        // Kept visible but not blocking: 8 effects have no suppression and need a decision each, follow-up #31.
-        // The 7 deliberate exceptions carry a biome-ignore with their reason.
-        "useExhaustiveDependencies": "warn",
+        // Deliberate exceptions carry a biome-ignore with their reason.
+        "useExhaustiveDependencies": "error",
         // Existing finding in a test helper that calls a mocked hook, follow-up #32 (2).
         "useHookAtTopLevel": "off"
       },

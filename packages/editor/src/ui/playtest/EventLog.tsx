@@ -21,10 +21,12 @@ export function EventLog({ playtest, project, ws }: { playtest: Playtest; projec
   usePlaytest(playtest);
   const run = playtest.run;
   const count = playtest.events.length;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `count` is a trigger: playtest.events grows in place, so the log is rebuilt when its length changes
   const lines = useMemo(() => (run ? formatLog(playtest.events, run.project, project) : []), [playtest, run, project, count]);
   const box = useRef<HTMLDivElement | null>(null);
   const pinned = useRef(true);
   // Follow new lines unless the user scrolled up to read.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `lines` is a trigger: scroll to the bottom whenever the log is rebuilt
   useEffect(() => {
     const el = box.current;
     if (el && pinned.current) el.scrollTop = el.scrollHeight;

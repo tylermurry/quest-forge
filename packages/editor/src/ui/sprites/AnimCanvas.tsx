@@ -13,11 +13,14 @@ export type Shown = Pick<ResolvedAnim, "anim" | "mirror" | "still">;
  */
 export function AnimCanvas({ images, shown, box }: { images: CanvasImages; shown: Shown | null; box: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const anim = shown?.anim;
+  const mirror = shown?.mirror;
+  const still = shown?.still;
   const image = shown ? images.lookup(shown.anim.image) : undefined;
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    if (!shown || !image) {
+    if (!anim || !image) {
       prepare(canvas, box, box);
       return;
     }
@@ -32,12 +35,12 @@ export function AnimCanvas({ images, shown, box }: { images: CanvasImages; shown
     const draw = () => {
       const ctx = prepare(canvas, box, box);
       if (!ctx) return; // no 2D canvas (tests)
-      const frame = shown.still ? shown.anim.frames[0]! : frameAt(shown.anim, (performance.now() - start) / 1000);
-      drawSpriteFrame(ctx, image, frame, zoom, feet, shown.mirror);
+      const frame = still ? anim.frames[0]! : frameAt(anim, (performance.now() - start) / 1000);
+      drawSpriteFrame(ctx, image, frame, zoom, feet, mirror);
       raf = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [shown?.anim, shown?.mirror, shown?.still, image, box]);
+  }, [anim, mirror, still, image, box]);
   return <canvas ref={ref} aria-hidden className="shrink-0 rounded-sm" />;
 }
