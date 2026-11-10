@@ -86,9 +86,11 @@ export class NodeFs implements ProjectFs {
     let entries: string[];
     try {
       entries = await readdir(dir);
-    } catch {
-      // The folder is already gone (or not a folder), so there is nothing to remove.
-      return;
+    } catch (error) {
+      // Only "the folder is already gone" means there is nothing to remove. Anything else (permissions, the path
+      // being a file, a disk error) is a real failure the caller must see.
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
     }
     if (entries.some((e) => e !== KEEP_FILE)) return;
     await rm(join(dir, KEEP_FILE), { force: true });

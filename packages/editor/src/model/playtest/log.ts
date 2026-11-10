@@ -77,10 +77,9 @@ function sentence(p: Project, label: string, parts: Part[], values: Record<strin
   return words.filter((w) => w !== "").join(" ");
 }
 
-export const conditionText = (p: Project, c: Condition) =>
-  sentence(p, CONDITION_LABEL[c.type], CONDITION_PARTS[c.type], c as unknown as Record<string, unknown>);
-export const actionText = (p: Project, a: Action) => sentence(p, ACTION_LABEL[a.type], ACTION_PARTS[a.type], a as unknown as Record<string, unknown>);
-const triggerText = (p: Project, t: Trigger) => sentence(p, TRIGGER_LABEL[t.type], TRIGGER_PARTS[t.type], t as unknown as Record<string, unknown>);
+export const conditionText = (p: Project, c: Condition) => sentence(p, CONDITION_LABEL[c.type], CONDITION_PARTS[c.type], c);
+export const actionText = (p: Project, a: Action) => sentence(p, ACTION_LABEL[a.type], ACTION_PARTS[a.type], a);
+const triggerText = (p: Project, t: Trigger) => sentence(p, TRIGGER_LABEL[t.type], TRIGGER_PARTS[t.type], t);
 
 /** What the player clicked or walked into, e.g. `pond`, `Gardener`, `region exit_shed`, `Game`. */
 function ownerName(p: Project, o: RuleOwner): string {
