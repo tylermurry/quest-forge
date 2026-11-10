@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryFs, saveProject, type SceneFile } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
@@ -67,6 +68,46 @@ describe("rule inspector", { timeout: 60_000 }, () => {
     return editor;
   }
   const ruleCards = () => within(inspector()).getAllByRole("listitem", { name: /^Rule \d+$/ });
+
+  it("moves a rule up and down from the keyboard alone, one undo step each", async () => {
+    const editor = await mountPondRules();
+    const user = userEvent.setup();
+    const order = () => hotspot(editor, "pond").rules.map((r) => r.id);
+    const before = order();
+    const openMenu = async (n: number) => {
+      const trigger = within(ruleCards()[n]!).getByRole("button", { name: "Rule menu" });
+      act(() => trigger.focus());
+      await user.keyboard("{Enter}");
+    };
+    // Arrow down from wherever focus starts until the item has it (the menu wraps, so this is bounded).
+    const choose = async (name: string) => {
+      const item = await screen.findByRole("menuitem", { name });
+      for (let i = 0; i < 5 && document.activeElement !== item; i++) await user.keyboard("{ArrowDown}");
+      expect(document.activeElement).toBe(item);
+      await user.keyboard("{Enter}");
+      await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+    };
+
+    await openMenu(0);
+    expect(await screen.findByRole("menuitem", { name: "Move up" })).toHaveProperty("dataset.disabled", "");
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+
+    await openMenu(1);
+    await choose("Move up");
+    expect(order()).toEqual([before[1], before[0], before[2], before[3]]);
+    act(() => editor.undo());
+    expect(order()).toEqual(before);
+
+    await openMenu(1);
+    await choose("Move down");
+    expect(order()).toEqual([before[0], before[2], before[1], before[3]]);
+    act(() => editor.undo());
+    expect(order()).toEqual(before);
+
+    await openMenu(3);
+    expect(await screen.findByRole("menuitem", { name: "Move down" })).toHaveProperty("dataset.disabled", "");
+  });
 
   it("shows rule cards as sentences", async () => {
     await mountPondRules();

@@ -1,10 +1,20 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { AnyRule, Problem, Project } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
-import { addAction, addCondition, deleteRule, duplicateRule, editRuleList, setOnce, setTriggerField, setTriggerType } from "../../model/rules/commands.ts";
+import {
+  addAction,
+  addCondition,
+  deleteRule,
+  duplicateRule,
+  editRuleList,
+  moveRule,
+  setOnce,
+  setTriggerField,
+  setTriggerType,
+} from "../../model/rules/commands.ts";
 import { ownerKey, ownerTriggers, type OwnerRules, type RuleOwnerRef, type TriggerType } from "../../model/rules/owner.ts";
 import { createAndUse } from "../../model/rules/pickers.ts";
 import { pointPickScene } from "../../model/rules/pointPick.ts";
@@ -128,6 +138,12 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onPointerDown={stop} onClick={stop}>
+            <DropdownMenuItem disabled={index === 0} onSelect={() => run("Move rule up", (q) => moveRule(q, owner, rule.id, index - 1))}>
+              <ArrowUp /> Move up
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={index === own.rules.length - 1} onSelect={() => run("Move rule down", (q) => moveRule(q, owner, rule.id, index + 1))}>
+              <ArrowDown /> Move down
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => editor.applyWith("Duplicate rule", (q) => duplicateRule(q, owner, rule.id))}>
               <Copy /> Duplicate
             </DropdownMenuItem>
