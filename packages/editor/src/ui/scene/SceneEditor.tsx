@@ -69,6 +69,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
 
   // Scene menu and Delete run through the command registry.
   const live = { c, remove };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the handlers close over the controller `c`; re-registering on other values would only churn the command registry
   useEffect(() => {
     const tool = (t: Tool) => ({ run: () => c.setTool(t), enabled: () => LAYER_TOOLS[c.ui.layer].includes(t) });
     const off = registry.register({
@@ -98,7 +99,6 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
       offs.forEach((o) => o());
       off();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the handlers close over the controller `c`; re-registering on other values would only churn the command registry
   }, [c, registry, ws]);
 
   // Browser rows dropped on the canvas place objects and characters; Objects rows reorder.

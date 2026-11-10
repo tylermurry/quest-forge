@@ -23,6 +23,7 @@ export function GameInspector({ actions }: { actions: Actions }) {
 
   // Jump-to a game setting flashes its field; rule spots are handled by their cards.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when the game settings change would flash again
   useEffect(() => {
     if (!highlight || !game || highlight.location.file !== game.path || highlight.location.path[0] === "rules") return;
     const key = String(highlight.location.path[0] ?? "");
@@ -30,7 +31,7 @@ export function GameInspector({ actions }: { actions: Actions }) {
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when the game settings change would flash again
+  }, [highlight?.seq]);
 
   if (!game) return <p className="text-muted-foreground">This project has no game.yaml.</p>;
   const g = game.data;

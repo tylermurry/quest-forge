@@ -102,6 +102,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
 
   // Jump-to: centre the node the problem points at and flash it.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when other values change would re-centre the view
   useEffect(() => {
     if (!highlight || !doc || highlight.location.file !== doc.path) return;
     const i = highlight.location.path[1];
@@ -109,7 +110,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     if (!n) return;
     setFlash({ node: n.id, seq: highlight.seq, log: highlight.tone === "log" });
     void rf.setCenter(n.pos[0] + 120, n.pos[1] + 40, { zoom: Math.max(rf.getZoom(), 0.8), duration: 300 });
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when other values change would re-centre the view
+  }, [highlight?.seq]);
 
   const run = (label: string, f: (p: Project) => Project): boolean => editor.apply(label, f);
   const selectNode = (node: string) => ws.select({ kind: "dialogueNode", dialogue: dialogueId, node });
@@ -138,6 +139,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
   // Registry: Delete, Auto-layout, Fit. Delete takes selected nodes, else selected edges.
   const live = useRef({ nodes, edges });
   live.current = { nodes, edges };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the handlers read the latest values through refs and `run`; re-registering on every change would only churn the command registry
   useEffect(() => {
     const selectedNodes = () => live.current.nodes.filter((n) => n.selected && n.data.node.type !== "start").map((n) => n.id);
     const selectedEdges = () => live.current.edges.filter((e) => e.selected);
@@ -162,7 +164,6 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
       "dialogue.fit": { run: () => void rf.fitView({ duration: 300, padding: 0.15, maxZoom: 1 }) },
     } satisfies Partial<Record<CommandId, unknown>>);
     return off;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the handlers read the latest values through refs and `run`; re-registering on every change would only churn the command registry
   }, [registry, dialogueId, rf]);
   useEffect(() => registry.changed(), [nodes, edges, registry]);
 

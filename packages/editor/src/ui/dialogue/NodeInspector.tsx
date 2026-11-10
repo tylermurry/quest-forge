@@ -51,6 +51,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
 
   // Jump-to: scroll to and flash the exact option, condition or action.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when other values change would flash again
   useEffect(() => {
     if (!highlight || !doc || highlight.location.file !== doc.path || !pathWithin(highlight.location.path, ["nodes", index])) return;
     const rest = highlight.location.path.slice(2);
@@ -59,7 +60,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when other values change would flash again
+  }, [highlight?.seq]);
 
   if (!doc || !node) return null;
   const problems = problemsByNode(editor.problems, doc.path, doc.data).get(node.id) ?? [];

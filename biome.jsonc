@@ -1,0 +1,90 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**/*.{ts,tsx,js,json,jsonc,css}",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!docs/.docusaurus",
+      "!packages/editor/src-tauri/target",
+      "!packages/editor/.sandbox",
+      "!packages/editor/src/platform/bindings.ts",
+      "!pnpm-lock.yaml",
+      "!packages/engine/fixtures",
+      "!packages/schema/test/fixtures"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 160
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        // Deliberate style: with noUncheckedIndexedAccess the code asserts non-null where an invariant guarantees it (854 uses).
+        "noNonNullAssertion": "off",
+        // Existing findings, follow-up issue to be filed (17).
+        "useImportType": "off",
+        "useTemplate": "off",
+        "useExponentiationOperator": "off",
+        // Existing findings in CSS, follow-up issue to be filed (6).
+        "noDescendingSpecificity": "off"
+      },
+      "correctness": {
+        // Kept visible but not blocking: 8 effects have no suppression and need a decision each, follow-up issue to be filed.
+        // The 7 deliberate exceptions carry a biome-ignore with their reason.
+        "useExhaustiveDependencies": "warn",
+        // Existing finding in a test helper that calls a mocked hook, follow-up issue to be filed (2).
+        "useHookAtTopLevel": "off"
+      },
+      "suspicious": {
+        // Existing findings, follow-up issue to be filed.
+        "useIterableCallbackReturn": "off", // 28
+        "noArrayIndexKey": "off", // 14
+        "noAssignInExpressions": "off", // 10
+        "noControlCharactersInRegex": "off", // 4
+        "noConfusingVoidType": "off", // 2
+        // `then` is a dialogue graph port name in the schema, not a thenable (6).
+        "noThenProperty": "off"
+      },
+      "complexity": {
+        // Existing findings, follow-up issue to be filed.
+        "noCommaOperator": "off", // 6
+        "useOptionalChain": "off", // 3
+        "noUselessFragments": "off", // 1
+        "useIndexOf": "off", // 1
+        "noAdjacentSpacesInRegex": "off" // 1
+      },
+      "a11y": {
+        // Real accessibility findings in the editor UI, existing, follow-up issue to be filed (49 in total).
+        "useButtonType": "off", // 21
+        "useAriaPropsSupportedByRole": "off", // 7
+        "useSemanticElements": "off", // 6
+        "useFocusableInteractive": "off", // 4
+        "noStaticElementInteractions": "off", // 2
+        "noLabelWithoutControl": "off", // 2
+        "useMediaCaption": "off", // 1
+        "noNoninteractiveTabindex": "off", // 1
+        "noNoninteractiveElementToInteractiveRole": "off", // 1
+        "noAutofocus": "off" // 1
+      }
+    }
+  },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "assist": { "enabled": true, "actions": { "source": { "organizeImports": "off" } } }
+}

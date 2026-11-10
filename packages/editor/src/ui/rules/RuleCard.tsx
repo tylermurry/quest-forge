@@ -55,6 +55,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
 
   // Jump-to: scroll to and flash the exact part.
   const highlight = ws.highlight;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per jump request (seq); re-running when the rule changes would flash again
   useEffect(() => {
     if (!highlight) return;
     const where = locateInRules(highlight.location, own);
@@ -64,7 +65,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
     el?.scrollIntoView?.({ block: "nearest" });
     flashElement(el, highlight.tone);
     ws.clearHighlight();
-  }, [highlight?.seq]); // eslint-disable-line react-hooks/exhaustive-deps -- runs once per jump request (seq); re-running when the rule changes would flash again
+  }, [highlight?.seq]);
 
   const handlers = (where: "when" | `if/${number}` | `do/${number}`, apply: (patch: Record<string, unknown>) => (p: Project) => Project): Omit<PartHandlers, "animTarget"> => ({
     patch: (patch, field) => run("Edit rule", apply(patch), field && `${where}/${field}`),

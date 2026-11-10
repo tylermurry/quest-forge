@@ -138,6 +138,7 @@ export function Workspace({ root, editor, onClose }: Props) {
   // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up.
   const playing = useSyncExternalStore(playtest.subscribe, () => playtest.playing);
   const hiddenForPlay = useRef<("browser" | "inspector")[] | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   useEffect(() => {
     if (playing) {
       const up = (["browser", "inspector"] as const).filter((n) => shown(n === "browser" ? browser : inspector));
@@ -148,7 +149,6 @@ export function Workspace({ root, editor, onClose }: Props) {
       hiddenForPlay.current = null;
     }
     setTick((t) => t + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   }, [playing]);
 
   // Notices (outside reloads, refused imports, command errors) show as toasts.

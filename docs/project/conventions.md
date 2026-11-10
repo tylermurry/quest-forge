@@ -6,8 +6,10 @@ change.
 
 ## Working in the repo
 
-- Run pnpm through corepack: `corepack pnpm install`, `corepack pnpm check` (typecheck + tests).
+- Run pnpm through corepack: `corepack pnpm install`, `corepack pnpm check` (lint and format check, typecheck, tests).
   `corepack pnpm test` runs all Vitest projects. Tests live in `packages/*/test/*.test.ts`.
+- Biome formats and lints (`biome.jsonc` at the root; each disabled rule has its reason next to it). Run
+  `corepack pnpm lint` to check and `corepack pnpm format` to rewrite; `check` runs it, so CI enforces it.
 - TypeScript strict + `noUncheckedIndexedAccess`. Internal packages export `src/*.ts` directly,
   with no build step. Import with `.ts` extensions.
 - One ticket ≈ one commit, with tests. Commit messages are imperative and explain why.

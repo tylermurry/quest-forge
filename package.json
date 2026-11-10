@@ -11,9 +11,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p packages/schema && tsc -p packages/engine && tsc -p packages/editor && tsc -p packages/site",
-    "check": "npm run typecheck && npm test"
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check . && npm run typecheck && npm test"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.6",
     "@types/node": "^26.6.6",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
