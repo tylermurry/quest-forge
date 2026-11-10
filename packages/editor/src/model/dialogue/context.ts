@@ -1,4 +1,4 @@
-// Where a dialogue is played from (D142): the first scene whose rules start it, and
+// Where a dialogue is played from: the first scene whose rules start it, and
 // the placed character whose own rules do (the likely speaker). DOM-free.
 import type { AnyRule, Project } from "@questforge/schema";
 import { hereSpawn } from "../playtest/playtest.ts";
@@ -14,7 +14,7 @@ export interface DialogueContext {
 
 const starts = (rules: readonly AnyRule[], dialogue: string) => rules.some((r) => r.do.some((a) => a.type === "start_dialogue" && a.dialogue === dialogue));
 
-/** The scene "Play from this node" uses (D142), or null when the project has nowhere to play. */
+/** The scene "Play from this node" uses, or null when the project has nowhere to play. */
 export function dialogueContext(p: Project, dialogue: string): DialogueContext | null {
   for (const { data: s } of p.scenes) {
     const speaker = s.characters.find((c) => starts(c.rules, dialogue));

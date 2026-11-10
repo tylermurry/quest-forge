@@ -1,4 +1,4 @@
-// The project browser's model (spec 08): one folder tree per section, built from
+// The project browser's model: one folder tree per section, built from
 // the Project. DOM-free so it's testable in Node; the React tree only renders it.
 import { ASSET_LAYOUT, SECTION_ROOTS, folderOf, sectionOfFolder, type AssetKind, type Doc, type Project, type RenameKind } from "@questforge/schema";
 
@@ -16,7 +16,7 @@ export const SECTIONS: { section: Section; title: string }[] = [
 ];
 
 export const isAssetKind = (s: Section): s is AssetKind => s in ASSET_LAYOUT;
-/** Sections whose entries open in a tab: assets, and images for slicing (D114). */
+/** Sections whose entries open in a tab: assets, and images for slicing. */
 export const opensTab = (s: Section) => isAssetKind(s) || s === "image";
 
 /** One thing in the browser. `folder` is relative to the section root (`""` = root). */
@@ -87,7 +87,7 @@ export function sectionFolders(project: Project, section: Section): string[] {
   return [...out].sort();
 }
 
-/** The folder tree of one section, sorted: folders first, then entries, by name (D83). */
+/** The folder tree of one section, sorted: folders first, then entries, by name. */
 export function buildSection(project: Project, section: Section): FolderNode {
   const root: FolderNode = { section, path: "", name: "", folders: [], entries: [] };
   const nodes = new Map<string, FolderNode>([["", root]]);
@@ -112,7 +112,7 @@ export function buildSection(project: Project, section: Section): FolderNode {
 }
 
 /**
- * Filters a tree to entries whose name or ID contains the query (spec 08 search),
+ * Filters a tree to entries whose name or ID contains the query,
  * keeping the folders that lead to them. An empty query keeps everything.
  */
 export function filterTree(tree: FolderNode, query: string): FolderNode | null {

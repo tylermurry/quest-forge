@@ -59,7 +59,7 @@ const config = {
       title: "Questforge docs",
       items: [
         { to: "/standards/", label: "Standards", position: "left", activeBaseRegex: "/standards/" },
-        { to: "/project/", label: "Project", position: "left", activeBaseRegex: "/project/" },
+        { to: "/project/conventions/", label: "Project", position: "left", activeBaseRegex: "/project/" },
       ],
     },
   },

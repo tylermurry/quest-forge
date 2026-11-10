@@ -16,7 +16,7 @@ const TONE: Record<LogTone, string> = {
   note: "text-muted-foreground italic",
 };
 
-/** The event log (spec 12, D129): lines about a rule jump to it in the rule inspector. */
+/** The event log: lines about a rule jump to it in the rule inspector. */
 export function EventLog({ playtest, project, ws }: { playtest: Playtest; project: Project; ws: WorkspaceState }) {
   usePlaytest(playtest);
   const run = playtest.run;

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Id, Text, schemaVersion } from "./common.ts";
 
-/** `items/**\/<id>.item.yaml` (D58). `icon` is an image asset ID. */
+/** `items/**\/<id>.item.yaml`. `icon` is an image asset ID. */
 export const ItemFile = z.strictObject({
   schemaVersion,
   id: Id,

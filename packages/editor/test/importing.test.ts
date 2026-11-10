@@ -8,7 +8,7 @@ import { errorsIn, m1Project } from "./support/fixtures.ts";
 
 const f = (name: string) => ({ name, bytes: new Uint8Array([1, 2, 3]) });
 
-describe("importing files (D88)", () => {
+describe("importing files", () => {
   it("puts images and sounds in their sections, in the drop folder when it matches", async () => {
     const p = await m1Project();
     const r = importFiles(p, [f("Sea Shell.PNG"), f("waves.ogg"), f("notes.txt")], "image", "items");

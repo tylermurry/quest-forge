@@ -35,7 +35,7 @@ function memoryPlatform(): Platform & { disks: Map<string, MemoryFs> } {
   };
 }
 
-describe("start screen (spec 08)", () => {
+describe("start screen", () => {
   it("creates a blank project, opens it, and lists it as recent", async () => {
     const platform = memoryPlatform();
     const saveRecent = vi.spyOn(platform, "saveRecent");
@@ -44,7 +44,7 @@ describe("start screen (spec 08)", () => {
         <App />
       </PlatformContext.Provider>,
     );
-    expect(screen.getByRole("button", { name: "From demo template" })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: "From demo template" })).toBeNull();
     fireEvent.change(screen.getByLabelText("Game title"), { target: { value: "Cave Story" } });
     fireEvent.click(screen.getByRole("button", { name: "Create blank project" }));
     await waitFor(() => expect(screen.getByText("Cave Story")).toBeTruthy());
@@ -57,7 +57,7 @@ describe("start screen (spec 08)", () => {
     view.unmount();
   });
 
-  it("saves by hand and asks before leaving with unsaved changes (D145)", async () => {
+  it("saves by hand and asks before leaving with unsaved changes", async () => {
     const platform = memoryPlatform();
     const view = render(
       <PlatformContext.Provider value={platform}>

@@ -1,5 +1,5 @@
-// Edits to a list of conditions or actions (spec 10), shared by rule cards and the
-// dialogue graph's Choices, Branch and Actions nodes (spec 11). Pure: each takes a
+// Edits to a list of conditions or actions, shared by rule cards and the
+// dialogue graph's Choices, Branch and Actions nodes. Pure: each takes a
 // list and returns a new one; the caller puts it back where it lives.
 import { Action, Condition, type Project } from "@questforge/schema";
 import { CommandError } from "../commands.ts";

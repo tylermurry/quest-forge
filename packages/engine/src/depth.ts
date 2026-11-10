@@ -1,6 +1,6 @@
 import type { SceneFile } from "@questforge/schema";
 
-// Depth (spec 04, D35): scale lerped between the far and near lines, occlusion by
+// Depth: scale lerped between the far and near lines, occlusion by
 // baseline y-sort.
 
 type Depth = SceneFile["depth"];

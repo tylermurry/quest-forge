@@ -7,7 +7,7 @@ import { m1Project } from "./support/fixtures.ts";
 
 const garden = (p: Project) => p.scenes.find((s) => s.data.id === "garden")!;
 
-describe("jump-to (D120, D121)", () => {
+describe("jump-to", () => {
   it("maps each problem of a deleted item to the exact thing whose rule uses it", async () => {
     const p = deleteEntry(await m1Project(), "item", "stick");
     const jumps = validateProject(p)
@@ -74,7 +74,7 @@ describe("jump-to (D120, D121)", () => {
   });
 });
 
-describe("jump-to picks the Inspector tab (D125)", () => {
+describe("jump-to picks the Inspector tab", () => {
   it("opens Rules for a rule part and Details for anything else", async () => {
     const p = await m1Project();
     const ws = new WorkspaceState();

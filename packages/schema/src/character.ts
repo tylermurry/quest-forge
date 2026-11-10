@@ -9,8 +9,8 @@ export const AnimationSlot = z.enum(ANIMATION_SLOTS);
 export type AnimationSlot = z.infer<typeof AnimationSlot>;
 
 /**
- * A named animation (spec 05). `image` is an image asset ID and `frames` are cell
- * indices into its sheet (D66); an unsliced image has the single frame 0.
+ * A named animation. `image` is an image asset ID and `frames` are cell
+ * indices into its sheet; an unsliced image has the single frame 0.
  */
 export const Animation = z.strictObject({
   image: Id,
@@ -20,17 +20,17 @@ export const Animation = z.strictObject({
 });
 export type Animation = z.infer<typeof Animation>;
 
-/** `characters/**\/<id>.character.yaml` (D58). */
+/** `characters/**\/<id>.character.yaml`. */
 export const CharacterFile = z.strictObject({
   schemaVersion,
   id: Id,
   name: Text,
   textColor: Color,
-  /** Pixels per second at depth scale 1.0 (spec 04). */
+  /** Pixels per second at depth scale 1.0. */
   walkSpeed: z.int().positive(),
-  /** Render left-facing slots by mirroring the right ones (D39). */
+  /** Render left-facing slots by mirroring the right ones. */
   mirrorLeft: z.boolean(),
-  /** Keyed by slot; an object (not a record) so keys serialize in slot order (D54). */
+  /** Keyed by slot; an object (not a record) so keys serialize in slot order. */
   animations: z.strictObject(
     Object.fromEntries(ANIMATION_SLOTS.map((slot) => [slot, Animation.optional()])) as {
       [S in AnimationSlot]: z.ZodOptional<typeof Animation>;

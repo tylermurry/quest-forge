@@ -1,6 +1,6 @@
 import type { Facing, FlagsFile, Placement, SceneFile } from "@questforge/schema";
 
-// Runtime game state (spec 07, D75): one plain JSON object, so save/load (spec 07)
+// Runtime game state: one plain JSON object, so save/load
 // stores it as-is. Everything that changes during play and must survive a scene
 // change or a save lives here; UI state (current item, open panels) does not.
 
@@ -18,7 +18,7 @@ export interface GameState {
   inventory: string[];
   flags: Record<string, boolean>;
   counters: Record<string, number>;
-  /** Award ID → points. Each award counts once (spec 07). */
+  /** Award ID → points. Each award counts once. */
   awards: Record<string, number>;
   /** `scene/object` → visible, for objects changed by show/hide_object. */
   objects: Record<string, boolean>;
@@ -26,11 +26,11 @@ export interface GameState {
   characters: Record<string, Position>;
   /** Scene IDs entered at least once, in order. */
   visited: string[];
-  /** Keys of rules that have run (D117), for `once` and `first_time`. */
+  /** Keys of rules that have run, for `once` and `first_time`. */
   fired: string[];
-  /** Dialogue `once` options already chosen, as `<dialogue>/<node>/<option>` (D137). */
+  /** Dialogue `once` options already chosen, as `<dialogue>/<node>/<option>`. */
   dialogueChoices: string[];
-  /** Audio ID of the current music, recorded by play/stop_music (D71). */
+  /** Audio ID of the current music, recorded by play/stop_music. */
   music: string | null;
 }
 

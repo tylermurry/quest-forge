@@ -1,4 +1,4 @@
-// Playtest (spec 12, D126–D132): runs the engine on a snapshot of the in-memory
+// Playtest: runs the engine on a snapshot of the in-memory
 // project in the playtest area. DOM-free: the playtest area mounts the canvas for the current run
 // and hands the engine's session back with `attach`; Node tests build the session
 // themselves through `createSession`.
@@ -10,11 +10,11 @@ import type { WorkspaceState } from "../workspace.ts";
 import { dialogueContext } from "../dialogue/context.ts";
 import { droppedNotice, PresetStore, sanitizeState } from "./presets.ts";
 
-/** Where a run began; Restart goes back here (D128, D132). */
+/** Where a run began; Restart goes back here. */
 export type RunOrigin =
   | { kind: "game" }
   | { kind: "here"; scene: string; spawn: string }
-  /** Play from this node (D142): the dialogue's scene, then the dialogue at the node. */
+  /** Play from this node: the dialogue's scene, then the dialogue at the node. */
   | { kind: "node"; dialogue: string; node: string; scene: string; spawn: string }
   | { kind: "preset"; name: string; state: GameState };
 
@@ -32,7 +32,7 @@ export interface PlaytestOptions {
   createSession?(run: Run, hooks: { trace: (e: TraceEvent) => void; restart: () => void }): Session;
 }
 
-/** The spawn Play from here uses (D132): the selected spawn in that scene, else `default`, else the first. */
+/** The spawn Play from here uses: the selected spawn in that scene, else `default`, else the first. */
 export function hereSpawn(scene: SceneFile, selected: string | null): string | null {
   if (selected && scene.spawns[selected]) return selected;
   if (scene.spawns.default) return "default";
@@ -57,11 +57,11 @@ export class Playtest {
   private _run: Run | null = null;
   private _session: Session | null = null;
   private nextId = 1;
-  /** Engine trace events of the current run; the event log formats them (D129). */
+  /** Engine trace events of the current run; the event log formats them. */
   readonly events: TraceEvent[] = [];
-  /** Turned-on debug layers (D132). The game view passes this object to the engine, which reads it each frame. */
+  /** Turned-on debug layers. The game view passes this object to the engine, which reads it each frame. */
   readonly debug: DebugFlags = { ...DEBUG_OFF };
-  /** Named state snapshots in `.editor/presets.json` (D126). */
+  /** Named state snapshots in `.editor/presets.json`. */
   readonly presets = new PresetStore();
 
   private _version = 0;
@@ -97,12 +97,12 @@ export class Playtest {
   get playing(): boolean {
     return this._run !== null;
   }
-  /** The project changed since this run started: "Restart scene to apply" (D128). */
+  /** The project changed since this run started: "Restart scene to apply". */
   get stale(): boolean {
     return !!this._run && !sameContent(this._run.project, this.editor.project);
   }
 
-  /** The scene Play from here would use, or null when it is disabled (no scene tab, D132). */
+  /** The scene Play from here would use, or null when it is disabled (no scene tab). */
   hereTarget(): { scene: string; spawn: string } | null {
     const id = this.ws.activeScene;
     const scene = id ? this.editor.project.scenes.find((s) => s.data.id === id)?.data : undefined;
@@ -113,7 +113,7 @@ export class Playtest {
     return spawn ? { scene: scene.id, spawn } : null;
   }
 
-  /** The node Play from this node would use: the selected dialogue node, in its scene context (D142). */
+  /** The node Play from this node would use: the selected dialogue node, in its scene context. */
   nodeTarget(): { dialogue: string; node: string; scene: string; spawn: string } | null {
     const sel = this.ws.selection;
     if (sel?.kind !== "dialogueNode") return null;
@@ -123,7 +123,7 @@ export class Playtest {
     return ctx ? { dialogue: sel.dialogue, node: sel.node, scene: ctx.scene, spawn: ctx.spawn } : null;
   }
 
-  /** Play from this node (spec 11): the selected node's dialogue, in its scene (D142). */
+  /** Play from this node: the selected node's dialogue, in its scene. */
   playNode(): boolean {
     const target = this.nodeTarget();
     return target ? this.launch({ kind: "node", ...target }) : false;
@@ -140,7 +140,7 @@ export class Playtest {
     return here ? this.launch({ kind: "here", ...here }) : false;
   }
 
-  /** Start from a saved preset (D126): IDs the project lost are dropped, with a notice. */
+  /** Start from a saved preset: IDs the project lost are dropped, with a notice. */
   playPreset(name: string): boolean {
     const preset = this.presets.find(name);
     return preset ? this.launch({ kind: "preset", name, state: preset.state }) : false;
@@ -153,12 +153,12 @@ export class Playtest {
     return true;
   }
 
-  /** Restart: the run's original start, with the current project (D128, D132). */
+  /** Restart: the run's original start, with the current project. */
   restart(): boolean {
     return this._run ? this.launch(this._run.origin) : false;
   }
 
-  /** Restart scene: the current project, back to the state as this scene was entered (D128). */
+  /** Restart scene: the current project, back to the state as this scene was entered. */
   restartScene(): boolean {
     const run = this._run;
     const session = this._session;
@@ -193,7 +193,7 @@ export class Playtest {
       trace: (e: TraceEvent) => {
         if (this._run !== run) return;
         this.events.push(e);
-        // The log shows the last 500 lines (D132); keep plenty of events for them.
+        // The log shows the last 500 lines; keep plenty of events for them.
         if (this.events.length > 5000) this.events.splice(0, 1000);
         this.changed();
       },
@@ -203,7 +203,7 @@ export class Playtest {
     };
   }
 
-  /** Validation errors block playtest and open Problems instead (D38). */
+  /** Validation errors block playtest and open Problems instead. */
   private gate(): boolean {
     this.editor.validateNow();
     const errors = this.editor.problems.filter((p) => p.severity === "error");
@@ -217,7 +217,7 @@ export class Playtest {
     if (!this.gate()) return false;
     const project = this.editor.project;
     let start: SessionStart = override ?? startOf(origin);
-    // A saved state may name things the project no longer has (D126).
+    // A saved state may name things the project no longer has.
     if (start.state) {
       const { state, dropped } = sanitizeState(project, start.state);
       if (dropped.length) this.editor.showNotice({ kind: "info", text: droppedNotice(override ? "Restart scene" : `Preset "${origin.kind === "preset" ? origin.name : ""}"`, dropped) });

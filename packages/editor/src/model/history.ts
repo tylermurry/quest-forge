@@ -1,14 +1,14 @@
-// Undo/redo across all editors (spec 08, D21, D84). Steps are whole-project
+// Undo/redo across all editors. Steps are whole-project
 // snapshots: Projects are immutable and unchanged docs are shared, so each step
 // costs only the docs it changed.
 import type { Project } from "@questforge/schema";
 
-/** Spec 08 asks for at least 200 steps per session (D84). */
+/** Spec 08 asks for at least 200 steps per session. */
 const HISTORY_LIMIT = 500;
-/** Edits with the same merge key closer together than this are one step (typing, D84). */
+/** Edits with the same merge key closer together than this are one step (typing). */
 export const MERGE_WINDOW_MS = 1000;
 
-/** Fields describing what's on disk. They're never undone: undo keeps the current ones (D84). */
+/** Fields describing what's on disk. They're never undone: undo keeps the current ones. */
 const DISK_KEYS = ["files", "saved", "savedFolders", "trash"] as const satisfies readonly (keyof Project)[];
 
 /** Whether two projects hold the same content (disk state aside); unchanged docs are shared, so this compares references. */
@@ -69,7 +69,7 @@ export class History {
     if (this.past.length > this.limit) this.past.shift();
   }
 
-  /** Ends any merging, e.g. when a field loses focus (D84). */
+  /** Ends any merging, e.g. when a field loses focus. */
   breakMerge() {
     const last = this.past[this.past.length - 1];
     if (last) delete last.mergeKey;
@@ -106,7 +106,7 @@ export class History {
     return this.past.length;
   }
 
-  /** Forget everything, e.g. after the project reloads from disk (D84, D85). */
+  /** Forget everything, e.g. after the project reloads from disk. */
   clear() {
     this.past = [];
     this.future = [];

@@ -1,4 +1,4 @@
-// Jump-to (spec 14, D120, D121): what a problem's location selects. A rule problem
+// Jump-to: what a problem's location selects. A rule problem
 // selects the exact hotspot, object, character, region, scene or Game, and keeps the
 // data path so the rule inspector can scroll to and flash the rule part.
 import { ASSET_LAYOUT, allDocs, type AssetKind, type DataPath, type Location, type Project, type SceneFile } from "@questforge/schema";
@@ -11,11 +11,11 @@ type JumpTarget =
   | { kind: "entry"; entry: EntryRef }
   /** A thing on a scene canvas. */
   | { kind: "sceneThing"; scene: string; list: ThingList; key: string }
-  /** The scene itself, e.g. its own rules (D124). */
+  /** The scene itself, e.g. its own rules. */
   | { kind: "scene"; scene: string }
-  /** Game-level rules and settings (spec 10). */
+  /** Game-level rules and settings. */
   | { kind: "game" }
-  /** A dialogue node: opens the dialogue's graph and selects the node (D121). */
+  /** A dialogue node: opens the dialogue's graph and selects the node. */
   | { kind: "dialogueNode"; dialogue: string; node: string };
 
 export interface Jump {

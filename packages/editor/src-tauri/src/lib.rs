@@ -1,6 +1,6 @@
-//! Questforge's native side (spec 08, D90): file I/O confined to the open project
+//! Questforge's native side: file I/O confined to the open project
 //! folder, folder watching, the recent-projects file, and saving a built game where
-//! the user picks (D153). Native dialogs come from tauri-plugin-dialog. All project
+//! the user picks. Native dialogs come from tauri-plugin-dialog. All project
 //! logic lives in TypeScript.
 
 use notify::{RecursiveMode, Watcher};
@@ -131,7 +131,7 @@ fn percent_decode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// Binary writes (imports, D88) send raw bytes; root and path travel URI-encoded in headers.
+/// Binary writes (imports) send raw bytes; root and path travel URI-encoded in headers.
 #[tauri::command]
 fn fs_write_bytes(request: Request<'_>) -> Res<()> {
     let header = |name: &str| -> Res<String> {
@@ -145,7 +145,7 @@ fn fs_write_bytes(request: Request<'_>) -> Res<()> {
     }
 }
 
-/// Build Game (D153): asks where to save the built `.quest` file with the native
+/// Build Game: asks where to save the built `.quest` file with the native
 /// save dialog and writes the raw body there. The only write outside the project
 /// folder, and only to the path the user just picked. Returns that path, or None if cancelled.
 #[tauri::command]
@@ -191,7 +191,7 @@ fn fs_make_folder(root: String, path: String) -> Res<()> {
     fs::create_dir_all(resolve(&root, &path)?).map_err(err)
 }
 
-/// Removes a folder only if nothing but a `.keep` file is left in it (D83).
+/// Removes a folder only if nothing but a `.keep` file is left in it.
 #[tauri::command]
 #[specta::specta]
 fn fs_remove_folder(root: String, path: String) -> Res<()> {
@@ -205,7 +205,7 @@ fn fs_remove_folder(root: String, path: String) -> Res<()> {
     fs::remove_dir(dir).map_err(err)
 }
 
-/// Deletes a folder tree. Only ever called for `.editor/trash` (D88).
+/// Deletes a folder tree. Only ever called for `.editor/trash`.
 #[tauri::command]
 #[specta::specta]
 fn fs_remove_tree(root: String, path: String) -> Res<()> {
@@ -253,7 +253,7 @@ struct Watches {
     active: Mutex<HashMap<u32, notify::RecommendedWatcher>>,
 }
 
-/// Watches a project folder; changed paths (relative) arrive on `channel` (spec 08).
+/// Watches a project folder; changed paths (relative) arrive on `channel`.
 #[tauri::command]
 #[specta::specta]
 fn watch_start(root: String, channel: Channel<Vec<String>>, watches: State<'_, Watches>) -> Res<u32> {
@@ -289,7 +289,7 @@ fn recent_file(app: &tauri::AppHandle) -> Res<PathBuf> {
     Ok(app.path().app_config_dir().map_err(err)?.join("recent.json"))
 }
 
-/// Recent projects live in the app config folder (D87).
+/// Recent projects live in the app config folder.
 #[tauri::command]
 #[specta::specta]
 fn recent_load(app: tauri::AppHandle) -> Res<String> {
@@ -302,7 +302,7 @@ fn recent_save(app: tauri::AppHandle, json: String) -> Res<()> {
     atomic_write(&recent_file(&app)?, json.as_bytes())
 }
 
-/// The typed commands (D92): tauri-specta generates their TypeScript bindings.
+/// The typed commands: tauri-specta generates their TypeScript bindings.
 /// `fs_write_bytes` and `build_save` take a raw request body, which specta can't
 /// describe, so they are registered separately and called by hand in `tauri.ts`.
 pub fn specta_builder() -> Builder<tauri::Wry> {
@@ -346,14 +346,14 @@ pub fn run() {
     let typed = specta_builder().invoke_handler();
     let raw = raw_handler();
     tauri::Builder::default()
-        // A second launch focuses the window that's already open (D92). Must be the first plugin.
+        // A second launch focuses the window that's already open. Must be the first plugin.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.unminimize();
                 let _ = window.set_focus();
             }
         }))
-        // Remembers the window's size and position between launches (D92).
+        // Remembers the window's size and position between launches.
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .manage(Watches::default())

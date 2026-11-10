@@ -1,6 +1,6 @@
-// Auto-layout for the dialogue graph (spec 11): columns by distance from Start, left
+// Auto-layout for the dialogue graph: columns by distance from Start, left
 // to right, each column stacked top to bottom in the order the ports lead there.
-// Nodes Start can't reach go in the columns after. Pure; positions are integers (D62).
+// Nodes Start can't reach go in the columns after. Pure; positions are integers.
 import { nodePorts, type DialogueFile, type DialogueNode } from "@questforge/schema";
 
 const COLUMN_WIDTH = 320;

@@ -15,7 +15,7 @@ import { useCommands } from "../hooks.ts";
 import { cn } from "../lib/utils.ts";
 import { usePlaytest } from "./hooks.ts";
 
-/** Start-from-preset items for a split button's menu (D126). */
+/** Start-from-preset items for a split button's menu. */
 function PresetItems({ playtest }: { playtest: Playtest }) {
   useSyncExternalStore(playtest.presets.subscribe, () => playtest.presets.version);
   const list = playtest.presets.list;
@@ -55,7 +55,7 @@ function SplitButton(props: { label: string; title: string; icon: React.ReactNod
 }
 
 /**
- * Play controls (spec 12, D133), in the title bar and the playtest window's toolbar.
+ * Play controls, in the title bar and the playtest window's toolbar.
  * Only what applies shows: Play (with From here and presets) while stopped; Restart
  * (with Restart scene and presets) and Stop while playing.
  */

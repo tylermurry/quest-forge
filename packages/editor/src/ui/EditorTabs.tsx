@@ -18,7 +18,7 @@ const docData = (p: Project, ref: EntryRef) => {
   return list?.find((d) => d.data.id === ref.id)?.data;
 };
 
-/** The tabbed editor area (spec 08). A scene tab is the scene editor (D103), a dialogue tab the graph (spec 11); other assets get a details form (D89). */
+/** The tabbed editor area. A scene tab is the scene editor, a dialogue tab the graph; other assets get a details form. */
 export function EditorTabs({ actions }: { actions: Actions }) {
   const { ws, editor } = actions;
   const p = editor.project;

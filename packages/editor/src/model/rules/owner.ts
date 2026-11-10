@@ -1,4 +1,4 @@
-// Who owns a rule list (spec 10): a thing on a scene, the scene itself, or the game.
+// Who owns a rule list: a thing on a scene, the scene itself, or the game.
 // DOM-free; every rule command goes through `ownerRules` / `updateOwnerRules`.
 import type { AnyRule, DataPath, GameFile, Project, SceneFile, Trigger } from "@questforge/schema";
 import { CommandError } from "../commands.ts";
@@ -17,7 +17,7 @@ const isRuleThingList = (list: string): list is RuleThingList => (RULE_THING_LIS
 
 export type TriggerType = Trigger["type"];
 
-/** The triggers a rule may use where it lives (spec 02); the schema enforces the same split. */
+/** The triggers a rule may use where it lives; the schema enforces the same split. */
 export function ownerTriggers(owner: RuleOwnerRef): TriggerType[] {
   if (owner.kind === "game") return ["combine", "dialogue_end"];
   if (owner.kind === "scene") return ["scene_enter", "scene_exit"];
@@ -80,7 +80,7 @@ export function thingOwner(scene: string, list: string, key: string): RuleOwnerR
   return isRuleThingList(list) ? { kind: "thing", scene, list, key } : null;
 }
 
-/** A free rule ID in this list: `rule_<n>` one past the highest used (D117). */
+/** A free rule ID in this list: `rule_<n>` one past the highest used. */
 export function newRuleId(rules: readonly AnyRule[]): string {
   let max = 0;
   for (const r of rules) {

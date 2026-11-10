@@ -8,7 +8,7 @@ import { drawSpriteFrame, prepare } from "./draw.ts";
 export type Shown = Pick<ResolvedAnim, "anim" | "mirror" | "still">;
 
 /**
- * A slot playing as the engine plays it (frameAt, mirrored around the origin, D39),
+ * A slot playing as the engine plays it (frameAt, mirrored around the origin),
  * with its feet on a fixed point and the origin marked. Redraws every frame while shown.
  */
 export function AnimCanvas({ images, shown, box }: { images: CanvasImages; shown: Shown | null; box: number }) {

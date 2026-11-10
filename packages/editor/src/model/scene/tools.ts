@@ -1,4 +1,4 @@
-// Tool gestures on the scene canvas (spec 09): Select/Move, Polygon, Rectangle,
+// Tool gestures on the scene canvas: Select/Move, Polygon, Rectangle,
 // Spawn point, Walk-to point. DOM-free; tested in Node by feeding pointer input.
 import { facingFor, scaleAt, sceneNav, type NavMesh, type Vec } from "@questforge/engine";
 import { polygonIssue, type CharacterFile, type Facing, type Point, type SceneFile } from "@questforge/schema";
@@ -40,29 +40,29 @@ type Move = { hit: Hit; start: Vec };
 /** Placing a spawn or walk-to point: press places it, dragging away sets the facing. */
 type Place = { kind: "spawn" | "walkto"; at: Point; hotspot?: string };
 
-/** A polygon being drawn, point by point. Not in history until it closes (D84). */
+/** A polygon being drawn, point by point. Not in history until it closes. */
 type Drawing = { points: Point[]; target: DrawTarget };
 
 export class SceneTools extends SceneController {
   private move: Move | null = null;
   /** What the cursor is over (for the cursor shape). */
   private hoverHit: Hit | null = null;
-  /** Where the last point snapped to a vertex or edge, for the snap ring (D102). */
+  /** Where the last point snapped to a vertex or edge, for the snap ring. */
   protected snapMark: Point | null = null;
 
   private drawing: Drawing | null = null;
   private place: Place | null = null;
-  /** Rectangle-to-polygon drag in progress (spec 09). */
+  /** Rectangle-to-polygon drag in progress. */
   private rect: { start: Point; end: Point; target: DrawTarget } | null = null;
   /** Where the next point would go (snapped), for the rubber band. */
   private cursorPoint: Point | null = null;
 
-  /** A polygon is being drawn (not in history until it closes, D84). */
+  /** A polygon is being drawn (not in history until it closes). */
   get isDrawing(): boolean {
     return this.drawing !== null || this.rect !== null;
   }
 
-  /** What a polygon drawn now would become (D104), or why nothing can be drawn. */
+  /** What a polygon drawn now would become, or why nothing can be drawn. */
   drawTarget(): DrawTarget | string {
     const scene = this.scene;
     if (!scene) return "There's no scene.";
@@ -143,7 +143,7 @@ export class SceneTools extends SceneController {
     const made = this.editor.applyWith(DRAW_LABEL[target.kind], (p) => createShape(p, id, target, points));
     if (made) {
       this.select(made.ref);
-      // New hotspots and regions get their name typed right away (D99).
+      // New hotspots and regions get their name typed right away.
       if (target.kind === "hotspot" || target.kind === "region") this.host.ws.requestFocus("name");
     }
     this.changed();
@@ -181,7 +181,7 @@ export class SceneTools extends SceneController {
     if (!this.abort()) super.cancel();
   }
 
-  // ── Objects layer (spec 09, D95, D106) ──────────────────────────────────────
+  // ── Objects layer ──────────────────────────────────────
 
   /** An image or character dragged from the browser and dropped at a screen point. */
   dropEntry(item: { section: string; id: string }, screen: Vec): boolean {
@@ -208,7 +208,7 @@ export class SceneTools extends SceneController {
   }
 
   /**
-   * Moves an object in the Objects list, which shows draw order front first (D95).
+   * Moves an object in the Objects list, which shows draw order front first.
    * `frontIndex` is its new place in that list.
    */
   reorder(objectId: string, frontIndex: number): boolean {
@@ -222,8 +222,8 @@ export class SceneTools extends SceneController {
   }
 
   /**
-   * Files dropped from the OS onto the canvas (D98), or picked with "Import
-   * background…" (`screen` null). They're imported (D88); the first image becomes
+   * Files dropped from the OS onto the canvas, or picked with "Import
+   * background…" (`screen` null). They're imported; the first image becomes
    * the background when the Background layer is active or the scene has none,
    * else it's placed as an object at the drop point. One undo step.
    */
@@ -292,7 +292,7 @@ export class SceneTools extends SceneController {
   protected override toolDown(e: PointerInput) {
     if (e.button !== 0) return;
     const p = toScene(this.transform, e.screen);
-    // "Pick on canvas" takes the click before any tool (D124).
+    // "Pick on canvas" takes the click before any tool.
     const pick = this.host.ws.pointPick;
     if (pick && pick.scene === this.sceneId) {
       this.editor.apply("Pick point on canvas", (q) => applyPointPick(q, pick, snapPixel(p)));
@@ -359,7 +359,7 @@ export class SceneTools extends SceneController {
   }
 
   private polygonDown(p: Vec, e: PointerInput) {
-    // The second click of a double-click closes the shape (spec 09).
+    // The second click of a double-click closes the shape.
     if (this.drawing && (e.clicks ?? 1) >= 2) return this.finish();
     const target = this.drawing?.target ?? this.drawTarget();
     if (typeof target === "string") {
@@ -391,7 +391,7 @@ export class SceneTools extends SceneController {
     this.rect = { start: pt, end: pt, target };
   }
 
-  /** Spawn point and Walk-to point tools (spec 09). An existing point is dragged as with Select. */
+  /** Spawn point and Walk-to point tools. An existing point is dragged as with Select. */
   protected pointToolDown(p: Vec) {
     const tool = this.ui.tool;
     const hit = this.hit(p);
@@ -420,7 +420,7 @@ export class SceneTools extends SceneController {
     this.previewPlace(at);
   }
 
-  /** Facing from the drag direction (spec 05's dominant-axis rule); a plain click faces down, toward the player. */
+  /** Facing from the drag direction (dominant axis wins); a plain click faces down, toward the player. */
   private placeFacing(at: Point, to: Vec): Facing {
     const dx = to[0] - at[0];
     const dy = to[1] - at[1];
@@ -509,11 +509,11 @@ export class SceneTools extends SceneController {
     }
   }
 
-  // ── Live aids (spec 09, D96, D105) ──────────────────────────────────────────
+  // ── Live aids ──────────────────────────────────────────
 
   private navCache: { scene: SceneFile; nav: NavMesh | null } | null = null;
 
-  /** The scene's walkable area with initially visible obstacles (D42, D105); null if it can't be walked. */
+  /** The scene's walkable area with initially visible obstacles; null if it can't be walked. */
   nav(scene: SceneFile): NavMesh | null {
     if (this.navCache?.scene === scene) return this.navCache.nav;
     const { outer, holes } = scene.walkable;
@@ -531,7 +531,7 @@ export class SceneTools extends SceneController {
 
   /**
    * The aids at the cursor: the path from the default spawn, and the ghost of the
-   * player standing where that walk would end, at that point's depth scale (D105).
+   * player standing where that walk would end, at that point's depth scale.
    */
   aidsAt(scene: SceneFile, cursor: Vec): { path: Vec[] | null; feet: Vec } {
     const nav = this.nav(scene);
@@ -548,7 +548,7 @@ export class SceneTools extends SceneController {
     return this.editor.project.characters.find((c) => c.data.id === id)?.data;
   }
 
-  /** Placeholder ghost size at scale 1 when the player has no usable slot (D96). */
+  /** Placeholder ghost size at scale 1 when the player has no usable slot. */
   static readonly GHOST_BOX = { w: 24, h: 56 };
 
   override frame(): Frame | null {

@@ -3,7 +3,7 @@ import { ImageAsset, formatProblem, loadProject, serialize, validateProject, typ
 import { NodeFs } from "../src/node.ts";
 import { FIXTURE } from "./helpers.ts";
 
-// Spritesheet slicing and origin (spec 05, D66).
+// Spritesheet slicing and origin.
 
 const fixture = async () => structuredClone((await loadProject(new NodeFs(FIXTURE))).project);
 const image = (p: Project, id: string) => p.assets!.data.images.find((i) => i.id === id)!;

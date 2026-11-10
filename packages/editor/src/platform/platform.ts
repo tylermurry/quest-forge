@@ -1,4 +1,4 @@
-// What the editor needs from where it runs (D90, D91): the Tauri app, or the dev
+// What the editor needs from where it runs: the Tauri app, or the dev
 // page in a browser. Everything else in the editor is the same code.
 import type { CommandRegistry } from "../model/appCommands.ts";
 import type { ProjectHost } from "../model/editor.ts";
@@ -31,7 +31,7 @@ export interface Platform {
    */
   installMenu?(registry: CommandRegistry): Promise<() => void>;
   /**
-   * Build Game (D153): asks where to save the built `.quest` file (suggesting
+   * Build Game: asks where to save the built `.quest` file (suggesting
    * `fileName`) and writes it. Returns where it went, as shown to the user, or null if cancelled.
    */
   saveBuild(fileName: string, bytes: Uint8Array): Promise<string | null>;

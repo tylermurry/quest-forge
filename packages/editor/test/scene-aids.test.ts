@@ -7,7 +7,7 @@ import { m1Project } from "./support/fixtures.ts";
 
 const HERO = { hero_sheet: [128, 192] as [number, number], rock_img: [70, 40] as [number, number], boulder_img: [84, 66] as [number, number] };
 
-describe("live aids (spec 09, D105)", () => {
+describe("live aids", () => {
   it("the ghost stands at the hovered point at the depth scale there", async () => {
     const { c, at, dispose } = await sceneEditor(undefined, "garden", HERO);
     const scene = c.scene!;
@@ -15,14 +15,14 @@ describe("live aids (spec 09, D105)", () => {
       c.pointerMove(at([120, y]));
       const ghost = c.frame()!.sprites.find((s) => s.ghost)!;
       expect(ghost.d.baseline).toBeCloseTo(y);
-      // Same maths as the engine (D35): frame height × scaleAt(feet y).
+      // Same maths as the engine: frame height × scaleAt(feet y).
       const cell = c.host.images("hero_sheet")!.asset.sheet?.cellHeight ?? 192;
       expect(ghost.d.dest.h).toBeCloseTo(cell * scaleAt(scene.depth, y));
     }
     dispose();
   });
 
-  it("sorts the ghost with the objects by its feet, so it goes behind and in front (D35)", async () => {
+  it("sorts the ghost with the objects by its feet, so it goes behind and in front", async () => {
     const { c, at, dispose } = await sceneEditor(undefined, "garden", HERO);
     const rock = c.scene!.objects.find((o) => o.id === "rock")!; // baseline 296
     const order = () => c.frame()!.sprites.map((s) => (s.ghost ? "ghost" : s.d.id));
@@ -51,7 +51,7 @@ describe("live aids (spec 09, D105)", () => {
     dispose();
   });
 
-  it("aids can be turned off, and a player with no animation gets a scaled box (D96)", async () => {
+  it("aids can be turned off, and a player with no animation gets a scaled box", async () => {
     const p: Project = await m1Project();
     const { c, ws, at, dispose } = await sceneEditor(p, "garden", HERO);
     ws.sceneUi.update("garden", (u) => ({ ...u, aids: { ghost: false, shading: true, path: false } }));

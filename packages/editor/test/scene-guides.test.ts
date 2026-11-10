@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sceneEditor } from "./support/scene.ts";
 
-describe("Spawn point and Walk-to point tools (spec 09)", () => {
+describe("Spawn point and Walk-to point tools", () => {
   it("a click adds a spawn facing down; dragging away sets its facing; one step each", async () => {
     const { c, editor, scene, click, drag, dispose } = await sceneEditor();
     c.setLayer("guides");

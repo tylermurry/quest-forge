@@ -1,5 +1,5 @@
 // A tiny RGBA PNG writer with no dependencies (DOM-free), for the blank project's
-// placeholder art (D87). Uses uncompressed deflate blocks: bigger files, no zlib.
+// placeholder art. Uses uncompressed deflate blocks: bigger files, no zlib.
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);

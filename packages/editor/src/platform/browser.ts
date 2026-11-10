@@ -1,4 +1,4 @@
-// The dev page's platform (D91): project folders in packages/editor/.sandbox,
+// The dev page's platform: project folders in packages/editor/.sandbox,
 // reached through the Vite middleware in dev/sandbox.ts.
 import type { ProjectFs } from "@questforge/schema";
 import type { ProjectHost } from "../model/editor.ts";

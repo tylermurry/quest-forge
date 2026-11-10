@@ -12,7 +12,7 @@ import { RuleCard } from "./RuleCard.tsx";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase";
 
-/** Look / Hand / Talk text: each keeps one plain rule (D118). */
+/** Look / Hand / Talk text: each keeps one plain rule. */
 function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef }) {
   const { editor, ws } = actions;
   const own = ownerRules(editor.project, owner);
@@ -53,8 +53,8 @@ function QuickFields({ actions, owner }: { actions: Actions; owner: RuleOwnerRef
 
 /**
  * The rule list for a hotspot, object, placed character, region, scene or the game
- * (spec 10): quick fields first where there are verbs, then cards that read like
- * sentences, dragged to reorder (first match wins, D40).
+ *: quick fields first where there are verbs, then cards that read like
+ * sentences, dragged to reorder (first match wins).
  */
 export function RuleInspector({ actions, owner }: { actions: Actions; owner: RuleOwnerRef }) {
   const { editor } = actions;

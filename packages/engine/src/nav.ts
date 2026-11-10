@@ -1,10 +1,10 @@
 import { doubleArea, inWalkable, type Polygon, type SceneFile } from "@questforge/schema";
 import { add, dist, normalize, scale, sub, type Vec } from "./vec.ts";
 
-// Navigation (spec 04, D34, D42): walkable polygon + holes → visibility graph over
+// Navigation: walkable polygon + holes → visibility graph over
 // the corners a walker can bend around → A*. Paths are straight segments, no grid.
 
-/** How far graph nodes sit inside the walkable area, off each corner (spec 04: 1px). */
+/** How far graph nodes sit inside the walkable area, off each corner (1px). */
 const INSET = 1;
 /** Distance used to nudge boundary points off an edge so they are strictly walkable. */
 const NUDGE = 0.25;
@@ -99,7 +99,7 @@ export class NavMesh {
   /**
    * Straight-segment path from `from` to `to`, starting at `from` (snapped to the
    * walkable area). A target outside the walkable area, or one that can't be reached,
-   * is replaced by the nearest point the walker can reach (spec 04).
+   * is replaced by the nearest point the walker can reach.
    */
   findPath(from: Vec, to: Vec): Vec[] {
     const start = this.nearestWalkable(from);
@@ -216,7 +216,7 @@ export class NavMesh {
   }
 }
 
-/** The navigation mesh for a scene, given which objects are currently visible (D42). */
+/** The navigation mesh for a scene, given which objects are currently visible. */
 export function sceneNav(scene: SceneFile, visible: (objectId: string) => boolean): NavMesh {
   const obstacles = scene.objects.flatMap((o) => (o.obstacle && visible(o.id) ? [o.obstacle] : []));
   return new NavMesh(scene.walkable.outer, [...scene.walkable.holes, ...obstacles]);

@@ -3,13 +3,13 @@ import { DEBUG_ALL, DEBUG_OFF, debugShapes } from "../src/debug.ts";
 import { Session } from "../src/session.ts";
 import { testImages, testProject } from "./support/project.ts";
 
-// Playtest debug layers (spec 12, D132): each toggle draws only its own shapes.
+// Playtest debug layers: each toggle draws only its own shapes.
 
 const region = { regions: [{ id: "exit", shape: [[600, 300], [640, 300], [640, 400], [600, 400]], rules: [] }] };
 const make = () => new Session(testProject({ yard: region }), testImages);
 const layers = (s: Session, on: Partial<typeof DEBUG_OFF>) => new Set(debugShapes(s.world, { ...DEBUG_OFF, ...on }).map((sh) => sh.layer));
 
-describe("debug layers (D132)", () => {
+describe("debug layers", () => {
   it("draw nothing when off", () => {
     expect(debugShapes(make().world, DEBUG_OFF)).toEqual([]);
   });

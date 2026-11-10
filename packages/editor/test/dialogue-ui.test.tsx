@@ -10,8 +10,8 @@ import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
 import { m1Project } from "./support/fixtures.ts";
 
-// The dialogue tab (spec 11): the graph shows the file's nodes, clicking one edits it
-// in the Inspector with the spec 10 controls, and Delete runs through the registry.
+// The dialogue tab: the graph shows the file's nodes, clicking one edits it
+// in the Inspector with the rule inspector's controls, and Delete runs through the registry.
 
 afterEach(cleanup);
 
@@ -47,7 +47,7 @@ async function mount() {
 const nodes = (ed: Editor) => ed.project.dialogues[0]!.data.nodes;
 const inspector = () => screen.getByLabelText("Inspector");
 
-describe("dialogue graph tab (spec 11)", () => {
+describe("dialogue graph tab", () => {
   it("shows every node as a card with its ports", async () => {
     await mount();
     const graph = document.querySelector("[data-dialogue-graph=chat]") as HTMLElement;
@@ -76,7 +76,7 @@ describe("dialogue graph tab (spec 11)", () => {
     expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ options: [{ text: "See you.", once: false }] });
   });
 
-  it("a Line picks its speaker; the narrator has no animation field (D139)", async () => {
+  it("a Line picks its speaker; the narrator has no animation field", async () => {
     const { editor } = await mount();
     fireEvent.click(screen.getByLabelText("Line node hello"));
     expect(within(inspector()).getByRole("combobox", { name: "Animation" })).toBeTruthy();

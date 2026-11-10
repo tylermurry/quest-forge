@@ -1,4 +1,4 @@
-// Dev-page file access (D91): a Vite middleware that exposes project folders
+// Dev-page file access: a Vite middleware that exposes project folders
 // inside packages/editor/.sandbox/ over HTTP, backed by the real NodeFs, plus
 // change events. Lets the editor UI run in a plain browser against real files.
 // Never used by the Tauri app or exported builds.

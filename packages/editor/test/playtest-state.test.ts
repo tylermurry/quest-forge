@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { applyStateEdit, awardCatalog, stateView } from "../src/model/playtest/state.ts";
 import { playtestEditor } from "./support/playtest.ts";
 
-// The state panel (spec 12, D130): what it lists and live edits.
+// The state panel: what it lists and live edits.
 
 const POND: [number, number] = [310, 320];
 
@@ -25,7 +25,7 @@ describe("state panel view", () => {
   });
 });
 
-describe("live edits (D130)", () => {
+describe("live edits", () => {
   it("an added item works in the next rule at once", async () => {
     const { playtest, session, tap, dispose } = await playtestEditor();
     playtest.play();

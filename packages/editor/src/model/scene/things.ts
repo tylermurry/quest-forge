@@ -1,4 +1,4 @@
-// What's in a scene, by layer (spec 09, D15, D103): the rows of the Layers panel,
+// What's in a scene, by layer: the rows of the Layers panel,
 // what a selection refers to, and which layer each thing lives on. DOM-free.
 import { objectBaseline, objectFrameSize, sortByBaseline, type ImageLookup } from "@questforge/engine";
 import type { SceneFile } from "@questforge/schema";
@@ -9,7 +9,7 @@ export type ThingList = "objects" | "characters" | "hotspots" | "regions" | "spa
 
 /**
  * One thing in a scene. Keys: object/hotspot/region ID, character ID (one placement
- * per character, D106), spawn ID, `outer` / `hole:<n>` for the walkable area, `far` /
+ * per character), spawn ID, `outer` / `hole:<n>` for the walkable area, `far` /
  * `near` for depth lines, `background`.
  */
 export interface ThingRef {
@@ -39,7 +39,7 @@ export interface LayerRow {
   detail: string;
   /** Can be deleted from the Layers panel. */
   deletable: boolean;
-  /** Can be dragged to change draw order (objects only, D95). */
+  /** Can be dragged to change draw order (objects only). */
   draggable?: boolean;
 }
 
@@ -47,7 +47,7 @@ const rules = (n: number) => `${n} rule${n === 1 ? "" : "s"}`;
 const points = (n: number) => `${n} point${n === 1 ? "" : "s"}`;
 
 /**
- * Objects and placed characters in draw order, back to front (D95): by baseline,
+ * Objects and placed characters in draw order, back to front: by baseline,
  * ties keep file order with objects before characters, exactly as the engine sorts.
  * An object whose image isn't loaded yet sorts by its top edge.
  */

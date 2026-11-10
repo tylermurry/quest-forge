@@ -9,7 +9,7 @@ import { Workspace } from "../src/ui/Workspace.tsx";
 import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-// The character tab (spec 05, D39): slot grid and slot editor, through the real Workspace.
+// The character tab: slot grid and slot editor, through the real Workspace.
 
 /** jsdom doesn't decode images: every image "loads" as 128×144, the m1 hero sheet's 4 × 3 cells of 32×48. */
 class FakeImage {

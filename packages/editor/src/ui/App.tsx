@@ -9,7 +9,7 @@ import { Workspace } from "./Workspace.tsx";
 import { CommandsContext, usePlatform, useShortcutKeys } from "./hooks.ts";
 import { saveNow } from "./saveNow.ts";
 
-// Editor shell (spec 08). Components stay thin: logic lives in src/model.
+// Editor shell. Components stay thin: logic lives in src/model.
 export function App() {
   const platform = usePlatform();
   const [registry] = useState(() => new CommandRegistry());
@@ -35,7 +35,7 @@ export function App() {
     // Runs once per platform; `open` is recreated every render.
   }, [platform]);
 
-  // The native menu bar (app) or page shortcuts (dev page) run the same commands (D92).
+  // The native menu bar (app) or page shortcuts (dev page) run the same commands.
   useShortcutKeys(registry, native);
   useEffect(() => {
     if (!platform.installMenu) return;
@@ -82,7 +82,7 @@ export function App() {
     await open(root);
   };
 
-  // Saving is manual (D145): leaving with unsaved changes asks first.
+  // Saving is manual: leaving with unsaved changes asks first.
   const [leaving, setLeaving] = useState<((ok: boolean) => void) | null>(null);
   const confirmLeave = async (): Promise<boolean> => {
     if (!editor?.editor.hasUnsavedChanges) return true;

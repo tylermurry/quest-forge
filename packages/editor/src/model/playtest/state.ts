@@ -1,4 +1,4 @@
-// The playtest state panel (spec 12, D130): what it lists and the live edits it
+// The playtest state panel: what it lists and the live edits it
 // makes. Edits change the running session's GameState at once, even during a
 // sequence; they are play state, never project data and never undo steps.
 import { awardCatalog, choiceKey, score, type GameState, type Session } from "@questforge/engine";
@@ -6,7 +6,7 @@ import type { Project } from "@questforge/schema";
 import { pickerOptions, type PickOption } from "../rules/pickers.ts";
 import { hereSpawn } from "./playtest.ts";
 
-/** An award ID and the points it gives first (D132); the catalog is the engine's (shared with loading saves). */
+/** An award ID and the points it gives first; the catalog is the engine's (shared with loading saves). */
 interface AwardOption {
   id: string;
   points: number;
@@ -26,11 +26,11 @@ export interface StateView {
   visited: { id: string; label: string; visited: boolean }[];
   /** Scenes for "Go to scene". */
   scenes: PickOption[];
-  /** Go to scene waits while a sequence or scene change runs (D130). */
+  /** Go to scene waits while a sequence or scene change runs. */
   canGoToScene: boolean;
-  /** The dialogue playing and its node, with display names (spec 11). */
+  /** The dialogue playing and its node, with display names. */
   dialogue: { id: string; name: string; node: string | null; nodeType: string | null } | null;
-  /** Every once-only option in the project and whether it has been chosen (D137). */
+  /** Every once-only option in the project and whether it has been chosen. */
   onceOptions: { key: string; dialogue: string; text: string; chosen: boolean }[];
 }
 
@@ -95,10 +95,10 @@ export type StateEdit =
   | { kind: "revokeAward"; award: string }
   | { kind: "setVisited"; scene: string; visited: boolean }
   | { kind: "goToScene"; scene: string }
-  /** Marks a once-only dialogue option chosen or not (D137). */
+  /** Marks a once-only dialogue option chosen or not. */
   | { kind: "setChoice"; key: string; chosen: boolean };
 
-/** Applies an edit at once (D130). Returns false when it can't apply now (Go to scene while busy). */
+/** Applies an edit at once. Returns false when it can't apply now (Go to scene while busy). */
 export function applyStateEdit(session: Session, edit: StateEdit): boolean {
   const s: GameState = session.state;
   switch (edit.kind) {
@@ -133,7 +133,7 @@ export function applyStateEdit(session: Session, edit: StateEdit): boolean {
       const scene = session.sceneFile(edit.scene);
       const spawn = scene && hereSpawn(scene, null);
       if (!spawn) return false;
-      // A real scene change: the exit rule, then the new scene's enter rule (D72).
+      // A real scene change: the exit rule, then the new scene's enter rule.
       session.changeScene(edit.scene, spawn);
       return true;
     }

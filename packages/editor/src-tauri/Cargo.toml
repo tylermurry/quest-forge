@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-# The Rust side does only file I/O, folder watching and native dialogs (spec 08, D90).
+# The Rust side does only file I/O, folder watching and native dialogs.
 
 [lib]
 name = "questforge_editor_lib"

@@ -12,18 +12,18 @@ import { Picker } from "./Picker.tsx";
 type AnimTarget = { kind: "character"; character: string } | { kind: "object"; scene: string; object: string };
 
 export interface PartHandlers {
-  /** Changes fields; `field` names the typed field so keystrokes merge into one undo step (D84). */
+  /** Changes fields; `field` names the typed field so keystrokes merge into one undo step. */
   patch(patch: Record<string, unknown>, field?: string): void;
   /** Ends a typing step. */
   blur(): void;
   /** "+ Create new…" for a pick field: make it, then use it (one undo step). */
   create(pick: PickKind, name: string, key: string): void;
   animTarget(target: AnimTarget): void;
-  /** "Pick on canvas" for a point (D124); absent when there's no scene to pick on. */
+  /** "Pick on canvas" for a point; absent when there's no scene to pick on. */
   pickPoint?(): void;
   /** True while this point is waiting for a canvas click. */
   picking?: boolean;
-  /** Why "Pick on canvas" can't be used right now (D124). */
+  /** Why "Pick on canvas" can't be used right now. */
   pickDisabled?: string;
 }
 
@@ -153,7 +153,7 @@ function FieldInput({ project, field, value, h, invalid }: { project: Project; f
   }
 }
 
-/** The fields of a trigger, condition or action as a sentence (spec 10). `invalidKeys` are fields with problems. */
+/** The fields of a trigger, condition or action as a sentence. `invalidKeys` are fields with problems. */
 export function PartFields({ project, parts, value, h, invalidKeys }: { project: Project; parts: readonly Part[]; value: Record<string, unknown>; h: PartHandlers; invalidKeys: ReadonlySet<string> }) {
   return (
     <>

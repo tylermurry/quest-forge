@@ -1,10 +1,10 @@
-// Per-scene editor UI state (D101): active layer and tool, shown/locked layers,
-// snapping, live aids and zoom. Never undone (D84), never game data; kept in
+// Per-scene editor UI state: active layer and tool, shown/locked layers,
+// snapping, live aids and zoom. Never undone, never game data; kept in
 // `.editor/view.json`. DOM-free.
 import type { ProjectFs } from "@questforge/schema";
 import type { Zoom } from "./view.ts";
 
-/** The fixed layer stack, top to bottom (spec 09, D15). */
+/** The fixed layer stack, top to bottom. */
 export const LAYERS = ["guides", "regions", "hotspots", "walkable", "objects", "background"] as const;
 export type Layer = (typeof LAYERS)[number];
 
@@ -28,7 +28,7 @@ export const TOOL_LABEL: Record<Tool, string> = {
   walkto: "Walk-to point",
 };
 
-/** The selected layer decides which tools are available (spec 09). */
+/** The selected layer decides which tools are available. */
 export const LAYER_TOOLS: Record<Layer, readonly Tool[]> = {
   guides: ["select", "spawn"],
   regions: ["select", "polygon", "rect"],
@@ -39,7 +39,7 @@ export const LAYER_TOOLS: Record<Layer, readonly Tool[]> = {
 };
 
 export interface Aids {
-  /** Depth-preview ghost of the player (spec 09). */
+  /** Depth-preview ghost of the player. */
   ghost: boolean;
   /** Shade the walkable area. */
   shading: boolean;
@@ -125,7 +125,7 @@ export class SceneUiStore {
 
   update(scene: string, f: (ui: SceneUi) => SceneUi) {
     const next = f(this.get(scene));
-    // Keep the tool valid for the layer (spec 09).
+    // Keep the tool valid for the layer.
     if (!LAYER_TOOLS[next.layer].includes(next.tool)) next.tool = "select";
     this.scenes.set(scene, next);
     this._version++;

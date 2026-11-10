@@ -27,8 +27,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useCommands } from "../hooks.ts";
 import { NodeCard, type FlowNode } from "./NodeCard.tsx";
 
-// The dialogue graph tab (spec 11, D17, D20): React Flow over the dialogue file.
-// Every change is one editor command (one undo step, D84); a drag commits on drop.
+// The dialogue graph tab: React Flow over the dialogue file.
+// Every change is one editor command (one undo step); a drag commits on drop.
 // Selecting a node edits it in the Inspector (NodeInspector).
 
 const NODE_TYPES = { dialogue: NodeCard };
@@ -100,7 +100,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     });
   }, [d, project, byNode, selectedNode, flash]);
 
-  // Jump-to (D120, D121): centre the node the problem points at and flash it.
+  // Jump-to: centre the node the problem points at and flash it.
   const highlight = ws.highlight;
   useEffect(() => {
     if (!highlight || !doc || highlight.location.file !== doc.path) return;
@@ -135,7 +135,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     requestAnimationFrame(() => void rf.fitView({ duration: 300, padding: 0.15, maxZoom: 1 }));
   }, [nodes, rf]);
 
-  // Registry: Delete, Auto-layout, Fit (D92). Delete takes selected nodes, else selected edges.
+  // Registry: Delete, Auto-layout, Fit. Delete takes selected nodes, else selected edges.
   const live = useRef({ nodes, edges });
   live.current = { nodes, edges };
   useEffect(() => {
@@ -180,7 +180,7 @@ function Graph({ actions, dialogueId }: { actions: Actions; dialogueId: string }
     run("Connect", (p) => connect(p, dialogueId, c.source, c.sourceHandle!, c.target));
   };
 
-  // Dropping a dragged port on empty space opens the "create node" menu (spec 11).
+  // Dropping a dragged port on empty space opens the "create node" menu.
   const onConnectEnd = (event: MouseEvent | TouchEvent, state: FinalConnectionState) => {
     if (state.isValid || !state.fromNode || state.fromHandle?.type !== "source" || !state.fromHandle.id) return;
     const target = (event.target as Element | null)?.closest?.(".react-flow__node");

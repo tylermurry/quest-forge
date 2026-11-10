@@ -11,7 +11,7 @@ const POND: RuleOwnerRef = { kind: "thing", scene: "garden", list: "hotspots", k
 const rule = (p: Project, id: string) => ownerRules(p, POND)!.rules.find((r) => r.id === id)!;
 const pickField = (parts: readonly (string | Field)[], key: string) => parts.find((x): x is Extract<Field, { kind: "pick" }> => typeof x !== "string" && x.kind === "pick" && x.key === key)!;
 
-describe("picker options (spec 10)", () => {
+describe("picker options", () => {
   it("lists each kind, with names where there are names", async () => {
     const p = await m1Project();
     expect(pickerOptions(p, "item").map((o) => o.id)).toEqual(["coin", "fish", "lantern", "rod", "stick", "string"]);
@@ -23,7 +23,7 @@ describe("picker options (spec 10)", () => {
     expect(pickerOptions(p, "object", "garden").map((o) => o.id)).toContain("boulder");
     expect(pickerOptions(p, "character").map((o) => o.id)).toEqual(["gardener", "hero", "visitor"]);
     expect(pickerOptions(p, "award").map((o) => o.id)).toEqual(expect.arrayContaining(["caught_fish", "fed_gardener", "saw_view"]));
-    // Slots include mirrored lefts (D39).
+    // Slots include mirrored lefts.
     const slots = pickerOptions(p, "slot", "hero").map((o) => o.id);
     expect(slots).toEqual(expect.arrayContaining(["walk_right", "walk_left"]));
   });
@@ -39,7 +39,7 @@ describe("picker options (spec 10)", () => {
   });
 });
 
-describe("+ Create new… (D123)", () => {
+describe("+ Create new…", () => {
   it("makes flags, counters, items, scenes, characters and dialogues from a typed name", async () => {
     const p = await m1Project();
     const flag = createForPicker(p, "flag", "Door locked");

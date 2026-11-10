@@ -1,4 +1,4 @@
-// Cloudflare Workers static assets (D157). Unknown paths such as /play get index.html.
+// Cloudflare Workers static assets. Unknown paths such as /play get index.html.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "questforge-site",

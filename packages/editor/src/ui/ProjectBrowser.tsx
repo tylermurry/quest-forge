@@ -16,7 +16,7 @@ type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "
 
 type Editing = { section: Section; kind: "entry"; id: string; value: string } | { section: Section; kind: "folder"; path: string; value: string } | null;
 
-/** Reads dropped or picked files and imports them (D88). */
+/** Reads dropped or picked files and imports them. */
 async function importInto(actions: Actions, section: Section, folder: string, files: File[]) {
   const read = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
   actions.importFiles(section, folder, read);
@@ -85,8 +85,8 @@ interface DropTarget {
 const dragId = (item: DragItem) => (item.kind === "entry" ? `entry:${item.section}:${item.id}` : `folder:${item.section}:${item.path}`);
 
 /**
- * A browser row that can be dragged (dnd-kit, D92) and, for folders and section
- * headers, dropped on. Files dragged in from the OS still arrive as HTML5 drops (D88).
+ * A browser row that can be dragged (dnd-kit) and, for folders and section
+ * headers, dropped on. Files dragged in from the OS still arrive as HTML5 drops.
  */
 function DndRow({
   drag,
@@ -133,7 +133,7 @@ function DndRow({
   );
 }
 
-/** The project browser (spec 08). Thin: every change goes through Actions. */
+/** The project browser. Thin: every change goes through Actions. */
 export function ProjectBrowser({ actions }: { actions: Actions }) {
   const { editor, ws } = actions;
   const project = editor.project;
@@ -182,7 +182,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     if (made) setEditing({ section, kind: "folder", path: made, value: made.split("/").pop()! });
   };
 
-  // ── Drag and drop: moves inside a section (D83, D92); files from the OS (D88) ──
+  // ── Drag and drop: moves inside a section; files from the OS ──
   // The DndContext is the Workspace's (rows can also be dropped on a scene canvas); listen to it here.
   const [dragging, setDragging] = useState<DragItem | null>(null);
   useDndMonitor({
@@ -327,7 +327,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
-        {/* Game-level rules, default responses and score (spec 10). */}
+        {/* Game-level rules, default responses and score. */}
         {!searching && (
           <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
             <div

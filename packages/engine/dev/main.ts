@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
-// Dev page (D68): plays the hand-written engine fixture with the real engine, or a
-// built game: open a `.quest` file, drop one on the page, or pass `?quest=<url>` (D153).
+// Dev page: plays the hand-written engine fixture with the real engine, or a
+// built game: open a `.quest` file, drop one on the page, or pass `?quest=<url>`.
 import { MemoryFs, QuestError, formatProblem, loadProject } from "@questforge/schema";
 import { DEBUG_ALL, DEBUG_OFF, ProjectErrors, createGame, loadQuest, score, type Game, type ProjectBundle, type QuestBundle } from "../src/index.ts";
 
@@ -90,7 +90,7 @@ function syncBoulder() {
   boulderBtn.textContent = w && has && !w.isObjectVisible("boulder") ? "Show boulder" : "Hide boulder";
 }
 
-/** One-line readout of the game state (the M6 state panel does this properly). */
+/** One-line readout of the game state (the editor's playtest state panel does this properly). */
 function showState() {
   const s = game?.session;
   if (s) {
@@ -116,7 +116,7 @@ boulderBtn.addEventListener("click", () => {
   syncBoulder();
 });
 
-// Frame-time readout for the spec 03 frame-rate check.
+// Frame-time readout for the frame-rate check.
 let frames = 0;
 let last = performance.now();
 let worst = 0;

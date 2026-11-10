@@ -1,4 +1,4 @@
-// Runtime engine (specs 03–07). Data in, no user code (spec 03).
+// Runtime engine. Data in, no user code.
 export { SCHEMA_VERSION } from "@questforge/schema";
 export { createGame, ProjectErrors, sceneImageIds, type Game, type GameOptions, type ProjectBundle } from "./game.ts";
 export { loadQuest, assetType, type QuestBundle } from "./quest.ts";

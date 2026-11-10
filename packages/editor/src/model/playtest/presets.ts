@@ -1,11 +1,11 @@
-// Playtest state presets (spec 12, D126): named GameState snapshots kept per project
+// Playtest state presets: named GameState snapshots kept per project
 // in `.editor/presets.json` (gitignored, like view.json). Not project data: no
 // schema, no validation, never undone. Starting from one drops IDs the project no
 // longer has, with a notice, and never crashes.
 import { cloneState, readState, type GameState } from "@questforge/engine";
 import type { ProjectFs } from "@questforge/schema";
 
-// Reading and sanitizing a stored state is the engine's, shared with save slots (spec 07).
+// Reading and sanitizing a stored state is the engine's, shared with save slots.
 export { readState, sanitizeState } from "@questforge/engine";
 
 export const PRESETS_FILE = ".editor/presets.json";
@@ -34,7 +34,7 @@ export function readPresets(text: string | null): Preset[] {
   }
 }
 
-/** The notice for a saved state that lost IDs (D126), e.g. `Preset "Before cave"`. */
+/** The notice for a saved state that lost IDs, e.g. `Preset "Before cave"`. */
 export function droppedNotice(what: string, dropped: string[]): string {
   return `${what} started without ${dropped.join(", ")}, which no longer ${dropped.length === 1 ? "exists" : "exist"} in the project.`;
 }

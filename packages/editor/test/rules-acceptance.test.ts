@@ -10,10 +10,10 @@ import { partKey, ruleProblems } from "../src/model/rules/problems.ts";
 import { m1Project } from "./support/fixtures.ts";
 import { sceneEditor } from "./support/scene.ts";
 
-// Spec 10 and spec 14 acceptance, driven through the same model calls the
+// Rule inspector and validation acceptance, driven through the same model calls the
 // Inspector makes: canvas gestures, dropdowns and pickers, plus one typed line.
 
-describe("spec 10 acceptance", () => {
+describe("rule inspector acceptance", () => {
   it("builds use key on door → unlocks → walk through door changes scene, typing only the dialogue text", async () => {
     const { editor, c, drag, scene, dispose } = await sceneEditor();
     const typed: string[] = [];
@@ -24,7 +24,7 @@ describe("spec 10 acceptance", () => {
     };
     const say = (text: string) => (typed.push(text), text);
 
-    // Draw the door on the Hotspots layer with the Rectangle tool (D99 names it).
+    // Draw the door on the Hotspots layer with the Rectangle tool.
     c.setLayer("hotspots");
     c.setTool("rect");
     drag([60, 290], [120, 350]);
@@ -91,7 +91,7 @@ describe("spec 10 acceptance", () => {
   });
 });
 
-describe("spec 14 acceptance in the editor", () => {
+describe("validation acceptance in the editor", () => {
   it("a deleted item used in 3 places makes 3 problems, each jumping to its rule and shown in red on it", async () => {
     const p: Project = deleteEntry(await m1Project(), "item", "stick");
     const problems = validateProject(p).filter((x) => x.code === "missing_reference");
@@ -107,7 +107,7 @@ describe("spec 14 acceptance in the editor", () => {
     expect(game.byPart.get(partKey(combine, { kind: "do", index: 0 }))).toHaveLength(1);
     const pot = ruleProblems(problems, ownerRules(p, POT)!);
     const hand = ownerRules(p, POT)!.rules.find((r) => r.do.some((a) => a.type === "give_item"))!.id;
-    // Narrate, play the pickup sound (M8), then give the stick.
+    // Narrate, play the pickup sound, then give the stick.
     expect(pot.byPart.get(partKey(hand, { kind: "do", index: 2 }))![0]!.message).toBe("uses item stick, which doesn't exist.");
   });
 });

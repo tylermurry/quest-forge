@@ -1,6 +1,6 @@
 import { Bitmap, type RGBA } from "../../src/model/png.ts";
 
-// An 8×4 walk sheet of 32×48 frames (spec 05 acceptance): rows face down, left,
+// An 8×4 walk sheet of 32×48 frames: rows face down, left,
 // right, up. Each figure has a nose on the side it faces and legs that swing,
 // so mirroring and frame order are visible.
 

@@ -3,7 +3,7 @@ import { Action } from "@questforge/schema";
 import { Sequence, type SequenceHost } from "../src/sequence.ts";
 import { initialState } from "../src/state.ts";
 
-// The action runner (spec 02, D71, D72) against a recording host.
+// The action runner against a recording host.
 
 function fakeHost() {
   const log: string[] = [];
@@ -62,7 +62,7 @@ function fakeHost() {
 const acts = (...a: unknown[]) => a.map((x) => Action.parse(x));
 const DT = 1 / 60;
 
-describe("sequences (D72)", () => {
+describe("sequences", () => {
   it("runs instant actions in one tick and in order", () => {
     const h = fakeHost();
     const s = new Sequence(h, acts(
@@ -154,7 +154,7 @@ describe("sequences (D72)", () => {
     expect(h.state.inventory).toEqual([]);
   });
 
-  it("ends at die and win_game (D71)", () => {
+  it("ends at die and win_game", () => {
     const h = fakeHost();
     const s = new Sequence(h, acts({ type: "die", message: "Splat." }, { type: "give_item", item: "x" }));
     s.tick(DT);
@@ -165,7 +165,7 @@ describe("sequences (D72)", () => {
     expect(h.state.inventory).toEqual([]);
   });
 
-  it("start_dialogue blocks until the dialogue ends, then the rule goes on (D136)", () => {
+  it("start_dialogue blocks until the dialogue ends, then the rule goes on", () => {
     const h = fakeHost();
     const s = new Sequence(h, acts({ type: "start_dialogue", dialogue: "shop" }, { type: "stop_music" }));
     h.state.music = "x";

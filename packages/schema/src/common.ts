@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-/** Version written to every project file (spec 01). */
+/** Version written to every project file. */
 export const SCHEMA_VERSION = 2 as const;
 
-/** Scene space (D31): geometry is integer pixels in 640×400. */
+/** Scene space: geometry is integer pixels in 640×400. */
 export const SCENE_WIDTH = 640;
 export const SCENE_HEIGHT = 400;
 
 export const schemaVersion = z.literal(SCHEMA_VERSION);
 
-/** Stable asset ID slug (D63). */
+/** Stable asset ID slug. */
 export const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 export const Id = z
   .string()

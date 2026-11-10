@@ -1,4 +1,4 @@
-// Snapping (spec 09, D102): always to whole pixels; with Snap on, also to the
+// Snapping: always to whole pixels; with Snap on, also to the
 // vertices (first) and edges of shapes on visible layers within a screen distance.
 import type { Vec } from "@questforge/engine";
 import type { Point, SceneFile } from "@questforge/schema";
@@ -6,7 +6,7 @@ import type { SceneUi } from "./sceneUi.ts";
 import { samePoly, scenePolygons, type PolyRef } from "./shapes.ts";
 import { snapPixel } from "./view.ts";
 
-/** Snap radius in screen px (D102). */
+/** Snap radius in screen px. */
 const SNAP_PX = 6;
 
 export interface Snapped {

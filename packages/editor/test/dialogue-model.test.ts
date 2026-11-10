@@ -25,12 +25,12 @@ import { actions, conditions } from "../src/model/rules/parts.ts";
 import { addAction, addRule, setActionFields } from "../src/model/rules/commands.ts";
 import { errorsIn, m1Project } from "./support/fixtures.ts";
 
-// The dialogue graph's commands (spec 11): pure Project → Project, each one undo step.
+// The dialogue graph's commands: pure Project → Project, each one undo step.
 
 const D = "chat";
 const nodes = (p: Project) => dialogueOf(p, D).nodes;
 const node = <T extends DialogueNode["type"]>(p: Project, id: string, _type?: T) => nodes(p).find((n) => n.id === id) as Extract<DialogueNode, { type: T }>;
-/** Every result must still parse: the schema is strict (D59). */
+/** Every result must still parse: the schema is strict. */
 const parses = (p: Project) => DialogueFile.parse(dialogueOf(p, D));
 
 async function withShop(): Promise<Project> {
@@ -91,7 +91,7 @@ describe("dialogue commands", () => {
     expect(() => deleteNodes(p, D, ["start"])).toThrow(/Start node can't be deleted/);
   });
 
-  it("moves nodes to whole-pixel positions (D62); unchanged nodes keep their object", async () => {
+  it("moves nodes to whole-pixel positions; unchanged nodes keep their object", async () => {
     const p = await withShop();
     const before = nodes(p)[1];
     const q = moveNodes(p, D, [{ id: "start", pos: [10.4, -20.6] }]);
@@ -99,7 +99,7 @@ describe("dialogue commands", () => {
     expect(nodes(q)[1]).toBe(before);
   });
 
-  it("edits a Line: speaker, narrator, text and the speaker's animation (D139)", async () => {
+  it("edits a Line: speaker, narrator, text and the speaker's animation", async () => {
     let p = await withShop();
     p = addNode(p, D, "line", [0, 0]).project;
     p = setLine(p, D, "line_1", { character: "gardener", text: "Hi!", animation: "idle_down" });
@@ -144,7 +144,7 @@ describe("dialogue commands", () => {
     parses(p);
   });
 
-  it("“+ Create new…” in a node makes the item and uses it as one step (D123)", async () => {
+  it("“+ Create new…” in a node makes the item and uses it as one step", async () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0]).project;
     p = editConditions(p, D, { node: "choices_1", option: "option_1" }, (l, d) => conditions.add(d, l, "has_item"));
@@ -169,7 +169,7 @@ describe("dialogue commands", () => {
     expect(nodes(q).every((n) => Number.isInteger(n.pos[0]) && Number.isInteger(n.pos[1]))).toBe(true);
   });
 
-  it("finds the scene a dialogue is played in (D142)", async () => {
+  it("finds the scene a dialogue is played in", async () => {
     let p = await withShop();
     expect(dialogueContext(p, D)).toEqual({ scene: "garden", spawn: "default", started: false });
     const owner = { kind: "thing", scene: "stress", list: "characters", key: "visitor" } as const;
@@ -183,7 +183,7 @@ describe("dialogue commands", () => {
   });
 });
 
-describe("problems on the graph (spec 14)", () => {
+describe("problems on the graph", () => {
   it("groups problems by node and by part", async () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0], { node: "start", port: "next" }).project;
@@ -202,7 +202,7 @@ describe("problems on the graph (spec 14)", () => {
   });
 });
 
-describe("the shopkeeper conversation (spec 11 acceptance), a gem standing in for the coin", () => {
+describe("the shopkeeper conversation, a gem standing in for the coin", () => {
   it("builds a once-only question, a choice gated on a coin and a loop back to the menu, as undo steps", async () => {
     const fs = new MemoryFs();
     await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });

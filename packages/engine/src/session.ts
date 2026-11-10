@@ -18,12 +18,12 @@ import { narrateBox, sayBox, type TextBox } from "./ui/textbox.ts";
 import type { Vec } from "./vec.ts";
 import { World, type ImageLookup, type Target } from "./world.ts";
 
-// A game being played (spec 02, 06): game state, the current scene's world, verbs,
+// A game being played: game state, the current scene's world, verbs,
 // rule evaluation, the running sequence and the text box. Pure logic, no DOM.
 
-/** Player verbs (spec 06). `item` uses the current inventory item. */
+/** Player verbs. `item` uses the current inventory item. */
 export type Verb = "walk" | "look" | "hand" | "talk" | "item";
-/** Right-click order (D32): Walk → Look → Hand → Talk → current item (if any). */
+/** Right-click order: Walk → Look → Hand → Talk → current item (if any). */
 export const VERB_CYCLE: readonly Verb[] = ["walk", "look", "hand", "talk", "item"];
 
 export type Ending = { kind: "die"; message: string } | { kind: "win" };
@@ -32,23 +32,23 @@ export interface SessionStart {
   scene?: string;
   spawn?: string;
   /**
-   * Start from this state instead (playtest presets and Restart scene, D126, D128):
+   * Start from this state instead (playtest presets and Restart scene):
    * its scene, at its player position. Copied, never changed. Wins over `scene`/`spawn`.
    */
   state?: GameState;
-  /** Play this dialogue once the scene is entered (playtest "Play from this node", D142), at `node` or its Start. */
+  /** Play this dialogue once the scene is entered (playtest "Play from this node"), at `node` or its Start. */
   dialogue?: { id: string; node?: string };
 }
 
-/** Playtest-only hooks (D129). The exported game passes none. */
+/** Playtest-only hooks. The exported game passes none. */
 export interface SessionHooks {
   /** Hears rule verdicts, default responses, actions, scene changes and notes. */
   trace?: Trace;
-  /** Replaces what the in-game Restart button does (playtest restarts the run's original start, D132). */
+  /** Replaces what the in-game Restart button does (playtest restarts the run's original start). */
   restart?: () => void;
 }
 
-/** Scene asset loading, owned by the host (spec 03). Headless sessions use `ALWAYS_READY`. */
+/** Scene asset loading, owned by the host. Headless sessions use `ALWAYS_READY`. */
 export interface SceneAssets {
   /** Every image the scene needs is loaded. */
   ready(scene: SceneFile): boolean;
@@ -60,14 +60,14 @@ export const ALWAYS_READY: SceneAssets = { ready: () => true, prefetch: () => {}
 /** Most sounds waiting for the host at once; older ones are dropped (a headless session never drains them). */
 const MAX_SOUNDS = 8;
 
-/** A scene change in progress (D72): the old scene's exit rule, then loading. */
+/** A scene change in progress: the old scene's exit rule, then loading. */
 interface SceneChange {
   scene: SceneFile;
   spawn: string;
   phase: "exit" | "load";
 }
 
-/** Every scene a scene's rules can `change_scene` to (D75 prefetch). */
+/** Every scene a scene's rules can `change_scene` to (for prefetching). */
 export function linkedScenes(scene: SceneFile): string[] {
   const lists = [
     scene.rules,
@@ -87,22 +87,22 @@ export class Session implements DialogueHost {
   state!: GameState;
   world!: World;
   verb: Verb = "walk";
-  /** The current inventory item (UI state, D75). */
+  /** The current inventory item (UI state). */
   item: string | null = null;
   text: TextBox | null = null;
   ending: Ending | null = null;
   /** Warnings and audio events, newest last (for the dev page and later the event log). */
   readonly log: string[] = [];
   readonly game: GameFile;
-  /** `play_sound` IDs not yet played, oldest first. The host drains them (spec 07). */
+  /** `play_sound` IDs not yet played, oldest first. The host drains them. */
   readonly sounds: string[] = [];
   private sequence: Sequence | null = null;
-  /** The dialogue being played (spec 11). */
+  /** The dialogue being played. */
   private _dialogue: DialogueRun | null = null;
-  /** A dialogue waiting for the scene's enter rule to finish (D142). */
+  /** A dialogue waiting for the scene's enter rule to finish. */
   private pendingDialogue: { id: string; node?: string } | null = null;
   private change: SceneChange | null = null;
-  /** Regions the player's feet are in, so `enter_region` fires on crossing in (D72). */
+  /** Regions the player's feet are in, so `enter_region` fires on crossing in. */
   private inside = new Set<string>();
   private readonly scenes: Map<string, SceneFile>;
   private readonly characters: Map<string, CharacterFile>;
@@ -111,7 +111,7 @@ export class Session implements DialogueHost {
   readonly ctx: RuleContext;
   readonly trace: Trace | undefined;
   private readonly onRestart: (() => void) | undefined;
-  /** The auto-snapshot of the current scene's entry (D43, D128). `enter`: Try again re-runs its `scene_enter` rule. */
+  /** The auto-snapshot of the current scene's entry. `enter`: Try again re-runs its `scene_enter` rule. */
   private _entry!: { state: GameState; spawn: string | null; enter: boolean };
 
   constructor(
@@ -133,7 +133,7 @@ export class Session implements DialogueHost {
     this.restart();
   }
 
-  /** Input is locked (D72): a sequence or scene change is running, or the game has ended. */
+  /** Input is locked: a sequence or scene change is running, or the game has ended. */
   get busy(): boolean {
     return this.sequence !== null || this._dialogue !== null || this.pendingDialogue !== null || this.change !== null || this.ending !== null;
   }
@@ -147,7 +147,7 @@ export class Session implements DialogueHost {
     return this.world.scene;
   }
 
-  /** The list box while a Choices node waits for the player (spec 06). */
+  /** The list box while a Choices node waits for the player. */
   get choices(): ChoiceList | null {
     return this._dialogue?.choices ?? null;
   }
@@ -172,13 +172,13 @@ export class Session implements DialogueHost {
 
   /**
    * The state as the current scene was entered (before its `scene_enter` rule) and
-   * the spawn used, null when play began from a given state (D128). A copy.
+   * the spawn used, null when play began from a given state. A copy.
    */
   get entry(): { state: GameState; spawn: string | null } {
     return { state: cloneState(this._entry.state), spawn: this._entry.spawn };
   }
 
-  /** The in-game Restart button (D71): the host's restart if it has one, else `restart()`. */
+  /** The in-game Restart button: the host's restart if it has one, else `restart()`. */
   requestRestart() {
     if (this.onRestart) this.onRestart();
     else this.restart();
@@ -223,7 +223,7 @@ export class Session implements DialogueHost {
   }
 
   /**
-   * Loads a saved state (spec 07, D43, D147): IDs the project no longer has are
+   * Loads a saved state: IDs the project no longer has are
    * dropped (listed in the result, and the player is told), then play goes on exactly
    * where it was saved. The scene's `scene_enter` rule does not run again.
    */
@@ -242,7 +242,7 @@ export class Session implements DialogueHost {
     return { dropped };
   }
 
-  /** "Try again" after a death (spec 07): back to the current scene's entry snapshot. */
+  /** "Try again" after a death: back to the current scene's entry snapshot. */
   tryAgain() {
     const entry = this._entry;
     const scene = this.scenes.get(entry.state.scene)!;
@@ -271,7 +271,7 @@ export class Session implements DialogueHost {
       }
       case "look":
         if (!target) return;
-        // Look runs where the player stands (D74).
+        // Look runs where the player stands.
         this.world.stop();
         this.world.faceToward(p);
         this.fireAt(target, { type: "look" });
@@ -286,7 +286,7 @@ export class Session implements DialogueHost {
     }
   }
 
-  /** Right-click (D32): cycle verbs. */
+  /** Right-click: cycle verbs. */
   secondaryClick() {
     if (this.busy || this.text) return;
     const cycle = VERB_CYCLE.filter((v) => v !== "item" || this.item);
@@ -298,27 +298,27 @@ export class Session implements DialogueHost {
     this.verb = v;
   }
 
-  /** Make an inventory item the current item (D80). */
+  /** Make an inventory item the current item. */
   selectItem(id: string) {
     if (!this.state.inventory.includes(id)) return;
     this.item = id;
     this.verb = "item";
   }
 
-  /** Look at an inventory item: its description (D80). */
+  /** Look at an inventory item: its description. */
   lookAtItem(id: string) {
     if (this.busy) return;
     const item = this.items.get(id);
     if (item) this.run([{ type: "narrate", text: item.description }]);
   }
 
-  /** Use item `held` on inventory item `target`: the game-level combine rules (D80). */
+  /** Use item `held` on inventory item `target`: the game-level combine rules. */
   combineItems(held: string, target: string) {
     if (this.busy || held === target) return;
     this.fire({ kind: "game" }, this.game.rules, { type: "combine", item: held, with: target });
   }
 
-  /** Pick an option of the dialogue list box (spec 06). */
+  /** Pick an option of the dialogue list box. */
   choose(optionId: string) {
     if (this.text || !this._dialogue) return;
     this._dialogue.choose(optionId);
@@ -348,7 +348,7 @@ export class Session implements DialogueHost {
       if (this.sequence?.done) this.sequence = null;
     }
     this.advanceChange();
-    // Play from this node (D142): once the scene's enter rule is done.
+    // Play from this node: once the scene's enter rule is done.
     const pending = this.pendingDialogue;
     if (pending && !this.sequence && !this.change && !this.ending && !this._dialogue) {
       this.pendingDialogue = null;
@@ -389,7 +389,7 @@ export class Session implements DialogueHost {
       if (next) this.assets.prefetch(next);
     }
     if (!enter) return;
-    // Scene music (spec 07, D148): the same track carries on; no music field leaves it as it is.
+    // Scene music: the same track carries on; no music field leaves it as it is.
     if (scene.music !== undefined && s.music !== scene.music) {
       s.music = scene.music;
       this.note(`Music: ${scene.music} (the scene's music)`);
@@ -397,7 +397,7 @@ export class Session implements DialogueHost {
     this.fire({ kind: "scene", scene: scene.id }, scene.rules, { type: "scene_enter" });
   }
 
-  /** Step a scene change along: after the exit rule, wait for assets, then enter (D72). */
+  /** Step a scene change along: after the exit rule, wait for assets, then enter. */
   private advanceChange() {
     const c = this.change;
     if (!c) return;
@@ -419,7 +419,7 @@ export class Session implements DialogueHost {
     return new Set(this.scene.regions.filter((r) => pointInPolygon(p, r.shape)).map((r) => r.id));
   }
 
-  /** `enter_region` fires when a player-started walk crosses into a region (D72, D81). */
+  /** `enter_region` fires when a player-started walk crosses into a region. */
   private checkRegions() {
     if (this.scene.regions.length === 0) return;
     const now = this.regionsAt();
@@ -434,7 +434,7 @@ export class Session implements DialogueHost {
     }
   }
 
-  /** Walk to the target (D74), face it, then fire the verb. A new click cancels the walk. */
+  /** Walk to the target, face it, then fire the verb. A new click cancels the walk. */
   private approachThen(target: Target, p: Vec, trigger: Trigger) {
     const a = this.world.approach(target, p);
     this.world.walkTo(a.dest, () => {
@@ -450,7 +450,7 @@ export class Session implements DialogueHost {
     this.fire({ kind: target.kind, scene, id: target.id }, this.rulesOf(target), trigger);
   }
 
-  /** First match runs (D40); otherwise the verb's default response, if it has one. */
+  /** First match runs; otherwise the verb's default response, if it has one. */
   /** Returns whether a rule matched. */
   private fire(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): boolean {
     const m = this.match(owner, rules, trigger);
@@ -458,7 +458,7 @@ export class Session implements DialogueHost {
     return m.matched;
   }
 
-  /** The first match's actions (marked fired), else the default response; traced (D129). */
+  /** The first match's actions (marked fired), else the default response; traced. */
   private match(owner: RuleOwner, rules: readonly AnyRule[], trigger: Trigger): { matched: boolean; actions: readonly Action[] | null } {
     const trace = this.trace;
     trace?.({ type: "trigger", owner, trigger });
@@ -563,7 +563,7 @@ export class Session implements DialogueHost {
     this.world.face(facing);
   }
 
-  /** D72: the old scene's exit rule, then load, place at the spawn, mark visited, enter rule. */
+  /** the old scene's exit rule, then load, place at the spawn, mark visited, enter rule. */
   changeScene(scene: string, spawn: string) {
     if (this.change) {
       this.note(`Ignored a scene change to ${scene} while leaving ${this.scene.id}.`);
@@ -575,7 +575,7 @@ export class Session implements DialogueHost {
       return;
     }
     this.world.stop();
-    // A scene change inside a dialogue ends it and the rule that started it (D72, D141).
+    // A scene change inside a dialogue ends it and the rule that started it.
     if (this._dialogue) {
       this._dialogue.stop();
       this._dialogue = null;
@@ -600,7 +600,7 @@ export class Session implements DialogueHost {
 
   playAnimation(target: Extract<Action, { type: "play_animation" }>["target"], animation: string): Done | null {
     if (target.kind === "object") {
-      // Objects in other scenes or hidden ones don't animate (D112).
+      // Objects in other scenes or hidden ones don't animate.
       const length = target.scene === this.scene.id ? this.world.playObjectAnimation(target.object, animation) : null;
       if (length === null) {
         const why = target.scene !== this.scene.id ? "isn't in this scene" : !this.world.isObjectVisible(target.object) ? "is hidden" : `has no animation ${animation}`;
@@ -643,7 +643,7 @@ export class Session implements DialogueHost {
     this.note(message);
   }
 
-  /** Starts a dialogue (spec 11). One plays at a time: another start is ignored with a note (D136). */
+  /** Starts a dialogue. One plays at a time: another start is ignored with a note. */
   startDialogue(id: string, node?: string): Done | null {
     const d = this.dialogues.get(id);
     if (!d) {
@@ -668,7 +668,7 @@ export class Session implements DialogueHost {
     return () => run.finished;
   }
 
-  /** A Line node: the speaker's say box (or the narrator's), plus its animation (D139). */
+  /** A Line node: the speaker's say box (or the narrator's), plus its animation. */
   showLine(node: Extract<DialogueNode, { type: "line" }>): Done {
     if (node.character === undefined) return this.narrate(node.text);
     const done = this.say(node.character, node.text);
@@ -687,7 +687,7 @@ export class Session implements DialogueHost {
     };
   }
 
-  /** The `dialogue_end` game rules (spec 02) for a dialogue that reached its end (D136). */
+  /** The `dialogue_end` game rules for a dialogue that reached its end. */
   endRule(dialogue: string): readonly Action[] | null {
     return this.match({ kind: "game" }, this.game.rules, { type: "dialogue_end", dialogue }).actions;
   }

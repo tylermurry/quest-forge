@@ -5,14 +5,14 @@ import { NODE_LABEL } from "../../model/dialogue/commands.ts";
 import { actionText, conditionText } from "../../model/playtest/log.ts";
 import { cn } from "../lib/utils.ts";
 
-// One node on the dialogue graph (spec 11): a summary card with an input on the left
-// and one output port per way on (D62 positions; editing happens in the Inspector).
+// One node on the dialogue graph: a summary card with an input on the left
+// and one output port per way on (editing happens in the Inspector).
 
 interface NodeCardData extends Record<string, unknown> {
   node: DialogueNode;
   project: Project;
   problems: readonly Problem[];
-  /** Briefly outlined after a jump-to (D120). */
+  /** Briefly outlined after a jump-to. */
   flash: number;
   /** The flash came from the playtest log, so it is blue. */
   flashLog?: boolean;

@@ -17,7 +17,7 @@ describe("PNG writer", () => {
   });
 });
 
-describe("new blank project (D87)", () => {
+describe("new blank project", () => {
   it("makes a folder name from the title", () => {
     expect(folderNameFor("My Game")).toBe("My Game");
     expect(folderNameFor("  a/b:c?  ")).toBe("a b c");

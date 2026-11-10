@@ -10,7 +10,7 @@ const setImages = (p: Project, f: (imgs: NonNullable<Project["assets"]>["data"][
 });
 const movePath = (p: Project, id: string, path: string) => setImages(p, (imgs) => imgs.map((i) => (i.id === id ? { ...i, path } : i)));
 
-describe("image and audio files follow assets.yaml (D88)", () => {
+describe("image and audio files follow assets.yaml", () => {
   it("moves the file when an image's path changes", async () => {
     const { dir, fs } = await fixtureCopy();
     let { project } = await loadProject(fs);
@@ -40,7 +40,7 @@ describe("image and audio files follow assets.yaml (D88)", () => {
     expect(project.trash).toEqual(["assets/images/palm_img.png"]);
     expect(await readFile(join(dir, TRASH_DIR, "assets/images/palm_img.png"))).toBeTruthy();
 
-    // Undo: the old content comes back with the current disk state (D84).
+    // Undo: the old content comes back with the current disk state.
     const undone = { ...project, assets: loaded.assets };
     expect(planSave(undone).moves).toEqual([{ from: `${TRASH_DIR}/assets/images/palm_img.png`, to: "assets/images/palm_img.png" }]);
     ({ project } = await saveProject(fs, undone));

@@ -82,7 +82,7 @@ describe("file schemas", () => {
     ).toBe(true);
   });
 
-  it("rejects unknown keys (D59)", () => {
+  it("rejects unknown keys", () => {
     const r = ItemFile.safeParse({ ...item, colour: "red" });
     expect(r.success).toBe(false);
     expect(r.error?.issues[0]?.code).toBe("unrecognized_keys");
@@ -120,7 +120,7 @@ describe("file schemas", () => {
     expect(bad("assets\\images\\beach.png")).toBe(false);
   });
 
-  it("does not add keys while parsing (D54)", () => {
+  it("does not add keys while parsing", () => {
     const parsed = CharacterFile.parse({ ...character, animations: {} });
     expect(Object.keys(parsed)).toEqual(Object.keys(character));
     expect(parsed.animations).toEqual({});

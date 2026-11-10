@@ -10,7 +10,7 @@ import { sizedImages } from "./scene.ts";
 // sessions are built headlessly (no canvas), so runs start at once.
 
 export async function playtestEditor(project?: Project) {
-  // A disk copy, so image files exist and the project validates (D38).
+  // A disk copy, so image files exist and the project validates.
   const { fs } = await m1Copy();
   if (project) await saveProject(fs, project);
   const editor = await Editor.open({ fs });
@@ -26,7 +26,7 @@ export async function playtestEditor(project?: Project) {
   const tick = (seconds = 1 / 60) => {
     for (let i = 0; i < Math.max(1, Math.round(seconds * 60)); i++) session().tick(1 / 60);
   };
-  /** Ticks until the player stops walking and any text closes by itself (D78). */
+  /** Ticks until the player stops walking and any text closes by itself. */
   const settle = () => {
     for (let i = 0; i < 60 * 60 && (session().world.walking || session().text || session().busy); i++) {
       if (session().ending) break;

@@ -1,4 +1,4 @@
-// Spritesheet slicing and sprite origins (spec 05, D66, D114, D115). Pure commands
+// Spritesheet slicing and sprite origins. Pure commands
 // from one Project to the next; the image tab calls them through `editor.apply`.
 import type { AssetsFile, ImageAsset, Project, SpriteSheet } from "@questforge/schema";
 import { CommandError } from "./commands.ts";
@@ -17,7 +17,7 @@ const positiveInt = (n: number, what: string) => {
 
 /**
  * A sheet of `columns` × `rows` cells covering the image. Cells are the image size
- * divided and rounded down; leftover pixels on the right and bottom are ignored (D115).
+ * divided and rounded down; leftover pixels on the right and bottom are ignored.
  */
 export function sheetFromGrid(size: Size, columns: number, rows: number): SpriteSheet {
   positiveInt(columns, "Columns");
@@ -28,7 +28,7 @@ export function sheetFromGrid(size: Size, columns: number, rows: number): Sprite
   return { columns, rows, cellWidth, cellHeight };
 }
 
-/** As many `cellWidth` × `cellHeight` cells as fit in the image, from its top-left (D66, D115). */
+/** As many `cellWidth` × `cellHeight` cells as fit in the image, from its top-left. */
 export function sheetFromCells(size: Size, cellWidth: number, cellHeight: number): SpriteSheet {
   positiveInt(cellWidth, "Frame width");
   positiveInt(cellHeight, "Frame height");
@@ -42,7 +42,7 @@ export const frameSizeOf = (img: ImageAsset, size: Size): Size => (img.sheet ? {
 /** How many frames an image has (an unsliced image has the single frame 0). */
 export const frameCountOf = (img: ImageAsset): number => (img.sheet ? img.sheet.columns * img.sheet.rows : 1);
 
-/** The origin actually used: the stored one, else bottom-centre of the frame (spec 05). */
+/** The origin actually used: the stored one, else bottom-centre of the frame. */
 export const effectiveOrigin = (img: ImageAsset, size: Size): [number, number] => {
   const f = frameSizeOf(img, size);
   return img.origin ? [img.origin[0], img.origin[1]] : [f.w / 2, f.h];
@@ -58,7 +58,7 @@ function updateImage(p: Project, id: string, f: (img: ImageAsset) => ImageAsset)
   return { ...p, assets: { ...assets, data } };
 }
 
-/** Writes the image entry's keys in schema order with optional ones omitted (D54). */
+/** Writes the image entry's keys in schema order with optional ones omitted. */
 const imageEntry = (img: ImageAsset, sheet: SpriteSheet | undefined, origin: ImageAsset["origin"]): ImageAsset => ({
   id: img.id,
   path: img.path,
@@ -68,7 +68,7 @@ const imageEntry = (img: ImageAsset, sheet: SpriteSheet | undefined, origin: Ima
 
 /**
  * Slices an image into a sheet, or makes it one frame again (`null`). An origin that
- * would fall outside the new frame is cleared (D115). `keep` is the origin to keep if
+ * would fall outside the new frame is cleared. `keep` is the origin to keep if
  * it fits (default: the current one), so typing "1" on the way to "16" doesn't lose it.
  */
 export function sliceImage(p: Project, id: string, size: Size, sheet: SpriteSheet | null, keep?: ImageAsset["origin"] | null): Project {

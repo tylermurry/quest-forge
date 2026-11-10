@@ -1,4 +1,4 @@
-# Deploys packages/site (the splash page and /play) and the docs (/docs/) to Cloudflare on every push to main (D157).
+# Deploys packages/site (the splash page and /play) and the docs (/docs/) to Cloudflare on every push to main.
 # Needs the repository secrets CLOUDFLARE_API_TOKEN (Workers Scripts: Edit) and CLOUDFLARE_ACCOUNT_ID.
 name: Site
 

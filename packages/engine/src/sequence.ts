@@ -1,7 +1,7 @@
 import type { Action, Facing } from "@questforge/schema";
 import { award, giveItem, takeItem, type GameState, type Position } from "./state.ts";
 
-// Runs a rule's actions in order (spec 02, D71, D72). Text, movement, waits,
+// Runs a rule's actions in order. Text, movement, waits,
 // one-shot animations and scene changes block until they finish; everything else
 // happens at once. Pure logic: the world and UI are reached through `SequenceHost`.
 
@@ -20,7 +20,7 @@ export interface SequenceHost {
   /** Walk another character there (or the nearest reachable point). Null when they aren't in this scene. */
   walkCharacterTo(character: string, x: number, y: number): Done | null;
   face(facing: Facing): void;
-  /** Leaves the scene; the sequence ends here (D72). */
+  /** Leaves the scene; the sequence ends here. */
   changeScene(scene: string, spawn: string): void;
   setObjectVisible(scene: string, object: string, visible: boolean): void;
   setCharacterPosition(character: string, scene: string, p: Position): void;
@@ -29,13 +29,13 @@ export interface SequenceHost {
   playSound(sound: string): void;
   /** Null stops the music. */
   playMusic(music: string | null): void;
-  /** `die` / `win_game` (D71). The sequence ends. */
+  /** `die` / `win_game`. The sequence ends. */
   endGame(ending: { kind: "die"; message: string } | { kind: "win" }): void;
-  /** Plays a dialogue (spec 11); done when it ends. Null when it can't start (D136). */
+  /** Plays a dialogue; done when it ends. Null when it can't start. */
   startDialogue(dialogue: string): Done | null;
   /** Something the engine skipped, for the playtest event log. */
   warn(message: string): void;
-  /** An action is about to run (playtest event log, D129). */
+  /** An action is about to run (playtest event log). */
   onAction?(action: Action): void;
 }
 
@@ -137,7 +137,7 @@ export class Sequence {
         host.playMusic(null);
         return;
       case "start_dialogue":
-        // Blocks like a text box; the rule's later actions run after it ends (D136).
+        // Blocks like a text box; the rule's later actions run after it ends.
         this.block = host.startDialogue(a.dialogue);
         return;
       case "wait":

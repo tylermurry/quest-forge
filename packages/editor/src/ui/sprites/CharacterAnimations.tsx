@@ -13,9 +13,9 @@ import { useCanvasImages, type CanvasImages } from "../scene/images.ts";
 import { AnimCanvas } from "./AnimCanvas.tsx";
 import { drawSheet, prepare } from "./draw.ts";
 
-// The character tab's animation editor (spec 05, D39): a grid of the twelve
+// The character tab's animation editor: a grid of the twelve
 // idle/walk/talk × direction slots, each previewed as the engine plays it, and an
-// editor for the selected slot. Every change is one undo step (D84).
+// editor for the selected slot. Every change is one undo step.
 
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 const PICKER_BOX = { w: 520, h: 300 };

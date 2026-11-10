@@ -4,7 +4,7 @@ import { mkdir, readFile, readdir, rename, rm, rmdir, writeFile } from "node:fs/
 import { dirname, join, relative, sep } from "node:path";
 import { KEEP_FILE, type ProjectFs } from "./fs.ts";
 
-/** A project folder on local disk (D12). */
+/** A project folder on local disk. */
 export class NodeFs implements ProjectFs {
   constructor(readonly root: string) {}
 

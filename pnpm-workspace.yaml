@@ -1,6 +1,5 @@
 packages:
   - packages/*
-  - templates/*
   - docs
 
 # Wrangler's bundler and local runtime (packages/site, D157) need their install scripts.

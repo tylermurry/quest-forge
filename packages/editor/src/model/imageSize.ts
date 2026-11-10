@@ -1,4 +1,4 @@
-// Pixel size of an imported image from its file header (PNG, JPEG, WebP; D88), so
+// Pixel size of an imported image from its file header (PNG, JPEG, WebP), so
 // the model can place a dropped image before the browser decodes it. DOM-free.
 
 export interface PixelSize {

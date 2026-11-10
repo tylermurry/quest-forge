@@ -4,7 +4,7 @@ import { isMac } from "../hooks.ts";
 import { drawFrame } from "./draw.ts";
 
 /**
- * The scene canvas (spec 09). It only forwards input to the DOM-free controller
+ * The scene canvas. It only forwards input to the DOM-free controller
  * and draws its frames; all decisions live in `model/scene`.
  */
 export function SceneCanvas({
@@ -64,7 +64,7 @@ export function SceneCanvas({
       }
       const ctx = el.getContext("2d");
       if (ctx) drawFrame(ctx, f, dpr, { w, h });
-      // Object loops and idle animations play live (D113); a still scene doesn't redraw.
+      // Object loops and idle animations play live; a still scene doesn't redraw.
       if (c.animating) request();
     };
     const request = () => {
@@ -78,7 +78,7 @@ export function SceneCanvas({
     };
   }, [c, redraw]);
 
-  // Space-drag pans (spec 09). Space is held state, not a command, so it isn't in the registry.
+  // Space-drag pans. Space is held state, not a command, so it isn't in the registry.
   useEffect(() => {
     const typing = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;

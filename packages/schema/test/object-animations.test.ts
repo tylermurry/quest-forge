@@ -16,7 +16,7 @@ import {
 import { NodeFs } from "../src/node.ts";
 import { FIXTURE } from "./helpers.ts";
 
-// Object animations (spec 05, D111, D112) and play_animation references.
+// Object animations and play_animation references.
 
 /** The mini fixture with the path scene's own rules cleared, so new rules start at index 0. */
 const fixture = async () => {

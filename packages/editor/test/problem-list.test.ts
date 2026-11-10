@@ -4,7 +4,7 @@ import { ALL_SEVERITIES, problemCounts, visibleProblems } from "../src/model/pro
 
 const pr = (severity: Problem["severity"], message: string): Problem => ({ severity, code: "missing_reference", breadcrumb: "X", message, location: { file: "f", path: [] } });
 
-describe("Problems list (spec 14, D120)", () => {
+describe("Problems list", () => {
   it("counts per severity, filters, and lists errors first", () => {
     const all = [pr("warning", "w1"), pr("error", "e1"), pr("warning", "w2"), pr("error", "e2")];
     expect(problemCounts(all)).toEqual({ error: 2, warning: 2 });

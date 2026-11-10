@@ -2,17 +2,17 @@ import type { AnyRule, Condition, GameFile, SceneFile, Trigger } from "@questfor
 import { hasItem, objectVisible, type GameState } from "./state.ts";
 import type { RuleReport } from "./trace.ts";
 
-// Rule evaluation (spec 02, D40): a trigger checks its owner's rules top to bottom
+// Rule evaluation: a trigger checks its owner's rules top to bottom
 // and the first rule whose conditions all pass is the one that runs. Pure: no
 // side effects here; the sequence runner marks the rule fired and runs its actions.
 
-/** Where a rule list lives. With the rule's ID it makes the fired key (D117). */
+/** Where a rule list lives. With the rule's ID it makes the fired key. */
 export type RuleOwner =
   | { kind: "hotspot" | "object" | "character" | "region"; scene: string; id: string }
   | { kind: "scene"; scene: string }
   | { kind: "game" };
 
-/** Fired key of a rule (D117): its owner plus its stable ID, e.g. `garden/hotspot:pond/rule_2`, `game/rule_1`. */
+/** Fired key of a rule: its owner plus its stable ID, e.g. `garden/hotspot:pond/rule_2`, `game/rule_1`. */
 export function ruleKey(owner: RuleOwner, ruleId: string): string {
   switch (owner.kind) {
     case "game":
@@ -88,7 +88,7 @@ export interface Match<R extends AnyRule = AnyRule> {
 
 /**
  * The first rule (top to bottom) answering `trigger` whose conditions all pass.
- * A `once` rule that already fired is skipped. `report` (playtest only, D129) hears
+ * A `once` rule that already fired is skipped. `report` (playtest only) hears
  * every rule's verdict up to and including the match; conditions stop at the first
  * that fails, as before.
  */
@@ -113,7 +113,7 @@ export function firstMatch<R extends AnyRule>(rules: readonly R[], owner: RuleOw
   return null;
 }
 
-/** The game's reply when no rule matches (D40). Walk has none: it's just a walk. */
+/** The game's reply when no rule matches. Walk has none: it's just a walk. */
 export function defaultResponse(game: GameFile, trigger: Trigger): string | null {
   switch (trigger.type) {
     case "look":

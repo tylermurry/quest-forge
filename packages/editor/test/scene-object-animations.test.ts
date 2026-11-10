@@ -11,7 +11,7 @@ import {
 import { errorsIn, m1Project } from "./support/fixtures.ts";
 import { sceneEditor } from "./support/scene.ts";
 
-// Object animations in the scene editor (spec 05, D111–D113).
+// Object animations in the scene editor.
 
 const scene = (p: Project, id: string) => p.scenes.find((s) => s.data.id === id)!.data as SceneFile;
 const bench = (p: Project) => scene(p, "shed").objects.find((o) => o.id === "workbench")!;
@@ -52,7 +52,7 @@ describe("object animation commands", () => {
   });
 });
 
-describe("live canvas (D113)", () => {
+describe("live canvas", () => {
   let dispose = () => {};
   afterEach(() => dispose());
 

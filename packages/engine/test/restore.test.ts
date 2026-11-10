@@ -17,7 +17,7 @@ const SHOP = {
 
 const fresh = (p: Project) => initialState(p.flags!.data, "yard", { x: 100, y: 380, facing: "up" });
 
-describe("readState (D43)", () => {
+describe("readState", () => {
   it("rejects anything that is not a state with a scene", () => {
     expect(readState(null)).toBeNull();
     expect(readState([])).toBeNull();
@@ -35,7 +35,7 @@ describe("readState (D43)", () => {
   });
 });
 
-describe("sanitizeState (D126)", () => {
+describe("sanitizeState", () => {
   it("adds flags and counters the saved state predates, at their initial values", () => {
     const p = testProject();
     const saved = fresh(p);

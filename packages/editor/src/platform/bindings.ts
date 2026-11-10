@@ -13,17 +13,17 @@ export const commands = {
 	fsMove: (root: string, from: string, to: string) => typedError<null, string>(__TAURI_INVOKE("fs_move", { root, from, to })),
 	fsRemove: (root: string, path: string) => typedError<null, string>(__TAURI_INVOKE("fs_remove", { root, path })),
 	fsMakeFolder: (root: string, path: string) => typedError<null, string>(__TAURI_INVOKE("fs_make_folder", { root, path })),
-	/**  Removes a folder only if nothing but a `.keep` file is left in it (D83). */
+	/**  Removes a folder only if nothing but a `.keep` file is left in it. */
 	fsRemoveFolder: (root: string, path: string) => typedError<null, string>(__TAURI_INVOKE("fs_remove_folder", { root, path })),
-	/**  Deletes a folder tree. Only ever called for `.editor/trash` (D88). */
+	/**  Deletes a folder tree. Only ever called for `.editor/trash`. */
 	fsRemoveTree: (root: string, path: string) => typedError<null, string>(__TAURI_INVOKE("fs_remove_tree", { root, path })),
 	fsExists: (root: string) => __TAURI_INVOKE<boolean>("fs_exists", { root }),
 	/**  Creates a new project folder; fails if one already exists there. */
 	fsMakeProjectFolder: (root: string) => typedError<null, string>(__TAURI_INVOKE("fs_make_project_folder", { root })),
-	/**  Watches a project folder; changed paths (relative) arrive on `channel` (spec 08). */
+	/**  Watches a project folder; changed paths (relative) arrive on `channel`. */
 	watchStart: (root: string, channel: Channel<string[]>) => typedError<number, string>(__TAURI_INVOKE("watch_start", { root, channel })),
 	watchStop: (id: number) => typedError<null, string>(__TAURI_INVOKE("watch_stop", { id })),
-	/**  Recent projects live in the app config folder (D87). */
+	/**  Recent projects live in the app config folder. */
 	recentLoad: () => typedError<string, string>(__TAURI_INVOKE("recent_load")),
 	recentSave: (json: string) => typedError<null, string>(__TAURI_INVOKE("recent_save", { json })),
 	/**  A project folder passed on the command line (`Questforge <folder>`), opened at startup. */

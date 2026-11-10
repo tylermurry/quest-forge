@@ -3,7 +3,7 @@ import { CommandError } from "../src/model/commands.ts";
 import { setDefaultResponse, setMaxScore, setStart } from "../src/model/game.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-describe("game settings (spec 10)", () => {
+describe("game settings", () => {
   it("edits default responses, the max score and where play starts", async () => {
     let p = await m1Project();
     p = setDefaultResponse(p, "look", "Nothing to see.");

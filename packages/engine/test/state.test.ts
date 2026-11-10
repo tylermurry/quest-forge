@@ -15,7 +15,7 @@ import {
   takeItem,
 } from "../src/state.ts";
 
-// Runtime game state (spec 07, D75).
+// Runtime game state.
 
 const flags = FlagsFile.parse({
   schemaVersion: 2,
@@ -55,7 +55,7 @@ describe("game state", () => {
     expect(s.music).toBe(null);
   });
 
-  it("survives a JSON round-trip deep-equal (spec 07)", () => {
+  it("survives a JSON round-trip deep-equal", () => {
     const s = fresh();
     giveItem(s, "coin");
     award(s, "found_coin", 5);

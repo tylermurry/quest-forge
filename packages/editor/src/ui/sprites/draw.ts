@@ -1,7 +1,7 @@
 import { drawSprites, frameRect, spriteRect, type LoadedImage, type Vec } from "@questforge/engine";
 import { effectiveOrigin, frameSizeOf } from "../../model/sprites.ts";
 
-// Canvas drawing for the image tab and animation previews (spec 05). Pixel art is
+// Canvas drawing for the image tab and animation previews. Pixel art is
 // drawn at the zoom with smoothing off; overlays are drawn in CSS px on top. Layout
 // and hit-testing live in model/sprites.ts.
 
@@ -74,7 +74,7 @@ export function drawSheet(ctx: Ctx, image: LoadedImage, zoom: number, selected: 
 
 /**
  * One frame with its origin on `feet` (CSS px), at `zoom`, mirrored around the origin
- * when asked (D39) — exactly as the engine places it (spriteRect). Marks the feet.
+ * when asked — exactly as the engine places it (spriteRect). Marks the feet.
  */
 export function drawSpriteFrame(ctx: Ctx, image: LoadedImage, frame: number, zoom: number, feet: Vec, mirror = false) {
   const { asset, size } = image;

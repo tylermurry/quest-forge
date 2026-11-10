@@ -1,5 +1,5 @@
-// File ▸ Build Game (D153): the project in memory (unsaved edits included, like
-// Play) becomes one `.quest` file the engine plays. Blocked by validation errors (D38).
+// File ▸ Build Game: the project in memory (unsaved edits included, like
+// Play) becomes one `.quest` file the engine plays. Blocked by validation errors.
 import { BuildError, buildQuest, questFileName } from "@questforge/schema";
 import type { Editor } from "./editor.ts";
 import type { WorkspaceState } from "./workspace.ts";

@@ -31,7 +31,7 @@ async function restart(a: Actions, dir: string) {
 
 const sceneFolders = (a: Actions) => Object.fromEntries(sectionEntries(a.editor.project, "scene").map((e) => [e.id, e.folder]));
 
-describe("spec 08 acceptance", () => {
+describe("editor shell acceptance", () => {
   it("create a project, make 3 nested folders, move scenes between them, restart: the structure persists", async () => {
     const dir = join(await mkdtemp(join(tmpdir(), "questforge-accept-")), "My Game");
     dirs.push(dir);
@@ -60,7 +60,7 @@ describe("spec 08 acceptance", () => {
     expect(sceneFolders(a)).toEqual(before.scenes);
     expect(before.scenes).toEqual({ first_scene: "act1", [second]: "act1/caves", [third]: "act1/caves/deep" });
     expect(await readdir(join(dir, "scenes/New folder"))).toEqual([".keep"]);
-    // New scenes start empty (D97): their only problem is the walkable area still to draw.
+    // New scenes start empty: their only problem is the walkable area still to draw.
     const codes = errorsIn(a.editor.project).map((x) => x.code);
     expect(codes.length).toBeGreaterThan(0);
     expect(new Set(codes)).toEqual(new Set(["no_walkable_area"]));

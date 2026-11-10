@@ -8,13 +8,13 @@ import { sceneEditor } from "./support/scene.ts";
 
 const png = (w: number, h: number) => ({ name: "Beach Day.png", bytes: new Bitmap(w, h).png() });
 
-/** A blank project plus a new, empty scene (D97). */
+/** A blank project plus a new, empty scene. */
 function withEmptyScene() {
   const made = createEntry(blankProject("Test"), "scene", "");
   return { project: made.project, id: made.id };
 }
 
-describe("backgrounds and empty scenes (D97, D98)", () => {
+describe("backgrounds and empty scenes", () => {
   it("reads image sizes from PNG, JPEG and WebP headers", () => {
     expect(imageSize(new Bitmap(37, 21).png())).toEqual({ w: 37, h: 21 });
     // A minimal JPEG: SOI, an APP0 segment, then SOF0 with height 300 and width 500.

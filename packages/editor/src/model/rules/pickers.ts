@@ -1,4 +1,4 @@
-// What each rule picker lists, and "+ Create new…" (spec 10, D123). DOM-free: the
+// What each rule picker lists, and "+ Create new…". DOM-free: the
 // combobox only renders `pickerOptions` and calls `createForPicker` inside one
 // Editor.apply, so creating something and using it is one undo step.
 import { animationScope, type Project } from "@questforge/schema";
@@ -73,7 +73,7 @@ export function fieldPick(part: Record<string, unknown>, field: Extract<Field, {
   return { pick: field.pick };
 }
 
-/** Kinds "+ Create new…" can make (D123). Spawns and objects are made on the canvas; audio by import. */
+/** Kinds "+ Create new…" can make. Spawns and objects are made on the canvas; audio by import. */
 export const CREATABLE: ReadonlySet<PickKind> = new Set(["item", "flag", "counter", "scene", "character", "dialogue", "award"]);
 
 export const CREATE_NOUN: Partial<Record<PickKind, string>> = {
@@ -109,7 +109,7 @@ export function createForPicker(p: Project, pick: PickKind, name: string): { pro
   }
 }
 
-/** "+ Create new…": makes the thing and uses it, for one Editor.apply (one undo step, D123). */
+/** "+ Create new…": makes the thing and uses it, for one Editor.apply (one undo step). */
 export function createAndUse(p: Project, pick: PickKind, name: string, use: (p: Project, id: string) => Project): Project {
   const { project, id } = createForPicker(p, pick, name);
   return use(project, id);

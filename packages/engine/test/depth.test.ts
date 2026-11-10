@@ -3,7 +3,7 @@ import { objectBaseline, scaleAt, sortByBaseline, walkSpeedAt } from "../src/dep
 
 const depth = { far: { y: 180, scale: 0.4 }, near: { y: 390, scale: 1 } };
 
-describe("depth scaling (spec 04)", () => {
+describe("depth scaling", () => {
   it("lerps between the far and near lines by feet-y", () => {
     expect(scaleAt(depth, 180)).toBeCloseTo(0.4);
     expect(scaleAt(depth, 390)).toBeCloseTo(1);
@@ -22,7 +22,7 @@ describe("depth scaling (spec 04)", () => {
   });
 });
 
-describe("baseline occlusion (spec 04)", () => {
+describe("baseline occlusion", () => {
   it("defaults an object's baseline to its bottom edge", () => {
     expect(objectBaseline({ y: 100 }, 64)).toBe(164);
     expect(objectBaseline({ y: 100, baseline: 120 }, 64)).toBe(120);

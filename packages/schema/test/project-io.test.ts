@@ -49,7 +49,7 @@ describe("loading the fixture project", () => {
   });
 });
 
-describe("round-trip (spec 01 acceptance)", () => {
+describe("round-trip", () => {
   it("load → save produces byte-identical files", async () => {
     const { dir, fs } = await fixtureCopy();
     const before = await snapshot(dir);
@@ -105,7 +105,7 @@ describe("round-trip (spec 01 acceptance)", () => {
   });
 });
 
-describe("moving between folders (spec 01 acceptance, D22)", () => {
+describe("moving between folders", () => {
   it("moving a scene to another folder changes only that file's path", async () => {
     const { dir, fs } = await fixtureCopy();
     const before = await snapshot(dir);
@@ -184,7 +184,7 @@ describe("load problems", () => {
     ]);
   });
 
-  it("opens a v1 project: rules get IDs, and the next save writes v2 (D117)", async () => {
+  it("opens a v1 project: rules get IDs, and the next save writes v2", async () => {
     const files = await base();
     const v1 = files["game.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 1").replace(/^  - id: rule_\d+\n    when:/gm, "  - when:");
     expect(v1).not.toContain("id: rule_");
@@ -208,7 +208,7 @@ describe("migrations", () => {
     expect(migrate({ schemaVersion: 2, id: "x" })).toEqual({ ok: true, value: { schemaVersion: 2, id: "x" } });
   });
 
-  it("v2 gives every rule an ID in list order and keeps existing ones (D117)", () => {
+  it("v2 gives every rule an ID in list order and keeps existing ones", () => {
     const r = (text: string, id?: string) => ({ ...(id ? { id } : {}), when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
     const v1 = {
       schemaVersion: 1,

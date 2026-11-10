@@ -1,4 +1,4 @@
-// The playtest event log (spec 12, D129, D132): the engine's trace events in plain
+// The playtest event log: the engine's trace events in plain
 // English, worded like the rule cards (vocab.ts). Each line about a rule can jump
 // to it (and to the failed condition) in the rule inspector through `ws.jumpTo`.
 import type { RuleOwner, TraceEvent } from "@questforge/engine";
@@ -8,7 +8,7 @@ import { ownerRules, type RuleOwnerRef } from "../rules/owner.ts";
 import { pickerOptions } from "../rules/pickers.ts";
 import { ACTION_LABEL, ACTION_PARTS, CONDITION_LABEL, CONDITION_PARTS, TRIGGER_LABEL, TRIGGER_PARTS, type Part } from "../rules/vocab.ts";
 
-/** The log keeps this many lines (D132). */
+/** The log keeps this many lines. */
 const LOG_LIMIT = 500;
 
 export type LogTone = "trigger" | "match" | "skip" | "default" | "action" | "scene" | "note";
@@ -117,7 +117,7 @@ function triggerLine(p: Project, owner: RuleOwner, t: Trigger): string {
   return `${what} → ${ownerName(p, owner)}`;
 }
 
-// ── Dialogues (spec 11) ─────────────────────────────────────────────────────
+// ── Dialogues ─────────────────────────────────────────────────────
 
 const dialogueName = (p: Project, id: string) => p.dialogues.find((d) => d.data.id === id)?.data.name ?? id;
 
@@ -165,7 +165,7 @@ const END_TEXT = {
  */
 export function formatLog(events: readonly TraceEvent[], ran: Project, now: Project): LogLine[] {
   const out: LogLine[] = [];
-  /** Rules for other triggers since the last trigger, folded into one line (D132). */
+  /** Rules for other triggers since the last trigger, folded into one line. */
   let otherVerbs = 0;
   let pending: { owner: RuleOwner; trigger: Trigger; index: number; sameType: number } | null = null;
   const flushOthers = () => {

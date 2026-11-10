@@ -353,8 +353,6 @@ importers:
         specifier: 4.159.0
         version: 4.159.0(@types/node@26.6.6)
 
-  templates/demo: {}
-
 packages:
 
   '@11ty/gray-matter@1.0.0':

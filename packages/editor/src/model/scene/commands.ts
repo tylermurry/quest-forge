@@ -1,5 +1,5 @@
-// Scene-editing commands (spec 09): pure Project → Project functions, each run as
-// one undo step through Editor.apply (D84). Geometry stays integer (spec 01).
+// Scene-editing commands: pure Project → Project functions, each run as
+// one undo step through Editor.apply. Geometry stays integer.
 import { RenameError, SCENE_HEIGHT, SCENE_WIDTH, renameSceneId, type Facing, type Placement, type Point, type Polygon, type Project, type SceneFile } from "@questforge/schema";
 import { CommandError, uniqueId, updateDoc } from "../commands.ts";
 import { getPolygon, withPolygon, type PolyRef } from "./shapes.ts";
@@ -58,7 +58,7 @@ export function deleteThing(p: Project, sceneId: string, ref: ThingRef): Project
         return { ...s, spawns };
       }
       case "walkable": {
-        // Deleting the outline keeps the holes, so a redrawn outline gets them back (D104).
+        // Deleting the outline keeps the holes, so a redrawn outline gets them back.
         if (ref.key === "outer") return { ...s, walkable: { ...s.walkable, outer: [] } };
         const i = holeIndex(ref.key);
         if (!s.walkable.holes[i]) throw gone();
@@ -110,7 +110,7 @@ export function moveVertex(p: Project, sceneId: string, pr: PolyRef, index: numb
   });
 }
 
-/** Alt-click (spec 09). A shape keeps at least 3 points. */
+/** Alt-click. A shape keeps at least 3 points. */
 export function deleteVertex(p: Project, sceneId: string, pr: PolyRef, index: number): Project {
   return updateScene(p, sceneId, (s) => {
     const poly = needPolygon(s, pr);
@@ -203,7 +203,7 @@ export function setDepthScale(p: Project, sceneId: string, key: "far" | "near", 
   return updateScene(p, sceneId, (s) => ({ ...s, depth: { ...s.depth, [key]: { ...s.depth[key], scale: Math.round(scale * 100) / 100 } } }));
 }
 
-/** Sets an object's baseline; undefined = Auto (its image's bottom edge, spec 04). */
+/** Sets an object's baseline; undefined = Auto (its image's bottom edge). */
 export function setBaseline(p: Project, sceneId: string, id: string, y: number | undefined): Project {
   return updateScene(p, sceneId, (s) => {
     if (!s.objects.some((o) => o.id === id)) throw gone();
@@ -218,9 +218,9 @@ export function setBaseline(p: Project, sceneId: string, id: string, y: number |
   });
 }
 
-// ── New shapes (D104) ────────────────────────────────────────────────────────
+// ── New shapes ────────────────────────────────────────────────────────
 
-/** What a closed polygon becomes, decided by the active layer (D104). */
+/** What a closed polygon becomes, decided by the active layer. */
 export type DrawTarget =
   | { kind: "outline" }
   | { kind: "hole" }
@@ -239,7 +239,7 @@ export const DRAW_LABEL: Record<DrawTarget["kind"], string> = {
 /** IDs used inside a scene by objects, hotspots and regions (each list must be unique). */
 const listIds = (s: SceneFile, list: "hotspots" | "regions" | "objects") => (s[list] as { id: string }[]).map((x) => x.id);
 
-/** "Hotspot", "Hotspot 2", … matching `hotspot`, `hotspot_2`, … (D99). */
+/** "Hotspot", "Hotspot 2", … matching `hotspot`, `hotspot_2`, …. */
 const defaultName = (base: string, id: string) => {
   const n = id.slice(base.length + 1);
   const word = base[0]!.toUpperCase() + base.slice(1);
@@ -296,7 +296,7 @@ export function setSpawn(p: Project, sceneId: string, id: string, at: Placement)
   });
 }
 
-// ── Objects layer (spec 09, D95, D106) ───────────────────────────────────────
+// ── Objects layer ───────────────────────────────────────
 
 /** An object ID from its image's ID: `palm_img` → `palm`. */
 const objectIdFor = (imageId: string) => imageId.replace(/_(img|image|sprite|png)$/, "") || imageId;
@@ -325,7 +325,7 @@ export function placeImage(p: Project, sceneId: string, imageId: string, at: Poi
   return { project, id };
 }
 
-/** Places a character with its feet at the drop point. The player and repeats are refused (D106). */
+/** Places a character with its feet at the drop point. The player and repeats are refused. */
 export function placeCharacter(p: Project, sceneId: string, character: string, at: Point): Project {
   if (!p.characters.some((c) => c.data.id === character)) throw new CommandError(`There's no character with ID ${character}.`);
   if (p.game?.data.player === character) throw new CommandError("The player appears at spawn points, so they aren't placed in scenes. Add a spawn point instead.");
@@ -336,7 +336,7 @@ export function placeCharacter(p: Project, sceneId: string, character: string, a
 }
 
 /**
- * Moves an object in the Objects list (D95). The list is draw order, so this sets
+ * Moves an object in the Objects list. The list is draw order, so this sets
  * the object's baseline between its new neighbours; with no room between them it
  * takes the one behind's baseline and moves after it in file order (ties keep file
  * order). `order` is back to front, as `drawOrder` returns; `index` is the object's
@@ -368,7 +368,7 @@ export function reorderObject(p: Project, sceneId: string, id: string, order: re
   });
 }
 
-/** Sets or removes a scene's background image (D97). */
+/** Sets or removes a scene's background image. */
 export function setBackground(p: Project, sceneId: string, imageId: string | undefined): Project {
   if (imageId !== undefined && !p.assets?.data.images.some((i) => i.id === imageId)) throw new CommandError(`There's no image with ID ${imageId}.`);
   return updateScene(p, sceneId, (s) => {
@@ -377,7 +377,7 @@ export function setBackground(p: Project, sceneId: string, imageId: string | und
   });
 }
 
-/** Sets or removes a scene's music (spec 07, D148): the track that plays while the player is in it. */
+/** Sets or removes a scene's music: the track that plays while the player is in it. */
 export function setSceneMusic(p: Project, sceneId: string, audioId: string | undefined): Project {
   if (audioId !== undefined && !p.assets?.data.audio.some((a) => a.id === audioId)) throw new CommandError(`There's no sound with ID ${audioId}.`);
   return updateScene(p, sceneId, (s) => {
@@ -386,7 +386,7 @@ export function setSceneMusic(p: Project, sceneId: string, audioId: string | und
   });
 }
 
-// ── Inspector fields (D99) ───────────────────────────────────────────────────
+// ── Inspector fields ───────────────────────────────────────────────────
 
 /** Changes the ID of an object, spawn, hotspot or region and everything that refers to it. */
 export function changeThingId(p: Project, sceneId: string, ref: ThingRef, to: string): Project {
@@ -400,7 +400,7 @@ export function changeThingId(p: Project, sceneId: string, ref: ThingRef, to: st
   }
 }
 
-/** Sets a hotspot's name (shown to the player), or an object's (empty = not clickable, D69). */
+/** Sets a hotspot's name (shown to the player), or an object's (empty = not clickable). */
 export function setThingName(p: Project, sceneId: string, ref: ThingRef, name: string): Project {
   return updateScene(p, sceneId, (s) => {
     if (ref.list === "hotspots") {
@@ -413,7 +413,7 @@ export function setThingName(p: Project, sceneId: string, ref: ThingRef, name: s
         objects: s.objects.map((o) => {
           if (o.id !== ref.key) return o;
           const { name: _old, ...rest } = o;
-          // The serializer writes keys in schema order (D54), so where `name` goes here doesn't matter.
+          // The serializer writes keys in schema order, so where `name` goes here doesn't matter.
           return name.trim() ? { ...rest, name } : rest;
         }),
       };
@@ -436,7 +436,7 @@ export function setObjectFields(p: Project, sceneId: string, id: string, f: Obje
 }
 
 /**
- * Gives an object a starting obstacle (D42): a strip along its baseline as wide as
+ * Gives an object a starting obstacle: a strip along its baseline as wide as
  * its image, which the user then shapes. `size` is the image's size.
  */
 export function addObstacle(p: Project, sceneId: string, id: string, size: { w: number; h: number }): Project {
@@ -463,7 +463,7 @@ export function removeObstacle(p: Project, sceneId: string, id: string): Project
   }));
 }
 
-/** Edits a placed character (D60). */
+/** Edits a placed character. */
 export function setPlacement(p: Project, sceneId: string, character: string, f: Partial<{ x: number; y: number; facing: Facing; visible: boolean }>): Project {
   return updateScene(p, sceneId, (s) => {
     if (!s.characters.some((c) => c.character === character)) throw gone();

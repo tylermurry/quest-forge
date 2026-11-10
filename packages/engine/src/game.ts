@@ -23,7 +23,7 @@ import { FixedStep, fitViewport, toScene } from "./viewport.ts";
 import { WebAudio } from "./webaudio.ts";
 import type { LoadedImage, World } from "./world.ts";
 
-// The engine entry point (spec 03): data in, no user code.
+// The engine entry point: data in, no user code.
 
 /** Everything the engine needs to play: the parsed project and where its files are served. */
 export interface ProjectBundle {
@@ -36,19 +36,19 @@ export interface GameOptions {
   /** Start somewhere other than `game.startScene` / `game.startSpawn` (playtest "from here"). */
   scene?: string;
   spawn?: string;
-  /** Start from a saved state (playtest presets and Restart scene, D126, D128). Wins over `scene`/`spawn`. */
+  /** Start from a saved state (playtest presets and Restart scene). Wins over `scene`/`spawn`. */
   state?: GameState;
-  /** Playtest "Play from this node" (D142): play this dialogue once the scene is entered. */
+  /** Playtest "Play from this node": play this dialogue once the scene is entered. */
   dialogue?: { id: string; node?: string };
-  /** Playtest event log sink (D129); the exported game passes none. */
+  /** Playtest event log sink; the exported game passes none. */
   trace?: Trace;
-  /** Playtest: what the in-game Restart button does instead (D132). */
+  /** Playtest: what the in-game Restart button does instead. */
   restart?: () => void;
-  /** Playtest debug layers (D132), changeable while playing through `Game.debug`. */
+  /** Playtest debug layers, changeable while playing through `Game.debug`. */
   debug?: Partial<DebugFlags>;
-  /** Scale to fill the canvas instead of whole multiples (the editor's playtest area, D135). Still letterboxed. */
+  /** Scale to fill the canvas instead of whole multiples (the editor's playtest area). Still letterboxed. */
   fill?: boolean;
-  /** Where save slots and volumes are kept (spec 07). Default: the page's localStorage; null turns saving off. */
+  /** Where save slots and volumes are kept. Default: the page's localStorage; null turns saving off. */
   storage?: KeyValueStore | null;
   /** Play sound (default true). */
   audio?: boolean;
@@ -69,7 +69,7 @@ export interface Game {
   destroy(): void;
 }
 
-/** Thrown when a project has blocking validation errors (D38). */
+/** Thrown when a project has blocking validation errors. */
 export class ProjectErrors extends Error {
   constructor(readonly problems: Problem[]) {
     super(`This project has ${problems.length} problem(s) to fix before it can play:\n${problems.map(formatProblem).join("\n")}`);
@@ -119,7 +119,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
     viewport = fitViewport(canvas.width, canvas.height, dpr, options.fill);
-    // CSS px per scene px, for the 44 CSS px minimum (D76).
+    // CSS px per scene px, for the 44 CSS px minimum.
     ui?.setScale(viewport.scale / dpr);
   };
   const observer = new view.ResizeObserver(resize);
@@ -168,7 +168,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const doc = canvas.ownerDocument;
   const onVisibility = () => audio?.setHidden(doc.visibilityState === "hidden");
   doc.addEventListener("visibilitychange", onVisibility);
-  // The cursor is drawn in the back buffer (D77).
+  // The cursor is drawn in the back buffer.
   canvas.style.cursor = "none";
 
   const loop = new FixedStep((dt) => {
@@ -198,7 +198,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   raf = view.requestAnimationFrame(frame);
 
   // The first scene (and every item icon) before play starts; later scenes load on
-  // change_scene and are prefetched on entry (D75).
+  // change_scene and are prefetched on entry.
   const itemIcons = project.items.map((i) => i.data.icon);
   const ready = Promise.all([images.loadScene(scene), images.load(itemIcons)]).then(() => {
     if (destroyed) return;
@@ -256,7 +256,7 @@ function pageStorage(view: Window): KeyValueStore | null {
   }
 }
 
-/** Scenes the current scene's rules can change to (D75), for prefetching their music. */
+/** Scenes the current scene's rules can change to, for prefetching their music. */
 function linkedSceneFiles(session: Session): SceneFile[] {
   return linkedScenes(session.scene).flatMap((id) => session.sceneFile(id) ?? []);
 }
@@ -271,8 +271,8 @@ export function sceneImageIds(scene: SceneFile, characters: Map<string, Characte
 }
 
 /**
- * Loads images by ID once and keeps them (spec 03). A scene is ready when all its
- * images are; `prefetch` starts loading in the background (D75).
+ * Loads images by ID once and keeps them. A scene is ready when all its
+ * images are; `prefetch` starts loading in the background.
  */
 class ImageCache {
   readonly loaded = new Map<string, LoadedImage>();

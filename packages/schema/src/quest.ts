@@ -1,4 +1,4 @@
-// The built game: a `.quest` file (D153). It is a zip holding `game.json` (every
+// The built game: a `.quest` file. It is a zip holding `game.json` (every
 // project file merged into one, editor-only data left out) and the image and audio
 // files the game uses, at their project paths. Build Game writes one; the engine
 // plays one. Both sides read it through here, so they can't disagree.
@@ -93,7 +93,7 @@ export function questFileName(project: Project): string {
 }
 
 /**
- * Builds the `.quest` bytes. Refuses a project with validation errors (D38).
+ * Builds the `.quest` bytes. Refuses a project with validation errors.
  * `readFile` returns an asset file's bytes (a pending import or the file on disk).
  */
 export async function buildQuest(project: Project, readFile: (path: string) => Promise<Uint8Array>): Promise<Uint8Array> {

@@ -5,7 +5,7 @@ import { sceneEditor } from "./support/scene.ts";
 // [390,320] [330,350] [240,345]; the pond hotspot sits over it.
 const HOLE = { list: "walkable", key: "hole:0" } as const;
 
-describe("Select/Move (spec 09)", () => {
+describe("Select/Move", () => {
   it("the active layer wins: inside the hole selects the hole on Walkable, the pond on Hotspots", async () => {
     const { c, click, dispose } = await sceneEditor();
     c.setLayer("walkable");
@@ -28,7 +28,7 @@ describe("Select/Move (spec 09)", () => {
     const steps = editor.history.size;
     c.pointerDown(at([230, 300]));
     c.pointerMove(at([215, 305]));
-    // The drag shows on the canvas but isn't in the project or history yet (D84).
+    // The drag shows on the canvas but isn't in the project or history yet.
     expect(c.frame()!.scene.walkable.holes[0]![0]).toEqual([215, 305]);
     expect(scene().walkable.holes[0]![0]).toEqual([230, 300]);
     c.pointerMove(at([210.4, 309.6]));
@@ -141,7 +141,7 @@ describe("Select/Move (spec 09)", () => {
     dispose();
   });
 
-  it("snaps a dragged point to nearby vertices when Snap is on (D102)", async () => {
+  it("snaps a dragged point to nearby vertices when Snap is on", async () => {
     const { c, ws, scene, click, drag, dispose } = await sceneEditor();
     c.setLayer("walkable");
     click([300, 320]);

@@ -1,4 +1,4 @@
-// Object animations in the scene editor (spec 05, D111, D112): one looping animation
+// Object animations in the scene editor: one looping animation
 // and named one-shots per object. Pure commands; the Inspector runs them through
 // `editor.apply`, one undo step each.
 import { ObjectAnimation, RenameError, renameObjectAnimation, type NamedObjectAnimation, type Project, type SceneObject } from "@questforge/schema";
@@ -69,7 +69,7 @@ export function patchObjectAnimation(p: Project, sceneId: string, id: string, an
   });
 }
 
-/** Removes a one-shot; rules that play it then show a missing-reference problem (D86). */
+/** Removes a one-shot; rules that play it then show a missing-reference problem. */
 export function deleteObjectAnimation(p: Project, sceneId: string, id: string, animId: string): Project {
   return updateObject(p, sceneId, id, ({ animations, ...o }) => {
     const rest = (animations ?? []).filter((a) => a.id !== animId);

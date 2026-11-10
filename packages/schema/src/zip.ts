@@ -1,5 +1,5 @@
-// A minimal zip reader and writer for `.quest` files (D153). No dependencies (the
-// engine ships nothing but the schema, D30): entries are stored or raw-deflated
+// A minimal zip reader and writer for `.quest` files. No dependencies (the
+// engine ships nothing but the schema): entries are stored or raw-deflated
 // through the platform's CompressionStream, which browsers and Node both have.
 
 export interface ZipEntry {

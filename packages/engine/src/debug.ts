@@ -2,14 +2,14 @@ import { SCENE_WIDTH } from "@questforge/schema";
 import type { Vec } from "./vec.ts";
 import type { World } from "./world.ts";
 
-// Playtest debug layers (spec 12, D132): what each toggle draws over the running
+// Playtest debug layers: what each toggle draws over the running
 // game, as plain shapes so it is tested without a canvas. `render.ts` draws them.
 
 export interface DebugFlags {
   /** Walkable outline, holes, visible obstacles and the nav graph's nodes. */
   walkable: boolean;
   hotspots: boolean;
-  /** Walk-into regions (D41). */
+  /** Walk-into regions. */
   regions: boolean;
   /** Each sprite's baseline and the far/near depth lines. */
   baselines: boolean;

@@ -1,5 +1,5 @@
 // Every polygon in a scene, addressed uniformly: the walkable outline and holes,
-// hotspot and region shapes, and object obstacles (D42). DOM-free.
+// hotspot and region shapes, and object obstacles. DOM-free.
 import type { Polygon, SceneFile } from "@questforge/schema";
 import type { Layer } from "./sceneUi.ts";
 import { holeIndex, holeKey, type ThingRef } from "./things.ts";
@@ -50,7 +50,7 @@ export function withPolygon(scene: SceneFile, pr: PolyRef, poly: Polygon): Scene
   }
 }
 
-/** Every polygon in the scene with the layer it's on, top of the layer stack first (D15). */
+/** Every polygon in the scene with the layer it's on, top of the layer stack first. */
 export function scenePolygons(scene: SceneFile): { pr: PolyRef; poly: Polygon; layer: Layer }[] {
   const out: { pr: PolyRef; poly: Polygon; layer: Layer }[] = [];
   // Later entries draw on top, so they're listed first.

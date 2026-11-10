@@ -74,7 +74,7 @@ export class CanvasImages {
     return this.assetUrl(asset.path);
   }
 
-  /** A URL for a project file, the in-memory copy when it was imported this session (playtest, D128). */
+  /** A URL for a project file, the in-memory copy when it was imported this session (playtest). */
   urlFor(p: Project, path: string): string {
     return this.sourceFor(p, { id: "", path }) ?? this.assetUrl(path) ?? path;
   }

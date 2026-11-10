@@ -1,19 +1,19 @@
-// The scene canvas's zoom and pan (spec 09): fit or 1×–8×, pan, screen ↔ scene,
+// The scene canvas's zoom and pan: fit or 1×–8×, pan, screen ↔ scene,
 // pixel snapping, grid visibility. DOM-free. Screen coordinates are CSS pixels
 // inside the canvas element; the canvas multiplies by devicePixelRatio itself.
 import { SCENE_HEIGHT, SCENE_WIDTH, type Point } from "@questforge/schema";
 import type { Vec } from "@questforge/engine";
 
-/** Fixed zoom steps (spec 09: 1×–8×). */
+/** Fixed zoom steps (1×–8×). */
 const ZOOM_STEPS = [1, 2, 3, 4, 6, 8] as const;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 8;
-/** The pixel grid shows at this zoom and above (spec 09). */
+/** The pixel grid shows at this zoom and above. */
 const GRID_ZOOM = 4;
 /** Space kept around the scene when fitting, in CSS px. */
 const FIT_MARGIN = 16;
 
-/** Zoom state saved per scene (D101): fitted to the canvas, or a fixed scale with a pan. */
+/** Zoom state saved per scene: fitted to the canvas, or a fixed scale with a pan. */
 export type Zoom = { fit: true } | { fit: false; scale: number; pan: Vec };
 
 /** Where the scene sits on screen: CSS px per scene px, and the scene's top-left in CSS px. */
@@ -83,7 +83,7 @@ export const toScene = (t: Transform, p: Vec): Vec => [(p[0] - t.x) / t.scale, (
 /** Scene point → screen px. */
 export const toScreen = (t: Transform, p: Vec): Vec => [t.x + p[0] * t.scale, t.y + p[1] * t.scale];
 
-/** Snapping to whole pixels, always (spec 09, spec 01: on-disk geometry is integer), clamped to the scene. */
+/** Snapping to whole pixels, always (on-disk geometry is integer), clamped to the scene. */
 export function snapPixel(p: Vec): Point {
   const x = Math.min(SCENE_WIDTH, Math.max(0, Math.round(p[0])));
   const y = Math.min(SCENE_HEIGHT, Math.max(0, Math.round(p[1])));

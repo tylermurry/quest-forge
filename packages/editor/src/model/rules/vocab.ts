@@ -1,4 +1,4 @@
-// The rule vocabulary as the inspector shows it (spec 02, spec 10): a plain-English
+// The rule vocabulary as the inspector shows it: a plain-English
 // label per trigger, condition and action, and a sentence of words and fields that
 // the card renders from dropdowns, pickers and text boxes. DOM-free.
 import { ACTION_TYPES, CONDITION_TYPES, type Action, type Condition, type Facing } from "@questforge/schema";
@@ -22,7 +22,7 @@ export type Field =
   | { kind: "number"; key: string; label: string; min: number; max: number; step: number }
   | { kind: "bool"; key: string; label: string; on: string; off: string }
   | { kind: "enum"; key: string; label: string; options: { value: string; label: string }[] }
-  /** `x` / `y` fields with "Pick on canvas" (D124); `sceneKey` names the field holding the scene, if any. */
+  /** `x` / `y` fields with "Pick on canvas"; `sceneKey` names the field holding the scene, if any. */
   | { kind: "point"; label: string; sceneKey?: string }
   /** `play_animation`'s target: a character or a scene object. */
   | { kind: "animTarget"; label: string };

@@ -41,7 +41,7 @@ export interface RuleCardProps {
   problems: RuleProblems;
 }
 
-/** One rule as a sentence of dropdowns, pickers and text (spec 10). */
+/** One rule as a sentence of dropdowns, pickers and text. */
 export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCardProps) {
   const { editor, ws } = actions;
   const p: Project = editor.project;
@@ -53,7 +53,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
   const blur = () => editor.history.breakMerge();
   const part = (pt: RulePart) => problems.byPart.get(partKey(rule.id, pt));
 
-  // Jump-to: scroll to and flash the exact part (D120).
+  // Jump-to: scroll to and flash the exact part.
   const highlight = ws.highlight;
   useEffect(() => {
     if (!highlight) return;
@@ -72,7 +72,7 @@ export function RuleCard({ actions, owner, own, rule, index, problems }: RuleCar
     create: (pick: PickKind, name: string, key: string) => run(`Create ${pick} and use it`, (q) => createAndUse(q, pick, name, (r, id) => apply({ [key]: id })(r))),
   });
 
-  // "Pick on canvas" for an action's point (D124).
+  // "Pick on canvas" for an action's point.
   const activeScene = ws.active?.startsWith("scene:") ? ws.active.slice("scene:".length) : null;
   const pickHandlers = (i: number): Pick<PartHandlers, "pickPoint" | "picking" | "pickDisabled"> => {
     const scene = pointPickScene(owner, rule.do[i]!, activeScene);

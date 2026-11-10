@@ -38,7 +38,7 @@ describe("ProjectFs folder and binary operations", () => {
   });
 });
 
-describe("browser folders on disk (D83)", () => {
+describe("browser folders on disk", () => {
   it("knows which section a folder belongs to", () => {
     expect(sectionOfFolder("scenes/a")).toBe("scene");
     expect(sectionOfFolder("assets/images/ui")).toBe("image");
@@ -101,7 +101,7 @@ describe("browser folders on disk (D83)", () => {
   });
 });
 
-describe("flag folders (D83)", () => {
+describe("flag folders", () => {
   const flagsYaml = [
     "schemaVersion: 2",
     "folders:",

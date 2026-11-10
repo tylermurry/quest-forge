@@ -1,5 +1,5 @@
 # Builds the editor for macOS, Windows and Linux on every push to main and publishes a
-# GitHub release (D156). The version is the latest v* tag with the patch bumped (none: 0.0.1);
+# GitHub release. The version is the latest v* tag with the patch bumped (none: 0.0.1);
 # it's passed to the build, never committed, so this workflow can't trigger itself.
 # Installers are uploaded under fixed names so the site can link to releases/latest/download/<name>.
 name: Release
@@ -93,7 +93,7 @@ jobs:
           cat src-tauri/tauri.release.conf.json
       - name: Build
         working-directory: packages/editor
-        # Signing stays off until certificates exist (unsigned builds, D156). When they do, set
+        # Signing stays off until certificates exist (unsigned builds). When they do, set
         # APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY, APPLE_ID,
         # APPLE_PASSWORD and APPLE_TEAM_ID as secrets and pass them here as env.
         run: corepack pnpm tauri build --config src-tauri/tauri.release.conf.json ${{ matrix.args }}

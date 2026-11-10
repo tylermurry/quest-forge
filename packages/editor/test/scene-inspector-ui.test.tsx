@@ -29,7 +29,7 @@ async function mount() {
 
 const garden = (ed: Editor) => ed.project.scenes.find((s) => s.data.id === "garden")!.data as SceneFile;
 
-describe("scene Inspector (D99)", () => {
+describe("scene Inspector", () => {
   it("edits depth lines from the Layers panel selection, one undo step per field", async () => {
     const editor = await mount();
     const guides = screen.getByRole("region", { name: "Guides layer" });

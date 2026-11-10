@@ -1,5 +1,4 @@
-// New projects (spec 08, D87). "Blank" is the smallest project that validates and
-// plays; the demo template arrives with M9.
+// New projects. "Blank" is the smallest project that validates and plays.
 import {
   AssetsFile,
   CharacterFile,
@@ -48,7 +47,7 @@ function playerSprite(): Uint8Array {
   return bmp.png();
 }
 
-/** The blank project in memory; saving it writes every file through the canonical serializer (D54). */
+/** The blank project in memory; saving it writes every file through the canonical serializer. */
 export function blankProject(title: string): Project {
   const p = emptyProject();
   const id = slugify(title, "game");

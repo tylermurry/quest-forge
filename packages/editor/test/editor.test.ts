@@ -30,7 +30,7 @@ const garden = (p: Project) => p.scenes.find((s) => s.data.id === "garden")!.dat
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
-describe("manual save (D145)", () => {
+describe("manual save", () => {
   it("keeps changes in memory until flush, then saves", async () => {
     const { fs, host } = await memoryHost();
     const ed = await Editor.open(host, { autosave: false });
@@ -69,7 +69,7 @@ describe("manual save (D145)", () => {
   });
 });
 
-describe("autosave (spec 08, D21)", () => {
+describe("autosave", () => {
   it("saves about 1 s after the last change and reports Saved", async () => {
     const { fs, host } = await memoryHost();
     const ed = await Editor.open(host);
@@ -148,7 +148,7 @@ describe("autosave (spec 08, D21)", () => {
   });
 });
 
-describe("save errors (D85)", () => {
+describe("save errors", () => {
   it("keeps edits, explains, and retries after 2 s, 5 s, then 10 s", async () => {
     const { fs, host } = await memoryHost();
     const write = fs.writeText.bind(fs);
@@ -182,7 +182,7 @@ describe("save errors (D85)", () => {
   });
 });
 
-describe("outside changes (spec 08, D85)", () => {
+describe("outside changes", () => {
   it("ignores watcher events caused by its own saves", async () => {
     const { host, emit } = await memoryHost();
     const ed = await Editor.open(host);
@@ -270,7 +270,7 @@ describe("opening", () => {
   });
 });
 
-describe("continuous validation (spec 14, D120)", () => {
+describe("continuous validation", () => {
   const dropStick = (p: Project) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") });
   const missing = (ed: Editor) => ed.problems.filter((x) => x.code === "missing_reference").length;
 

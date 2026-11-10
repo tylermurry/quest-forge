@@ -6,7 +6,7 @@ import type { LoadedImage } from "../../src/world.ts";
 
 type Raw = Record<string, unknown>;
 
-/** Rule IDs only need to be unique within a list (D117); a counter makes them unique everywhere. */
+/** Rule IDs only need to be unique within a list; a counter makes them unique everywhere. */
 let nextRuleId = 0;
 export const rule = (when: Raw, actions: Raw[], cond: Raw[] = [], once = false) => ({ id: `rule_${++nextRuleId}`, when, if: cond, do: actions, once });
 export const narrate = (text: string) => ({ type: "narrate", text });

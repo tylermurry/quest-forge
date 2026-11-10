@@ -12,11 +12,11 @@ function idRules(list: unknown): unknown {
 const RULE_OWNERS = ["objects", "characters", "hotspots", "regions"];
 
 /**
- * `MIGRATIONS[n]` upgrades a file from schemaVersion n to n + 1 (spec 01: the
+ * `MIGRATIONS[n]` upgrades a file from schemaVersion n to n + 1 (the
  * editor migrates older versions on open).
  */
 export const MIGRATIONS: Record<number, (raw: Raw) => Raw> = {
-  /** v2: rules get stable IDs (D117). Files without rules only change version. */
+  /** v2: rules get stable IDs. Files without rules only change version. */
   1: (raw) => withRuleIds(raw),
 };
 

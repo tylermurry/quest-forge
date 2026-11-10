@@ -5,7 +5,7 @@ import { cn } from "./lib/utils.ts";
 
 /**
  * A number that edits project data as you type, like TextField: typing within a
- * second is one undo step and leaving the field ends it (D84). Text that isn't a
+ * second is one undo step and leaving the field ends it. Text that isn't a
  * usable number stays in the box (marked) without being applied.
  */
 export function NumberField(props: {
@@ -13,13 +13,13 @@ export function NumberField(props: {
   value: number;
   onChange(value: number): void;
   onBlur(): void;
-  /** Whole numbers only (scene geometry, spec 01). */
+  /** Whole numbers only (scene geometry). */
   integer?: boolean;
   min?: number;
   max?: number;
   step?: number;
   className?: string;
-  /** Keeps the label for screen readers only, for fields inside a sentence (spec 10). */
+  /** Keeps the label for screen readers only, for fields inside a sentence. */
   compact?: boolean;
 }) {
   const id = useId();

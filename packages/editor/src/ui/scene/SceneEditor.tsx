@@ -46,7 +46,7 @@ function ToolButton({ label, pressed, disabled, onClick, children }: { label: st
   );
 }
 
-/** A scene tab (spec 09, D103): toolbar, Layers panel and canvas. */
+/** A scene tab: toolbar, Layers panel and canvas. */
 export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: string }) {
   const { ws, editor } = actions;
   const registry = useCommands();
@@ -67,7 +67,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
     else c.deleteThing(ref);
   };
 
-  // Scene menu and Delete run through the command registry (D92).
+  // Scene menu and Delete run through the command registry.
   const live = { c, remove };
   useEffect(() => {
     const tool = (t: Tool) => ({ run: () => c.setTool(t), enabled: () => LAYER_TOOLS[c.ui.layer].includes(t) });
@@ -101,7 +101,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the handlers close over the controller `c`; re-registering on other values would only churn the command registry
   }, [c, registry, ws]);
 
-  // Browser rows dropped on the canvas place objects and characters (spec 09); Objects rows reorder (D95).
+  // Browser rows dropped on the canvas place objects and characters; Objects rows reorder.
   const canvasDrop = useDroppable({ id: `scene-canvas:${sceneId}`, data: { kind: "sceneCanvas" } });
   const canvasEl = useRef<HTMLElement | null>(null);
   useDndMonitor({
@@ -197,7 +197,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
 
 const readFiles = (files: File[]) => Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
 
-/** The prompt on a scene with no background (D97): drop an image, pick one, or import one. */
+/** The prompt on a scene with no background: drop an image, pick one, or import one. */
 function EmptyBackground({ c }: { c: SceneTools }) {
   const picker = useRef<HTMLInputElement | null>(null);
   const images = c.editor.project.assets?.data.images ?? [];
@@ -239,7 +239,7 @@ function EmptyBackground({ c }: { c: SceneTools }) {
 
 /**
  * A row in the Layers panel. Object rows can be dragged onto another row of the
- * Objects list to change draw order (D95); every Objects row is a drop slot.
+ * Objects list to change draw order; every Objects row is a drop slot.
  */
 function LayerRowItem({ row, index, className, label, children }: { row: LayerRow; index: number; className: string; label: string; children: React.ReactNode }) {
   const isObjects = LIST_LAYER[row.ref.list] === "objects";
@@ -261,7 +261,7 @@ function LayerRowItem({ row, index, className, label, children }: { row: LayerRo
   );
 }
 
-/** The fixed layer stack (spec 09, D15, D103): show/lock per layer, and what's on it. */
+/** The fixed layer stack: show/lock per layer, and what's on it. */
 function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): void }) {
   const scene = c.scene!;
   const ui = c.ui;

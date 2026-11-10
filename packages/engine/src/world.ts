@@ -22,11 +22,11 @@ export interface Actor {
   /** Seconds since the current animation started. */
   animTime: number;
   visible: boolean;
-  /** A slot played by `play_animation` (D71), shown until it ends or the actor walks. */
+  /** A slot played by `play_animation`, shown until it ends or the actor walks. */
   special: { anim: Animation; mirror: boolean; time: number } | null;
 }
 
-/** Something that can be clicked (D69 hit-test result). */
+/** Something that can be clicked (hit-test result). */
 export type Target =
   | { kind: "hotspot"; id: string; name: string }
   | { kind: "object"; id: string; name: string }
@@ -56,9 +56,9 @@ export class World {
   readonly player: Actor;
   readonly npcs: Actor[];
   private readonly objectVisible: Map<string, boolean>;
-  /** Seconds since the scene started: the clock of objects' looping animations (D112). */
+  /** Seconds since the scene started: the clock of objects' looping animations. */
   private clock = 0;
-  /** One-shots playing on objects (D111); each ends back at rest. */
+  /** One-shots playing on objects; each ends back at rest. */
   private readonly oneShots = new Map<string, { anim: ObjectAnimation; time: number }>();
   private navMesh: NavMesh;
   private path: Vec[] = [];
@@ -89,7 +89,7 @@ export class World {
     return this.navMesh;
   }
 
-  /** The player's most recent walk, start to end, kept after arriving (playtest debug, D132). */
+  /** The player's most recent walk, start to end, kept after arriving (playtest debug). */
   get lastPath(): readonly Vec[] {
     return this._lastPath;
   }
@@ -103,7 +103,7 @@ export class World {
     return this.objectVisible.get(id) ?? false;
   }
 
-  /** Show or hide an object; its obstacle joins or leaves the walkable area (D42). */
+  /** Show or hide an object; its obstacle joins or leaves the walkable area. */
   setObjectVisible(id: string, visible: boolean) {
     if (!this.objectVisible.has(id) || this.objectVisible.get(id) === visible) return;
     this.objectVisible.set(id, visible);
@@ -209,7 +209,7 @@ export class World {
     this.face(facingFor(sub(p, this.player.pos), this.player.facing));
   }
 
-  /** Where to stand to use a verb on `target` clicked at `p` (D74). */
+  /** Where to stand to use a verb on `target` clicked at `p`. */
   approach(target: Target, p: Vec): Approach {
     const hotspot = target.kind === "hotspot" ? this.scene.hotspots.find((h) => h.id === target.id) : undefined;
     const walkTo = hotspot?.walkTo;
@@ -237,7 +237,7 @@ export class World {
   }
 
   /**
-   * Play one of a character's animation slots (D71). Returns its length in seconds
+   * Play one of a character's animation slots. Returns its length in seconds
    * if it's one-shot, 0 if it loops, null if there's no such slot.
    */
   playSlot(id: string, slot: string): number | null {
@@ -256,7 +256,7 @@ export class World {
   }
 
   /**
-   * Play one of an object's one-shot animations (D111). Returns its length in seconds,
+   * Play one of an object's one-shot animations. Returns its length in seconds,
    * or null if the object is hidden or has no such animation. Replaces a one-shot
    * already playing on it.
    */
@@ -287,7 +287,7 @@ export class World {
     return this.navMesh.isWalkable(spot) ? spot : [npc.pos[0] - side * gap, npc.pos[1]];
   }
 
-  /** Advance one logic tick (spec 03: fixed 60 Hz). */
+  /** Advance one logic tick (fixed 60 Hz). */
   tick(dt: number) {
     this.clock += dt;
     for (const [id, shot] of this.oneShots) {
@@ -322,13 +322,13 @@ export class World {
     if (this.path.length === 0) this.arrive();
   }
 
-  /** Every visible sprite, back to front (spec 04 baseline sort). */
+  /** Every visible sprite, back to front (sorted by baseline). */
   drawList(): Drawable[] {
     const actors = [...this.npcs, this.player].filter((a) => a.visible);
     return sceneDrawables(this.scene, this.images, (id) => this.isObjectVisible(id), actors, (id) => this.objectPose(id));
   }
 
-  /** What's under a scene point (D69): hotspots first, then named sprites, topmost first. */
+  /** What's under a scene point: hotspots first, then named sprites, topmost first. */
   hitTest(p: Vec): Target | null {
     for (const h of [...this.scene.hotspots].reverse()) {
       if (pointInPolygon(p, h.shape)) return { kind: "hotspot", id: h.id, name: h.name };

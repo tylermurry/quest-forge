@@ -13,7 +13,7 @@ import { fitViewport } from "../src/viewport.ts";
 import type { Vec } from "../src/vec.ts";
 import { World, type LoadedImage } from "../src/world.ts";
 
-// The hand-written M1 fixture (D68) that the dev page plays.
+// The hand-written engine fixture that the dev page plays.
 
 const ROOT = join(import.meta.dirname, "../fixtures/m1");
 
@@ -47,11 +47,11 @@ async function imagesOf(project: Project) {
   return images;
 }
 
-describe("the M1 fixture", () => {
+describe("the engine fixture", () => {
   it("loads with no problems and is in canonical form", async () => {
     const { project, problems } = await load();
     expect(problems).toEqual([]);
-    // The stress scene is only opened from the dev page, so nothing in the game leads to it (D122).
+    // The stress scene is only opened from the dev page, so nothing in the game leads to it.
     expect(validateProject(project).map((p) => [p.code, p.location.file])).toEqual([["scene_unreachable", "scenes/stress.scene.yaml"]]);
     expect(planSave(project)).toSatisfy(isEmptyPlan);
   });
@@ -62,14 +62,14 @@ describe("the M1 fixture", () => {
     expect(await pngSize("assets/images/garden_bg.png")).toEqual({ w: 640, h: 400 });
   });
 
-  it("has a stress scene with 15 objects and 3 characters (spec 03)", async () => {
+  it("has a stress scene with 15 objects and 3 characters", async () => {
     const { project } = await load();
     const w = await world(project, "stress");
     expect(w.scene.objects).toHaveLength(15);
     expect(w.drawList().filter((d) => d.kind === "character")).toHaveLength(3);
   });
 
-  it("plays the M1 acceptance walk headlessly", async () => {
+  it("plays the acceptance walk headlessly", async () => {
     const { project } = await load();
     const w = await world(project);
     const order = () => w.drawList().map((d) => d.id);
@@ -109,7 +109,7 @@ describe("the M1 fixture", () => {
   });
 });
 
-/** The M2 puzzle chain, touch only at phone size (spec 06); also played from a built `.quest` (D153). */
+/** The puzzle chain, touch only at phone size; also played from a built `.quest`. */
 function playM2Chain(project: Project, images: Map<string, LoadedImage>) {
   const s = new Session(project, (id) => images.get(id));
   const ui = new PlayerUi(s);
@@ -228,13 +228,13 @@ function playM2Chain(project: Project, images: Map<string, LoadedImage>) {
   expect(JSON.parse(JSON.stringify(s.state))).toEqual(s.state);
 }
 
-describe("the M2 puzzle chain, touch only at phone size (spec 06)", () => {
+describe("the puzzle chain, touch only at phone size", () => {
   it("plays pick up → exit → take → combine → use → gated sequence → ledge", async () => {
     const { project } = await load();
     playM2Chain(project, await imagesOf(project));
   });
 
-  it("plays the same from the built .quest file (D153)", async () => {
+  it("plays the same from the built .quest file", async () => {
     const { project } = await load();
     const bundle = await loadQuest(await buildQuest(project, (p) => readFile(join(ROOT, p)).then((b) => new Uint8Array(b))));
     const images = new Map<string, LoadedImage>();
@@ -247,7 +247,7 @@ describe("the M2 puzzle chain, touch only at phone size (spec 06)", () => {
   });
 });
 
-describe("the M7 shop, touch only at phone size (spec 11, spec 06)", () => {
+describe("the shop, touch only at phone size", () => {
   it("plays coin → talk → once-only question → buy while holding the coin → loop → goodbye", async () => {
     const { project } = await load();
     const images = await imagesOf(project);
@@ -285,7 +285,7 @@ describe("the M7 shop, touch only at phone size (spec 11, spec 06)", () => {
       tap(center(ui.layout.barButtons.find((b) => b.id === id)!.rect));
     };
     const shown = () => s.choices?.options.map((o) => o.text) ?? [];
-    /** Taps an option of the list box; every row is at least 44 CSS px tall (D76). */
+    /** Taps an option of the list box; every row is at least 44 CSS px tall. */
     const pick = (text: string) => {
       const box = ui.choiceBox!;
       for (const r of box.rows) expect(r.h * cssScale).toBeGreaterThanOrEqual(44);
@@ -332,7 +332,7 @@ describe("the M7 shop, touch only at phone size (spec 11, spec 06)", () => {
   });
 });
 
-describe("the M8 shed: save, die, try again, restore (spec 07), touch only at phone size", () => {
+describe("the shed: save, die, try again, restore, touch only at phone size", () => {
   it("saves in the shed, dies on the saw, tries again, then restores the save after a fresh start", async () => {
     const { project } = await load();
     const images = await imagesOf(project);

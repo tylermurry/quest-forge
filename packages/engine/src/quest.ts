@@ -1,4 +1,4 @@
-// Plays a built game (D153): a `.quest` file becomes a ProjectBundle whose assets
+// Plays a built game: a `.quest` file becomes a ProjectBundle whose assets
 // are served from blob URLs, then goes through `createGame` like any project.
 import { readQuest } from "@questforge/schema";
 import type { ProjectBundle } from "./game.ts";

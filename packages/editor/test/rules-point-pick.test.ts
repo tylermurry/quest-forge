@@ -10,7 +10,7 @@ const POND: RuleOwnerRef = { kind: "thing", scene: "garden", list: "hotspots", k
 const GAME: RuleOwnerRef = { kind: "game" };
 const action = (p: Project, o: RuleOwnerRef, id: string, i: number) => ownerRules(p, o)!.rules.find((r) => r.id === id)!.do[i]!;
 
-describe("Pick on canvas (D124)", () => {
+describe("Pick on canvas", () => {
   it("picks on the rule's scene, the action's scene, or the open scene tab for game rules", () => {
     const walk = { type: "walk_player_to", x: 1, y: 1 } as const;
     expect(pointPickScene(POND, walk, "shed")).toBe("garden");

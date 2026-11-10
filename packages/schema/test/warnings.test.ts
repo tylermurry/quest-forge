@@ -3,7 +3,7 @@ import { formatProblem, hasBlockingErrors, loadProject, validateProject, type Pr
 import { NodeFs } from "../src/node.ts";
 import { FIXTURE } from "./helpers.ts";
 
-// Spec 14 warnings (D122) and the empty-text error (D119), each from an edit to the
+// Spec 14 warnings and the empty-text error, each from an edit to the
 // mini fixture, which itself has no problems.
 
 const fixture = async () => (await loadProject(new NodeFs(FIXTURE))).project;
@@ -16,7 +16,7 @@ const scene = (p: Project, id: string) => p.scenes.find((s) => s.data.id === id)
 const summary = (ps: Problem[]) => ps.map((p) => ({ severity: p.severity, code: p.code, file: p.location.file, path: p.location.path.join("."), text: formatProblem(p) }));
 const BEACH = "scenes/outdoors/beach.scene.yaml";
 
-describe("spec 14 warnings", () => {
+describe("warnings", () => {
   it("scene unreachable from the start scene", async () => {
     const problems = await problemsAfter((p) => {
       // The path's exit is the only way into the shop.
@@ -90,7 +90,7 @@ describe("spec 14 warnings", () => {
     ]);
   });
 
-  it("dialogue: a Choices node with no options, and ports that lead nowhere (D140)", async () => {
+  it("dialogue: a Choices node with no options, and ports that lead nowhere", async () => {
     const problems = await problemsAfter((p) => {
       const nodes = p.dialogues[0]!.data.nodes;
       const menu = nodes.find((n) => n.id === "menu")!;
@@ -113,7 +113,7 @@ describe("spec 14 warnings", () => {
     ]);
   });
 
-  it("dialogue: a loop with no Line or Choices (D140)", async () => {
+  it("dialogue: a loop with no Line or Choices", async () => {
     const problems = await problemsAfter((p) => {
       const nodes = p.dialogues[0]!.data.nodes;
       const sell = nodes.find((n) => n.id === "sell")!;
@@ -131,7 +131,7 @@ describe("spec 14 warnings", () => {
     ]);
   });
 
-  it("dialogue: empty line and option text are errors (D138)", async () => {
+  it("dialogue: empty line and option text are errors", async () => {
     const problems = await problemsAfter((p) => {
       const nodes = p.dialogues[0]!.data.nodes;
       const hello = nodes.find((n) => n.id === "hello")!;
@@ -187,7 +187,7 @@ describe("spec 14 warnings", () => {
   });
 });
 
-describe("empty rule text (D119)", () => {
+describe("empty rule text", () => {
   it("is an error that blocks playtest, for narrate, say and die", async () => {
     const problems = await problemsAfter((p) => {
       const shell = scene(p, "beach").hotspots[0]!.rules[0]!;

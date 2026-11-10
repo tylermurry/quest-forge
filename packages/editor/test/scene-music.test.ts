@@ -4,8 +4,8 @@ import { CommandError } from "../src/model/commands.ts";
 import { setSceneMusic } from "../src/model/scene/commands.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-// Scene music (spec 07, D148): set in the scene's Inspector, omitted from the file when unset.
-describe("scene music (D148)", () => {
+// Scene music: set in the scene's Inspector, omitted from the file when unset.
+describe("scene music", () => {
   it("sets and removes a scene's music by audio ID; unknown IDs are refused", async () => {
     const p = await m1Project();
     const audio = p.assets!.data.audio[0]!.id;

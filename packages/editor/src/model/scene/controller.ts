@@ -1,4 +1,4 @@
-// The scene canvas's input logic (spec 09), DOM-free like the engine's world.ts:
+// The scene canvas's input logic, DOM-free like the engine's world.ts:
 // pointer and key input in, zoom/pan, selection, tool gestures and editor commands
 // out. The canvas component forwards events and draws `frame()`.
 import { resolveAnim, sceneDrawables, type ActorPose, type ImageLookup, type Vec } from "@questforge/engine";
@@ -90,7 +90,7 @@ export class SceneController {
     return this.savedScene;
   }
 
-  // ── Drafts: a gesture in progress, committed as one undo step on release (D84) ──
+  // ── Drafts: a gesture in progress, committed as one undo step on release ──
 
   private draft: { label: string; run: (p: Project) => Project; project: Project } | null = null;
 
@@ -169,7 +169,7 @@ export class SceneController {
     this.host.ws.sceneUi.setZoom(this.host.scene, zoom);
   }
 
-  // ── Zoom and pan (spec 09) ──────────────────────────────────────────────────
+  // ── Zoom and pan ──────────────────────────────────────────────────
 
   zoomIn() {
     this.setZoom(zoomStep(this.transform, this.size, 1, this.hoverScreen() ?? undefined));
@@ -195,7 +195,7 @@ export class SceneController {
     else this.setZoom(panBy(this.transform, -e.dx, -e.dy));
   }
 
-  /** Space held: dragging pans (spec 09). */
+  /** Space held: dragging pans. */
   setSpace(held: boolean) {
     if (this.spaceHeld === held) return;
     this.spaceHeld = held;
@@ -283,7 +283,7 @@ export class SceneController {
 
   // ── Frame ───────────────────────────────────────────────────────────────────
 
-  /** Seconds of animation the canvas shows (D113); the canvas advances it while `animating`. 0 in tests. */
+  /** Seconds of animation the canvas shows; the canvas advances it while `animating`. 0 in tests. */
   clock = 0;
 
   /** True when something in the scene moves: an object loop or a placed character's idle with several frames. */
@@ -303,7 +303,7 @@ export class SceneController {
     return new Map(this.editor.project.characters.map((c) => [c.data.id, c.data]));
   }
 
-  /** Placed characters as actors standing idle (D60). */
+  /** Placed characters as actors standing idle. */
   protected placedActors(scene: SceneFile): ActorPose[] {
     const chars = this.characters();
     return scene.characters.flatMap((c) => {
@@ -312,7 +312,7 @@ export class SceneController {
     });
   }
 
-  /** Sprites back to front, with `ghosts` (IDs starting `ghost:`) sorted in by their feet (D105). */
+  /** Sprites back to front, with `ghosts` (IDs starting `ghost:`) sorted in by their feet. */
   protected sprites(scene: SceneFile, ghosts: ActorPose[] = []): Sprite[] {
     const hiddenChars = new Set(scene.characters.filter((c) => !c.visible).map((c) => c.character));
     const hiddenObjects = new Set(scene.objects.filter((o) => !o.visible).map((o) => o.id));
@@ -325,7 +325,7 @@ export class SceneController {
     });
   }
 
-  /** Validation problems in this scene by thing (D100); "" holds scene-wide ones. */
+  /** Validation problems in this scene by thing; "" holds scene-wide ones. */
   get problems(): Map<string, Problem[]> {
     const doc = this.editor.project.scenes.find((s) => s.data.id === this.host.scene);
     const all = this.editor.problems;

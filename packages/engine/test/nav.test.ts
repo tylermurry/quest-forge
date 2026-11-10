@@ -89,7 +89,7 @@ describe("NavMesh.findPath", () => {
   });
 });
 
-describe("obstacles tied to object visibility (D42)", () => {
+describe("obstacles tied to object visibility", () => {
   // A corridor from a lower field up to a far area, plugged by a boulder.
   const scene = {
     walkable: {

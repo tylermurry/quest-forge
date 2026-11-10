@@ -27,7 +27,7 @@ afterEach(async () => {
 
 const png = (name: string, w: number, h: number) => ({ name, bytes: new Bitmap(w, h).png() });
 
-describe("spec 09 acceptance", () => {
+describe("scene editor acceptance", () => {
   it("builds a scene from empty on the canvas alone, and it persists", async () => {
     const dir = await mkdtemp(join(tmpdir(), "questforge-m4-"));
     dirs.push(dir);
@@ -37,7 +37,7 @@ describe("spec 09 acceptance", () => {
     const actions = new Actions(editor, new WorkspaceState());
     const ws = actions.ws;
 
-    // A new, empty scene (D97) from the browser, opened in a tab.
+    // A new, empty scene from the browser, opened in a tab.
     const sceneId = actions.newEntry("scene", "")!;
     // Images "decode" to the size their file header says, as the canvas would see them.
     const images = (id: string): LoadedImage | undefined => {
@@ -63,7 +63,7 @@ describe("spec 09 acceptance", () => {
     expect(scene().background).toBeUndefined();
     expect(scene().walkable.outer).toEqual([]);
 
-    // 1. Import a background: drop a file from the OS onto the canvas (D98).
+    // 1. Import a background: drop a file from the OS onto the canvas.
     c.dropFiles([png("beach.png", 640, 400)], at([320, 200]).screen);
     expect(scene().background).toBe("beach");
 

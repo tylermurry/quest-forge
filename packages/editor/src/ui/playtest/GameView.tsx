@@ -4,9 +4,9 @@ import type { Playtest, Run } from "../../model/playtest/playtest.ts";
 import { CanvasImagesContext } from "../scene/images.ts";
 
 /**
- * The running game (spec 12): the real engine on a canvas, remounted for every run.
+ * The running game: the real engine on a canvas, remounted for every run.
  * The canvas is focusable; while it has focus plain shortcuts stay with the game,
- * and Escape hands focus back to the editor (D131).
+ * and Escape hands focus back to the editor.
  */
 export function GameView({ playtest, run }: { playtest: Playtest; run: Run }) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
@@ -28,7 +28,7 @@ export function GameView({ playtest, run }: { playtest: Playtest; run: Run }) {
         ...(start.dialogue ? { dialogue: start.dialogue } : {}),
         ...playtest.hooks(run),
         debug: playtest.debug,
-        // The playtest area grows the game as large as it fits (D135).
+        // The playtest area grows the game as large as it fits.
         fill: true,
       });
     } catch (e) {

@@ -1,5 +1,5 @@
 // One open project: its data, undo history, autosave and reaction to outside
-// changes (spec 08, D21, D84, D85). DOM-free; React subscribes to it.
+// changes. DOM-free; React subscribes to it.
 import {
   KEEP_FILE,
   ROOT_FILES,
@@ -18,16 +18,16 @@ import {
 import { CommandError } from "./commands.ts";
 import { History, withDiskState } from "./history.ts";
 
-/** Autosave runs this long after the last change (spec 08). */
+/** Autosave runs this long after the last change. */
 export const AUTOSAVE_DELAY_MS = 1000;
-/** Waits between retries of a failed save (D85); the last one repeats. */
+/** Waits between retries of a failed save; the last one repeats. */
 const RETRY_DELAYS_MS = [2000, 5000, 10000];
 /** Watcher events are gathered this long before the disk is checked. */
 export const WATCH_SETTLE_MS = 200;
-/** Validation runs this long after the last change (D120). */
+/** Validation runs this long after the last change. */
 export const VALIDATE_DELAY_MS = 250;
 
-/** How a project is opened. The app saves by hand (D145); tests and tools can keep autosave on. */
+/** How a project is opened. The app saves by hand; tests and tools can keep autosave on. */
 export interface EditorOptions {
   /** Save about AUTOSAVE_DELAY_MS after the last change. Default true. */
   autosave?: boolean;
@@ -52,7 +52,7 @@ export interface ProjectHost {
   watch?(onChange: (paths: string[]) => void): () => void;
 }
 
-/** Plain-English reason a save failed (D85). */
+/** Plain-English reason a save failed. */
 export function describeSaveError(e: unknown): string {
   if (e instanceof SaveError) return `some data is invalid (${e.problems[0]?.breadcrumb ?? "unknown"}: ${e.problems[0]?.message ?? ""})`;
   const text = e instanceof Error ? e.message : String(e);
@@ -68,7 +68,7 @@ export class Editor {
   private _loadProblems: Problem[];
   private _status: SaveStatus = { state: "saved" };
   private _notice: Notice | null = null;
-  /** The last validation result; the canvas, Inspector and Problems panel all read it (D120). */
+  /** The last validation result; the canvas, Inspector and Problems panel all read it. */
   private _problems: Problem[] = [];
   private validatedFor: Project | null = null;
   private validateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -105,7 +105,7 @@ export class Editor {
     this.validateNow();
   }
 
-  /** Opens a project folder. The trash from the last session is emptied first (D88). */
+  /** Opens a project folder. The trash from the last session is emptied first. */
   static async open(host: ProjectHost, options?: EditorOptions): Promise<Editor> {
     await host.fs.removeTree(TRASH_DIR);
     const editor = new Editor(host, await loadProject(host.fs), options);
@@ -140,7 +140,7 @@ export class Editor {
   }
   /**
    * Load problems plus validation of the project as it was at most VALIDATE_DELAY_MS
-   * ago: validation runs once typing or dragging pauses, not on every change (D120).
+   * ago: validation runs once typing or dragging pauses, not on every change.
    */
   get problems(): Problem[] {
     return this._problems;
@@ -195,7 +195,7 @@ export class Editor {
   }
 
   /**
-   * Runs a command as one undo step (D84). A CommandError becomes a notice and
+   * Runs a command as one undo step. A CommandError becomes a notice and
    * changes nothing. Returns whether the project changed.
    */
   apply(label: string, command: (p: Project) => Project, mergeKey?: string): boolean {
@@ -245,7 +245,7 @@ export class Editor {
     this.changed();
   }
 
-  // ── Saving (autosave, or by hand with `flush`, D145) ───────────────────────────────────────────────────────────────
+  // ── Saving (autosave, or by hand with `flush`) ───────────────────────────────────────────────────────────────
 
   private scheduleSave(delay: number) {
     if (this.disposed) return;
@@ -308,7 +308,7 @@ export class Editor {
     return this.saving;
   }
 
-  // ── Outside changes (D85) ──────────────────────────────────────────────────
+  // ── Outside changes ──────────────────────────────────────────────────
 
   /** Called by the host's watcher. Our own writes are recognized by content and ignored. */
   onDiskChange(paths: string[]) {
@@ -358,7 +358,7 @@ export class Editor {
       return;
     }
     if (!this.autosave && this.dirty) {
-      // Unsaved edits could be a lot of work: keep them and say so once instead of reloading (D145).
+      // Unsaved edits could be a lot of work: keep them and say so once instead of reloading.
       if (!this.outsideWhileDirty) {
         this.outsideWhileDirty = true;
         this.showNotice({ kind: "error", text: "Files changed on disk outside the editor. Your unsaved changes were kept: saving will overwrite those outside changes." });
@@ -368,7 +368,7 @@ export class Editor {
     await this.reload("outside");
   }
 
-  /** Reloads from disk, dropping history and unsaved edits (D85). */
+  /** Reloads from disk, dropping history and unsaved edits. */
   async reload(reason: "outside" | "user" = "user") {
     const lost = this.dirty;
     if (this.saveTimer) clearTimeout(this.saveTimer);

@@ -1,6 +1,6 @@
-// What's under the pointer on the scene canvas (spec 09). Hidden and locked layers
+// What's under the pointer on the scene canvas. Hidden and locked layers
 // can't be hit. Order: the selected thing's handles, then the active layer, then
-// the other layers top to bottom (D15). DOM-free.
+// the other layers top to bottom. DOM-free.
 import type { Drawable, Vec } from "@questforge/engine";
 import { pointInPolygon, SCENE_WIDTH, type SceneFile } from "@questforge/schema";
 import { isEditable, LAYERS, type Layer, type SceneUi } from "./sceneUi.ts";
@@ -23,9 +23,9 @@ export type Hit =
   | { kind: "shape"; ref: ThingRef; pr: PolyRef }
   /** A placed object or character's sprite. */
   | { kind: "sprite"; ref: ThingRef }
-  /** The selected object's baseline handle (spec 09). */
+  /** The selected object's baseline handle. */
   | { kind: "baseline"; ref: ThingRef }
-  /** A depth line (spec 04). */
+  /** A depth line. */
   | { kind: "depth"; ref: ThingRef }
   /** A spawn point. */
   | { kind: "spawn"; ref: ThingRef }

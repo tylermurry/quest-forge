@@ -9,8 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { PartFields, type PartHandlers } from "./PartFields.tsx";
 
-// Condition and action rows (spec 10), shared by rule cards and the dialogue node
-// inspector (spec 11). Each row edits its list through `edit`, one undo step per change.
+// Condition and action rows, shared by rule cards and the dialogue node
+// inspector. Each row edits its list through `edit`, one undo step per change.
 
 const stop = (e: { stopPropagation(): void }) => e.stopPropagation();
 
@@ -33,12 +33,12 @@ export interface PartListProps<T> {
   list: readonly T[];
   /** Applies a list edit to the project (pure). */
   edit(p: Project, f: (list: T[], d: RuleDefaults) => T[]): Project;
-  /** Runs a change as one undo step; `field` merges typing into one step (D84). */
+  /** Runs a change as one undo step; `field` merges typing into one step. */
   run(label: string, f: (p: Project) => Project, field?: string): void;
   blur(): void;
   problems(i: number): readonly Problem[] | undefined;
   invalid(i: number): ReadonlySet<string>;
-  /** `data-part` of row i, for jump-to (D120). */
+  /** `data-part` of row i, for jump-to. */
   partKey(i: number): string;
   /** Prefix of typing merge keys, e.g. `if`. */
   field: string;
@@ -92,7 +92,7 @@ export function ConditionRows(props: PartListProps<Condition> & { first?: string
   );
 }
 
-/** Numbered action rows with move up/down and remove. `pick` adds "Pick on canvas" (D124). */
+/** Numbered action rows with move up/down and remove. `pick` adds "Pick on canvas". */
 export function ActionRows(props: PartListProps<Action> & { pick?(i: number): Pick<PartHandlers, "pickPoint" | "picking" | "pickDisabled"> }) {
   const { project, list, run, edit } = props;
   return (
@@ -170,7 +170,7 @@ export function AddConditionMenu({ onAdd, label = "Condition" }: { onAdd(type: C
   );
 }
 
-/** "+ Action" menu, grouped like spec 02. */
+/** "+ Action" menu, grouped by kind. */
 export function AddActionMenu({ onAdd }: { onAdd(type: ActionType): void }) {
   return (
     <DropdownMenu>

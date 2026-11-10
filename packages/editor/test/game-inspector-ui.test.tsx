@@ -27,7 +27,7 @@ async function mount() {
   return editor;
 }
 
-describe("the Game item (spec 10)", () => {
+describe("the Game item", () => {
   it("opens game rules, default responses and the score from the browser", async () => {
     const editor = await mount();
     fireEvent.click(within(screen.getByRole("treeitem", { name: "Game" })).getByText("Game"));

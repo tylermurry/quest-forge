@@ -3,7 +3,7 @@ import { addObstacle, changeThingId, setDepthScale, setThingName } from "../src/
 import { sceneEditor } from "./support/scene.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-describe("Inspector commands (D99)", () => {
+describe("Inspector commands", () => {
   it("changes a referenced object's ID with its references, and refuses taken IDs", async () => {
     const p = await m1Project();
     const next = changeThingId(p, "garden", { list: "objects", key: "boulder" }, "big_rock");
@@ -31,7 +31,7 @@ describe("Inspector commands (D99)", () => {
   });
 });
 
-describe("live validation on the canvas (D100)", () => {
+describe("live validation on the canvas", () => {
   it("marks a hole dragged outside the outline and a spawn outside the walkable area", async () => {
     const { c, drag, click, dispose } = await sceneEditor();
     expect(c.frame()!.invalid.size).toBe(0);
@@ -39,7 +39,7 @@ describe("live validation on the canvas (D100)", () => {
     click([300, 320]);
     // Move the whole hole down past the outline's bottom edge (y 395); it stops at the scene's edge.
     drag([300, 320], [300, 380]);
-    // Validation waits for a pause (D120).
+    // Validation waits for a pause.
     expect(c.frame()!.invalid.has("walkable:hole:0")).toBe(false);
     c.editor.validateNow();
     expect(c.frame()!.invalid.has("walkable:hole:0")).toBe(true);
