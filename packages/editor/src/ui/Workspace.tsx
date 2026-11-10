@@ -36,6 +36,7 @@ function layoutStorage() {
   try {
     return window.localStorage;
   } catch {
+    // Blocked storage (the property getter can throw): panel sizes just aren't remembered.
     return undefined;
   }
 }

@@ -116,6 +116,7 @@ export class Editor {
   private async readBroken() {
     this.brokenTexts.clear();
     for (const file of new Set(this._loadProblems.map((p) => p.location.file))) {
+      // An unreadable file has no baseline text; the load problem for it is already shown, so skip it.
       const text = await this.host.fs.readText(file).catch(() => null);
       if (text !== null) this.brokenTexts.set(file, text);
     }
@@ -339,6 +340,7 @@ export class Editor {
     if (!same(folders.sort(), [...p.savedFolders].sort())) return false;
     for (const f of files) {
       if (!classify(f)) continue;
+      // An unreadable file counts as "differs from what we saved", which makes the caller reload and report it.
       const text = await fs.readText(f).catch(() => null);
       if (text !== (p.saved[f] ?? this.brokenTexts.get(f) ?? null)) return false;
     }
