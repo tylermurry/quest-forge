@@ -10,18 +10,72 @@ import {
   isAssetKind,
   opensTab,
   sectionEntries,
+  sectionFolders,
   type Entry,
   type FolderNode,
   type Section,
 } from "../model/browser.ts";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "./components/ui/context-menu.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
 import { ConfirmDelete, MenuItems, Prompt, type MenuItem, type MenuParts } from "./Dialogs.tsx";
 import { cn } from "./lib/utils.ts";
 
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
+
+/** The "Move to" submenu's pieces, for the context menu and the dropdown. */
+const CONTEXT_SUB = { Sub: ContextMenuSub, Trigger: ContextMenuSubTrigger, Content: ContextMenuSubContent };
+const DROPDOWN_SUB = { Sub: DropdownMenuSub, Trigger: DropdownMenuSubTrigger, Content: DropdownMenuSubContent };
+
+/** Where an entry can be moved to: one choice per folder; `""` is the section root. */
+interface MoveChoice {
+  folder: string;
+  label: string;
+  disabled: boolean;
+  onSelect(): void;
+}
+
+/** An item list, with a "Move to" submenu placed before the first separated item (Delete). */
+function MenuBody({ items, move, parts, sub }: { items: MenuItem[]; move?: MoveChoice[]; parts: MenuParts; sub: typeof DROPDOWN_SUB }) {
+  if (!move) return <MenuItems items={items} parts={parts} />;
+  const cut = items.findIndex((i) => i.separated);
+  const at = cut < 0 ? items.length : cut;
+  return (
+    <>
+      <MenuItems items={items.slice(0, at)} parts={parts} />
+      <sub.Sub>
+        <sub.Trigger disabled={move.every((m) => m.disabled)}>Move to</sub.Trigger>
+        <sub.Content className="max-h-72 min-w-40 overflow-auto">
+          {move.map((m) => (
+            <parts.Item key={m.folder} disabled={m.disabled} onSelect={() => m.onSelect()}>
+              {m.label}
+            </parts.Item>
+          ))}
+        </sub.Content>
+      </sub.Sub>
+      <MenuItems items={items.slice(at)} parts={parts} />
+    </>
+  );
+}
 
 type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
@@ -36,12 +90,20 @@ async function importInto(actions: Actions, section: Section, folder: string, fi
 /** A row with a right-click menu and a "⋯" button showing the same items. */
 function MenuRow({
   items,
+  move,
   label,
   className,
   children,
   rowRef,
   ...rest
-}: { items: MenuItem[]; label: string; className?: string; children: ReactNode; rowRef?: Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>) {
+}: {
+  items: MenuItem[];
+  move?: MoveChoice[];
+  label: string;
+  className?: string;
+  children: ReactNode;
+  rowRef?: Ref<HTMLDivElement>;
+} & React.HTMLAttributes<HTMLDivElement>) {
   // When a menu closes, an inline rename box it opened gets focus instead of the row.
   const keepFocus = (e: Event) => {
     const box = document.querySelector<HTMLInputElement>("input[data-rename]");
@@ -71,13 +133,13 @@ function MenuRow({
               <Ellipsis className="size-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
-              <MenuItems items={items} parts={DROPDOWN} />
+              <MenuBody items={items} move={move} parts={DROPDOWN} sub={DROPDOWN_SUB} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="min-w-44" onCloseAutoFocus={keepFocus} {...contain}>
-        <MenuItems items={items} parts={CONTEXT} />
+        <MenuBody items={items} move={move} parts={CONTEXT} sub={CONTEXT_SUB} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -170,6 +232,15 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
       onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)),
     },
   ];
+
+  /** Every folder of the entry's section, the root first; its own folder can't be picked. */
+  const moveChoices = (e: Entry): MoveChoice[] =>
+    ["", ...sectionFolders(project, e.section)].map((folder) => ({
+      folder,
+      label: folder || "Top level",
+      disabled: folder === e.folder,
+      onSelect: () => void actions.drop({ section: e.section, kind: "entry", id: e.id }, e.section, folder),
+    }));
 
   const folderMenu = (section: Section, path: string): MenuItem[] => [
     { label: "New folder", onSelect: () => startNewFolder(section, path) },
@@ -305,6 +376,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
               <li key={`e:${e.id}`} role="treeitem" aria-selected={selected} aria-label={`${NOUN[e.section]} ${e.name}`}>
                 <DndRow
                   items={entryMenu(e)}
+                  move={moveChoices(e)}
                   label={`Actions for ${NOUN[e.section]} ${e.id}`}
                   className={rowClass(selected)}
                   style={indent(depth + 1.15)}
