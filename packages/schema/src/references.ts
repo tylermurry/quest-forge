@@ -283,6 +283,8 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
     );
   for (const assetKind of Object.keys(ASSET_LAYOUT) as AssetKind[]) {
     const list = ASSET_LAYOUT[assetKind].list;
+    // `list` is one of the asset list names chosen at run time, so TypeScript can't type the
+    // key; every one of them holds Docs with an `id`.
     (next as unknown as Record<string, Doc<{ id: string }>[]>)[list] = (project[list] as Doc<{ id: string }>[]).map((doc) => {
       if (assetKind === kind && doc.data.id === from) {
         const renamed = edit(doc, (d) => (d.id = to));

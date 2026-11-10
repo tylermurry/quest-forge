@@ -34,6 +34,7 @@ export class WebAudio implements AudioBackend {
   unlock = () => {
     if (this.closed) return;
     if (!this.ctx) {
+      // Older Safari only has the prefixed name, which TypeScript's DOM types don't declare.
       const Ctor = this.view.AudioContext ?? (this.view as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
       const ctx = new Ctor();

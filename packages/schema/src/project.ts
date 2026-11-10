@@ -194,6 +194,8 @@ export async function loadProject(fs: ProjectFs): Promise<{ project: Project; pr
     }
     project.saved[path] = text;
     const doc = { path, data: parsed.data };
+    // `kind` picks one of the three single-file fields by name, which TypeScript can't follow
+    // through a string key, so the project is written to as a plain record here.
     if (kind === "game" || kind === "flags" || kind === "assets") (project as unknown as Record<string, unknown>)[kind] = doc;
     else (project[ASSET_LAYOUT[kind].list] as Doc<unknown>[]).push(doc);
   }

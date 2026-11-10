@@ -128,6 +128,7 @@ export class Session implements DialogueHost {
     this.characters = new Map(project.characters.map((c) => [c.data.id, c.data]));
     this.items = new Map(project.items.map((i) => [i.data.id, i.data]));
     this.dialogues = new Map(project.dialogues.map((d) => [d.data.id, d.data]));
+    // `state` is a placeholder: restart() on the next line sets it before anything reads it.
     this.ctx = { state: undefined as unknown as GameState, scene: (id) => this.scenes.get(id) };
     this.restart();
   }
