@@ -4,7 +4,7 @@ import { Mark } from "./Mark.tsx";
 import { QuestPicker } from "./QuestPicker.tsx";
 import { useLatestRelease } from "./releases.ts";
 
-const GITHUB = `https://github.com/${REPO}`;
+export const GITHUB = `https://github.com/${REPO}`;
 
 function Header() {
   return (
@@ -86,6 +86,9 @@ function Download() {
               This early build isn’t signed yet. If SmartScreen warns you, choose More info, then Run anyway.
             </p>
           )}
+          <p className="fine note">
+            No account, no tracking. <a href="/privacy">Privacy</a>
+          </p>
         </div>
         <div className="download-list">
           <h3>{primary ? "Other systems" : "All downloads"}</h3>
@@ -233,24 +236,31 @@ export function Home() {
         <Download />
       </main>
 
-      <footer className="foot">
-        <div className="wrap foot-inner">
-          <span className="brand brand-small">
-            <Mark size={16} />
-            Quest Forge
-          </span>
-          <nav aria-label="Links">
-            <a href={GITHUB}>Source</a>
-            <a href={RELEASES_URL}>Releases</a>
-            <a href={`${GITHUB}/issues`}>Report a problem</a>
-          </nav>
-        </div>
-        <p className="wrap foot-note">
-          Quest Forge is free software under the{" "}
-          <a href={`${GITHUB}/blob/main/LICENSE`}>GPL-3.0-or-later licence</a>. Games you make with it are
-          yours: a built .quest file is your own content, not a derivative of the editor.
-        </p>
-      </footer>
+      <Footer />
     </>
+  );
+}
+
+export function Footer() {
+  return (
+    <footer className="foot">
+      <div className="wrap foot-inner">
+        <span className="brand brand-small">
+          <Mark size={16} />
+          Quest Forge
+        </span>
+        <nav aria-label="Links">
+          <a href={GITHUB}>Source</a>
+          <a href={RELEASES_URL}>Releases</a>
+          <a href={`${GITHUB}/issues`}>Report a problem</a>
+          <a href="/privacy">Privacy</a>
+        </nav>
+      </div>
+      <p className="wrap foot-note">
+        Quest Forge is free software under the{" "}
+        <a href={`${GITHUB}/blob/main/LICENSE`}>GPL-3.0-or-later licence</a>. Games you make with it are
+        yours: a built .quest file is your own content, not a derivative of the editor.
+      </p>
+    </footer>
   );
 }

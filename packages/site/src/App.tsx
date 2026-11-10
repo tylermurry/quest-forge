@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Home } from "./Home.tsx";
 import { isQuestFile, playQuestFile } from "./questFile.ts";
-import { usePath } from "./router.ts";
+import { Privacy } from "./Privacy.tsx";
+import { pageFor, usePath } from "./router.ts";
 
 // The player pulls in the engine and schema; the home page shouldn't have to.
 const Play = lazy(() => import("./Play.tsx").then((m) => ({ default: m.Play })));
@@ -25,7 +26,9 @@ export function App() {
     };
   }, []);
 
-  return path.replace(/\/+$/, "") === "/play" ? (
+  const page = pageFor(path);
+  if (page === "privacy") return <Privacy />;
+  return page === "play" ? (
     <Suspense fallback={<div className="play" />}>
       <Play />
     </Suspense>

@@ -519,7 +519,8 @@ a:focus-visible {
 
 .foot nav {
   display: flex;
-  gap: 22px;
+  flex-wrap: wrap;
+  gap: 8px 22px;
 }
 
 .foot a {
@@ -671,4 +672,30 @@ a:focus-visible {
 .play-error p:first-child {
   color: #f0a585;
   font-weight: 550;
+}
+
+/* Privacy page (/privacy) */
+.prose {
+  max-width: 44rem;
+  padding-top: 48px;
+  padding-bottom: 24px;
+}
+
+.prose h2 {
+  font-size: 1.3rem;
+  margin-top: 36px;
+}
+
+.prose p,
+.prose ul {
+  margin-top: 12px;
+  color: var(--ink-2);
+}
+
+.prose ul {
+  padding-left: 1.25em;
+}
+
+.prose li + li {
+  margin-top: 6px;
 }

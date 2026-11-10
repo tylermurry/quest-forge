@@ -1,4 +1,4 @@
-// Two routes don't need a router library: History API + useSyncExternalStore.
+// A few routes don't need a router library: History API + useSyncExternalStore.
 import { useSyncExternalStore } from "react";
 
 const listeners = new Set<() => void>();
@@ -20,3 +20,11 @@ export function navigate(path: string) {
 }
 
 export const usePath = () => useSyncExternalStore(subscribe, () => location.pathname);
+
+export type Page = "home" | "play" | "privacy";
+
+/** Which page a path shows. Anything unknown, like the server's fallback for a bad link, is the home page. */
+export function pageFor(path: string): Page {
+  const clean = path.replace(/\/+$/, "");
+  return clean === "/play" ? "play" : clean === "/privacy" ? "privacy" : "home";
+}

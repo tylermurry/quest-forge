@@ -11,7 +11,7 @@ vi.mock("react", () => ({
   },
 }));
 
-import { navigate, usePath } from "../src/router.ts";
+import { navigate, pageFor, usePath } from "../src/router.ts";
 
 /** A just-enough browser: a location, a history that moves it, scrolling and window events. */
 function fakeBrowser(start: string) {
@@ -89,5 +89,23 @@ describe("navigate", () => {
     expect(browser.scrollTo).not.toHaveBeenCalled();
     expect(seen).not.toHaveBeenCalled();
     unsubscribe();
+  });
+});
+
+describe("pageFor", () => {
+  it("picks the page for each path", () => {
+    expect(pageFor("/")).toBe("home");
+    expect(pageFor("/play")).toBe("play");
+    expect(pageFor("/privacy")).toBe("privacy");
+  });
+
+  it("ignores trailing slashes", () => {
+    expect(pageFor("/play/")).toBe("play");
+    expect(pageFor("/privacy/")).toBe("privacy");
+  });
+
+  it("shows the home page for anything else", () => {
+    expect(pageFor("/nope")).toBe("home");
+    expect(pageFor("/privacy/extra")).toBe("home");
   });
 });
