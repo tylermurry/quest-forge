@@ -127,10 +127,11 @@ describe("snapPoint", () => {
     const near: [number, number] = [v[0] + 1, v[1] + 1];
     const got = snapPoint(near, scene, uiWith({ snap: true }), 2, { pr: sel.pr, index: 0 });
     expect(got.point).not.toEqual(v);
-    // Halfway along an edge that touches the dragged vertex: no edge snap either.
-    const mid: [number, number] = [Math.round((v[0] + next[0]) / 2) + 0.3, Math.round((v[1] + next[1]) / 2) + 0.3];
-    const onEdge = snapPoint(mid, scene, uiWith({ snap: true }), 2, { pr: sel.pr, index: 0 });
-    expect(onEdge.kind === "edge" || onEdge.kind === "pixel").toBe(true);
-    expect(onEdge.kind === "edge" ? onEdge.point : null).not.toEqual(mid.map(Math.round));
+    // Just off the middle of an edge that touches the dragged vertex. Normally that snaps
+    // to the edge; while dragging the vertex the edge moves with it, so only the pixel grid applies.
+    const mid: [number, number] = [(v[0] + next[0]) / 2 + 0.3, (v[1] + next[1]) / 2 + 0.3];
+    expect(snapPoint(mid, scene, uiWith({ snap: true }), 2).kind).toBe("edge");
+    const dragging = snapPoint(mid, scene, uiWith({ snap: true }), 2, { pr: sel.pr, index: 0 });
+    expect(dragging).toEqual({ point: [Math.round(mid[0]), Math.round(mid[1])], kind: "pixel" });
   });
 });
