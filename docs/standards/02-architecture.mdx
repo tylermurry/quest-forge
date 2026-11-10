@@ -31,13 +31,13 @@ platform, the change keeps that separation, so the logic can be tested without t
 
 ### ARC-4: Record structural changes as decisions
 
-**Must.** A new module, a new boundary, or a new pattern that other code is expected to
-follow is recorded in the project's decision log in the same change.
+**Retired.** Decisions are not kept in a separate log. A new module, boundary or pattern
+is described in the project's documented structure, under DOC-1 and DOC-3.
 
 ### ARC-5: Put code where a reader would look for it
 
 **Should.** New code goes in the place the documented structure suggests. If no existing
-place fits, that is a structural change (ARC-4).
+place fits, the change adds one and updates the documented structure in the same change.
 
 ### ARC-6: Use public interfaces
 
