@@ -12,7 +12,7 @@ function Header() {
       <div className="wrap top-inner">
         <a className="brand" href="/">
           <Mark />
-          <span>Questforge</span>
+          <span>Quest Forge</span>
         </a>
         <nav className="top-nav" aria-label="Sections">
           <a href="#features">Features</a>
@@ -64,7 +64,7 @@ function Download() {
     <section className="download" id="download">
       <div className="wrap download-inner">
         <div>
-          <h2>Download Questforge</h2>
+          <h2>Download Quest Forge</h2>
           <p className="lede">Free. For macOS, Windows and Linux.</p>
           {primary ? (
             <div className="download-main">
@@ -78,7 +78,7 @@ function Download() {
           )}
           {primary?.os === "mac" && (
             <p className="fine note">
-              This early build isn’t notarized yet. The first time, right-click Questforge in Applications and choose Open, then Open again.
+              This early build isn’t notarized yet. The first time, right-click Quest Forge in Applications and choose Open, then Open again.
             </p>
           )}
           {primary?.os === "windows" && (
@@ -121,7 +121,7 @@ const SPECS: [string, string][] = [
   ["Touch, too", "Every game plays on phones and tablets: big enough targets, no hover needed."],
 ];
 
-const HOME_TITLE = "Questforge — make point-and-click adventures";
+const HOME_TITLE = "Quest Forge — make point-and-click adventures";
 
 export function Home() {
   useEffect(() => {
@@ -141,7 +141,7 @@ export function Home() {
               you grew up with.
             </h1>
             <p className="lede hero-lede">
-              Questforge is a desktop editor for point-and-click adventures in the classic style: a verb bar, a bag of odd items, a narrator with opinions, and the occasional untimely death. You draw the rooms and write what happens. Nobody writes code.
+              Quest Forge is a desktop editor for point-and-click adventures in the classic style: a verb bar, a bag of odd items, a narrator with opinions, and the occasional untimely death. You draw the rooms and write what happens. Nobody writes code.
             </p>
             <div className="hero-actions">
               {primary ? (
@@ -157,7 +157,7 @@ export function Home() {
             </div>
           </div>
           <div className="wrap">
-            <Shot wide src="/screenshots/scene-editor.webp" alt="The Questforge editor: the project browser, a garden scene with its layers, hotspots and walkable floor, and the pond hotspot open in the Inspector." />
+            <Shot wide src="/screenshots/scene-editor.webp" alt="The Quest Forge editor: the project browser, a garden scene with its layers, hotspots and walkable floor, and the pond hotspot open in the Inspector." />
           </div>
         </section>
 
@@ -207,7 +207,7 @@ export function Home() {
           <Feature
             n="05"
             title="One file. Any browser."
-            shot={<Shot src="/screenshots/game.webp" alt="A finished Questforge game playing in a web browser." />}
+            shot={<Shot src="/screenshots/game.webp" alt="A finished Quest Forge game playing in a web browser." />}
           >
             <p>
               Build Game makes a single <code>.quest</code> file. Send it to anyone: they open it on this site and play, on a laptop or a phone, with saves, music and a score. Nothing to install and nothing uploaded.
@@ -237,7 +237,7 @@ export function Home() {
         <div className="wrap foot-inner">
           <span className="brand brand-small">
             <Mark size={16} />
-            Questforge
+            Quest Forge
           </span>
           <nav aria-label="Links">
             <a href={GITHUB}>Source</a>

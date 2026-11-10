@@ -40,7 +40,7 @@ export type QuestGame = z.infer<typeof QuestGame>;
 /** Build Game can't go ahead (validation errors, or an asset file that can't be read). */
 export class BuildError extends Error {}
 
-/** A `.quest` file that can't be played: not one, damaged, or made by a newer Questforge. */
+/** A `.quest` file that can't be played: not one, damaged, or made by a newer Quest Forge. */
 export class QuestError extends Error {}
 
 /** IDs of the images and audio the game uses. Anything else in `assets.yaml` is left out of a build. */
@@ -118,7 +118,7 @@ const LISTS = { scene: "scenes", item: "items", character: "characters", dialogu
 
 function parsePart<T>(schema: z.ZodType<T>, raw: unknown, where: string): T {
   const migrated = migrate(raw);
-  if (!migrated.ok) throw new QuestError("was built with a newer version of Questforge.");
+  if (!migrated.ok) throw new QuestError("was built with a newer version of Quest Forge.");
   const r = schema.safeParse(migrated.value);
   if (!r.success) throw new QuestError(`is damaged (${where}: ${r.error.issues[0]?.message ?? "invalid"}).`);
   return r.data;
@@ -134,10 +134,10 @@ export async function readQuest(bytes: Uint8Array): Promise<{ project: Project; 
   try {
     files = await readZip(bytes);
   } catch (e) {
-    throw new QuestError(e instanceof ZipError ? `${e.message}.` : "isn't a Questforge game.");
+    throw new QuestError(e instanceof ZipError ? `${e.message}.` : "isn't a Quest Forge game.");
   }
   const json = files.get(QUEST_GAME_ENTRY);
-  if (!json) throw new QuestError("isn't a Questforge game (it has no game.json).");
+  if (!json) throw new QuestError("isn't a Quest Forge game (it has no game.json).");
   files.delete(QUEST_GAME_ENTRY);
   let raw: unknown;
   try {
@@ -146,8 +146,8 @@ export async function readQuest(bytes: Uint8Array): Promise<{ project: Project; 
     throw new QuestError("is damaged (game.json can't be read).");
   }
   const head = QuestGame.safeParse(raw);
-  if (!head.success) throw new QuestError("isn't a Questforge game.");
-  if (head.data.formatVersion > QUEST_FORMAT_VERSION) throw new QuestError("was built with a newer version of Questforge.");
+  if (!head.success) throw new QuestError("isn't a Quest Forge game.");
+  if (head.data.formatVersion > QUEST_FORMAT_VERSION) throw new QuestError("was built with a newer version of Quest Forge.");
   const q = head.data;
   const project = emptyProject();
   project.game = { path: ROOT_FILES.game, data: parsePart(GameFile, q.game, "game") };

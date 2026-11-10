@@ -32,7 +32,7 @@ export function Play() {
   useEffect(() => onPendingQuest(() => setFile(takePendingQuest())), []);
 
   useEffect(() => {
-    document.title = title ? `${title} — Questforge` : "Play — Questforge";
+    document.title = title ? `${title} — Quest Forge` : "Play — Quest Forge";
   }, [title]);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function Play() {
           }}
         >
           <Mark size={18} />
-          <span>Questforge</span>
+          <span>Quest Forge</span>
         </a>
         <span className="play-title">{title}</span>
         <div className="play-actions">
@@ -140,7 +140,7 @@ export function Play() {
             ) : (
               <>
                 <h1>Play a quest</h1>
-                <p>Pick a <code>.quest</code> file made with Questforge’s Build Game, or drop one on this page. It runs here in your browser; nothing is uploaded.</p>
+                <p>Pick a <code>.quest</code> file made with Quest Forge’s Build Game, or drop one on this page. It runs here in your browser; nothing is uploaded.</p>
               </>
             )}
             <QuestPicker className="btn btn-primary">{error ? "Choose another file" : "Choose a .quest file"}</QuestPicker>

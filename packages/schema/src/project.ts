@@ -162,7 +162,7 @@ export function parseFile<K extends FileKind>(
     return fail("yaml_syntax", `can't be read${line ? ` (line ${line})` : ""}: ${yamlError.message.split("\n")[0]}`);
   }
   const migrated = migrate(doc.toJS());
-  if (!migrated.ok) return fail("unsupported_version", "was made with a newer version of Questforge. Update the editor to open it.", ["schemaVersion"]);
+  if (!migrated.ok) return fail("unsupported_version", "was made with a newer version of Quest Forge. Update the editor to open it.", ["schemaVersion"]);
   const result = SCHEMAS[kind].safeParse(migrated.value);
   if (!result.success) return { ok: false, problems: zodProblems(kind, file, migrated.value, result.error) };
   return { ok: true, data: result.data as z.infer<(typeof SCHEMAS)[K]> };

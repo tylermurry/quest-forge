@@ -24,7 +24,7 @@ export interface QuestBundle extends ProjectBundle {
 
 /**
  * Reads a `.quest` file for `createGame`. Throws the schema's QuestError (with a
- * plain-English message to put after the file name, e.g. "isn't a Questforge game.")
+ * plain-English message to put after the file name, e.g. "isn't a Quest Forge game.")
  * when it can't be played; validation errors are left to `createGame` (ProjectErrors).
  */
 export async function loadQuest(bytes: Uint8Array): Promise<QuestBundle> {

@@ -155,7 +155,7 @@ async fn build_save(app: tauri::AppHandle, request: Request<'_>) -> Res<Option<S
     let InvokeBody::Raw(bytes) = request.body() else {
         return Err("expected raw bytes".into());
     };
-    let Some(picked) = app.dialog().file().set_title("Build Game").set_file_name(&name).add_filter("Questforge game", &["quest"]).blocking_save_file() else {
+    let Some(picked) = app.dialog().file().set_title("Build Game").set_file_name(&name).add_filter("Quest Forge game", &["quest"]).blocking_save_file() else {
         return Ok(None);
     };
     let mut path = picked.into_path().map_err(err)?;
@@ -362,7 +362,7 @@ pub fn run() {
             _ => typed(invoke),
         })
         .run(tauri::generate_context!())
-        .expect("error while running Questforge");
+        .expect("error while running Quest Forge");
 }
 
 #[cfg(test)]

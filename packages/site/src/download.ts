@@ -16,11 +16,11 @@ export interface Installer {
 
 /** Ordered: each system's first entry is the one its main button offers. */
 export const INSTALLERS: readonly Installer[] = [
-  { os: "mac", system: "macOS", kind: "Disk image (.dmg) · Apple silicon and Intel", file: "Questforge-macos.dmg" },
-  { os: "windows", system: "Windows", kind: "Installer (.exe) · Windows 10 and 11", file: "Questforge-windows-setup.exe" },
-  { os: "windows", system: "Windows", kind: "MSI package (.msi)", file: "Questforge-windows.msi" },
-  { os: "linux", system: "Linux", kind: "AppImage · most distributions", file: "Questforge-linux.AppImage" },
-  { os: "linux", system: "Linux", kind: "Debian / Ubuntu (.deb)", file: "Questforge-linux.deb" },
+  { os: "mac", system: "macOS", kind: "Disk image (.dmg) · Apple silicon and Intel", file: "Quest-Forge-macos.dmg" },
+  { os: "windows", system: "Windows", kind: "Installer (.exe) · Windows 10 and 11", file: "Quest-Forge-windows-setup.exe" },
+  { os: "windows", system: "Windows", kind: "MSI package (.msi)", file: "Quest-Forge-windows.msi" },
+  { os: "linux", system: "Linux", kind: "AppImage · most distributions", file: "Quest-Forge-linux.AppImage" },
+  { os: "linux", system: "Linux", kind: "Debian / Ubuntu (.deb)", file: "Quest-Forge-linux.deb" },
 ];
 
 export const downloadUrl = (file: string) => `https://github.com/${REPO}/releases/latest/download/${file}`;

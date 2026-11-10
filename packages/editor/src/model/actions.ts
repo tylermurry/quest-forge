@@ -204,7 +204,7 @@ export class Actions {
     if (refused.length) {
       this.editor.showNotice({
         kind: "error",
-        text: `Not imported: ${refused.join(", ")}. Questforge imports images (PNG, JPG, WebP) and sounds (MP3, OGG, WAV).`,
+        text: `Not imported: ${refused.join(", ")}. Quest Forge imports images (PNG, JPG, WebP) and sounds (MP3, OGG, WAV).`,
       });
     }
     return count;

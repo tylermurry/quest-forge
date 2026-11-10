@@ -35,7 +35,7 @@ describe("detectOS", () => {
 describe("pickDownloads", () => {
   it("offers the visitor's system first and lists the rest", () => {
     const { primary, others } = pickDownloads("windows");
-    expect(primary?.file).toBe("Questforge-windows-setup.exe");
+    expect(primary?.file).toBe("Quest-Forge-windows-setup.exe");
     expect(others.map((i) => i.file)).toEqual(INSTALLERS.filter((i) => i !== primary).map((i) => i.file));
     expect(others).toHaveLength(INSTALLERS.length - 1);
   });
@@ -45,8 +45,8 @@ describe("pickDownloads", () => {
   });
 
   it("links to the latest release's stable asset names", () => {
-    expect(downloadUrl("Questforge-macos.dmg")).toBe(
-      "https://github.com/tylermurry/quest-forge/releases/latest/download/Questforge-macos.dmg",
+    expect(downloadUrl("Quest-Forge-macos.dmg")).toBe(
+      "https://github.com/tylermurry/quest-forge/releases/latest/download/Quest-Forge-macos.dmg",
     );
   });
 });
