@@ -530,6 +530,14 @@ a:focus-visible {
   color: var(--ink);
 }
 
+.foot-note {
+  margin-top: 20px;
+}
+
+.foot-note a {
+  text-decoration: underline;
+}
+
 /* Player (/play) — always dark, the game is the light source. */
 .play {
   --glass: #4a3f2c;

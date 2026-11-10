@@ -245,6 +245,11 @@ export function Home() {
             <a href={`${GITHUB}/issues`}>Report a problem</a>
           </nav>
         </div>
+        <p className="wrap foot-note">
+          Quest Forge is free software under the{" "}
+          <a href={`${GITHUB}/blob/main/LICENSE`}>GPL-3.0-or-later licence</a>. Games you make with it are
+          yours: a built .quest file is your own content, not a derivative of the editor.
+        </p>
       </footer>
     </>
   );

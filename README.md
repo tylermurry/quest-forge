@@ -46,3 +46,9 @@ corepack pnpm --filter @questforge/editor tauri dev
 - [`docs/standards/`](docs/standards/index.mdx): the engineering standards every change is held to.
 - [`docs/project/`](docs/project/conventions.md): how the code is organised and the conventions for working in it.
 - [Milestones and issues](https://github.com/tylermurry/quest-forge/milestones): what is planned next.
+
+## Licence
+
+Quest Forge is free software, released under the [GPL-3.0-or-later](LICENSE).
+
+Games you make with Quest Forge are yours. A built `.quest` file holds your own art, writing and rules; it is not a derivative of the editor, and you can license or sell it however you like.
