@@ -73,7 +73,7 @@ const actions: Record<string, Case> = {
 
 const rule = (when: unknown, extra: Record<string, unknown> = {}) => ({ id: "rule_1", when, if: [], do: [], once: false, ...extra });
 
-describe("rule vocabulary covers spec 02 exactly", () => {
+describe("rule vocabulary covers every trigger, condition and action", () => {
   it("has a test case for every type, and nothing more", () => {
     expect([...TRIGGER_TYPES].sort()).toEqual(Object.keys(triggers).sort());
     expect([...CONDITION_TYPES].sort()).toEqual(Object.keys(conditions).sort());
@@ -91,7 +91,7 @@ describe.each(Object.entries(conditions))("condition %s", (_name, c) => {
   it("rejects bad parameters", () => expect(Condition.safeParse(c.bad).success).toBe(false));
 });
 
-describe("rule text (D119)", () => {
+describe("rule text", () => {
   it("may be empty while authoring; validation reports it instead", () => {
     expect(Action.safeParse({ type: "narrate", text: "" }).success).toBe(true);
     expect(Action.safeParse({ type: "say", character: "hero", text: "" }).success).toBe(true);
@@ -130,7 +130,7 @@ describe("rules", () => {
     expect(r.do.map((a) => a.type)).toEqual(["take_item", "give_item", "award_points"]);
   });
 
-  it("requires id/when/if/do/once to be present (one canonical form, D117)", () => {
+  it("requires id/when/if/do/once to be present (one canonical form)", () => {
     expect(InteractRule.safeParse({ id: "rule_1", when: { type: "look" }, do: [], once: false }).success).toBe(false);
     expect(InteractRule.safeParse({ id: "rule_1", when: { type: "look" }, if: [], do: [] }).success).toBe(false);
     expect(InteractRule.safeParse({ when: { type: "look" }, if: [], do: [], once: false }).success).toBe(false);

@@ -37,14 +37,14 @@ const GARDENER: RuleOwnerRef = { kind: "thing", scene: "garden", list: "characte
 const rules = (p: Project, o: RuleOwnerRef) => ownerRules(p, o)!.rules;
 const ids = (p: Project, o: RuleOwnerRef) => rules(p, o).map((r) => r.id);
 const rule = (p: Project, o: RuleOwnerRef, id: string) => rules(p, o).find((r) => r.id === id)!;
-/** Every command result must still parse: the schema is strict (D59). */
+/** Every command result must still parse: the schema is strict. */
 const valid = (p: Project) => {
   for (const s of p.scenes) expect(SceneFile.safeParse(s.data).success).toBe(true);
   expect(GameFile.safeParse(p.game!.data).success).toBe(true);
   return p;
 };
 
-describe("rule owners (spec 02)", () => {
+describe("rule owners", () => {
   it("finds each owner's list and only offers its own triggers", async () => {
     const p = await m1Project();
     expect(ownerRules(p, POND)!.path).toEqual(["hotspots", 0, "rules"]);
@@ -66,7 +66,7 @@ describe("rule owners (spec 02)", () => {
   });
 });
 
-describe("vocabulary (spec 02)", () => {
+describe("vocabulary", () => {
   it("labels every condition and action and groups every action once", () => {
     for (const t of CONDITION_ORDER) expect(CONDITION_LABEL[t] && CONDITION_PARTS[t]).toBeTruthy();
     for (const t of ACTION_ORDER) expect(ACTION_LABEL[t] && ACTION_PARTS[t]).toBeTruthy();
@@ -84,7 +84,7 @@ describe("vocabulary (spec 02)", () => {
     valid(q);
     const r = rule(q, POND, id);
     expect(r.when).toEqual({ type: "use_item", item: d.item() });
-    // Text starts empty (D119), and kinds the fixture has none of start on a red placeholder (D123).
+    // Text starts empty, and kinds the fixture has none of start on a red placeholder.
     const at = ["hotspots", 0, "rules", rules(q, POND).indexOf(r)].join(".");
     const inRule = validateProject(q).filter((x) => x.location.path.join(".").startsWith(at));
     expect(inRule.map((x) => `${x.code} ${x.location.path.slice(4).join(".")}`)).toEqual([
@@ -109,7 +109,7 @@ describe("vocabulary (spec 02)", () => {
   });
 });
 
-describe("rule commands (spec 10)", () => {
+describe("rule commands", () => {
   it("adds above the quick fields' plain rules, deletes, duplicates and reorders by ID", async () => {
     let p = await m1Project();
     expect(ids(p, POND)).toEqual(["rule_1", "rule_2", "rule_3", "rule_4"]);
@@ -185,7 +185,7 @@ describe("rule commands (spec 10)", () => {
   });
 });
 
-describe("quick fields (D118)", () => {
+describe("quick fields", () => {
   it("reads the last plain rule for each verb", async () => {
     const p = await m1Project();
     expect(quickField(rules(p, POND), "look")).toEqual({ state: "plain", ruleId: "rule_1", text: "A still pond. Tiny fish dart about." });
@@ -221,7 +221,7 @@ describe("quick fields (D118)", () => {
   });
 });
 
-describe("rule problems (spec 10 inline red)", () => {
+describe("rule problems (inline red)", () => {
   it("splits problems by rule and by part", async () => {
     let p = await m1Project();
     p = { ...p, items: p.items.filter((i) => i.data.id !== "rod") };

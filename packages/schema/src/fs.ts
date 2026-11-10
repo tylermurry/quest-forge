@@ -1,12 +1,12 @@
 /**
- * The only file access the project layer uses (D56). Paths are project-relative
+ * The only file access the project layer uses. Paths are project-relative
  * with `/` separators. The Node adapter lives in `@questforge/schema/node`; the
- * Tauri adapter and the dev-page HTTP adapter live in the editor (M3).
+ * Tauri adapter and the dev-page HTTP adapter live in the editor.
  */
 export interface ProjectFs {
   /** Every file in the project, recursively, skipping dot-files and dot-folders (e.g. `.editor/`, `.git/`). */
   list(): Promise<string[]>;
-  /** Every folder in the project, recursively, skipping dot-folders (D83). */
+  /** Every folder in the project, recursively, skipping dot-folders. */
   listFolders(): Promise<string[]>;
   readText(path: string): Promise<string>;
   /** Writes the file, creating parent folders. */
@@ -18,13 +18,13 @@ export interface ProjectFs {
   remove(path: string): Promise<void>;
   /** Creates a folder and its parents. */
   makeFolder(path: string): Promise<void>;
-  /** Removes a folder only if nothing but a `.keep` file is left in it (D83). */
+  /** Removes a folder only if nothing but a `.keep` file is left in it. */
   removeFolder(path: string): Promise<void>;
-  /** Deletes a folder and everything in it. Only used for `.editor/trash` (D88). */
+  /** Deletes a folder and everything in it. Only used for `.editor/trash`. */
   removeTree(path: string): Promise<void>;
 }
 
-/** Placeholder that keeps an empty folder in git (D83). */
+/** Placeholder that keeps an empty folder in git. */
 export const KEEP_FILE = ".keep";
 
 export const isHidden = (path: string) => path.split("/").some((seg) => seg.startsWith("."));

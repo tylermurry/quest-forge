@@ -8,7 +8,7 @@ import { Prompt } from "../Dialogs.tsx";
 import { cn } from "../lib/utils.ts";
 
 /**
- * A searchable picker over existing IDs (spec 10, D123). A value that no longer
+ * A searchable picker over existing IDs. A value that no longer
  * exists stays shown as "(missing)" in red; "+ Create new…" asks for a name and
  * hands it back, and the caller creates and uses it in one undo step.
  */

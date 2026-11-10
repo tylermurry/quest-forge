@@ -1,6 +1,6 @@
 import type { AudioBackend } from "./audio.ts";
 
-// Web Audio backend (spec 07): music loops through one gain, sound effects through
+// Web Audio backend: music loops through one gain, sound effects through
 // another. Browsers (iOS Safari above all) keep audio silent until a user gesture,
 // so the context is created and resumed from `unlock()`, which the game calls on
 // every pointerdown and pointerup (pointerup is the touch gesture iOS accepts).
@@ -30,7 +30,7 @@ export class WebAudio implements AudioBackend {
     this.paths = new Map(audio.map((a) => [a.id, a.path]));
   }
 
-  /** Called from user gestures: make the context and let it play (spec 07 iOS requirement). */
+  /** Called from user gestures: make the context and let it play (iOS requires a gesture). */
   unlock = () => {
     if (this.closed) return;
     if (!this.ctx) {

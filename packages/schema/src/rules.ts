@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { Facing, Id, SceneX, SceneY } from "./common.ts";
 
-// Rule vocabulary (spec 02, D37). Every trigger, condition and action is a map
-// tagged by `type` (D63). This closed set is everything a designer can express.
+// Rule vocabulary. Every trigger, condition and action is a map
+// tagged by `type`. This closed set is everything a designer can express.
 
 const tag = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
   z.strictObject({ type: z.literal(type), ...shape });
 
-/** An object reference always names its scene (D61). */
+/** An object reference always names its scene. */
 const objectRef = { scene: Id, object: Id };
 
 // ── Triggers ────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export type Condition = z.infer<typeof Condition>;
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
-/** Text a rule shows. Unlike `Text` it may be `""` while authoring: an error, not a parse failure (D119). */
+/** Text a rule shows. Unlike `Text` it may be `""` while authoring: an error, not a parse failure. */
 export const RuleText = z.string();
 
 export const AnimationTarget = z.discriminatedUnion("kind", [
@@ -56,7 +56,7 @@ export const AnimationTarget = z.discriminatedUnion("kind", [
 ]);
 
 export const Action = z.discriminatedUnion("type", [
-  // Text. May be empty while authoring; validation reports it (D119).
+  // Text. May be empty while authoring; validation reports it.
   tag("narrate", { text: RuleText }),
   tag("say", { character: Id, text: RuleText }),
   // Movement
@@ -70,7 +70,7 @@ export const Action = z.discriminatedUnion("type", [
   // State
   tag("set_flag", { flag: Id, value: z.boolean() }),
   tag("add_to_counter", { counter: Id, amount: z.int() }),
-  /** Each award ID counts once (spec 07). */
+  /** Each award ID counts once. */
   tag("award_points", { points: z.int().positive(), award: Id }),
   // World
   tag("show_object", objectRef),
@@ -92,8 +92,8 @@ export type Action = z.infer<typeof Action>;
 // ── Rules ───────────────────────────────────────────────────────────────────
 
 /**
- * `WHEN <trigger> [IF <all conditions>] DO <actions>` plus `once` (spec 02). `id` is
- * stable, unique within its rule list and never shown; fired keys use it (D117).
+ * `WHEN <trigger> [IF <all conditions>] DO <actions>` plus `once`. `id` is
+ * stable, unique within its rule list and never shown; fired keys use it.
  */
 export const makeRule = <T extends z.ZodType>(trigger: T) =>
   z.strictObject({
@@ -118,7 +118,7 @@ export type Trigger = AnyRule["when"];
 const typesOf = (u: { options: readonly { shape: { type: { value: string } } }[] }) =>
   u.options.map((o) => o.shape.type.value);
 
-/** Dropdown vocabularies for the rule inspector (spec 10). */
+/** Dropdown vocabularies for the rule inspector. */
 export const CONDITION_TYPES = typesOf(Condition);
 export const ACTION_TYPES = typesOf(Action);
 export const TRIGGER_TYPES = [InteractTrigger, RegionTrigger, SceneTrigger, GameTrigger].flatMap(typesOf);

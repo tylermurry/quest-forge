@@ -5,22 +5,22 @@ import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
 import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type InventoryButtonId, type Layout } from "./layout.ts";
 
-// Player UI input (spec 06, D32, D33, D79, D80): the icon bar, inventory, settings,
+// Player UI input: the icon bar, inventory, settings,
 // hover labels and tap-and-hold. Pointer events arrive in scene coordinates with
 // their pointer type; nothing here touches the DOM, so it's tested in Node.
 
 export type PointerKind = "mouse" | "touch" | "pen";
 
-/** Mouse at the very top opens the bar (D79). */
+/** Mouse at the very top opens the bar. */
 const REVEAL_CSS = 8;
-/** Tap-and-hold (D79). */
+/** Tap-and-hold. */
 const HOLD_SECONDS = 0.4;
 const HOLD_SLOP_CSS = 10;
 
-/** `save` / `load` are the slot list (D149); `volume` the volume panel (D150). */
+/** `save` / `load` are the slot list; `volume` the volume panel. */
 export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | null;
 
-/** What the player UI keeps outside the game state: save slots and volumes (spec 07). */
+/** What the player UI keeps outside the game state: save slots and volumes. */
 export interface UiServices {
   slots: SaveSlots;
   settings: PlayerSettings;
@@ -44,15 +44,15 @@ interface Press {
 export class PlayerUi {
   layout: Layout;
   barOpen = false;
-  /** A touch or pen has been seen: show the bar tab (D79). */
+  /** A touch or pen has been seen: show the bar tab. */
   touchSeen = false;
   panel: Panel = null;
   inventoryMode: InventoryMode = "select";
   /** Name label for what's under the pointer (hover or hold). */
   label: { text: string; at: Vec } | null = null;
-  /** Mouse position for the drawn cursor (D77); null for touch. */
+  /** Mouse position for the drawn cursor; null for touch. */
   cursor: Vec | null = null;
-  /** Page of a long dialogue list box (UI state, D143). */
+  /** Page of a long dialogue list box (UI state). */
   choicePage = 0;
   /** The slot picked in the save / load list, 0-based (UI state). */
   slot: number | null = null;
@@ -119,7 +119,7 @@ export class PlayerUi {
       this.activate(p);
       return;
     }
-    // Touch and pen act on release, so a hold can show the label instead (D79).
+    // Touch and pen act on release, so a hold can show the label instead.
     this.press = { at: p, kind, held: 0, long: false, moved: false };
   }
 
@@ -167,7 +167,7 @@ export class PlayerUi {
         this.label = t ? { text: t.name, at: press.at } : null;
       }
     }
-    // The bar can't stay open under a sequence (D72), and the item it shows may go away.
+    // The bar can't stay open under a sequence, and the item it shows may go away.
     if (this.session.busy && this.barOpen && !this.session.text) this.barOpen = false;
     if (this.inventoryMode === "item" && !this.session.item) this.inventoryMode = "select";
   }
@@ -187,7 +187,7 @@ export class PlayerUi {
     if (this.panel === "save" || this.panel === "load") return this.slotsClick(p);
     if (this.panel === "volume") return this.volumeClick(p);
     if (s.ending) return this.endingClick(p);
-    // Text first: any click skips it, over the scene or the inventory (D72, D78).
+    // Text first: any click skips it, over the scene or the inventory.
     if (s.text) {
       s.skipText();
       return;
@@ -208,7 +208,7 @@ export class PlayerUi {
     s.primaryClick(p);
   }
 
-  /** A tap on an option picks it; "More…" turns the page (D143). */
+  /** A tap on an option picks it; "More…" turns the page. */
   private choiceClick(p: Vec) {
     const box = this.choiceBox;
     const list = this.session.choices;
@@ -304,7 +304,7 @@ export class PlayerUi {
     }
   }
 
-  /** The death or win box (spec 07): Restore · Restart · Try again. */
+  /** The death or win box: Restore · Restart · Try again. */
   private endingClick(p: Vec) {
     const ending = this.session.ending!;
     const L = this.layout.ending;
@@ -324,7 +324,7 @@ export class PlayerUi {
     }
   }
 
-  /** Opens the save or load list on a sensible slot: the first empty one to save, the newest save to load (D149). */
+  /** Opens the save or load list on a sensible slot: the first empty one to save, the newest save to load. */
   openSlots(mode: "save" | "load") {
     const list = this.slots.list;
     let pick: number | null = null;
@@ -387,7 +387,7 @@ export class PlayerUi {
     return ok;
   }
 
-  /** Loads a slot's save (spec 07). */
+  /** Loads a slot's save. */
   loadFrom(index: number): boolean {
     const slot = this.slots.get(index);
     if (!slot) return false;
@@ -430,7 +430,7 @@ export class PlayerUi {
     return this.barOpen && inRect(p, this.layout.bar);
   }
 
-  /** Mouse hover: reveal the bar at the top edge, label what's under the cursor (D79). */
+  /** Mouse hover: reveal the bar at the top edge, label what's under the cursor. */
   private hover(p: Vec | null) {
     const s = this.session;
     if (!p) {

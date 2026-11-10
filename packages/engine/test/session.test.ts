@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Session } from "../src/session.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Verbs, rules, sequences and text through a headless session (spec 02, 06; D71–D74, D78, D80).
+// Verbs, rules, sequences and text through a headless session.
 
 type Over = Parameters<typeof testProject>[0];
 const make = (over?: Over) => new Session(testProject(over), testImages);
@@ -23,7 +23,7 @@ const potRules = (rules: unknown[]) => ({
 });
 const gardenerRules = (rules: unknown[]) => ({ characters: [{ character: "gardener", x: 500, y: 380, facing: "left", visible: true, rules }] });
 
-describe("verbs (D74)", () => {
+describe("verbs", () => {
   it("Look runs where the player stands, facing the target", () => {
     const s = make({ yard: potRules([rule({ type: "look" }, [narrate("A clay pot.")])]) });
     s.selectVerb("look");
@@ -68,7 +68,7 @@ describe("verbs (D74)", () => {
     expect(s.text?.text).toBe("Nobody answers.");
   });
 
-  it("falls back to the default response for each verb (D40)", () => {
+  it("falls back to the default response for each verb", () => {
     const s = make();
     for (const [verb, reply] of [["look", "Nothing special."], ["hand", "You can't."], ["talk", "Nobody answers."]] as const) {
       s.selectVerb(verb);
@@ -101,7 +101,7 @@ describe("verbs (D74)", () => {
     expect(s.state.flags.open).toBe(true);
   });
 
-  it("right-click cycles Walk → Look → Hand → Talk → item (D32)", () => {
+  it("right-click cycles Walk → Look → Hand → Talk → item", () => {
     const s = make();
     const seen = [s.verb];
     for (let i = 0; i < 4; i++) {
@@ -119,7 +119,7 @@ describe("verbs (D74)", () => {
   });
 });
 
-describe("items (D80)", () => {
+describe("items", () => {
   it("uses the current item on a target; others get the default", () => {
     const s = make({ yard: potRules([rule({ type: "use_item", item: "key" }, [narrate("Click.")])]) });
     s.state.inventory.push("key", "stick");
@@ -203,7 +203,7 @@ describe("rules through the session", () => {
   });
 });
 
-describe("sequences (D72)", () => {
+describe("sequences", () => {
   const sequence = gardenerRules([
     rule({ type: "talk" }, [
       { type: "say", character: "gardener", text: "Let me move that." },
@@ -246,7 +246,7 @@ describe("sequences (D72)", () => {
     expect(s.busy).toBe(false);
   });
 
-  it("text closes by itself after its time (D78)", () => {
+  it("text closes by itself after its time", () => {
     const s = make({ yard: potRules([rule({ type: "look" }, [narrate("Short."), narrate("Next.")])]) });
     s.selectVerb("look");
     s.primaryClick(POT);
@@ -256,7 +256,7 @@ describe("sequences (D72)", () => {
     expect(s.text?.text).toBe("Next.");
   });
 
-  it("die ends the game until Restart, which resets the state (D71)", () => {
+  it("die ends the game until Restart, which resets the state", () => {
     const s = make({ yard: potRules([rule({ type: "hand" }, [{ type: "give_item", item: "key" }, { type: "die", message: "A snake bites you." }])]) });
     s.selectVerb("hand");
     s.primaryClick(POT);
@@ -272,7 +272,7 @@ describe("sequences (D72)", () => {
     expect(s.world.player.pos).toEqual([100, 380]);
   });
 
-  it("notes a missing dialogue and an object animation that doesn't exist (D112)", () => {
+  it("notes a missing dialogue and an object animation that doesn't exist", () => {
     const s = make({
       yard: potRules([rule({ type: "look" }, [{ type: "start_dialogue", dialogue: "shop" }, { type: "play_animation", target: { kind: "object", scene: "yard", object: "rock" }, animation: "spin" }, narrate("Done.")])]),
     });

@@ -5,7 +5,7 @@ import { fitTransform, gridVisible, panBy, snapPixel, stepZoom, toScene, toScree
 
 const canvas = { w: 1000, h: 700 };
 
-describe("scene view transform (spec 09)", () => {
+describe("scene view transform", () => {
   it("fits and centres the 640×400 scene", () => {
     const t = fitTransform(canvas);
     expect(t.scale).toBeCloseTo(Math.min(968 / 640, 668 / 400));
@@ -55,7 +55,7 @@ describe("scene view transform (spec 09)", () => {
   });
 });
 
-describe("scene UI state (D101)", () => {
+describe("scene UI state", () => {
   it("keeps the tool valid for the selected layer", () => {
     const s = new SceneUiStore();
     s.setLayer("garden", "hotspots");

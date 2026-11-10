@@ -34,8 +34,8 @@ import { InspectorShell } from "../InspectorShell.tsx";
 import { thingOwner } from "../../model/rules/owner.ts";
 import { objectFrameSize } from "@questforge/engine";
 
-// The Inspector for things on a scene canvas (spec 09, D99). Every change is one
-// labelled undo step through Editor.apply; typing merges per field until blur (D84).
+// The Inspector for things on a scene canvas. Every change is one
+// labelled undo step through Editor.apply; typing merges per field until blur.
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase";
 const FACINGS: Facing[] = ["down", "up", "left", "right"];
@@ -82,7 +82,7 @@ function ImageSelect(props: { actions: Actions; value: string | undefined; onCha
   return <AssetSelect {...props} kind="images" none="None (black)" />;
 }
 
-/** A scene's music (D148): any imported sound, or none (whatever is playing carries on). */
+/** A scene's music: any imported sound, or none (whatever is playing carries on). */
 function MusicSelect(props: { actions: Actions; value: string | undefined; onChange(v: string | undefined): void }) {
   return <AssetSelect {...props} kind="audio" label="Music" allowNone none="None (keep what's playing)" />;
 }
@@ -110,7 +110,7 @@ function AssetSelect({ actions, value, onChange, label, allowNone, kind, none }:
   );
 }
 
-/** Problems with the selected thing, in plain English (D100). */
+/** Problems with the selected thing, in plain English. */
 function Problems({ problems }: { problems: Problem[] }) {
   if (!problems.length) return null;
   return (
@@ -145,7 +145,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
   const [changingId, setChangingId] = useState(false);
   const nameBox = useRef<HTMLDivElement | null>(null);
 
-  // A new hotspot or region asks for its name right away (D99).
+  // A new hotspot or region asks for its name right away.
   useEffect(() => {
     if (ws.focusRequest !== "name") return;
     ws.takeFocusRequest();
@@ -156,7 +156,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
 
   if (!doc) return null;
   const scene = doc.data as SceneFile;
-  // Problems inside rules show on their rule cards in red (spec 10); the rest show here.
+  // Problems inside rules show on their rule cards in red; the rest show here.
   const problems = (sceneProblems(editor.problems, doc.path, scene).get(thingKey(thing)) ?? []).filter((x) => !x.location.path.includes("rules"));
   const ruleOwner = thingOwner(sceneId, thing.list, thing.key);
   const run = (label: string, f: Parameters<typeof editor.apply>[1], field?: string) => editor.apply(label, f, field && `${sceneId}:${thing.list}:${thing.key}:${field}`);
@@ -306,7 +306,7 @@ export function SceneThingInspector({ actions, sceneId, thing }: { actions: Acti
     case "depth":
       body = (
         <>
-          <p className="text-muted-foreground text-[12px]">Characters with their feet on the far line draw at its scale, on the near line at its scale, and in between at a blend (spec 04).</p>
+          <p className="text-muted-foreground text-[12px]">Characters with their feet on the far line draw at its scale, on the near line at its scale, and in between at a blend.</p>
           {(["far", "near"] as const).map((key) => (
             <Section key={key} title={key === "far" ? "Far line" : "Near line"}>
               <div className="grid grid-cols-2 gap-2">
@@ -380,7 +380,7 @@ export function SceneSettings({ actions, sceneId }: { actions: Actions; sceneId:
   const doc = editor.project.scenes.find((s) => s.data.id === sceneId);
   if (!doc) return null;
   const scene = doc.data as SceneFile;
-  // Problems in the scene's own rules show on their cards (spec 10).
+  // Problems in the scene's own rules show on their cards.
   const sceneWide = (sceneProblems(editor.problems, doc.path, scene).get("") ?? []).filter((x) => x.location.path[0] !== "rules");
   return (
     <div className="mb-2 grid gap-2">

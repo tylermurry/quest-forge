@@ -20,7 +20,7 @@ function FilterToggle(props: { label: string; count: number; on: boolean; onTogg
   );
 }
 
-/** Bottom dock: the Problems panel (spec 14, D120). The game plays in the playtest area (D133). */
+/** Bottom dock: the Problems panel. The game plays in the playtest area. */
 export function Dock({ actions }: { actions: Actions }) {
   const { editor, ws } = actions;
   const [filter, setFilter] = useState<SeverityFilter>(ALL_SEVERITIES);

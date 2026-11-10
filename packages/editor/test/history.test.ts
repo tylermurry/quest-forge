@@ -12,8 +12,8 @@ function clock() {
   return { now: () => t, tick: (ms: number) => (t += ms) };
 }
 
-describe("undo/redo history (D84)", () => {
-  it("undo restores a deleted hotspot including its rules (spec 08 acceptance)", async () => {
+describe("undo/redo history", () => {
+  it("undo restores a deleted hotspot including its rules", async () => {
     const h = new History();
     const before = await m1Project();
     const index = garden(before).hotspots.findIndex((x) => x.rules.length > 0);

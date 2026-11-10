@@ -53,7 +53,7 @@ describe("folders", () => {
     expect(folderOfScene(p, "garden")).toBe("act1/caves/deep");
     p = moveEntry(p, "scene", "garden", "act1");
     expect(p.scenes.find((s) => s.data.id === "garden")?.path).toBe("scenes/act1/garden.scene.yaml");
-    // Only the path changed (D22): the moved file's content is identical.
+    // Only the path changed: the moved file's content is identical.
     expect(planSave(p).writes).toEqual([{ path: "scenes/act1/garden.scene.yaml", content: (await m1Project()).saved["scenes/garden.scene.yaml"] }]);
     expect(errorsIn(p)).toEqual([]);
   });
@@ -112,7 +112,7 @@ describe("folders", () => {
 });
 
 describe("entries", () => {
-  it("creates new assets that start out valid, except a new scene's empty walkable area (D97)", async () => {
+  it("creates new assets that start out valid, except a new scene's empty walkable area", async () => {
     let p = await m1Project();
     for (const kind of ["scene", "item", "character", "dialogue", "flag"] as const) {
       const made = createEntry(p, kind, "");
@@ -135,7 +135,7 @@ describe("entries", () => {
     expect(project.folders).toEqual(expect.arrayContaining(["items/keys", "items/keys/brass"]));
   });
 
-  it("rename changes the display name; Change ID updates references (D86)", async () => {
+  it("rename changes the display name; Change ID updates references", async () => {
     let p = await m1Project();
     p = renameEntry(p, "item", "stick", "  Long stick ");
     expect(p.items.find((i) => i.data.id === "stick")?.data.name).toBe("Long stick");
@@ -186,7 +186,7 @@ describe("entries", () => {
   });
 });
 
-describe("delete with references (spec 08, D86)", () => {
+describe("delete with references", () => {
   it("summarizes and lists the references", async () => {
     const p = await m1Project();
     const refs = entryReferences(p, "item", "stick");
@@ -212,7 +212,7 @@ describe("delete with references (spec 08, D86)", () => {
   });
 });
 
-describe("inside a scene (D89)", () => {
+describe("inside a scene", () => {
   it("deletes a hotspot with its rules", async () => {
     const p = await m1Project();
     const garden = p.scenes.find((s) => s.data.id === "garden")!.data;

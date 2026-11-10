@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Questforge is a dark, dense desktop editor (D92). shadcn/ui reads these tokens. */
+/* Questforge is a dark, dense desktop editor. shadcn/ui reads these tokens. */
 :root {
   color-scheme: dark;
   --radius: 0.375rem;
@@ -72,7 +72,7 @@
   #root {
     @apply h-full;
   }
-  /* Desktop app hygiene (D92): no page scroll or rubber-banding, no text selection
+  /* Desktop app hygiene: no page scroll or rubber-banding, no text selection
      outside fields, default cursor, system font at desktop density. */
   html,
   body {
@@ -104,7 +104,7 @@
   }
 }
 
-/* Jump-to flash on a rule part (D120). */
+/* Jump-to flash on a rule part. */
 @keyframes qf-flash {
   0%,
   60% {

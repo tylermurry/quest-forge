@@ -5,7 +5,7 @@ import { sizedImages, sceneEditor } from "./support/scene.ts";
 
 const SIZES = { palm_img: [60, 200], boulder_img: [84, 66], flowerpot_img: [32, 32], rock_img: [70, 40], workbench_img: [80, 40] } as Record<string, [number, number]>;
 
-describe("Objects layer (spec 09, D95, D106)", () => {
+describe("Objects layer", () => {
   it("moves an object left as well as right; its baseline and obstacle follow", async () => {
     const { editor, dispose } = await sceneEditor(undefined, "shed", SIZES);
     const bench = (p = editor.project) => p.scenes.find((x) => x.data.id === "shed")!.data.objects.find((o) => o.id === "workbench")!;
@@ -44,7 +44,7 @@ describe("Objects layer (spec 09, D95, D106)", () => {
     dispose();
   });
 
-  it("reordering an object in the list sets its baseline between its new neighbours (D95)", async () => {
+  it("reordering an object in the list sets its baseline between its new neighbours", async () => {
     const { c, editor, scene, dispose } = await sceneEditor(undefined, "garden", SIZES);
     const images = sizedImages(editor.project, SIZES);
     const frontFirst = () => drawOrder(scene(), images).reverse().map((r) => r.key);

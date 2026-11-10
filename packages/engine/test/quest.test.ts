@@ -5,7 +5,7 @@ import { QuestError, buildQuest, compileGame, loadProject, validateProject } fro
 import { NodeFs } from "@questforge/schema/node";
 import { assetType, loadQuest } from "../src/quest.ts";
 
-// A built game (D153): the m1 fixture through Build Game, then played from the `.quest` bytes.
+// A built game: the m1 fixture through Build Game, then played from the `.quest` bytes.
 
 const ROOT = join(import.meta.dirname, "../fixtures/m1");
 

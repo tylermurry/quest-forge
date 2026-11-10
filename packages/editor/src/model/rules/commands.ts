@@ -1,5 +1,5 @@
-// Rule commands (spec 10): pure Project → Project functions, each run as one undo
-// step through Editor.apply (D84). Rules are addressed by their stable ID (D117);
+// Rule commands: pure Project → Project functions, each run as one undo
+// step through Editor.apply. Rules are addressed by their stable ID;
 // conditions and actions by index inside the rule.
 import { Id, type AnyRule, type Project, type Trigger } from "@questforge/schema";
 import { CommandError } from "../commands.ts";
@@ -29,7 +29,7 @@ const allowed = (owner: RuleOwnerRef, type: TriggerType) => {
 
 /**
  * Adds a rule with no conditions and no actions. It goes above the quick fields'
- * plain fallback rules so they stay last (first match wins, D118); elsewhere at the end.
+ * plain fallback rules so they stay last (first match wins); elsewhere at the end.
  */
 export function addRule(p: Project, owner: RuleOwnerRef, type: TriggerType = ownerTriggers(owner)[0]!): { project: Project; id: string } {
   allowed(owner, type);
@@ -55,7 +55,7 @@ export function duplicateRule(p: Project, owner: RuleOwnerRef, id: string): { pr
   return { project: updateOwnerRules(p, owner, (rs) => [...rs.slice(0, i + 1), copy, ...rs.slice(i + 1)]), id: copy.id };
 }
 
-/** Moves a rule to `to` (its index after the move). Order matters: first match wins (D40). */
+/** Moves a rule to `to` (its index after the move). Order matters: first match wins. */
 export function moveRule(p: Project, owner: RuleOwnerRef, id: string, to: number): Project {
   const rules = rulesOf(p, owner);
   const from = rules.findIndex((r) => r.id === id);

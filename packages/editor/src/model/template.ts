@@ -47,7 +47,7 @@ function playerSprite(): Uint8Array {
   return bmp.png();
 }
 
-/** The blank project in memory; saving it writes every file through the canonical serializer (D54). */
+/** The blank project in memory; saving it writes every file through the canonical serializer. */
 export function blankProject(title: string): Project {
   const p = emptyProject();
   const id = slugify(title, "game");

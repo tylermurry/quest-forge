@@ -3,7 +3,7 @@ import { objectDrawable, sceneDrawables } from "../src/drawables.ts";
 import { Session } from "../src/session.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Object animations: looping at rest, one-shots from play_animation (spec 05, D111, D112).
+// Object animations: looping at rest, one-shots from play_animation.
 
 const torch = {
   id: "torch",
@@ -29,7 +29,7 @@ const torchSprite = (s: Session) => s.world.drawList().find((d) => d.id === "tor
 describe("objectDrawable", () => {
   const o = testProject({ yard: yardWith([torch]) }).scenes[0]!.data.objects[0]!;
 
-  it("shows frame 0 of a sliced image at rest, with the frame's bottom as baseline (D112)", () => {
+  it("shows frame 0 of a sliced image at rest, with the frame's bottom as baseline", () => {
     const d = objectDrawable({ ...o, animation: undefined } as typeof o, testImages)!;
     expect(d.src).toEqual({ x: 0, y: 0, w: 16, h: 24 });
     expect(d.dest).toEqual({ x: 300, y: 250, w: 16, h: 24 });

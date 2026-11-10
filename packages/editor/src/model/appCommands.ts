@@ -1,4 +1,4 @@
-// App-level commands (D92): one registry that the native menu bar, keyboard
+// App-level commands: one registry that the native menu bar, keyboard
 // shortcuts and (later) a command palette all run, so they never disagree.
 // DOM-free: hosts register handlers and render the list however they like.
 
@@ -130,7 +130,7 @@ export function matchesShortcut(shortcut: string, e: KeyPress, mac: boolean): bo
   return e.key.toLowerCase() === key && mod === want.mod && e.shiftKey === want.shift && e.altKey === want.alt;
 }
 
-/** Function keys can't be typed into a field, so they are real accelerators (D131). */
+/** Function keys can't be typed into a field, so they are real accelerators. */
 const isFunctionKey = (shortcut: string) => /^F\d{1,2}$/.test(shortcut.split("+").at(-1)!);
 
 /**
@@ -146,7 +146,7 @@ export const isPlainShortcut = (shortcut: string) => {
 export interface KeyOptions {
   /** Only plain shortcuts (the native menu handles the rest). */
   plainOnly?: boolean;
-  /** The playtest game has focus: plain shortcuts don't reach the editor (D131). */
+  /** The playtest game has focus: plain shortcuts don't reach the editor. */
   inGame?: boolean;
 }
 

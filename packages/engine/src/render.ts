@@ -6,15 +6,15 @@ import type { Viewport } from "./viewport.ts";
 import type { Drawable } from "./drawables.ts";
 import { debugShapes, type DebugFlags, type DebugShape } from "./debug.ts";
 
-// Canvas 2D drawing (spec 03, D30). Everything draws into the 640×400 back buffer,
-// which is then blitted to the screen with nearest-neighbor scaling (D31).
+// Canvas 2D drawing. Everything draws into the 640×400 back buffer,
+// which is then blitted to the screen with nearest-neighbor scaling.
 
 export type Ctx = CanvasRenderingContext2D;
 
 const FONT = TEXT_FONT;
 
 
-/** Draws one frame of play into the back buffer, in spec 03 order. */
+/** Draws one frame of play into the back buffer in layer order. */
 export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags) {
   const session = ui.session;
   const world = session.world;
@@ -29,7 +29,7 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
   drawUi(ctx, ui, icons, () => session.text && drawTextBox(ctx, session.text));
 }
 
-/** Blits sprites in the order given (back to front), mirroring flipped ones (D39). Shared with the editor (D93). */
+/** Blits sprites in the order given (back to front), mirroring flipped ones. Shared with the editor. */
 export function drawSprites(ctx: Ctx, list: readonly Drawable[]) {
   for (const d of list) {
     const el = d.image.el;
@@ -60,7 +60,7 @@ export function drawLoading(ctx: Ctx, progress: number) {
   ctx.fillRect(222, 207, Math.round(197 * progress), 5);
 }
 
-/** Copies the back buffer to the screen canvas, letterboxed (spec 03). */
+/** Copies the back buffer to the screen canvas, letterboxed. */
 export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
   screen.imageSmoothingEnabled = false;
   screen.fillStyle = "#000";
@@ -68,7 +68,7 @@ export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
   screen.drawImage(back, v.offsetX, v.offsetY, SCENE_WIDTH * v.scale, SCENE_HEIGHT * v.scale);
 }
 
-/** A `narrate` or `say` box (spec 06, D78). */
+/** A `narrate` or `say` box. */
 function drawTextBox(ctx: Ctx, box: TextBox) {
   ctx.font = FONT;
   const l = layoutTextBox(box, (t) => ctx.measureText(t).width);

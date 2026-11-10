@@ -8,7 +8,7 @@ import { applyStateEdit, stateView } from "../src/model/playtest/state.ts";
 import { m1Project } from "./support/fixtures.ts";
 import { playtestEditor } from "./support/playtest.ts";
 
-// Dialogues in the playtest (spec 11 "Play from this node", spec 12): the D142 scene
+// Dialogues in the playtest ("Play from this node"): the scene
 // context, the event log's dialogue lines with jump-to, and the state panel.
 
 const GARDENER: [number, number] = [560, 300];
@@ -51,7 +51,7 @@ async function withShop(started = true): Promise<Project> {
   };
 }
 
-describe("Play from this node (spec 11, D142)", () => {
+describe("Play from this node", () => {
   it("starts in the scene that starts the dialogue, at the selected node", async () => {
     const { playtest, ws, session, tick, dispose } = await playtestEditor(await withShop());
     expect(playtest.nodeTarget()).toBe(null);
@@ -61,7 +61,7 @@ describe("Play from this node (spec 11, D142)", () => {
     tick();
     expect(session().dialogue).toEqual({ id: "chat", node: "menu" });
     expect(session().choices?.options.map((o) => o.id)).toEqual(["ask", "bye"]);
-    // Restart replays from the node (D142).
+    // Restart replays from the node.
     session().choose("ask");
     playtest.restart();
     tick();
@@ -69,7 +69,7 @@ describe("Play from this node (spec 11, D142)", () => {
     dispose();
   });
 
-  it("uses the game's start when no scene starts it, and is blocked by errors like Play (D38)", async () => {
+  it("uses the game's start when no scene starts it, and is blocked by errors like Play", async () => {
     const p = await withShop(false);
     const { playtest, ws, editor, session, tick, dispose } = await playtestEditor(p);
     ws.select({ kind: "dialogueNode", dialogue: "chat", node: "start" });
@@ -85,12 +85,12 @@ describe("Play from this node (spec 11, D142)", () => {
   });
 });
 
-describe("dialogues in the event log and state panel (spec 12)", () => {
+describe("dialogues in the event log and state panel", () => {
   it("logs lines, options and why some are hidden, choices and the end, each jumping to its node", async () => {
     const { playtest, editor, ws, session, tap, settle, dispose } = await playtestEditor(await withShop());
     playtest.play();
     tap("talk", GARDENER);
-    // The greeting closed by itself (D78); the list box waits.
+    // The greeting closed by itself; the list box waits.
     session().choose("ask");
     settle();
     session().choose("bye");
@@ -115,7 +115,7 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
       "  1 rule for other verbs",
       "  No rule matched",
     ]);
-    // The hidden option's line jumps to its failed condition; jumping selects the node (D121).
+    // The hidden option's line jumps to its failed condition; jumping selects the node.
     const hidden = lines[start + 3]!;
     expect(hidden.jump?.location).toEqual({ file: "dialogues/chat.dialogue.yaml", path: ["nodes", 2, "options", 1, "if", 0] });
     ws.jumpTo(hidden.jump!);
@@ -124,7 +124,7 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
     dispose();
   });
 
-  it("shows the dialogue and once-only options, and edits them live (D130)", async () => {
+  it("shows the dialogue and once-only options, and edits them live", async () => {
     const { playtest, editor, session, tap, dispose } = await playtestEditor(await withShop());
     playtest.play();
     tap("talk", GARDENER);
@@ -143,7 +143,7 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
     dispose();
   });
 
-  it("presets drop once-only choices and dialogue keys the project no longer has (D126)", async () => {
+  it("presets drop once-only choices and dialogue keys the project no longer has", async () => {
     const p = await withShop();
     const { playtest, session, tap, dispose } = await playtestEditor(p);
     playtest.play();
@@ -160,7 +160,7 @@ describe("dialogues in the event log and state panel (spec 12)", () => {
   });
 });
 
-describe("jump-to a dialogue node (D121)", () => {
+describe("jump-to a dialogue node", () => {
   it("opens the graph and selects the node a problem points into", async () => {
     const p = await withShop();
     const jump = locate(p, { file: "dialogues/chat.dialogue.yaml", path: ["nodes", 4, "do", 1, "item"] })!;

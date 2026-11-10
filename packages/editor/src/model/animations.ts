@@ -1,4 +1,4 @@
-// Character animation slots (spec 05, D39, D70) and frame picking (D115). Pure
+// Character animation slots and frame picking. Pure
 // commands from one Project to the next; the character tab calls them through
 // `editor.apply`. What a slot shows comes from the engine's own `resolveAnim`.
 import { resolveAnim, type AnimKind } from "@questforge/engine";
@@ -18,7 +18,7 @@ const findCharacter = (p: Project, id: string): CharacterFile => {
   return c;
 };
 
-/** Rebuilds `animations` in slot order (D54), dropping empty slots. */
+/** Rebuilds `animations` in slot order, dropping empty slots. */
 const ordered = (anims: CharacterFile["animations"]): CharacterFile["animations"] =>
   Object.fromEntries(ANIMATION_SLOTS.flatMap((s) => (anims[s] ? [[s, anims[s]]] : [])));
 
@@ -85,7 +85,7 @@ export function setMirrorLeft(p: Project, characterId: string, mirrorLeft: boole
 export interface SlotView {
   /** The slot's own animation, if it has one. */
   own: Animation | undefined;
-  /** What the engine plays for this kind and facing (spec 05 fallbacks, D39, D70), or null. */
+  /** What the engine plays for this kind and facing (with its fallbacks), or null. */
   shown: { anim: Animation; mirror: boolean; still: boolean; from: AnimationSlot } | null;
 }
 
@@ -108,7 +108,7 @@ export function slotLabel(view: SlotView, slot: AnimationSlot): string {
   return `Empty: uses ${still ? `first frame of ${from}` : from}${mirror ? " (mirrored)" : ""}`;
 }
 
-// ── Frame picking (D115) ─────────────────────────────────────────────────────
+// ── Frame picking ─────────────────────────────────────────────────────
 
 export interface PickMods {
   /** Extend from the anchor (shift-click). */

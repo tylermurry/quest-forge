@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MAX_RECENT, addRecent, parseRecent, removeRecent } from "../src/model/recent.ts";
 import { SANDBOX, sandboxPath } from "../dev/sandbox.ts";
 
-describe("dev sandbox (D91)", () => {
+describe("dev sandbox", () => {
   it("only resolves folders inside the sandbox", () => {
     expect(sandboxPath("garden")).toBe(`${SANDBOX}/garden`);
     expect(() => sandboxPath("../../engine/fixtures/m1")).toThrow(/Outside/);
@@ -11,7 +11,7 @@ describe("dev sandbox (D91)", () => {
   });
 });
 
-describe("recent projects (D87)", () => {
+describe("recent projects", () => {
   const r = (root: string, t = 0) => ({ root, title: root, openedAt: t });
   it("moves a reopened project to the top, keeping 10", () => {
     let list = Array.from({ length: 12 }, (_, i) => r(`p${i}`)).reduce(addRecent, []);

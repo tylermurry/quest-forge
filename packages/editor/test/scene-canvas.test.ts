@@ -3,7 +3,7 @@ import { layerRows } from "../src/model/scene/things.ts";
 import { sceneEditor, sizedImages } from "./support/scene.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-describe("scene canvas controller (spec 09)", () => {
+describe("scene canvas controller", () => {
   it("pans with space-drag and the middle button, and zooms with a pinch around the pointer", async () => {
     const { c, at, dispose } = await sceneEditor();
     c.setSpace(true);
@@ -55,7 +55,7 @@ describe("scene canvas controller (spec 09)", () => {
     dispose();
   });
 
-  it("lists each layer's contents, objects and characters together in draw order (D95, D103)", async () => {
+  it("lists each layer's contents, objects and characters together in draw order", async () => {
     const p = await m1Project();
     const garden = p.scenes.find((s) => s.data.id === "garden")!.data;
     const rows = layerRows(garden, sizedImages(p));

@@ -1,6 +1,6 @@
 import type { Rect } from "../sprite.ts";
 
-// Built-in placeholder icons (D77), drawn with Canvas paths so projects need no UI
+// Built-in placeholder icons, drawn with Canvas paths so projects need no UI
 // art. Each draws into a square `r`, in a 16×16 design grid scaled to fit.
 
 export type IconId = "walk" | "look" | "hand" | "talk" | "inventory" | "settings";

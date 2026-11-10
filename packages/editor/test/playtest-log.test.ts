@@ -4,7 +4,7 @@ import { formatLog, type LogLine } from "../src/model/playtest/log.ts";
 import { m1Project } from "./support/fixtures.ts";
 import { playtestEditor } from "./support/playtest.ts";
 
-// The event log (spec 12, D129, D132): which rule fired, why the others didn't,
+// The event log: which rule fired, why the others didn't,
 // default responses, actions, scene changes and stub notes, with jump-to.
 
 const DOOR: [number, number] = [90, 320];
@@ -34,7 +34,7 @@ async function withDoor(): Promise<Project> {
 
 const texts = (lines: LogLine[]) => lines.map((l) => `${"  ".repeat(l.depth)}${l.text}`);
 
-describe("spec 12 acceptance: why 'use key on door' did nothing", () => {
+describe("playtest acceptance: why 'use key on door' did nothing", () => {
   it("names the rule and its failed condition, and that line jumps to the condition", async () => {
     const { playtest, editor, ws, session, tap, dispose } = await playtestEditor(await withDoor());
     playtest.play();
@@ -90,7 +90,7 @@ describe("event log lines", () => {
     dispose();
   });
 
-  it("logs sounds as actions (spec 07)", async () => {
+  it("logs sounds as actions", async () => {
     const p = await withDoor();
     const garden = p.scenes.find((s) => s.data.id === "garden")!;
     const door = garden.data.hotspots.find((h) => h.id === "door")!;
@@ -100,7 +100,7 @@ describe("event log lines", () => {
     playtest.play();
     tap("look", DOOR);
     const log = texts(formatLog(playtest.events, playtest.run!.project, editor.project));
-    // Sounds play for real since M8: the log shows the action, no stub note.
+    // Sounds play for real: the log shows the action, no stub note.
     expect(log).toContain("  Play sound creak");
     expect(log.some((l) => l.includes("M8"))).toBe(false);
     dispose();

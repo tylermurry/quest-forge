@@ -1,4 +1,4 @@
-// Importing files from the OS into assets/ (spec 08, D88). The bytes wait in
+// Importing files from the OS into assets/. The bytes wait in
 // pendingFiles until the next save, so an import is one undoable step.
 import { SCHEMA_VERSION, SECTION_ROOTS, definedIds, type Project } from "@questforge/schema";
 import { slugify, uniqueId } from "./commands.ts";

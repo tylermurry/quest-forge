@@ -38,8 +38,8 @@ async function mount() {
 
 const garden = (ed: Editor) => ed.project.scenes.find((s) => s.data.id === "garden")!.data as SceneFile;
 
-describe("workspace (D89, D103)", () => {
-  it("opens a scene with its Layers panel; deleting a hotspot with rules is undone by Cmd+Z (spec 08 acceptance)", async () => {
+describe("workspace", () => {
+  it("opens a scene with its Layers panel; deleting a hotspot with rules is undone by Cmd+Z", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     expect(screen.getByRole("tab", { name: "Garden" })).toBeTruthy();
@@ -100,11 +100,11 @@ describe("workspace (D89, D103)", () => {
     const first = within(list).getAllByRole("button").find((b) => !b.hasAttribute("disabled") && b.textContent?.includes("Garden"))!;
     fireEvent.click(first);
     expect(screen.getByRole("tab", { name: "Garden" }).getAttribute("aria-selected")).toBe("true");
-    // It selects the exact hotspot or object whose rule uses the item, not just the scene (D120).
+    // It selects the exact hotspot or object whose rule uses the item, not just the scene.
     expect(screen.getByLabelText("Inspector").textContent).not.toContain("Select something");
   });
 
-  it("the Problems panel filters by severity, with counts (D120)", async () => {
+  it("the Problems panel filters by severity, with counts", async () => {
     const ed = await mount();
     ed.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "stick") }));
     act(() => ed.validateNow());

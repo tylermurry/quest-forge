@@ -2,7 +2,7 @@ import type { GameFile } from "@questforge/schema";
 import { readState } from "./restore.ts";
 import { cloneState, type GameState } from "./state.ts";
 
-// Save slots (spec 07, D43, D146): 10 named slots kept in key-value storage
+// Save slots: 10 named slots kept in key-value storage
 // (localStorage in the browser). One storage entry per game ID holds every slot;
 // each slot remembers the game version it was made with, so a newer version of
 // the game still lists and loads it (IDs that are gone are dropped on load).
@@ -26,9 +26,9 @@ export interface SaveSlot {
   state: GameState;
 }
 
-/** Storage key for a game's slots (D146). */
+/** Storage key for a game's slots. */
 export const savesKey = (gameId: string) => `questforge/${gameId}/saves`;
-/** Storage key for a game's player settings (volume, D150). */
+/** Storage key for a game's player settings (volume). */
 export const settingsKey = (gameId: string) => `questforge/${gameId}/settings`;
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -119,7 +119,7 @@ export class SaveSlots {
   }
 }
 
-/** Player settings that outlive a game (D150): volumes 0–10. Not game state. */
+/** Player settings that outlive a game: volumes 0–10. Not game state. */
 export interface PlayerSettings {
   music: number;
   sfx: number;

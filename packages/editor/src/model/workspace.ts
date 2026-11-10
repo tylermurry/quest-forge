@@ -1,5 +1,5 @@
-// Editor UI state (spec 08 layout): open tabs, selection, expanded folders, search.
-// Not game data and never undone (D84). DOM-free; React subscribes to it.
+// Editor UI state: open tabs, selection, expanded folders, search.
+// Not game data and never undone. DOM-free; React subscribes to it.
 import type { Location, Project } from "@questforge/schema";
 import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
 import type { Jump } from "./locate.ts";
@@ -16,13 +16,13 @@ export type Selection =
   | { kind: "entry"; section: Section; id: string }
   | { kind: "folder"; section: Section; path: string }
   | { kind: "sceneThing"; scene: string; list: ThingList; key: string }
-  /** Game-level rules and default responses (spec 10). */
+  /** Game-level rules and default responses. */
   | { kind: "game" }
-  /** A node on a dialogue graph (spec 11). */
+  /** A node on a dialogue graph. */
   | { kind: "dialogueNode"; dialogue: string; node: string }
   | null;
 
-/** The spot a jump-to points at, which the Inspector scrolls to and flashes (D120). `seq` changes on every jump. */
+/** The spot a jump-to points at, which the Inspector scrolls to and flashes. `seq` changes on every jump. */
 export interface Highlight {
   location: Location;
   seq: number;
@@ -43,19 +43,19 @@ export class WorkspaceState {
   expanded = new Set<string>();
   collapsedSections = new Set<Section>();
   search = "";
-  /** A field the Inspector should focus next (e.g. a new hotspot's name, D99); it clears it. */
+  /** A field the Inspector should focus next (e.g. a new hotspot's name); it clears it. */
   focusRequest: string | null = null;
-  /** The Inspector's tab for things with rules (D125). Kept while the selection changes. */
+  /** The Inspector's tab for things with rules. Kept while the selection changes. */
   inspectorTab: "details" | "rules" = "details";
-  /** A rule action's point waiting for a click on its scene's canvas (D124). */
+  /** A rule action's point waiting for a click on its scene's canvas. */
   pointPick: (PointPick & { restore: Selection }) | null = null;
-  /** The last jump-to's spot (D120); cleared once the Inspector has shown it. */
+  /** The last jump-to's spot; cleared once the Inspector has shown it. */
   highlight: Highlight | null = null;
-  /** Bumped when something asks to show the Problems dock (e.g. Play blocked by errors, D38); the Workspace expands it. */
+  /** Bumped when something asks to show the Problems dock (e.g. Play blocked by errors); the Workspace expands it. */
   dockRequest = 0;
   /** Bumped by every jump-to so the Workspace shows the Inspector before the spot is highlighted. */
   inspectorRequest = 0;
-  /** Per-scene canvas state: layers, tool, zoom (D101). Has its own subscription. */
+  /** Per-scene canvas state: layers, tool, zoom. Has its own subscription. */
   readonly sceneUi = new SceneUiStore();
 
   private _version = 0;
@@ -72,7 +72,7 @@ export class WorkspaceState {
     for (const l of this.listeners) l();
   }
 
-  /** Opens (or focuses) an entry's tab (spec 08: double-click opens it in a tab). */
+  /** Opens (or focuses) an entry's tab (double-click opens it in a tab). */
   open(ref: EntryRef) {
     if (!this.tabs.some((t) => refKey(t) === refKey(ref))) this.tabs = [...this.tabs, ref];
     this.active = refKey(ref);
@@ -132,7 +132,7 @@ export class WorkspaceState {
     this.changed();
   }
 
-  /** Jump-to from a problem (spec 14, D120): opens and selects the exact thing, then highlights the spot. */
+  /** Jump-to from a problem: opens and selects the exact thing, then highlights the spot. */
   jumpTo({ target, location }: Jump, tone: FlashTone = "problem") {
     this.inspectorRequest++;
     switch (target.kind) {
@@ -153,12 +153,12 @@ export class WorkspaceState {
         this.selection = { kind: "game" };
         break;
       case "dialogueNode":
-        // The graph selects the node, and the Inspector edits it (D121).
+        // The graph selects the node, and the Inspector edits it.
         this.open({ section: "dialogue", id: target.dialogue });
         this.selection = { kind: "dialogueNode", dialogue: target.dialogue, node: target.node };
         break;
     }
-    // A problem inside a rule opens the Rules tab; anything else, Details (D125).
+    // A problem inside a rule opens the Rules tab; anything else, Details.
     this.inspectorTab = location.path.includes("rules") ? "rules" : "details";
     this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1, tone };
     this.changed();
@@ -184,7 +184,7 @@ export class WorkspaceState {
     this.changed();
   }
 
-  /** Highlights a spot without changing the selection, e.g. "Set by rule N" (D118). */
+  /** Highlights a spot without changing the selection, e.g. "Set by rule N". */
   flash(location: Location) {
     this.highlight = { location, seq: (this.highlight?.seq ?? 0) + 1, tone: "problem" };
     this.changed();

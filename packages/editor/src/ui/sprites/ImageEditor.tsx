@@ -22,9 +22,9 @@ import { NumberField } from "../NumberField.tsx";
 import { useCanvasImages } from "../scene/images.ts";
 import { drawSheet, drawSpriteFrame, prepare } from "./draw.ts";
 
-// The image tab (D114): slice a spritesheet by rows × columns or by frame size, and
+// The image tab: slice a spritesheet by rows × columns or by frame size, and
 // click in a frame preview to set the origin (the feet). Every change is one undo
-// step through Editor.apply; typing in a field merges until blur (D84).
+// step through Editor.apply; typing in a field merges until blur.
 
 const SHEET_BOX = { w: 560, h: 440 };
 const FRAME_BOX = { w: 220, h: 260 };

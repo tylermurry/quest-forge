@@ -5,7 +5,7 @@ import { facingFor, frameAt, frameRect, frameSize, originOf, resolveAnim, sheetF
 const sheet: ImageAsset = { id: "hero_sheet", path: "assets/images/hero.png", sheet: { columns: 8, rows: 4, cellWidth: 32, cellHeight: 48 } };
 const size = { w: 256, h: 192 };
 
-describe("spritesheet slicing (D66)", () => {
+describe("spritesheet slicing", () => {
   it("cuts an 8×4 sheet into cells counted row by row", () => {
     expect(frameRect(sheet, size, 0)).toEqual({ x: 0, y: 0, w: 32, h: 48 });
     expect(frameRect(sheet, size, 7)).toEqual({ x: 224, y: 0, w: 32, h: 48 });
@@ -69,7 +69,7 @@ describe("facing from movement", () => {
   });
 });
 
-describe("animation slots (spec 05, D39)", () => {
+describe("animation slots", () => {
   const a = (frames: number[]): Animation => ({ image: "hero_sheet", frames, fps: 8, loop: true });
   const hero: Pick<CharacterFile, "animations" | "mirrorLeft"> = {
     mirrorLeft: true,
@@ -88,7 +88,7 @@ describe("animation slots (spec 05, D39)", () => {
     const own = { mirrorLeft: false, animations: { ...hero.animations, walk_left: a([12, 13]) } };
     expect(resolveAnim(own, "walk", "left")).toEqual({ anim: a([12, 13]), mirror: false, still: false });
   });
-  it("falls back to facing down when a direction has nothing (D70)", () => {
+  it("falls back to facing down when a direction has nothing", () => {
     expect(resolveAnim(hero, "walk", "up")!.anim.frames).toEqual([0, 1, 2, 3]);
     expect(resolveAnim({ mirrorLeft: false, animations: {} }, "idle", "up")).toBe(null);
   });

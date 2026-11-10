@@ -2,7 +2,7 @@ import type { Action, AnyRule, Condition, DialogueNode, Trigger } from "@questfo
 import type { DialogueEndReason, OptionVerdict } from "./dialogue.ts";
 import type { RuleOwner } from "./rules.ts";
 
-// Playtest event log hooks (spec 12, D129). The editor passes a `Trace` callback to
+// Playtest event log hooks. The editor passes a `Trace` callback to
 // `Session`; the exported game passes none, so no events are built. Events are plain
 // data: the editor turns them into plain English with the rule-card wording.
 
@@ -39,7 +39,7 @@ export type TraceEvent =
   | { type: "dialogue_choice"; dialogue: string; node: string; option: string }
   /** A Branch: true or false, and the first failed condition. */
   | { type: "dialogue_branch"; dialogue: string; node: string; result: boolean; failed?: { index: number; condition: Condition } }
-  /** The dialogue stopped (D141). */
+  /** The dialogue stopped. */
   | { type: "dialogue_end"; dialogue: string; reason: DialogueEndReason };
 
 export type Trace = (event: TraceEvent) => void;

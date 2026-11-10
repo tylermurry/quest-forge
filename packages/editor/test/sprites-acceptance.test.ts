@@ -23,7 +23,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((d) => rm(d, { recursive: true, force: true })));
 });
 
-describe("spec 05 acceptance", () => {
+describe("sprites and animation acceptance", () => {
   it("imports, slices and assigns walk cycles in a dozen actions; mirrored left keeps the origin", async () => {
     const dir = await mkdtemp(join(tmpdir(), "questforge-m4b-"));
     dirs.push(dir);
@@ -71,7 +71,7 @@ describe("spec 05 acceptance", () => {
     expect(reloaded.problems).toEqual([]);
     expect(reloaded.project.characters.find((c) => c.data.id === "player")!.data).toEqual(player());
 
-    // The game walks left with the right row mirrored around the origin (D39).
+    // The game walks left with the right row mirrored around the origin.
     const images = (id: string): LoadedImage | undefined => {
       const asset = reloaded.project.assets?.data.images.find((i) => i.id === id);
       return asset ? { asset, size: id === "hero_walk" ? size : { w: 640, h: 400 } } : undefined;

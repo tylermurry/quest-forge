@@ -1,13 +1,13 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 
-// Player UI layout (spec 06, D76): every control is at least 44 CSS px after
+// Player UI layout: every control is at least 44 CSS px after
 // scaling. The UI draws in the 640×400 back buffer, so sizes are computed from how
 // many CSS px one scene px covers right now. Pure; tested in Node.
 
 /** Spec 06 minimum hit size. */
 export const MIN_HIT_CSS = 44;
-/** Design size of a control in scene px when the screen is big enough (D76). */
+/** Design size of a control in scene px when the screen is big enough. */
 const DESIGN_UNIT = 32;
 const GAP = 4;
 
@@ -34,15 +34,15 @@ export interface Layout {
   barButtons: Button<BarButtonId>[];
   /** Right edge of the score text, vertically centered in the bar. */
   score: { x: number; y: number };
-  /** Touch tab (D79): drawn small, hit area full size. */
+  /** Touch tab: drawn small, hit area full size. */
   tab: { hit: Rect; visual: Rect };
   inventory: { panel: Rect; cells: Rect[]; buttons: Button<InventoryButtonId>[] };
   settings: { panel: Rect; buttons: Button<SettingsButtonId>[] };
-  /** Save / load list (D149): slot rows on one page, then Save or Load, More…, Cancel. */
+  /** Save / load list: slot rows on one page, then Save or Load, More…, Cancel. */
   slots: { panel: Rect; rows: Rect[]; perPage: number; pages: number; buttons: Button<SlotsButtonId>[] };
-  /** Music and sound-effect volume (D150): a bar between − and + for each. */
+  /** Music and sound-effect volume: a bar between − and + for each. */
   volume: { panel: Rect; music: Rect; sfx: Rect; labelX: number; buttons: Button<VolumeButtonId>[] };
-  /** The death / win box (spec 07): message, then Restore · Restart · Try again (death only). */
+  /** The death / win box: message, then Restore · Restart · Try again (death only). */
   ending: { panel: Rect; message: Rect; buttons: Button<EndingButtonId>[]; win: Button<EndingButtonId>[] };
   /** Short notices ("Game saved."), at the bottom centre. */
   notice: { x: number; y: number };
@@ -108,7 +108,7 @@ export function computeLayout(cssScale: number): Layout {
     });
   }
 
-  // Save / load slots: two columns of rows, paged when they don't all fit (D149).
+  // Save / load slots: two columns of rows, paged when they don't all fit.
   const slotCount = 10;
   const slotsW = Math.min(SCENE_WIDTH - GAP * 4, 600);
   const rowsFit = Math.max(1, Math.floor((SCENE_HEIGHT - GAP * 4 - title - pad * 3 - u + GAP) / (u + GAP)));
@@ -143,7 +143,7 @@ export function computeLayout(cssScale: number): Layout {
     ...row(["ok"] as const, volPanel, volPanel.y + volPanel.h - pad - u, Math.max(u * 2, 64), u),
   ];
 
-  // Ending (spec 07): message area, then a row of buttons.
+  // Ending: message area, then a row of buttons.
   const eBtnW = Math.max(Math.round(u * 2.5), 100);
   const ePanel = centered(Math.max(380, eBtnW * 3 + GAP * 2 + pad * 2), 120 + u);
   const eBtnY = ePanel.y + ePanel.h - pad - u;
@@ -175,7 +175,7 @@ export function hitButton<Id extends string>(buttons: readonly Button<Id>[], p: 
   return buttons.find((b) => inRect(p, b.rect))?.id ?? null;
 }
 
-/** The dialogue list box (spec 06, D76, D143): one full-width row per option, at least 44 CSS px tall. */
+/** The dialogue list box: one full-width row per option, at least 44 CSS px tall. */
 export interface ChoiceBox {
   panel: Rect;
   /** One per option shown on this page, top to bottom. */

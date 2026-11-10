@@ -45,7 +45,7 @@ describe("reference index", () => {
   });
 });
 
-describe("rename (spec 01 acceptance)", () => {
+describe("rename", () => {
   it("renaming an item ID updates every referencing rule across the project", async () => {
     const { fs } = await fixtureCopy();
     const { project } = await loadProject(fs);
@@ -116,7 +116,7 @@ describe("rename (spec 01 acceptance)", () => {
   });
 });
 
-describe("renameSceneId (M4 Inspector)", () => {
+describe("renameSceneId (scene Inspector)", () => {
   it("renames an object and every { scene, object } reference to it", async () => {
     const project = await load();
     const before = collectReferences(project).filter((r) => r.kind === "object" && r.id === "boulder").length;
@@ -145,7 +145,7 @@ describe("renameSceneId (M4 Inspector)", () => {
   });
 });
 
-describe("references inside dialogue nodes (M7)", () => {
+describe("references inside dialogue nodes", () => {
   /** The fixture's dialogue, plus a branch on a flag and a counter and an animated line. */
   const withGraph = async () => {
     const p = structuredClone(await load());
@@ -205,7 +205,7 @@ describe("references inside dialogue nodes (M7)", () => {
     expect(validateProject(p).filter((x) => x.severity === "error")).toEqual([]);
   });
 
-  it("deleting what a node uses leaves an error at that node (spec 14)", async () => {
+  it("deleting what a node uses leaves an error at that node", async () => {
     const p = await withGraph();
     p.characters = p.characters.filter((c) => c.data.id !== "shopkeeper");
     p.flags!.data.flags = p.flags!.data.flags.filter((f) => f.id !== "talked_to_villager");

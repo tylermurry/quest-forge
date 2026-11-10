@@ -22,7 +22,7 @@ async function problemsAfter(edit: (p: Project) => void): Promise<Problem[]> {
   edit(project);
   return validateProject(project);
 }
-/** Only the blocking errors: the spec 14 error tests ignore warnings, which have their own tests. */
+/** Only the blocking errors: the error tests ignore warnings, which have their own tests. */
 const errorsAfter = async (edit: (p: Project) => void) => (await problemsAfter(edit)).filter((p) => p.severity === "error");
 const scene = (p: Project, id: string) => p.scenes.find((s) => s.data.id === id)!.data;
 const summary = (ps: Problem[]) => ps.map((p) => ({ code: p.code, file: p.location.file, path: p.location.path.join("."), text: formatProblem(p) }));
@@ -33,8 +33,8 @@ describe("the fixture project", () => {
   });
 });
 
-describe("spec 14 errors", () => {
-  it("missing reference, with a did-you-mean (spec 14 message style)", async () => {
+describe("blocking errors", () => {
+  it("missing reference, with a did-you-mean", async () => {
     const problems = await errorsAfter((p) => {
       p.items.find((i) => i.data.id === "lantern")!.data.id = "golden_key";
       scene(p, "beach").hotspots[0]!.rules[1]!.when = { type: "use_item", item: "gold_key" };
@@ -148,7 +148,7 @@ describe("spec 14 errors", () => {
     ]);
   });
 
-  it("invalid polygon: a hole that sticks out of the walkable outline (D100)", async () => {
+  it("invalid polygon: a hole that sticks out of the walkable outline", async () => {
     const out = await errorsAfter((p) => {
       scene(p, "beach").walkable.holes[0] = [[300, 200], [360, 200], [360, 340], [300, 340]];
     });
@@ -203,7 +203,7 @@ describe("spec 14 errors", () => {
   });
 });
 
-describe("spec 14 acceptance: deleting an item used in 3 places", () => {
+describe("validation acceptance: deleting an item used in 3 places", () => {
   it("produces 3 problems, each jumping to the correct spot", async () => {
     const problems = await problemsAfter((p) => {
       p.items = p.items.filter((i) => i.data.id !== "coin");

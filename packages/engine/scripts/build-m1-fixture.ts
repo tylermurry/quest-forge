@@ -1,17 +1,17 @@
-// Builds the hand-written engine fixture (spec 15 note, D68): the project files in
+// Builds the hand-written engine fixture: the project files in
 // canonical form plus procedurally drawn placeholder PNGs. Internal test data only;
-// not a user path (D13). Run: `corepack pnpm --filter @questforge/engine fixture`.
+// not a user path. Run: `corepack pnpm --filter @questforge/engine fixture`.
 //
-// M2 puzzle chain (exercises spec 02): Hand the flowerpot → stick. Walk east into
+// Puzzle chain (exercises the rule vocabulary): Hand the flowerpot → stick. Walk east into
 // the shed (region exit), take the string. Combine stick + string → fishing rod.
 // Use the rod on the pond → fish. Talk to the gardener while holding the fish
 // (gated rule) → a sequence that rolls the boulder away and opens the ledge.
 //
-// M7 shop (spec 11 acceptance): Hand the workbench → a coin. Talk to the visitor in
+// Shop: Hand the workbench → a coin. Talk to the visitor in
 // the shed → the shop dialogue: a once-only question, buying the lantern only while
 // you have the coin, and a loop back to the menu.
 //
-// M8 (spec 07): each scene has its own music loop, picking things up plays a
+// each scene has its own music loop, picking things up plays a
 // sound, and grabbing the saw in the shed is a death (Restore · Restart · Try again).
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -416,7 +416,7 @@ const npc = (id: string, name: string) =>
     textColor: "#88cc88",
     walkSpeed: 60,
     mirrorLeft: true,
-    // Idle only: talk/walk slots fall back (spec 05).
+    // Idle only: talk/walk slots fall back.
     animations: { idle_down: anim("gardener_sheet", [0, 0, 0, 1], 2) },
   });
 
@@ -458,7 +458,7 @@ const garden = SceneFile.parse(withRuleIds({
       visible: true,
       rules: [
         look("The gardener is busy pulling weeds."),
-        // Gated on the fish: the M2 end-to-end sequence.
+        // Gated on the fish: the end-to-end puzzle sequence.
         rule({ type: "talk" }, [
           say("gardener", "A fish! For my supper? You're too kind."),
           { type: "take_item", item: "fish" },
@@ -552,7 +552,7 @@ const shed = SceneFile.parse(withRuleIds({
   ],
   hotspots: [
     { id: "window", name: "window", shape: [[260, 60], [380, 60], [380, 140], [260, 140]], walkTo: { x: 320, y: 270, facing: "up" }, rules: [look("Sunlight and cobwebs.")] },
-    // A death (spec 07): Restore · Restart · Try again.
+    // A death: Restore · Restart · Try again.
     {
       id: "saw",
       name: "saw",
@@ -565,7 +565,7 @@ const shed = SceneFile.parse(withRuleIds({
   rules: [rule({ type: "scene_enter" }, [narrate("A cramped garden shed. It smells of soil and oil.")], [{ type: "first_time" }])],
 }));
 
-// The visitor's shop (spec 11 acceptance), laid out left to right like auto-layout.
+// The visitor's shop, laid out left to right like auto-layout.
 const option = (id: string, text: string, next: string, extra: Raw = {}) => ({ id, text, if: [], once: false, next, ...extra });
 const shop = DialogueFile.parse({
   schemaVersion: SCHEMA_VERSION,
@@ -591,7 +591,7 @@ const shop = DialogueFile.parse({
   ],
 });
 
-// 15 objects and 3 characters for the spec 03 frame-rate check.
+// 15 objects and 3 characters for the frame-rate check.
 const stressObjects = Array.from({ length: 15 }, (_, i) => {
   const kind = (["rock", "boulder", "palm"] as const)[i % 3]!;
   const col = i % 5;

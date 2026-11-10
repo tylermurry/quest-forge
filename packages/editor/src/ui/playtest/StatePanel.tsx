@@ -19,7 +19,7 @@ function Section({ title, children, extra }: { title: string; children: React.Re
   );
 }
 
-/** The live game state beside the game (spec 12, D130). Edits apply at once and are never undone. */
+/** The live game state beside the game. Edits apply at once and are never undone. */
 export function StatePanel({ playtest, project, footer }: { playtest: Playtest; project: Project; footer?: React.ReactNode }) {
   usePlaytest(playtest);
   const session = playtest.session;

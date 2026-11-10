@@ -4,7 +4,7 @@ import type { Project } from "./project.ts";
 import type { Action, AnyRule, Condition } from "./rules.ts";
 import type { SceneFile } from "./scene.ts";
 
-// Spec 14 warnings (D122) and the empty-text error (D119). Warnings never block
+// Spec 14 warnings and the empty-text error. Warnings never block
 // playtest or export; they point at things that are probably mistakes.
 
 /** Where validate.ts collects problems. `crumbPath` defaults to the parent of `path`. */
@@ -66,7 +66,7 @@ export function logicBlocks(project: Project): LogicBlock[] {
 const actionsOf = (blocks: LogicBlock[]) => blocks.flatMap((b) => b.actions.map((x) => ({ ...x, block: b })));
 const conditionsOf = (blocks: LogicBlock[]) => blocks.flatMap((b) => b.conditions.map((x) => ({ ...x, block: b })));
 
-/** Narration, lines and death messages need words (D119). */
+/** Narration, lines and death messages need words. */
 function checkEmptyText(project: Project, blocks: LogicBlock[], out: Report) {
   const names = new Map(project.characters.map((c) => [c.data.id, c.data.name]));
   for (const { a, path, block } of actionsOf(blocks)) {
@@ -76,7 +76,7 @@ function checkEmptyText(project: Project, blocks: LogicBlock[], out: Report) {
   }
 }
 
-/** Scenes the player can never get to from the start scene (D122). */
+/** Scenes the player can never get to from the start scene. */
 function checkReachableScenes(project: Project, blocks: LogicBlock[], out: Report) {
   const start = project.game?.data.startScene;
   const ids = new Set(project.scenes.map((s) => s.data.id));
@@ -135,9 +135,9 @@ function checkFlagsUsed(project: Project, blocks: LogicBlock[], out: Report) {
 const NODE_NOUN: Record<string, string> = { start: "Start", line: "Line", choices: "Choices", actions: "Actions", branch: "Branch", end: "End" };
 
 /**
- * Dialogue graph warnings (spec 14, D122, D140): nodes Start can't reach, Choices with no
+ * Dialogue graph warnings: nodes Start can't reach, Choices with no
  * options, ports that lead nowhere (the dialogue just ends there) and loops with no
- * Line or Choices. Empty line and option text is an error (D119, D138).
+ * Line or Choices. Empty line and option text is an error.
  */
 function checkDialogueNodes(project: Project, out: Report) {
   for (const { path, data } of project.dialogues) {
@@ -178,7 +178,7 @@ function checkHotspotRules(project: Project, out: Report) {
   }
 }
 
-/** Each award ID counts once (spec 07), so the total is per unique ID. */
+/** Each award ID counts once, so the total is per unique ID. */
 function checkAwards(project: Project, blocks: LogicBlock[], out: Report) {
   const points = new Map<string, number>();
   for (const { a, path, block } of actionsOf(blocks)) {
@@ -218,7 +218,7 @@ export function checkLogic(project: Project, out: Report) {
 }
 
 /**
- * What all awards add up to, each award ID counted once (spec 07). With mismatched
+ * What all awards add up to, each award ID counted once. With mismatched
  * points for one ID the largest counts; the mismatch is a warning of its own.
  */
 export function awardTotal(project: Project, blocks = logicBlocks(project)): { total: number; awards: number } {

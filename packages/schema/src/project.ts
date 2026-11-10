@@ -30,23 +30,23 @@ export interface Project {
   items: Doc<ItemFile>[];
   characters: Doc<CharacterFile>[];
   dialogues: Doc<DialogueFile>[];
-  /** Browser folders inside the section roots, e.g. `scenes/act1` (D83). Sorted. */
+  /** Browser folders inside the section roots, e.g. `scenes/act1`. Sorted. */
   folders: string[];
-  /** Imported files not yet written, keyed by path. Written on save if `assets.yaml` still uses them (D88). */
+  /** Imported files not yet written, keyed by path. Written on save if `assets.yaml` still uses them. */
   pendingFiles: Record<string, Uint8Array>;
   // Disk state: what is on disk as of the last load or save. Undo history keeps
-  // the fields above and carries these over from the current project (D84).
+  // the fields above and carries these over from the current project.
   /** Every file on disk (used to check that asset files exist). */
   files: string[];
   /** Text of each file as last loaded or saved; `planSave` diffs against it. */
   saved: Record<string, string>;
   /** `folders` as last loaded or saved. */
   savedFolders: string[];
-  /** Asset paths whose file the editor moved into `.editor/trash` this session (D88). */
+  /** Asset paths whose file the editor moved into `.editor/trash` this session. */
   trash: string[];
 }
 
-/** Where deleted image and audio files wait so undo can bring them back (D88). */
+/** Where deleted image and audio files wait so undo can bring them back. */
 export const TRASH_DIR = ".editor/trash";
 
 export const SCHEMAS = {
@@ -61,7 +61,7 @@ export const SCHEMAS = {
 
 export const ROOT_FILES = { game: "game.yaml", flags: "flags.yaml", assets: "assets.yaml" } as const;
 
-/** Section folder and file suffix per asset kind (spec 01). */
+/** Section folder and file suffix per asset kind. */
 export const ASSET_LAYOUT = {
   scene: { dir: "scenes", suffix: ".scene.yaml", list: "scenes" },
   item: { dir: "items", suffix: ".item.yaml", list: "items" },
@@ -71,7 +71,7 @@ export const ASSET_LAYOUT = {
 
 type ListKey = (typeof ASSET_LAYOUT)[AssetKind]["list"];
 
-/** Kinds that live in a browser section made of real folders (D83). */
+/** Kinds that live in a browser section made of real folders. */
 export type FolderSection = AssetKind | "image" | "audio";
 
 /** The folder each section's folders live under. */
@@ -216,12 +216,12 @@ export function* allDocs(project: Project): Generator<{ kind: FileKind; doc: Doc
 export interface SavePlan {
   /** New folders to create. Parents first. */
   makeFolders: string[];
-  /** Folders that get a `.keep` file because they'll be empty (D83). */
+  /** Folders that get a `.keep` file because they'll be empty. */
   keeps: string[];
   writes: { path: string; content: string }[];
-  /** Imported files to write (D88). */
+  /** Imported files to write. */
   binaryWrites: { path: string; bytes: Uint8Array }[];
-  /** Image/audio files that follow `assets.yaml`: moved, sent to trash, or restored (D88). */
+  /** Image/audio files that follow `assets.yaml`: moved, sent to trash, or restored. */
   moves: { from: string; to: string }[];
   deletes: string[];
   /** Folders that were removed from the project. Deepest first; only removed once empty. */
@@ -242,7 +242,7 @@ export const isEmptyPlan = (plan: SavePlan) =>
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
 /**
- * How image and audio files follow `assets.yaml` (D88). Compares the manifest as
+ * How image and audio files follow `assets.yaml`. Compares the manifest as
  * last saved with the current one: an entry whose file isn't on disk gets it from
  * its old path (same ID, else same file name), from the pending imports, or back
  * from the trash; files no entry uses any more go to the trash.
@@ -323,7 +323,7 @@ export function planSave(project: Project): SavePlan {
   const deletes = Object.keys(project.saved).filter((p) => !current.has(p)).sort();
   const folders = new Set(project.folders);
   const savedFolders = new Set(project.savedFolders);
-  // A folder needs a `.keep` when it's new, or when its last file or sub-folder leaves (D83).
+  // A folder needs a `.keep` when it's new, or when its last file or sub-folder leaves.
   const nowPaths = [...current, ...assetEntries(project.assets?.data).map((e) => e.path)];
   const beforePaths = [...Object.keys(project.saved), ...project.files];
   const isEmpty = (f: string, paths: string[], dirs: string[]) =>
@@ -406,7 +406,7 @@ export function withFolder(project: Project, folder: string): Project {
   return add.length ? { ...project, folders: [...project.folders, ...add].sort() } : project;
 }
 
-/** Moves an asset to another folder. Only its file path changes (D22). */
+/** Moves an asset to another folder. Only its file path changes. */
 export function moveAsset(project: Project, kind: AssetKind, id: string, folder: string): Project {
   const list = ASSET_LAYOUT[kind].list as ListKey;
   const docs = project[list] as Doc<{ id: string }>[];

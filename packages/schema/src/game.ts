@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Id, Text, schemaVersion } from "./common.ts";
 import { GameRule } from "./rules.ts";
 
-/** Reply when no rule matches a verb (D40). */
+/** Reply when no rule matches a verb. */
 export const DefaultResponses = z.strictObject({
   look: Text,
   hand: Text,
@@ -11,12 +11,12 @@ export const DefaultResponses = z.strictObject({
   combine: Text,
 });
 
-/** `game.yaml` (D58). */
+/** `game.yaml`. */
 export const GameFile = z.strictObject({
   schemaVersion,
   id: Id,
   title: Text,
-  /** Bumped on export; save slots are keyed by game id + version (spec 07). */
+  /** Bumped on export; save slots are keyed by game id + version. */
   version: z.int().positive(),
   startScene: Id,
   startSpawn: Id,

@@ -1,7 +1,7 @@
 import type { Animation, CharacterFile, Facing, ImageAsset } from "@questforge/schema";
 import type { Vec } from "./vec.ts";
 
-// Sprites and animation (spec 05, D39, D66).
+// Sprites and animation.
 
 export interface Size {
   w: number;
@@ -19,7 +19,7 @@ export interface Rect {
 export const frameSize = (img: ImageAsset, imageSize: Size): Size =>
   img.sheet ? { w: img.sheet.cellWidth, h: img.sheet.cellHeight } : imageSize;
 
-/** Source rectangle of a frame; cells are counted row by row from the top-left (D66). */
+/** Source rectangle of a frame; cells are counted row by row from the top-left. */
 export function frameRect(img: ImageAsset, imageSize: Size, frame: number): Rect {
   if (!img.sheet) return { x: 0, y: 0, w: imageSize.w, h: imageSize.h };
   const { columns, cellWidth, cellHeight } = img.sheet;
@@ -34,19 +34,19 @@ export const sheetFits = (img: ImageAsset, imageSize: Size) =>
 export const sheetProblem = (img: ImageAsset, imageSize: Size): string | null =>
   sheetFits(img, imageSize) ? null : `Image ${img.id}: its sheet is larger than the ${imageSize.w}×${imageSize.h} image.`;
 
-/** The feet point inside a frame; bottom-center unless set (spec 05). */
+/** The feet point inside a frame; bottom-center unless set. */
 export const originOf = (img: ImageAsset, frame: Size): Vec => (img.origin ? img.origin : [frame.w / 2, frame.h]);
 
 /**
  * Where a frame lands on screen so its origin sits on `feet`, at `scale`. A mirrored
- * frame flips around the origin, so the feet stay put (D39).
+ * frame flips around the origin, so the feet stay put.
  */
 export function spriteRect(feet: Vec, origin: Vec, frame: Size, scale: number, mirror: boolean): Rect {
   const ox = mirror ? frame.w - origin[0] : origin[0];
   return { x: feet[0] - ox * scale, y: feet[1] - origin[1] * scale, w: frame.w * scale, h: frame.h * scale };
 }
 
-/** The frame index to show `elapsed` seconds into an animation (objects' loops pass `loop: true`, D111). */
+/** The frame index to show `elapsed` seconds into an animation (objects' loops pass `loop: true`). */
 export function frameAt(anim: Pick<Animation, "frames" | "fps" | "loop">, elapsed: number): number {
   const n = anim.frames.length;
   const step = Math.floor(Math.max(0, elapsed) * anim.fps + 1e-9);
@@ -72,9 +72,9 @@ export interface ResolvedAnim {
 }
 
 /**
- * The animation to play for a kind and facing (spec 05). Missing slots fall back
+ * The animation to play for a kind and facing. Missing slots fall back
  * talk → idle → first frame of walk. A left slot uses the mirrored right slot when the
- * character says so (D39). A direction with nothing at all falls back to facing down (D70).
+ * character says so. A direction with nothing at all falls back to facing down.
  */
 export function resolveAnim(character: Pick<CharacterFile, "animations" | "mirrorLeft">, kind: AnimKind, facing: Facing): ResolvedAnim | null {
   const inDir = (dir: Facing): ResolvedAnim | null => {

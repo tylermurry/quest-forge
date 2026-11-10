@@ -7,8 +7,8 @@ import type { PlayerUi } from "./controller.ts";
 import { drawIcon, type IconId } from "./icons.ts";
 import { TEXT_FONT, TEXT_LINE, wrap } from "./textbox.ts";
 
-// Draws the player UI (spec 06) into the back buffer: icon bar, touch tab,
-// inventory, settings, the ending box, labels and the cursor (D76, D77, D79, D80).
+// Draws the player UI into the back buffer: icon bar, touch tab,
+// inventory, settings, the ending box, labels and the cursor.
 
 type Ctx = CanvasRenderingContext2D;
 /** Decoded image for an image asset ID (item icons). */
@@ -90,7 +90,7 @@ function fit(ctx: Ctx, text: string, width: number): string {
   return `${t.trimEnd()}…`;
 }
 
-/** The dialogue list box (spec 06, D143): the options the player can pick. */
+/** The dialogue list box: the options the player can pick. */
 function drawChoices(ctx: Ctx, ui: PlayerUi) {
   const box = ui.choiceBox;
   const list = ui.session.choices;
@@ -149,7 +149,7 @@ function drawBar(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined)
     if (b.id === "item") itemIcon(ctx, itemImg, b.rect);
     else drawIcon(ctx, b.id as IconId, inset(b.rect, 0.18), active ? "#000" : EDGE);
   }
-  // Score (D71); hidden if a very large unit leaves no room for it.
+  // Score; hidden if a very large unit leaves no room for it.
   const text = `Score: ${score(s.state)} of ${s.game.maxScore}`;
   ctx.font = TEXT_FONT;
   const last = L.barButtons.at(-1)!.rect;
@@ -214,7 +214,7 @@ function drawSettings(ctx: Ctx, ui: PlayerUi) {
 
 const ENDING_TEXT: Record<string, string> = { restore: "Restore", restart: "Restart", try_again: "Try again" };
 
-/** The Sierra death box (spec 07): message, then Restore · Restart · Try again. A win offers Restore · Restart. */
+/** The Sierra death box: message, then Restore · Restart · Try again. A win offers Restore · Restart. */
 function drawEnding(ctx: Ctx, ui: PlayerUi, s: Session, L: PlayerUi["layout"]["ending"]) {
   const e = s.ending!;
   panel(ctx, L.panel, e.kind === "die" ? "You have died" : "You won!");
@@ -246,7 +246,7 @@ const savedAt = (ms: number) => {
   }
 };
 
-/** The save / load list (D149): numbered slots, the picked one highlighted. */
+/** The save / load list: numbered slots, the picked one highlighted. */
 function drawSlots(ctx: Ctx, ui: PlayerUi) {
   const L = ui.layout.slots;
   const saving = ui.panel === "save";
@@ -286,7 +286,7 @@ function drawSlots(ctx: Ctx, ui: PlayerUi) {
   }
 }
 
-/** Music and sound-effect volume (D150). */
+/** Music and sound-effect volume. */
 function drawVolume(ctx: Ctx, ui: PlayerUi) {
   const L = ui.layout.volume;
   panel(ctx, L.panel, "Volume");
@@ -335,7 +335,7 @@ function drawLabel(ctx: Ctx, text: string, at: readonly [number, number]) {
   ctx.fillText(text, x + 4, y + h / 2 + 0.5);
 }
 
-/** Drawn cursor (D77): the active verb's icon centered on the pointer, or the item. */
+/** Drawn cursor: the active verb's icon centered on the pointer, or the item. */
 function drawCursor(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined) {
   const [x, y] = ui.cursor!;
   const r: Rect = { x: Math.round(x) - 8, y: Math.round(y) - 8, w: 16, h: 16 };

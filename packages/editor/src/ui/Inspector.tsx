@@ -12,7 +12,7 @@ import { TextField } from "./TextField.tsx";
 
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase first-of-type:mt-0";
 
-/** Inspector (D89): what's selected, where it lives, and what uses it. */
+/** Inspector: what's selected, where it lives, and what uses it. */
 export function Inspector({ actions }: { actions: Actions }) {
   const { ws, editor } = actions;
   const p = editor.project;
@@ -128,7 +128,7 @@ function ImagePreview({ path, actions }: { path: string; actions: Actions }) {
   );
 }
 
-/** Listen to an imported sound (spec 07). Shown once the file is saved into the project. */
+/** Listen to an imported sound. Shown once the file is saved into the project. */
 function AudioPreview({ path, actions }: { path: string; actions: Actions }) {
   const url = actions.assetUrl?.(path);
   if (!url || !actions.editor.project.files.includes(path)) return null;

@@ -19,7 +19,7 @@ const LAYERS: { key: keyof DebugFlags; label: string }[] = [
   { key: "path", label: "Path" },
 ];
 
-/** Panel sizes are a per-user preference, kept in the editor's storage (D92). */
+/** Panel sizes are a per-user preference, kept in the editor's storage. */
 function layoutStorage() {
   try {
     return window.localStorage;
@@ -29,7 +29,7 @@ function layoutStorage() {
   }
 }
 
-/** The debug bar: the debug layer toggles (D132). Play controls stay in the title bar. */
+/** The debug bar: the debug layer toggles. Play controls stay in the title bar. */
 function DebugBar({ playtest }: { playtest: Playtest }) {
   usePlaytest(playtest);
   return (
@@ -55,7 +55,7 @@ function DebugBar({ playtest }: { playtest: Playtest }) {
 }
 
 /**
- * The playtest area (spec 12, D133): while a game runs it replaces the scene editor
+ * The playtest area: while a game runs it replaces the scene editor
  * and Problems in the centre. Debug bar on top; state on the left; the game as large
  * as fits; the event log along the bottom.
  */

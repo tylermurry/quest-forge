@@ -1,4 +1,4 @@
-// Recent projects on the start screen (spec 08, D87).
+// Recent projects on the start screen.
 
 export interface RecentProject {
   /** Folder path (absolute in the app, sandbox-relative on the dev page). */

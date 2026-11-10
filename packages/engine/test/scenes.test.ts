@@ -3,7 +3,7 @@ import type { SceneFile } from "@questforge/schema";
 import { Session, linkedScenes, type SceneAssets } from "../src/session.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Multi-scene play (D41, D72, D75): change_scene, scene_enter/exit, regions, visited,
+// Multi-scene play: change_scene, scene_enter/exit, regions, visited,
 // persistence across scenes, loading and prefetch.
 
 type Over = Parameters<typeof testProject>[0];
@@ -104,7 +104,7 @@ describe("walk-into regions and scene changes", () => {
     s.setCharacterPosition("gardener", "shed", { x: 300, y: 350, facing: "down" });
     s.changeScene("shed", "door");
     expect(s.world.actorById("gardener")?.pos).toEqual([300, 350]);
-    // Still in the yard too: placements are per scene (D81).
+    // Still in the yard too: placements are per scene.
     s.changeScene("yard", "default");
     expect(s.world.actorById("gardener")?.pos).toEqual([500, 380]);
   });
@@ -135,7 +135,7 @@ describe("walk-into regions and scene changes", () => {
     expect(s.walkCharacterTo("nobody", 400, 380)).toBeNull();
   });
 
-  it("waits for the next scene's images, and prefetches linked scenes on entry (D75)", () => {
+  it("waits for the next scene's images, and prefetches linked scenes on entry", () => {
     const loaded = new Set(["yard"]);
     const fetched: string[] = [];
     const assets: SceneAssets = { ready: (sc: SceneFile) => loaded.has(sc.id), prefetch: (sc) => fetched.push(sc.id) };
@@ -159,7 +159,7 @@ describe("walk-into regions and scene changes", () => {
     expect(linkedScenes(p.scenes[0]!.data)).toEqual(["shed"]);
   });
 
-  it("the state after multi-scene play survives JSON deep-equal (spec 07)", () => {
+  it("the state after multi-scene play survives JSON deep-equal", () => {
     const s = make({ yard: { regions: [exitRegion()] } });
     s.primaryClick([620, 300]);
     run(s, 8);

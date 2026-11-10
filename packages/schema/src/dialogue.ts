@@ -2,12 +2,12 @@ import { z } from "zod";
 import { CanvasPos, Id, Text, schemaVersion } from "./common.ts";
 import { Action, Condition, RuleText } from "./rules.ts";
 
-// Dialogue graph (spec 11). `next` is null while a port is unconnected.
+// Dialogue graph. `next` is null while a port is unconnected.
 const node = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
   z.strictObject({ id: Id, type: z.literal(type), pos: CanvasPos, ...shape });
 const Next = Id.nullable();
 
-/** A player option. Its text may be `""` while authoring: an error, not a parse failure (D119, D138). */
+/** A player option. Its text may be `""` while authoring: an error, not a parse failure. */
 export const ChoiceOption = z.strictObject({
   id: Id,
   text: RuleText,
@@ -21,7 +21,7 @@ export const DialogueNode = z.discriminatedUnion("type", [
   node("start", { next: Next }),
   /**
    * No `character` means the narrator speaks. `animation` is a slot of the speaker's that
-   * plays while the line shows (D139). Text may be `""` while authoring (D138).
+   * plays while the line shows. Text may be `""` while authoring.
    */
   node("line", { character: Id.optional(), text: RuleText, animation: Id.optional(), next: Next }),
   node("choices", { options: z.array(ChoiceOption) }),
@@ -42,7 +42,7 @@ export const DialogueFile = z.strictObject({
 export type DialogueFile = z.infer<typeof DialogueFile>;
 
 /**
- * One output port of a node (spec 11): `next` on Start, Line and Actions; `then` / `else`
+ * One output port of a node: `next` on Start, Line and Actions; `then` / `else`
  * on Branch; one per option on Choices (`option:<id>`). `path` is relative to the node.
  */
 export interface NodePort {
@@ -89,7 +89,7 @@ export function reachableNodes(d: DialogueFile): Set<string> {
 }
 
 /**
- * Loops that never pass a Line or Choices node, so nothing waits for the player (D140).
+ * Loops that never pass a Line or Choices node, so nothing waits for the player.
  * Each is a list of node IDs in file order; a node that links to itself counts.
  */
 export function silentLoops(d: DialogueFile): string[][] {

@@ -2,7 +2,7 @@ import type { Action, AnyRule, SceneFile } from "@questforge/schema";
 import type { PlayerSettings } from "./saves.ts";
 import { VOLUME_STEPS } from "./saves.ts";
 
-// Audio logic (spec 07, D148): which track should play and which sounds are due,
+// Audio logic: which track should play and which sounds are due,
 // decided from the session; the host's backend (Web Audio in the browser) makes
 // the noise. Pure, so it is tested in Node.
 

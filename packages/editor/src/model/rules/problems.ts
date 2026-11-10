@@ -1,4 +1,4 @@
-// Which rule parts are invalid (spec 10: "invalid rules show inline in red"), and
+// Which rule parts are invalid ("invalid rules show inline in red"), and
 // whether a jump-to highlight points into one. Reuses the Editor's problems; never
 // re-checks anything itself.
 import type { DataPath, Location, Problem } from "@questforge/schema";

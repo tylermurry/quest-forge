@@ -1,5 +1,5 @@
-// Project browser commands (spec 08, D83, D86). Each is a pure function from one
-// immutable Project to the next, so undo is just keeping the old one (D84).
+// Project browser commands. Each is a pure function from one
+// immutable Project to the next, so undo is just keeping the old one.
 import {
   ASSET_LAYOUT,
   CharacterFile,
@@ -47,7 +47,7 @@ export function uniqueId(base: string, taken: Iterable<string>): string {
   }
 }
 
-/** Turns any text into an ID slug (D63), e.g. a file name or a title. */
+/** Turns any text into an ID slug, e.g. a file name or a title. */
 export function slugify(text: string, prefix = "id"): string {
   const slug = text
     .normalize("NFKD")
@@ -108,7 +108,7 @@ function defaultImage(p: Project, hint: RegExp): string {
 function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
   switch (kind) {
     case "scene":
-      // An empty scene: no background, no walkable area yet, a default spawn (D97).
+      // An empty scene: no background, no walkable area yet, a default spawn.
       return SceneFile.parse({
         schemaVersion: SCHEMA_VERSION,
         id,
@@ -162,7 +162,7 @@ export function createFlag(p: Project, name: string, type: "bool" | "counter", f
   return { project, id };
 }
 
-/** A new asset called `name`, its ID made from the name (D123: "+ Create new…" in a picker). */
+/** A new asset called `name`, its ID made from the name ("+ Create new…" in a picker). */
 export function createNamedEntry(p: Project, section: AssetKind, name: string, folder = ""): { project: Project; id: string } {
   if (!name.trim()) throw new CommandError("Type a name first.");
   name = name.trim();
@@ -199,7 +199,7 @@ const withParents = (folder: string) => folder.split("/").map((_, i, segs) => se
 
 /**
  * Moves or renames a folder: everything inside it moves along (only file paths
- * change, D22). `to` is the folder's new path within the section.
+ * change). `to` is the folder's new path within the section.
  */
 export function relocateFolder(p: Project, section: Section, from: string, to: string): Project {
   if (from === to) return p;
@@ -243,7 +243,7 @@ export function relocateFolder(p: Project, section: Section, from: string, to: s
 export const entriesInFolder = (p: Project, section: Section, folder: string) =>
   sectionEntries(p, section).filter((e) => inFolder(e.folder, folder));
 
-/** Deletes a folder and everything in it (after the user confirmed, D86). */
+/** Deletes a folder and everything in it (after the user confirmed). */
 export function deleteFolder(p: Project, section: Section, folder: string): Project {
   if (folder === "") throw new CommandError("The section itself can't be deleted.");
   let next = entriesInFolder(p, section, folder).reduce((acc, e) => deleteEntry(acc, section, e.id), p);
@@ -255,7 +255,7 @@ export function deleteFolder(p: Project, section: Section, folder: string): Proj
 
 // ── Entries ──────────────────────────────────────────────────────────────────
 
-/** Moves an entry to another folder (drag-and-drop, D83). */
+/** Moves an entry to another folder (drag-and-drop). */
 export function moveEntry(p: Project, section: Section, id: string, folder: string): Project {
   if (isAssetKind(section)) {
     findDoc(p, section, id);
@@ -290,7 +290,7 @@ export function moveEntry(p: Project, section: Section, id: string, folder: stri
 const assetPaths = (p: Project) => new Set([...(p.assets?.data.images ?? []), ...(p.assets?.data.audio ?? [])].map((a) => a.path));
 
 /**
- * Renames what the user sees (D86): the display name for scenes, items, characters
+ * Renames what the user sees: the display name for scenes, items, characters
  * and dialogues; the ID for flags, images and sounds, which have no name.
  */
 export function renameEntry(p: Project, section: Section, id: string, name: string): Project {
@@ -299,7 +299,7 @@ export function renameEntry(p: Project, section: Section, id: string, name: stri
   return updateDoc<{ name: string }>(p, section, id, (d) => ({ ...d, name: name.trim() }));
 }
 
-/** "Change ID…" (D86): changes an ID and every reference to it (spec 01). */
+/** "Change ID…": changes an ID and every reference to it. */
 export function changeId(p: Project, section: Section, from: string, to: string): Project {
   if (!ID_PATTERN.test(to) || to.length > MAX_ID) {
     throw new CommandError(`"${to}" can't be an ID. Use lowercase letters, digits and underscores, starting with a letter.`);
@@ -326,7 +326,7 @@ export function entryReferences(p: Project, section: Section, id: string): Refer
   return findReferences(p, REF_KINDS[section][0]!, id);
 }
 
-/** A copy of an asset or flag next to the original (D86). Returns the project and the copy's ID. */
+/** A copy of an asset or flag next to the original. Returns the project and the copy's ID. */
 export function duplicateEntry(p: Project, section: Section, id: string): { project: Project; id: string } {
   if (section === "image" || section === "audio") throw new CommandError("Images and sounds can't be duplicated. Import the file again instead.");
   const copyId = uniqueId(`${id}_copy`, definedIds(p, section));
@@ -348,7 +348,7 @@ export function duplicateEntry(p: Project, section: Section, id: string): { proj
   return { project: withDocs(p, section, [...docs.slice(0, i + 1), copy, ...docs.slice(i + 1)]), id: copyId };
 }
 
-/** In a duplicated scene, references to the original scene point at the copy instead (D86). */
+/** In a duplicated scene, references to the original scene point at the copy instead. */
 function retargetSelf(copy: AnyDoc, from: string, to: string) {
   // `copy` is a scene here (the caller checked the section), but AnyDoc is a union, so TypeScript can't tell.
   const solo: Project = { ...emptyProject(), scenes: [copy as unknown as Doc<SceneFile>] };
@@ -364,7 +364,7 @@ function setAt(root: unknown, path: DataPath, value: unknown) {
   cur[path[path.length - 1]!] = value;
 }
 
-/** Deletes an entry. References to it are left dangling and show as problems (D86). */
+/** Deletes an entry. References to it are left dangling and show as problems. */
 export function deleteEntry(p: Project, section: Section, id: string): Project {
   if (isAssetKind(section)) {
     const doc = findDoc(p, section, id);
@@ -377,7 +377,7 @@ export function deleteEntry(p: Project, section: Section, id: string): Project {
   return { ...setAssets(p, (d) => ({ ...d, [list]: d[list].filter((a) => a.id !== id) })), pendingFiles: pending };
 }
 
-// ── The delete warning (spec 08) ─────────────────────────────────────────────
+// ── The delete warning ─────────────────────────────────────────────
 
 const FILE_NOUN: Record<Reference["fileKind"], [string, string]> = {
   game: ["the game settings", "the game settings"],
@@ -457,7 +457,7 @@ export function folderReferences(p: Project, section: Section, folder: string): 
   return collectReferences(p).filter((r) => kinds.includes(r.kind) && ids.has(r.id));
 }
 
-// ── Inside a scene (the M3 outline, D89) ─────────────────────────────────────
+// ── Inside a scene ─────────────────────────────────────
 
 export type SceneList = "objects" | "characters" | "hotspots" | "regions";
 

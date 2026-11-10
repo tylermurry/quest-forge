@@ -1,4 +1,4 @@
-// Validation problems on the dialogue graph (spec 14): by node for the canvas, and by
+// Validation problems on the dialogue graph: by node for the canvas, and by
 // part (an option, a condition, an action) for the node inspector. DOM-free.
 import type { DataPath, DialogueFile, Problem } from "@questforge/schema";
 import { pathWithin } from "../locate.ts";

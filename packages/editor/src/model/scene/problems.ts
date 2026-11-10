@@ -1,5 +1,5 @@
-// Which things in a scene have validation problems (D100), so the canvas can mark
-// them and the Inspector can explain them, ahead of M5's Problems panel. Reuses
+// Which things in a scene have validation problems, so the canvas can mark
+// them and the Inspector can explain them, alongside the Problems panel. Reuses
 // `validateProject`'s problems; never re-checks anything itself.
 import type { Problem, SceneFile } from "@questforge/schema";
 import { holeKey, type ThingRef } from "./things.ts";

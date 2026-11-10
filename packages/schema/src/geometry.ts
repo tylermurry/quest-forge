@@ -34,7 +34,7 @@ export const doubleArea = (poly: readonly P[]) =>
 
 export type PolygonIssue = "too_few_points" | "self_intersecting" | "no_area";
 
-/** Why a polygon is unusable, or null if it's a simple polygon (spec 14). */
+/** Why a polygon is unusable, or null if it's a simple polygon. */
 export function polygonIssue(poly: Polygon): PolygonIssue | null {
   const n = poly.length;
   if (n < 3) return "too_few_points";

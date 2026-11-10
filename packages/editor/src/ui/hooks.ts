@@ -31,7 +31,7 @@ function inTextField(el: Element | null = document.activeElement): boolean {
   return !!h && (h.tagName === "INPUT" || h.tagName === "TEXTAREA" || h.isContentEditable);
 }
 
-/** True when the event comes from the playtest game, which keeps plain keys to itself (D131). */
+/** True when the event comes from the playtest game, which keeps plain keys to itself. */
 function inPlaytestGame(el: Element | null): boolean {
   return !!el?.closest?.("[data-playtest-game]");
 }

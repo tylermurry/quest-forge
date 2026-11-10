@@ -1,7 +1,7 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 
-// Text boxes (spec 06, D78): `narrate` is a centered Sierra box; `say` sits over the
+// Text boxes: `narrate` is a centered Sierra box; `say` sits over the
 // speaker in their color with their name. Boxes advance on a click/tap or after a
 // time based on length. Layout is pure: the renderer passes a text measurer.
 
@@ -21,7 +21,7 @@ export interface TextBox {
   timeLeft: number;
 }
 
-/** How long a box stays up (D78): 1 s + 0.06 s per character, clamped to 2–10 s. */
+/** How long a box stays up: 1 s + 0.06 s per character, clamped to 2–10 s. */
 export const textDuration = (text: string) => Math.min(10, Math.max(2, 1 + 0.06 * text.length));
 
 export function narrateBox(text: string): TextBox {
@@ -79,7 +79,7 @@ export function layoutTextBox(box: TextBox, measure: Measure): BoxLayout {
     const above = anchor.y - MARGIN - h;
     y = clampY(above >= MARGIN ? above : anchor.y + anchor.h + MARGIN);
   } else {
-    // Centered, a little above the middle (the M1 look box position).
+    // Centered, a little above the middle.
     x = clampX((SCENE_WIDTH - w) / 2);
     y = clampY((SCENE_HEIGHT - h) / 2 - 40);
   }

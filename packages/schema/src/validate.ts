@@ -8,8 +8,8 @@ import type { SceneFile } from "./scene.ts";
 import type { DialogueFile } from "./dialogue.ts";
 import { checkLogic } from "./warnings.ts";
 
-// Validation (spec 14, D38, D57): the errors that block playtest and export, plus
-// the warnings and empty-text errors in warnings.ts (D119, D122).
+// Validation: the errors that block playtest and export, plus
+// the warnings and empty-text errors in warnings.ts.
 
 const KIND_NOUN: Record<RefKind, string> = {
   scene: "scene",
@@ -168,7 +168,7 @@ function checkDuplicates(project: Project, out: Collector) {
     });
   };
 
-  // Asset IDs are unique per type across all files (spec 01).
+  // Asset IDs are unique per type across all files.
   const lists = [
     ["scene", project.scenes],
     ["item", project.items],
@@ -201,7 +201,7 @@ function checkDuplicates(project: Project, out: Collector) {
       out.error("duplicate_id", "scene", path, ["characters", i, "character"], `places ${c.character} in this scene twice.`, ["characters", i]);
     });
   }
-  // Rule IDs are unique within their list, so fired keys stay unique (D117).
+  // Rule IDs are unique within their list, so fired keys stay unique.
   if (project.game) inList("game", project.game.path, ["rules"], project.game.data.rules, "rule in this list");
   for (const { path, data } of project.scenes) {
     inList("scene", path, ["rules"], data.rules, "rule in this list");
@@ -241,7 +241,7 @@ function checkScene(doc: Doc<SceneFile>, out: Collector) {
   }
   data.walkable.holes.forEach((h, i) => {
     const ok = polygon(h, ["walkable", "holes", i], "This hole", ["walkable", "holes", i]);
-    // A hole must sit inside the outline (D100), or walking around it makes no sense.
+    // A hole must sit inside the outline, or walking around it makes no sense.
     if (ok && outerOk && !polygonWithin(h, data.walkable.outer)) {
       out.error("invalid_polygon", "scene", file, ["walkable", "holes", i], "This hole sticks out of the walkable area. Move its points inside the outline.", ["walkable", "holes", i]);
     }
@@ -281,7 +281,7 @@ function checkImageFiles(project: Project, out: Collector) {
   });
 }
 
-/** Frames must exist in their sheet, and origins must sit inside a frame (D66). */
+/** Frames must exist in their sheet, and origins must sit inside a frame. */
 function checkSprites(project: Project, out: Collector) {
   const assets = project.assets;
   if (!assets) return;
@@ -323,7 +323,7 @@ function checkSprites(project: Project, out: Collector) {
   }
 }
 
-/** A flag's folder must be listed in `flags.yaml`, with its parents (D83). Doesn't block play. */
+/** A flag's folder must be listed in `flags.yaml`, with its parents. Doesn't block play. */
 function checkFlagFolders(project: Project, out: Collector) {
   const flags = project.flags;
   if (!flags) return;
@@ -341,7 +341,7 @@ function checkFlagFolders(project: Project, out: Collector) {
   });
 }
 
-/** Errors and warnings in a loaded project (spec 14). Load problems come from `loadProject`. */
+/** Errors and warnings in a loaded project. Load problems come from `loadProject`. */
 export function validateProject(project: Project): Problem[] {
   const out = new Collector(project);
   checkDuplicates(project, out);
@@ -355,10 +355,10 @@ export function validateProject(project: Project): Problem[] {
   return out.problems;
 }
 
-/** True if any problem blocks playtest/export (D38). */
+/** True if any problem blocks playtest/export. */
 export const hasBlockingErrors = (problems: Problem[]) => problems.some((p) => p.severity === "error");
 
-/** Slots `play_animation` can play on a character: filled ones, plus mirrored lefts (D39). */
+/** Slots `play_animation` can play on a character: filled ones, plus mirrored lefts. */
 function playableSlots(c: CharacterFile): Set<string> {
   const slots = new Set(Object.entries(c.animations).flatMap(([slot, a]) => (a ? [slot] : [])));
   if (c.mirrorLeft) for (const s of [...slots]) if (s.endsWith("_right")) slots.add(s.replace(/_right$/, "_left"));

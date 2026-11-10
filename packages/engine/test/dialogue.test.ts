@@ -6,7 +6,7 @@ import { PlayerUi } from "../src/ui/controller.ts";
 import { MIN_HIT_CSS } from "../src/ui/layout.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Dialogues through a headless session (spec 11, spec 06, D136–D143). The gardener
+// Dialogues through a headless session. The gardener
 // runs a little shop: a once-only question, a choice that needs the key (our coin),
 // and a loop back to the main menu.
 
@@ -69,7 +69,7 @@ function untilChoices(s: Session) {
 }
 const options = (s: Session) => s.choices?.options.map((o) => o.id) ?? null;
 
-describe("dialogue graph at runtime (spec 11)", () => {
+describe("dialogue graph at runtime", () => {
   it("shows the speaker's line in their color, then the list box", () => {
     const s = make();
     talk(s);
@@ -110,7 +110,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.state.inventory).toEqual(["rod"]);
   });
 
-  it("End fires dialogue_end, then the rule that started the dialogue goes on (D136)", () => {
+  it("End fires dialogue_end, then the rule that started the dialogue goes on", () => {
     const s = make();
     talk(s);
     untilChoices(s);
@@ -128,7 +128,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.state.fired.some((k) => k.startsWith("game/"))).toBe(true);
   });
 
-  it("an unconnected port ends the dialogue and fires dialogue_end (D141)", () => {
+  it("an unconnected port ends the dialogue and fires dialogue_end", () => {
     const s = make({ dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "hi" }, line("hi", "Hm?", null)] }] });
     talk(s);
     expect(s.text?.text).toBe("Hm?");
@@ -139,7 +139,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.state.flags.open).toBe(true);
   });
 
-  it("a Choices node with every option hidden ends the dialogue (D141)", () => {
+  it("a Choices node with every option hidden ends the dialogue", () => {
     const s = make({
       endRule: null,
       dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], options: [option("buy", "Buy", null, { if: [{ type: "has_item", item: "key" }] })] }] }],
@@ -167,11 +167,11 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.text?.text).toBe("Open, first time.");
     untilChoices(s);
     talk(s);
-    // `first_time` on a Branch is false once it has been passed (D137).
+    // `first_time` on a Branch is false once it has been passed.
     expect(s.text?.text).toBe("Not that.");
   });
 
-  it("stops a loop with no Line or Choices instead of hanging (D140)", () => {
+  it("stops a loop with no Line or Choices instead of hanging", () => {
     const events: TraceEvent[] = [];
     const loop = {
       id: "shop",
@@ -190,7 +190,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.log.at(-1)).toMatch(/came back to count/);
   });
 
-  it("a scene change inside the dialogue cuts it and the rule short (D72, D141)", () => {
+  it("a scene change inside the dialogue cuts it and the rule short", () => {
     const leave = {
       id: "shop",
       nodes: [
@@ -210,7 +210,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.state.flags.open).toBe(false);
   });
 
-  it("a narrator line uses the narrate box; a speaker's animation plays while the line shows (D139)", () => {
+  it("a narrator line uses the narrate box; a speaker's animation plays while the line shows", () => {
     const s = make({
       endRule: null,
       dialogues: [
@@ -237,7 +237,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.busy).toBe(false);
   });
 
-  it("only one dialogue plays at a time (D136)", () => {
+  it("only one dialogue plays at a time", () => {
     const nested = {
       id: "shop",
       nodes: [
@@ -251,7 +251,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.log).toContainEqual(expect.stringMatching(/Ignored starting dialogue shop/));
   });
 
-  it("can start at a given node once the scene is entered (playtest, D142)", () => {
+  it("can start at a given node once the scene is entered (playtest)", () => {
     const s = make({ start: { dialogue: { id: "shop", node: "menu" } } });
     expect(s.busy).toBe(true);
     tick(s);
@@ -262,7 +262,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
     expect(s.dialogue?.node).toBe("menu");
   });
 
-  it("traces nodes, options, choices, branches and the end (D129)", () => {
+  it("traces nodes, options, choices, branches and the end", () => {
     const events: TraceEvent[] = [];
     const s = make({ events });
     talk(s);
@@ -287,7 +287,7 @@ describe("dialogue graph at runtime (spec 11)", () => {
   });
 });
 
-describe("the list box (spec 06, D76, D143)", () => {
+describe("the list box", () => {
   /** A tap on a touch screen at a scene point. */
   const tap = (ui: PlayerUi, p: [number, number]) => {
     ui.pointerDown(p, "touch");

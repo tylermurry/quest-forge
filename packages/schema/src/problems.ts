@@ -1,7 +1,7 @@
 /** A path into a file's data, e.g. `["hotspots", 2, "rules", 1, "when", "item"]`. */
 export type DataPath = (string | number)[];
 
-/** Where a problem is. The editor maps `path` to a selection (jump-to, spec 14). */
+/** Where a problem is. The editor maps `path` to a selection (jump-to). */
 export interface Location {
   file: string;
   path: DataPath;
@@ -25,14 +25,14 @@ export type ProblemCode =
   | "invalid_polygon"
   | "duplicate_id"
   | "missing_image_file"
-  // Sprites (D66)
+  // Sprites
   | "frame_out_of_range"
   | "origin_outside_frame"
-  // Browser folders (D83)
+  // Browser folders
   | "missing_folder"
-  // Rule text (D119)
+  // Rule text
   | "empty_text"
-  // Spec 14 warnings (D122)
+  // Spec 14 warnings
   | "scene_unreachable"
   | "scene_no_background"
   | "item_never_given"
@@ -40,7 +40,7 @@ export type ProblemCode =
   | "flag_never_read"
   | "flag_never_set"
   | "dialogue_node_unreachable"
-  // Dialogue graph (D140)
+  // Dialogue graph
   | "dialogue_no_options"
   | "dialogue_dead_end"
   | "dialogue_silent_loop"

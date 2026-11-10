@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { defaultSlotImage, patchSlot, pickFrames, rowFrames, setMirrorLeft, setSlot, slotLabel, slotView } from "../src/model/animations.ts";
 import { errorsIn, m1Project } from "./support/fixtures.ts";
 
-// Character animation slots (spec 05, D39, D70, D115).
+// Character animation slots.
 
 const char = (p: Project, id: string) => p.characters.find((c) => c.data.id === id)!.data as CharacterFile;
 const img = (p: Project, id: string) => p.assets!.data.images.find((i) => i.id === id)!;
@@ -66,7 +66,7 @@ describe("what a slot shows (engine fallbacks)", () => {
     expect(slotLabel(slotView(c, "walk_down"), "walk_down")).toBe("2 frames · 8 fps");
   });
 
-  it("shows a mirrored right walk for an empty left slot (D39)", () => {
+  it("shows a mirrored right walk for an empty left slot", () => {
     const v = slotView(c, "walk_left");
     expect(v.shown).toMatchObject({ mirror: true, from: "walk_right" });
     expect(slotLabel(v, "walk_left")).toBe("Mirrors walk_right");
@@ -80,7 +80,7 @@ describe("what a slot shows (engine fallbacks)", () => {
     expect(slotLabel(slotView(noRight, "walk_left"), "walk_left")).toBe("Not used: left mirrors right");
   });
 
-  it("explains the talk → idle → walk fallback and facing-down fallback (D70)", () => {
+  it("explains the talk → idle → walk fallback and facing-down fallback", () => {
     expect(slotLabel(slotView(c, "talk_down"), "talk_down")).toBe("Empty: uses idle_down");
     expect(slotLabel(slotView(c, "idle_right"), "idle_right")).toBe("Empty: uses first frame of walk_right");
     expect(slotLabel(slotView(c, "walk_up"), "walk_up")).toBe("Empty: uses walk_down");
@@ -89,7 +89,7 @@ describe("what a slot shows (engine fallbacks)", () => {
   });
 });
 
-describe("frame picking (D115)", () => {
+describe("frame picking", () => {
   it("picks one frame, a shift range either way, or toggles with Cmd/Ctrl", () => {
     expect(pickFrames([1, 2], 5)).toEqual([5]);
     expect(pickFrames([8], 11, { range: true }, 8)).toEqual([8, 9, 10, 11]);

@@ -11,7 +11,7 @@ function emptyWalkable(): Project {
   return p;
 }
 
-describe("Polygon tool (spec 09, D104)", () => {
+describe("Polygon tool", () => {
   it("click adds points; nothing enters history until the shape closes; then outline, then holes", async () => {
     const { c, editor, scene, click, dispose } = await sceneEditor(emptyWalkable(), "first_scene");
     c.setLayer("walkable");
@@ -65,7 +65,7 @@ describe("Polygon tool (spec 09, D104)", () => {
     dispose();
   });
 
-  it("shows the closing edge red when closing would cross itself (D100)", async () => {
+  it("shows the closing edge red when closing would cross itself", async () => {
     const { c, at, click, dispose } = await sceneEditor(emptyWalkable(), "first_scene");
     c.setLayer("walkable");
     c.setTool("polygon");
@@ -79,7 +79,7 @@ describe("Polygon tool (spec 09, D104)", () => {
     dispose();
   });
 
-  it("makes new hotspots and regions with unique default names and IDs, asking for a name (D99)", async () => {
+  it("makes new hotspots and regions with unique default names and IDs, asking for a name", async () => {
     const { c, ws, scene, click, dispose } = await sceneEditor();
     c.setLayer("hotspots");
     c.setTool("polygon");
@@ -126,7 +126,7 @@ describe("Polygon tool (spec 09, D104)", () => {
   });
 });
 
-describe("Rectangle tool (spec 09)", () => {
+describe("Rectangle tool", () => {
   it("drags out a 4-point polygon as one step", async () => {
     const { c, editor, scene, drag, dispose } = await sceneEditor(emptyWalkable(), "first_scene");
     c.setLayer("walkable");

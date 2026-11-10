@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FixedStep, fitViewport, toDevice, toScene } from "../src/viewport.ts";
 
-describe("fitViewport (spec 03, D31)", () => {
+describe("fitViewport", () => {
   it.each([
     [640, 400, 1, 0, 0],
     [1280, 800, 2, 0, 0],
@@ -19,7 +19,7 @@ describe("fitViewport (spec 03, D31)", () => {
     expect(v.offsetY).toBe(200); // letterboxed top and bottom
   });
 
-  it("fill scales fractionally above 1× too, still letterboxed (playtest window, D135)", () => {
+  it("fill scales fractionally above 1× too, still letterboxed (playtest window)", () => {
     const v = fitViewport(1000, 560, 1, true);
     expect(v.scale).toBeCloseTo(1.4);
     expect(v.offsetX).toBe(52);
@@ -60,7 +60,7 @@ describe("toScene: clicks map to the right scene pixel at all scales", () => {
   });
 });
 
-describe("FixedStep (60 Hz logic, spec 03)", () => {
+describe("FixedStep (60 Hz logic)", () => {
   it("ticks at a fixed rate regardless of frame timing", () => {
     let ticks = 0;
     const loop = new FixedStep(() => ticks++);
@@ -90,7 +90,7 @@ describe("FixedStep (60 Hz logic, spec 03)", () => {
   });
 });
 
-describe("high-DPI screens (D82)", () => {
+describe("high-DPI screens", () => {
   it("chooses the integer multiple in CSS px", () => {
     // iPhone 14 landscape: 844×390 CSS at 2× → fractional fit, not 1 device px per scene px.
     const v = fitViewport(1688, 780, 2);

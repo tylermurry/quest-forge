@@ -37,7 +37,7 @@ export const NOUN: Record<Section, string> = {
   audio: "sound",
 };
 
-/** What a delete would break, for the confirm dialog (spec 08). Null: nothing uses it. */
+/** What a delete would break, for the confirm dialog. Null: nothing uses it. */
 export interface DeleteWarning {
   title: string;
   summary: string;
@@ -127,7 +127,7 @@ export class Actions {
     return ok;
   }
 
-  /** Inline rename: the display name, or the ID for flags/images/sounds (D86). */
+  /** Inline rename: the display name, or the ID for flags/images/sounds. */
   rename(section: Section, id: string, name: string): boolean {
     const ok = this.quietly(() => this.editor.apply(`Rename ${NOUN[section]}`, (p) => renameEntry(p, section, id, name)));
     if (ok && !isAssetKind(section)) this.ws.renamed(section, id, name);
@@ -183,7 +183,7 @@ export class Actions {
     return this.editor.apply("Delete folder", (p) => deleteFolder(p, section, path));
   }
 
-  /** Imports files dropped from the OS (D88) as one undo step. Refused files get a notice. */
+  /** Imports files dropped from the OS as one undo step. Refused files get a notice. */
   importFiles(section: Section, folder: string, files: ImportFile[]): number {
     let refused: string[] = [];
     let count = 0;
@@ -210,7 +210,7 @@ export class Actions {
     return count;
   }
 
-  // ── Scene outline (D89) ────────────────────────────────────────────────────
+  // ── Scene outline ────────────────────────────────────────────────────
 
   sceneThingWarning(scene: string, kind: "object" | "spawn", id: string): DeleteWarning | null {
     const refs = sceneThingReferences(this.project, scene, kind, id);

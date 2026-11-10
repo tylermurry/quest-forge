@@ -1,4 +1,4 @@
-// Hide all side panels (Ctrl+\, D134): the first press hides the project browser,
+// Hide all side panels (Ctrl+\): the first press hides the project browser,
 // the inspector and the Problems dock; the next shows the ones that were showing.
 
 export type PanelName = "browser" | "inspector" | "dock";

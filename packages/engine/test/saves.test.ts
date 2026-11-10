@@ -9,7 +9,7 @@ import { fitViewport } from "../src/viewport.ts";
 import type { Vec } from "../src/vec.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Spec 07 (M8): save / load, death with Restore · Restart · Try again, scene music.
+// Spec 07: save / load, death with Restore · Restart · Try again, scene music.
 
 const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
 const tap = (ui: PlayerUi, p: Vec) => {
@@ -79,7 +79,7 @@ function toShed(s: Session) {
   expect(s.scene.id).toBe("shed");
 }
 
-describe("save slots (spec 07, D146)", () => {
+describe("save slots", () => {
   it("has 10 empty slots; saves survive a new SaveSlots on the same storage", () => {
     const store = new MemoryStore();
     const game = { id: "t", version: 1 };
@@ -113,7 +113,7 @@ describe("save slots (spec 07, D146)", () => {
   });
 });
 
-describe("save and load (spec 07 acceptance)", () => {
+describe("save and load", () => {
   it("save in a later scene, reload the page, load: identical state", () => {
     const { s, ui, store } = play(adventure());
     toShed(s);
@@ -185,7 +185,7 @@ describe("save and load (spec 07 acceptance)", () => {
   });
 });
 
-describe("death (spec 07)", () => {
+describe("death", () => {
   it("Try again returns to the scene-entry state and re-runs the scene's enter rule", () => {
     const { s, ui } = play(adventure());
     toShed(s);
@@ -240,7 +240,7 @@ describe("death (spec 07)", () => {
   });
 });
 
-describe("volume (D150)", () => {
+describe("volume", () => {
   it("− and + step 0–10, are stored per game, and reach the audio", () => {
     const store = new MemoryStore();
     const seen: number[] = [];
@@ -269,7 +269,7 @@ describe("volume (D150)", () => {
   });
 });
 
-describe("audio (spec 07, D148)", () => {
+describe("audio", () => {
   class FakeAudio implements AudioBackend {
     calls: string[] = [];
     prefetch() {}

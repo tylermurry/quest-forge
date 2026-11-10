@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "./components/ui/input.tsx";
 import { Label } from "./components/ui/label.tsx";
 
-/** Delete warning with Cancel / Delete anyway (spec 08, D86). */
+/** Delete warning with Cancel / Delete anyway. */
 export function ConfirmDelete({ warning, onConfirm, onCancel }: { warning: DeleteWarning; onConfirm(): void; onCancel(): void }) {
   return (
     <AlertDialog open onOpenChange={(open) => !open && onCancel()}>

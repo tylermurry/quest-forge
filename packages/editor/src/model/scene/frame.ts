@@ -18,19 +18,19 @@ export interface Frame {
   ui: SceneUi;
   t: Transform;
   images: ImageLookup;
-  /** Objects, placed characters and the ghost, back to front (D35, D105). */
+  /** Objects, placed characters and the ghost, back to front. */
   sprites: Sprite[];
   selection: ThingRef | null;
-  /** `list:key` of things with validation errors (D100). */
+  /** `list:key` of things with validation errors. */
   invalid: Set<string>;
-  /** A polygon being drawn (not in history yet, D84). */
+  /** A polygon being drawn (not in history yet). */
   drawing: { points: Point[]; cursor: Point | null; closeInvalid: boolean } | null;
-  /** The vertex or edge point the cursor snapped to (D102). */
+  /** The vertex or edge point the cursor snapped to. */
   snap: Point | null;
-  /** The cursor, when the ghost stands somewhere else (D105). */
+  /** The cursor, when the ghost stands somewhere else. */
   crosshair: Vec | null;
-  /** Path preview from the default spawn (spec 09). */
+  /** Path preview from the default spawn. */
   path: Vec[] | null;
-  /** The ghost when the player has no usable animation: a box at the right scale (D96). */
+  /** The ghost when the player has no usable animation: a box at the right scale. */
   ghostBox: { x: number; y: number; w: number; h: number } | null;
 }

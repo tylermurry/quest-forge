@@ -10,7 +10,7 @@ import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
 import { m1Copy, m1Project } from "./support/fixtures.ts";
 
-// Play controls in the title bar and the playtest area (D133): only what applies
+// Play controls in the title bar and the playtest area: only what applies
 // shows, related actions sit behind split buttons, and the game replaces the scene editor.
 
 afterEach(() => {
@@ -48,7 +48,7 @@ async function mount(opts: { valid?: boolean } = {}) {
 
 const nextFrame = () => act(() => new Promise((r) => requestAnimationFrame(() => r(undefined))));
 
-describe("play controls (D133)", () => {
+describe("play controls", () => {
   it("shows Play while stopped, with From here (disabled without a scene) and presets behind the split", async () => {
     await mount();
     const controls = screen.getByRole("toolbar", { name: "Play controls" });
@@ -63,7 +63,7 @@ describe("play controls (D133)", () => {
     expect(screen.getByText(/No presets yet/)).toBeTruthy();
   });
 
-  it("Play with errors opens Problems and stays in the editor (D38)", async () => {
+  it("Play with errors opens Problems and stays in the editor", async () => {
     const { registry, editor } = await mount();
     const notice = vi.spyOn(editor, "showNotice");
     act(() => void registry.run("play.start"));

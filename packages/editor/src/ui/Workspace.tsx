@@ -31,7 +31,7 @@ interface Props {
   onClose(): void;
 }
 
-/** Panel sizes are a per-user preference, kept in the webview's storage (D92). */
+/** Panel sizes are a per-user preference, kept in the webview's storage. */
 function layoutStorage() {
   try {
     return window.localStorage;
@@ -43,7 +43,7 @@ function layoutStorage() {
 
 function SaveStatus({ editor }: { editor: Editor }) {
   const s = editor.status;
-  if (s.state === "saved") return null; // a save shows a toast instead (D145)
+  if (s.state === "saved") return null; // a save shows a toast instead
   const icon = {
     unsaved: <span className="bg-muted-foreground size-2 rounded-full" />,
     saving: <LoaderCircle className="size-3.5 animate-spin" />,
@@ -73,7 +73,7 @@ function IconButton({ label, onClick, disabled, active, className, children }: {
   );
 }
 
-/** Main layout (spec 08): browser · tabs · inspector · dock, each resizable (D92). */
+/** Main layout: browser · tabs · inspector · dock, each resizable. */
 export function Workspace({ root, editor, onClose }: Props) {
   const registry = useCommands();
   const ed = useEditor(editor);
@@ -83,12 +83,12 @@ export function Workspace({ root, editor, onClose }: Props) {
   useSyncExternalStore(ws.subscribe, () => ws.version);
   const [playtest] = useState(() => new Playtest(editor, ws));
   useEffect(() => () => playtest.stop(), [playtest]);
-  // Presets live in .editor/presets.json (D126).
+  // Presets live in .editor/presets.json.
   useEffect(() => {
     void playtest.presets.attach(ed.host.fs);
     return () => playtest.presets.detach();
   }, [playtest, ed]);
-  // Build Game (D153) reads asset files through the same URLs the canvas uses.
+  // Build Game reads asset files through the same URLs the canvas uses.
   const [builder] = useState(
     () =>
       new GameBuilder(editor, ws, {
@@ -118,7 +118,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     setTick((t) => t + 1);
   };
   const shown = (p: React.RefObject<PanelImperativeHandle | null>) => !(p.current?.isCollapsed() ?? false);
-  // Ctrl+\ hides every panel, then brings back the ones that were up (D134).
+  // Ctrl+\ hides every panel, then brings back the ones that were up.
   const hiddenPanels = useRef<PanelName[] | null>(null);
   const toggleAll = () => {
     const refs = { browser, inspector, dock };
@@ -135,7 +135,7 @@ export function Workspace({ root, editor, onClose }: Props) {
   };
 
   // While a game runs, the playtest area replaces the scene editor and the browser and
-  // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up (D133).
+  // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up.
   const playing = useSyncExternalStore(playtest.subscribe, () => playtest.playing);
   const hiddenForPlay = useRef<("browser" | "inspector")[] | null>(null);
   useEffect(() => {
@@ -160,7 +160,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     ed.dismissNotice();
   }, [ed, ed.notice]);
 
-  // Edit and View menu commands (D92); the registry refreshes menus when the editor changes.
+  // Edit and View menu commands; the registry refreshes menus when the editor changes.
   const panels = useRef({ browser, inspector, dock, toggle, toggleAll, shown });
   panels.current = { browser, inspector, dock, toggle, toggleAll, shown };
   useEffect(() => {
@@ -185,7 +185,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     };
   }, [ed, registry]);
 
-  // File ▸ Build Game (D153). Errors and failures arrive as notices; success is a toast.
+  // File ▸ Build Game. Errors and failures arrive as notices; success is a toast.
   useEffect(
     () =>
       registry.register({
@@ -200,7 +200,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     [builder, registry],
   );
 
-  // Play menu (spec 12, D131).
+  // Play menu.
   useEffect(() => {
     const off = registry.register({
       "play.start": { run: () => playtest.play() },
@@ -223,7 +223,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     };
   }, [playtest, ws, registry]);
 
-  // Something asked to show the Problems dock (Play blocked by errors, D38).
+  // Something asked to show the Problems dock (Play blocked by errors).
   const dockRequest = ws.dockRequest;
   useEffect(() => {
     if (dockRequest > 0 && dock.current?.isCollapsed()) dock.current.expand();
@@ -238,7 +238,7 @@ export function Workspace({ root, editor, onClose }: Props) {
     }
   }, [inspectorRequest]);
 
-  // Scene canvas view state lives in .editor/view.json (D101).
+  // Scene canvas view state lives in .editor/view.json.
   useEffect(() => {
     void ws.sceneUi.attach(ed.host.fs);
     return () => ws.sceneUi.detach();
@@ -254,7 +254,7 @@ export function Workspace({ root, editor, onClose }: Props) {
 
   return (
     <TooltipProvider delayDuration={500}>
-    {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases (D92). */}
+    {/* One drag context for the whole workspace: browser rows drop on folders and on scene canvases. */}
     <CanvasImagesContext.Provider value={images}>
     <DndContext sensors={sensors} collisionDetection={pointerWithin}>
     <div className="flex h-full flex-col">

@@ -6,12 +6,12 @@ import { applyStateEdit } from "../src/model/playtest/state.ts";
 import { m1Project } from "./support/fixtures.ts";
 import { playtestEditor } from "./support/playtest.ts";
 
-// State presets (spec 12, D126): saved per project in .editor/presets.json;
+// State presets: saved per project in .editor/presets.json;
 // stale IDs are dropped with a notice, never a crash.
 
 const GARDENER: [number, number] = [560, 312];
 
-describe("spec 12 acceptance: a late puzzle from a preset", () => {
+describe("playtest acceptance: a late puzzle from a preset", () => {
   it("saves 'Before gardener', then starts from it and solves the gated puzzle in under 5 seconds", async () => {
     const { playtest, editor, fs, session, tap, dispose } = await playtestEditor();
     await playtest.presets.attach(fs);
@@ -44,7 +44,7 @@ describe("spec 12 acceptance: a late puzzle from a preset", () => {
   });
 });
 
-describe("presets file (D126)", () => {
+describe("presets file", () => {
   it("saves, replaces by name and removes", async () => {
     const fs = new MemoryFs();
     const p = await m1Project();
@@ -94,7 +94,7 @@ describe("presets file (D126)", () => {
   });
 });
 
-describe("stale IDs (D126)", () => {
+describe("stale IDs", () => {
   const playing = async () => {
     const t = await playtestEditor();
     t.playtest.play();

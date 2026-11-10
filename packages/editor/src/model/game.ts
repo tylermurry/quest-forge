@@ -1,5 +1,5 @@
-// Game settings the Game inspector edits (spec 10): default verb responses (D40),
-// the max score (spec 07) and where play starts. Pure Project → Project commands.
+// Game settings the Game inspector edits: default verb responses,
+// the max score and where play starts. Pure Project → Project commands.
 import type { GameFile, Project } from "@questforge/schema";
 import { CommandError } from "./commands.ts";
 

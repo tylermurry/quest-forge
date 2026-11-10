@@ -1,4 +1,4 @@
-// Which installer to offer (D156). Pure, so it's tested in Node.
+// Which installer to offer. Pure, so it's tested in Node.
 
 export type OS = "mac" | "windows" | "linux" | "mobile" | "unknown";
 type DesktopOS = "mac" | "windows" | "linux";

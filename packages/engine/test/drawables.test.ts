@@ -10,7 +10,7 @@ const hero = p.characters.find((c) => c.data.id === "hero")!.data;
 const gardener = p.characters.find((c) => c.data.id === "gardener")!.data;
 const chars = new Map(p.characters.map((c) => [c.data.id, c.data]));
 
-describe("shared scene draw list (D93)", () => {
+describe("shared scene draw list", () => {
   it("matches what the playing World draws", () => {
     const world = new World(yard, chars, testImages, { player: "hero", spawn: { x: 100, y: 380, facing: "up" } });
     const actors = [...world.npcs, world.player];
@@ -39,7 +39,7 @@ describe("shared scene draw list (D93)", () => {
   });
 });
 
-describe("scenes without a background (D97)", () => {
+describe("scenes without a background", () => {
   it("need only their sprites' images and still play", async () => {
     const { sceneImageIds } = await import("../src/game.ts");
     const { Session } = await import("../src/session.ts");

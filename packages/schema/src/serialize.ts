@@ -1,7 +1,7 @@
 import { Document, isScalar, visit } from "yaml";
 
 /**
- * The canonical YAML writer (D54). Every project file the editor writes goes
+ * The canonical YAML writer. Every project file the editor writes goes
  * through here, so a file the editor wrote loads and saves byte-identically.
  *
  * Callers must pass schema-parsed data: zod emits keys in schema order, and

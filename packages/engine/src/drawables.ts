@@ -3,8 +3,8 @@ import { objectBaseline, scaleAt, sortByBaseline } from "./depth.ts";
 import { frameAt, frameRect, frameSize, originOf, resolveAnim, spriteRect, type AnimKind, type Rect, type Size } from "./sprite.ts";
 import type { Vec } from "./vec.ts";
 
-// The sprites of a scene in draw order (spec 04, D35). Shared by the playing World
-// and the editor canvas (D93), so the editor draws exactly what the engine draws.
+// The sprites of a scene in draw order. Shared by the playing World
+// and the editor canvas, so the editor draws exactly what the engine draws.
 // Pure: no DOM.
 
 export interface LoadedImage {
@@ -41,13 +41,13 @@ export interface ActorPose {
   kind: AnimKind;
   /** Seconds since the current animation started. */
   animTime: number;
-  /** A slot played by `play_animation` (D71). */
+  /** A slot played by `play_animation`. */
   special?: { anim: Animation; mirror: boolean; time: number } | null;
 }
 
 type SceneObject = SceneFile["objects"][number];
 
-/** Where an object's animations are (D111, D112). */
+/** Where an object's animations are. */
 export interface ObjectPose {
   /** Seconds the object's looping animation has run. */
   time: number;
@@ -55,7 +55,7 @@ export interface ObjectPose {
   oneShot?: { anim: ObjectAnimation; time: number } | null;
 }
 
-/** Size of an object's rest frame: frame 0 of its image (the whole image when unsliced, D112). */
+/** Size of an object's rest frame: frame 0 of its image (the whole image when unsliced). */
 export function objectFrameSize(o: SceneObject, images: ImageLookup): Size | null {
   const image = images(o.image);
   return image ? frameSize(image.asset, image.size) : null;
@@ -64,7 +64,7 @@ export function objectFrameSize(o: SceneObject, images: ImageLookup): Size | nul
 /**
  * A placed object's sprite, or null if the image to show isn't known. It plays a
  * one-shot if one is running, else its looping animation, else shows frame 0 of its
- * image (D112). Objects stand at their top-left and never scale (D110). The default
+ * image. Objects stand at their top-left and never scale. The default
  * baseline is the rest frame's bottom edge, so it doesn't jump while animating.
  */
 export function objectDrawable(o: SceneObject, images: ImageLookup, pose: ObjectPose = { time: 0 }): Drawable | null {
@@ -114,7 +114,7 @@ export function actorDrawable(a: ActorPose, depth: SceneFile["depth"], images: I
 
 /**
  * Every visible sprite, back to front: the scene's visible objects, then `actors`
- * (characters), sorted by baseline. Ties keep that order (spec 04). `objectPose` says
+ * (characters), sorted by baseline. Ties keep that order. `objectPose` says
  * where each object's animations are; absent, objects show their first frame.
  */
 export function sceneDrawables(

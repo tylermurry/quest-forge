@@ -5,7 +5,7 @@ import { loadProject, validateProject, type Project } from "@questforge/schema";
 import { NodeFs } from "@questforge/schema/node";
 import { afterEach } from "vitest";
 
-/** The engine's M1/M2 fixture: the "open an existing project" case. Never write to it. */
+/** The engine fixture: the "open an existing project" case. Never write to it. */
 export const M1 = join(import.meta.dirname, "../../../engine/fixtures/m1");
 
 const temps: string[] = [];
@@ -28,5 +28,5 @@ export async function m1Project() {
   return project;
 }
 
-/** Blocking problems only: "valid" means nothing stops playtest or export (D38); warnings are checked on their own. */
+/** Blocking problems only: "valid" means nothing stops playtest or export; warnings are checked on their own. */
 export const errorsIn = (p: Project) => validateProject(p).filter((x) => x.severity === "error");

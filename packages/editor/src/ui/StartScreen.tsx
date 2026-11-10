@@ -22,7 +22,7 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-muted-foreground mt-8 mb-2 text-[11px] font-semibold tracking-wider uppercase">{children}</h2>
 );
 
-/** Start screen (spec 08): New project · Open folder · recent projects. */
+/** Start screen: New project · Open folder · recent projects. */
 export function StartScreen({ onOpen, onCreate, recent, onForget, error, titleRef, chooserRequest = 0 }: Props) {
   const platform = usePlatform();
   const [title, setTitle] = useState("");

@@ -9,7 +9,7 @@ const key = (k: string, mods: Partial<{ meta: boolean; ctrl: boolean; shift: boo
   altKey: !!mods.alt,
 });
 
-describe("app commands (D92)", () => {
+describe("app commands", () => {
   it("matches Mod shortcuts as Cmd on macOS and Ctrl elsewhere", () => {
     expect(matchesShortcut("Mod+Z", key("z", { meta: true }), true)).toBe(true);
     expect(matchesShortcut("Mod+Z", key("z", { ctrl: true }), true)).toBe(false);
@@ -64,7 +64,7 @@ describe("app commands (D92)", () => {
     expect(isPlainShortcut("Mod+0")).toBe(false);
   });
 
-  it("Ctrl+\\ hides all panels with the Control key on every platform (D134)", () => {
+  it("Ctrl+\\ hides all panels with the Control key on every platform", () => {
     expect(commandForKey(key("\\", { ctrl: true }), true, false)).toBe("view.panels");
     expect(commandForKey(key("\\", { ctrl: true }), false, false)).toBe("view.panels");
     expect(commandForKey(key("\\", { meta: true }), true, false)).toBeNull();

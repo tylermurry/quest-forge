@@ -4,7 +4,7 @@ import { cloneState } from "../src/state.ts";
 import type { TraceEvent } from "../src/trace.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// The playtest trace sink (D129) and starting from a given state (D126, D128).
+// The playtest trace sink and starting from a given state.
 
 type Over = Parameters<typeof testProject>[0];
 const traced = (over?: Over) => {
@@ -21,7 +21,7 @@ const door = (rules: unknown[]) => ({
   yard: { hotspots: [{ id: "pot", name: "door", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], walkTo: { x: 320, y: 360, facing: "up" }, rules }] },
 });
 
-describe("trace sink (D129)", () => {
+describe("trace sink", () => {
   it("reports every rule's verdict up to the match", () => {
     const rules = [
       rule({ type: "look" }, [narrate("A door.")]),
@@ -61,7 +61,7 @@ describe("trace sink (D129)", () => {
     expect(events.filter((e) => e.type === "scene").at(-1)).toEqual({ type: "scene", from: "yard", to: "shed", spawn: "door" });
   });
 
-  it("notes skipped steps; sounds are actions, not notes (M8)", () => {
+  it("notes skipped steps; sounds are actions, not notes", () => {
     const { s, events } = traced(door([rule({ type: "hand" }, [{ type: "start_dialogue", dialogue: "chat" }, { type: "play_sound", sound: "creak" }])]));
     s.selectVerb("hand");
     s.primaryClick(POT);
@@ -81,7 +81,7 @@ describe("trace sink (D129)", () => {
   });
 });
 
-describe("start state and entry snapshot (D126, D128)", () => {
+describe("start state and entry snapshot", () => {
   it("starts from a given state at its scene and player position, without changing it", () => {
     const base = new Session(testProject(), testImages);
     const state = cloneState(base.state);

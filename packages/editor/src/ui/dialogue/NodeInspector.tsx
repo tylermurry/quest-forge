@@ -39,7 +39,7 @@ const HELP: Record<DialogueNode["type"], string> = {
   end: "Ends the dialogue and runs the Game's “Dialogue ends” rule for it.",
 };
 
-/** The right inspector for one dialogue graph node (spec 11): the same pickers and rule parts as spec 10. */
+/** The right inspector for one dialogue graph node: the same pickers and rule parts as the rule inspector. */
 export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions; dialogue: string; nodeId: string }) {
   const { editor, ws } = actions;
   const registry = useCommands();
@@ -49,7 +49,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
   const node = doc?.data.nodes[index];
   const root = useRef<HTMLDivElement | null>(null);
 
-  // Jump-to: scroll to and flash the exact option, condition or action (D120).
+  // Jump-to: scroll to and flash the exact option, condition or action.
   const highlight = ws.highlight;
   useEffect(() => {
     if (!highlight || !doc || highlight.location.file !== doc.path || !pathWithin(highlight.location.path, ["nodes", index])) return;

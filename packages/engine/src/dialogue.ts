@@ -4,7 +4,7 @@ import { Sequence, type Done, type SequenceHost } from "./sequence.ts";
 import { markFired, type GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
 
-// A dialogue being played (spec 11, D136–D141): walks the graph from Start (or a
+// A dialogue being played: walks the graph from Start (or a
 // given node). Lines show as text boxes, Choices as a list box, Actions run through
 // the sequence runner, Branch checks conditions through rules.ts, End fires
 // `dialogue_end`. Pure logic: the session draws, and the player picks through it.
@@ -13,13 +13,13 @@ type LineNode = Extract<DialogueNode, { type: "line" }>;
 type ChoicesNode = Extract<DialogueNode, { type: "choices" }>;
 
 /**
- * Key of a dialogue option in `GameState.dialogueChoices` (D137): dialogue, node and
+ * Key of a dialogue option in `GameState.dialogueChoices`: dialogue, node and
  * option IDs, which are stable however the graph is moved or reordered.
  */
 export const choiceKey = (dialogue: string, node: string, option: string) => `${dialogue}/${node}/${option}`;
 
 /**
- * Key in `GameState.fired` for `first_time` inside a dialogue (D137): an option is
+ * Key in `GameState.fired` for `first_time` inside a dialogue: an option is
  * fired once chosen, a Branch once passed.
  */
 export const dialogueFiredKey = (dialogue: string, node: string, option?: string) => `dialogue:${dialogue}/${node}${option === undefined ? "" : `/${option}`}`;
@@ -27,13 +27,13 @@ export const dialogueFiredKey = (dialogue: string, node: string, option?: string
 /** Why an option is in the list box or not. */
 export type OptionVerdict = { kind: "shown" } | { kind: "once_chosen" } | { kind: "condition_failed"; index: number; condition: Condition };
 
-/** How a dialogue stopped (D141). Only `end` and `dead_end` fire `dialogue_end`. */
+/** How a dialogue stopped. Only `end` and `dead_end` fire `dialogue_end`. */
 export type DialogueEndReason =
   /** An End node. */
   | "end"
   /** A port with nothing connected, or a Choices node with every option hidden or none. */
   | "dead_end"
-  /** A node came round again with no Line or Choices in between (D140). */
+  /** A node came round again with no Line or Choices in between. */
   | "loop"
   /** A scene change, death, win or restart cut it short. */
   | "cut";
@@ -48,7 +48,7 @@ export interface ChoiceList {
 /** How a dialogue reaches the session. Actions run on the session as a SequenceHost. */
 export interface DialogueHost extends SequenceHost {
   readonly ctx: RuleContext;
-  /** Shows a line in a text box (and plays its animation, D139); done when it closes. */
+  /** Shows a line in a text box (and plays its animation); done when it closes. */
   showLine(node: LineNode): Done;
   /** The actions of the first matching `dialogue_end` game rule, marked fired; null if none matched. */
   endRule(dialogue: string): readonly Action[] | null;
@@ -65,7 +65,7 @@ export class DialogueRun {
   private sub: Sequence | null = null;
   /** Running the `dialogue_end` rule's actions. */
   private ending = false;
-  /** Nodes passed since the last Line or Choices (D140). */
+  /** Nodes passed since the last Line or Choices. */
   private sinceInput = new Set<string>();
   private readonly byId: Map<string, DialogueNode>;
 
@@ -187,7 +187,7 @@ export class DialogueRun {
     }
   }
 
-  /** Options whose conditions pass, minus `once` ones already chosen (spec 11). */
+  /** Options whose conditions pass, minus `once` ones already chosen. */
   private offer(n: ChoicesNode) {
     const verdicts = n.options.map((o): { id: string; verdict: OptionVerdict } => {
       if (o.once && this.state.dialogueChoices.includes(choiceKey(this.id, n.id, o.id))) return { id: o.id, verdict: { kind: "once_chosen" } };
@@ -204,7 +204,7 @@ export class DialogueRun {
     this.choices = { dialogue: this.id, node: n.id, options: shown.map((o) => ({ id: o.id, text: o.text })) };
   }
 
-  /** Moves along a port. Nothing connected ends the dialogue (D141). */
+  /** Moves along a port. Nothing connected ends the dialogue. */
   private follow(next: string | null) {
     if (this.finished) return;
     if (next === null) return this.finish("dead_end");
@@ -227,7 +227,7 @@ export class DialogueRun {
     this.host.trace?.({ type: "dialogue_node", dialogue: this.id, node: n });
   }
 
-  /** End of the dialogue: an End node or a loose port runs the `dialogue_end` rule first (D136). */
+  /** End of the dialogue: an End node or a loose port runs the `dialogue_end` rule first. */
   private finish(reason: Exclude<DialogueEndReason, "cut">) {
     this.choices = null;
     this.host.trace?.({ type: "dialogue_end", dialogue: this.id, reason });

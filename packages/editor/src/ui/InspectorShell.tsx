@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs.t
 import { RuleInspector } from "./rules/RuleInspector.tsx";
 
 /**
- * Every Inspector page (D125): a title and subtitle that stay at the top while the
+ * Every Inspector page: a title and subtitle that stay at the top while the
  * page scrolls, and for things with rules, Details / Rules tabs so the rule list
  * doesn't run into the other fields. The open tab is UI state (`ws.inspectorTab`).
  */

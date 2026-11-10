@@ -1,7 +1,7 @@
-// What a new trigger, condition or action starts as (spec 10). Pickers start on the
+// What a new trigger, condition or action starts as. Pickers start on the
 // first existing choice, so most new parts are valid at once. When nothing exists yet
 // they start on a placeholder ID that validation reports in red until the user picks
-// or creates one (D123); text starts empty and is an error until typed (D119).
+// or creates one; text starts empty and is an error until typed.
 import { SCENE_HEIGHT, SCENE_WIDTH, logicBlocks, type Action, type Condition, type Project, type SceneFile, type Trigger } from "@questforge/schema";
 import { uniqueId } from "../commands.ts";
 import { ownerScene, type RuleOwnerRef, type TriggerType } from "./owner.ts";
@@ -127,7 +127,7 @@ export class RuleDefaults {
       case "add_to_counter":
         return { type, counter: this.counter(), amount: 1 };
       case "award_points":
-        // A fresh award named after the owner: each award counts once (spec 07).
+        // A fresh award named after the owner: each award counts once.
         return { type, points: 1, award: uniqueId(this.owner.kind === "thing" ? this.owner.key : this.owner.kind === "scene" ? this.owner.scene : "award", awardIds(this.project)) };
       case "show_object":
       case "hide_object": {

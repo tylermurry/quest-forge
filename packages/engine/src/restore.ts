@@ -1,7 +1,7 @@
 import { logicBlocks, type Facing, type Project } from "@questforge/schema";
 import { cloneState, type GameState } from "./state.ts";
 
-// Bringing a stored GameState back (spec 07, D43, D126): save slots and playtest
+// Bringing a stored GameState back: save slots and playtest
 // presets may come from an older version of the game. `readState` accepts any
 // shape and fills what's missing; `sanitizeState` drops IDs the project no longer
 // has and says which, so loading never crashes.
@@ -58,7 +58,7 @@ export interface Sanitized {
 }
 
 /**
- * A stored state made safe for the project as it is now (D43, D126): IDs that no
+ * A stored state made safe for the project as it is now: IDs that no
  * longer exist are dropped, flags and counters added since get their initial
  * values, and a missing scene falls back to the game's start.
  */
@@ -110,7 +110,7 @@ export function sanitizeState(p: Project, saved: GameState): Sanitized {
   // Fired rules of a deleted scene or dialogue can never matter again; drop them quietly.
   const dialogueIds = new Set(p.dialogues.map((d) => d.data.id));
   s.fired = s.fired.filter((k) => (k.startsWith("dialogue:") ? dialogueIds.has(sceneOf(k.slice("dialogue:".length))) : k.startsWith("game/") || scenes.has(sceneOf(k))));
-  // Once-only options are keyed `<dialogue>/<node>/<option>` (D137).
+  // Once-only options are keyed `<dialogue>/<node>/<option>`.
   const options = new Set(p.dialogues.flatMap((d) => d.data.nodes.flatMap((n) => (n.type === "choices" ? n.options.map((o) => `${d.data.id}/${n.id}/${o.id}`) : []))));
   s.dialogueChoices = keep(s.dialogueChoices, (k) => options.has(k), (k) => `dialogue choice ${k}`);
   if (s.music !== null && !audio.has(s.music)) {

@@ -10,7 +10,7 @@ import type { SceneFile } from "./scene.ts";
 
 /**
  * What an ID points at. `spawn` and `object` IDs are scoped to a scene; `node` to a dialogue;
- * `animation` (an object's one-shot, D111) to `<scene>/<object>`; `slot` (a character's
+ * `animation` (an object's one-shot) to `<scene>/<object>`; `slot` (a character's
  * animation slot played by `play_animation`) to the character.
  */
 export type RefKind =
@@ -37,7 +37,7 @@ export interface Reference {
   location: Location;
 }
 
-/** The scope of an object's one-shot animation IDs (D111). */
+/** The scope of an object's one-shot animation IDs. */
 export const animationScope = (scene: string, object: string) => `${scene}/${object}`;
 
 type Push = (kind: RefKind, id: string, path: DataPath, scope?: string) => void;
@@ -152,7 +152,7 @@ function dialogueRefs(d: DialogueFile, push: Push) {
       case "line":
         if (n.character !== undefined) {
           push("character", n.character, [...at, "character"]);
-          // The speaker's slot; a narrator line has no one to animate (D139).
+          // The speaker's slot; a narrator line has no one to animate.
           if (n.animation !== undefined) push("slot", n.animation, [...at, "animation"], n.character);
         }
         return next(n.next, [...at, "next"]);
@@ -203,7 +203,7 @@ export function collectReferences(project: Project): Reference[] {
   return refs;
 }
 
-/** References to one ID, e.g. for the delete warning "Used by 3 rules in 2 scenes" (spec 08). */
+/** References to one ID, e.g. for the delete warning "Used by 3 rules in 2 scenes". */
 export function findReferences(project: Project, kind: RefKind, id: string): Reference[] {
   const kinds: RefKind[] = kind === "flag" || kind === "counter" ? ["flag", "counter"] : [kind];
   return collectReferences(project).filter((r) => kinds.includes(r.kind) && r.id === id);
@@ -241,7 +241,7 @@ export function definedIds(project: Project, kind: RenameKind): string[] {
 }
 
 /**
- * The Rename command (spec 01): changes an ID and updates every reference to it
+ * The Rename command: changes an ID and updates every reference to it
  * across the project. An asset's file is renamed to match, in the same folder.
  * Only files that contain the ID change.
  */
@@ -296,7 +296,7 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
   return next;
 }
 
-/** Things whose IDs live inside one scene. Objects and spawns can be referenced (D61). */
+/** Things whose IDs live inside one scene. Objects and spawns can be referenced. */
 export type SceneIdKind = "object" | "spawn" | "hotspot" | "region";
 
 /**
@@ -348,7 +348,7 @@ export function renameSceneId(project: Project, sceneId: string, kind: SceneIdKi
 }
 
 /**
- * Changes the ID of one of an object's one-shot animations (D111) and every
+ * Changes the ID of one of an object's one-shot animations and every
  * `play_animation` that plays it.
  */
 export function renameObjectAnimation(project: Project, sceneId: string, objectId: string, from: string, to: string): Project {

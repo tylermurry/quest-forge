@@ -4,7 +4,7 @@ import type { Frame } from "../../model/scene/frame.ts";
 import { sameThing, type ThingRef } from "../../model/scene/things.ts";
 import { gridVisible, toScreen, type Transform } from "../../model/scene/view.ts";
 
-// Scene canvas drawing (D93). The background and sprites go through the engine's
+// Scene canvas drawing. The background and sprites go through the engine's
 // own drawing at the zoom scale; overlays (shapes, handles, guides, grid) are drawn
 // in screen pixels on top, so lines stay 1 px sharp at any zoom. The only DOM code
 // besides SceneCanvas.tsx.
@@ -41,7 +41,7 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
   ctx.fillStyle = BACKDROP;
   ctx.fillRect(0, 0, size.w * dpr, size.h * dpr);
 
-  // Scene space, through the engine's drawing (D93).
+  // Scene space, through the engine's drawing.
   ctx.setTransform(dpr * t.scale, 0, 0, dpr * t.scale, dpr * t.x, dpr * t.y);
   ctx.imageSmoothingEnabled = false;
   ctx.save();
@@ -117,7 +117,7 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
 
   if (gridVisible(t)) drawGrid(ctx, t, size);
 
-  // Bottom of the stack first, so higher layers draw on top (D15).
+  // Bottom of the stack first, so higher layers draw on top.
   if (shown("objects")) {
     scene.objects.forEach((o) => {
       if (o.obstacle) shape(o.obstacle, { list: "objects", key: o.id }, COLORS.obstacle, "rgba(251,146,60,0.18)");
@@ -131,7 +131,7 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
       ctx.setLineDash([4, 3]);
       ctx.strokeRect(Math.round(x0) + 0.5, Math.round(y0) + 0.5, Math.round(x1 - x0), Math.round(y1 - y0));
       ctx.setLineDash([]);
-      // Baseline handle (spec 09): a line across the sprite with a grab knob.
+      // Baseline handle: a line across the sprite with a grab knob.
       const by = Math.round(scr([0, s.d.baseline])[1]) + 0.5;
       ctx.strokeStyle = COLORS.guide;
       ctx.lineWidth = 2;
@@ -210,7 +210,7 @@ export function drawFrame(ctx: Ctx, f: Frame, dpr: number, size: { w: number; h:
     }
   }
 
-  // Live aids (spec 09).
+  // Live aids.
   if (f.path && f.path.length > 1) {
     ctx.strokeStyle = COLORS.path;
     ctx.lineWidth = 2;

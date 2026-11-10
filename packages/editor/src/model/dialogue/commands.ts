@@ -1,6 +1,6 @@
-// Dialogue graph commands (spec 11): pure Project → Project functions, each run as one
-// undo step through Editor.apply (D84). Nodes and options are addressed by their
-// stable IDs; positions are whole numbers in the file (D62).
+// Dialogue graph commands: pure Project → Project functions, each run as one
+// undo step through Editor.apply. Nodes and options are addressed by their
+// stable IDs; positions are whole numbers in the file.
 import { nodePorts, optionPort, type Action, type ChoiceOption, type Condition, type DialogueFile, type DialogueNode, type Project } from "@questforge/schema";
 import { CommandError, updateDoc } from "../commands.ts";
 import { RuleDefaults } from "../rules/defaults.ts";
@@ -49,7 +49,7 @@ function updateNode(p: Project, dialogue: string, id: string, f: (n: DialogueNod
 
 const round = (pos: Pos): Pos => [Math.round(pos[0]), Math.round(pos[1])];
 
-/** Defaults for conditions and actions in a dialogue: its scene context (D142), else game-level. */
+/** Defaults for conditions and actions in a dialogue: its scene context, else game-level. */
 function dialogueDefaults(p: Project, dialogue: string): RuleDefaults {
   const ctx = dialogueContext(p, dialogue);
   const owner: RuleOwnerRef = ctx?.started ? { kind: "scene", scene: ctx.scene } : { kind: "game" };
@@ -105,7 +105,7 @@ function setPort(n: DialogueNode, port: string, target: string | null): Dialogue
 
 /**
  * Adds a node at `pos`; with `from`, the port it was dragged out of connects to it
- * (the "create node" menu, spec 11). One undo step.
+ * (the "create node" menu). One undo step.
  */
 export function addNode(p: Project, dialogue: string, type: NodeType, pos: Pos, from?: { node: string; port: string }): { project: Project; id: string } {
   const d = dialogueOf(p, dialogue);
@@ -153,7 +153,7 @@ export function connect(p: Project, dialogue: string, node: string, port: string
   return updateNode(p, dialogue, node, (n) => setPort(n, port, target));
 }
 
-/** Auto-layout (spec 11): every node gets a new position, as one step. */
+/** Auto-layout: every node gets a new position, as one step. */
 export function layoutDialogue(p: Project, dialogue: string): Project {
   const pos = autoLayout(dialogueOf(p, dialogue));
   return moveNodes(p, dialogue, [...pos].map(([id, at]) => ({ id, pos: at })));
@@ -163,7 +163,7 @@ export function layoutDialogue(p: Project, dialogue: string): Project {
 
 /**
  * Edits a Line. `character: null` makes the narrator speak, which has no animation
- * (D139); a new speaker drops an animation slot they may not have.
+ *; a new speaker drops an animation slot they may not have.
  */
 export function setLine(p: Project, dialogue: string, node: string, patch: { character?: string | null; text?: string; animation?: string | null }): Project {
   return updateNode(p, dialogue, node, (n) => {

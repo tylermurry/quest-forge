@@ -35,7 +35,7 @@ function memoryPlatform(): Platform & { disks: Map<string, MemoryFs> } {
   };
 }
 
-describe("start screen (spec 08)", () => {
+describe("start screen", () => {
   it("creates a blank project, opens it, and lists it as recent", async () => {
     const platform = memoryPlatform();
     const saveRecent = vi.spyOn(platform, "saveRecent");
@@ -57,7 +57,7 @@ describe("start screen (spec 08)", () => {
     view.unmount();
   });
 
-  it("saves by hand and asks before leaving with unsaved changes (D145)", async () => {
+  it("saves by hand and asks before leaving with unsaved changes", async () => {
     const platform = memoryPlatform();
     const view = render(
       <PlatformContext.Provider value={platform}>

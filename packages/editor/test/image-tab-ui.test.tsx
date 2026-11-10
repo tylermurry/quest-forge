@@ -9,7 +9,7 @@ import { Workspace } from "../src/ui/Workspace.tsx";
 import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-// The image tab (D114): slicing fields and the origin, through the real Workspace.
+// The image tab: slicing fields and the origin, through the real Workspace.
 
 /** jsdom doesn't decode images: every image "loads" as 128×144, the m1 hero sheet's 4 × 3 cells of 32×48. */
 class FakeImage {
@@ -53,7 +53,7 @@ async function openHeroSheet() {
 
 const hero = (ed: Editor) => ed.project.assets!.data.images.find((i) => i.id === "hero_sheet")!;
 
-describe("image tab (D114)", () => {
+describe("image tab", () => {
   it("opens from the browser and shows the sheet", async () => {
     await openHeroSheet();
     expect(screen.getByLabelText("Sheet summary").textContent).toBe("4 × 3 = 12 frames of 32×48 px");

@@ -1,4 +1,4 @@
-// /play: runs a `.quest` with the real engine (D153, D155). Same path as the engine
+// /play: runs a `.quest` with the real engine. Same path as the engine
 // dev page: loadQuest → createGame, then destroy + dispose on the way out.
 import { formatProblem, QuestError } from "@questforge/schema";
 import { createGame, loadQuest, ProjectErrors, type Game, type QuestBundle } from "@questforge/engine";

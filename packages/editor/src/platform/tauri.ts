@@ -1,4 +1,4 @@
-// The desktop app's platform (D90): Rust commands confined to the open project
+// The desktop app's platform: Rust commands confined to the open project
 // folder (src-tauri/src/lib.rs), native folder dialogs, and recent projects in the
 // app config folder.
 import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
@@ -18,7 +18,7 @@ async function ok<T>(result: Promise<{ status: "ok"; data: T } | { status: "erro
   return r.data;
 }
 
-/** ProjectFs for a folder on disk, through the typed Tauri commands (D56, D92). */
+/** ProjectFs for a folder on disk, through the typed Tauri commands. */
 export class TauriFs implements ProjectFs {
   constructor(readonly root: string) {}
   list = () => ok(commands.fsList(this.root));
@@ -46,7 +46,7 @@ const textFieldFocused = () => {
 };
 
 /**
- * The native menu bar (D92), built from the command registry. Undo and Redo act on
+ * The native menu bar, built from the command registry. Undo and Redo act on
  * a focused text field's typing, and on the project otherwise.
  */
 async function installMenu(registry: CommandRegistry): Promise<() => void> {
@@ -147,7 +147,7 @@ export const tauriPlatform: Platform = {
     };
   },
   assetUrl: (root, path) => convertFileSrc(`${root}/${path}`),
-  /** Raw bytes as the body; Rust shows the native save dialog and writes only where the user chose (D153). */
+  /** Raw bytes as the body; Rust shows the native save dialog and writes only where the user chose. */
   async saveBuild(fileName, bytes) {
     try {
       return await invoke<string | null>("build_save", bytes, { headers: { "x-name": encodeURIComponent(fileName) } });

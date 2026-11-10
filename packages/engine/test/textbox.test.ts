@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { layoutTextBox, narrateBox, sayBox, textDuration, wrap } from "../src/ui/textbox.ts";
 
-// Text boxes (spec 06, D78), laid out with a fixed-width measurer (6 px per char).
+// Text boxes, laid out with a fixed-width measurer (6 px per char).
 
 const measure = (s: string) => s.length * 6;
 

@@ -1,9 +1,9 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Vec } from "./vec.ts";
 
-// Back buffer → window (spec 03, D31): largest integer multiple that fits, fractional
+// Back buffer → window: largest integer multiple that fits, fractional
 // fit below 1×, always letterboxed, never cropped. The multiple is chosen in CSS px
-// (D82), so a phone with a 2× screen still gets its fractional fit.
+//, so a phone with a 2× screen still gets its fractional fit.
 
 export interface Viewport {
   /** Device pixels per scene pixel. */
@@ -19,7 +19,7 @@ export interface Viewport {
 /** Fit 640×400 into a surface of `width`×`height` device pixels at `dpr` device px per CSS px. */
 export function fitViewport(width: number, height: number, dpr = 1, fill = false): Viewport {
   const fit = Math.min(width / SCENE_WIDTH, height / SCENE_HEIGHT) / dpr;
-  // Whole multiples keep pixels even (spec 03); `fill` (the editor's playtest area, D135) uses all the room.
+  // Whole multiples keep pixels even; `fill` (the editor's playtest area) uses all the room.
   const scale = (fit >= 1 && !fill ? Math.floor(fit) : fit) * dpr;
   return {
     scale,
@@ -42,7 +42,7 @@ export function toScene(v: Viewport, deviceX: number, deviceY: number): Vec | nu
 export const toDevice = (v: Viewport, p: Vec): Vec => [v.offsetX + p[0] * v.scale, v.offsetY + p[1] * v.scale];
 
 /**
- * Fixed-timestep driver (spec 03): logic ticks at exactly `hz`, decoupled from how
+ * Fixed-timestep driver: logic ticks at exactly `hz`, decoupled from how
  * often frames render. Long stalls (a backgrounded tab) are capped, not replayed.
  */
 export class FixedStep {

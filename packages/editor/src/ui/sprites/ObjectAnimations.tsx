@@ -19,7 +19,7 @@ import { useCanvasImages, type CanvasImages } from "../scene/images.ts";
 import { TextField } from "../TextField.tsx";
 import { AnimCanvas } from "./AnimCanvas.tsx";
 
-// The object Inspector's animations (spec 05, D111, D112): one looping animation
+// The object Inspector's animations: one looping animation
 // that plays at rest, and named one-shots for play_animation. One undo step each.
 
 const DT = "text-muted-foreground text-[11px] font-medium uppercase tracking-wide";

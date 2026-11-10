@@ -1,4 +1,4 @@
-// Quick fields (spec 10, D118): Look / Hand / Talk text that creates and keeps one
+// Quick fields: Look / Hand / Talk text that creates and keeps one
 // simple rule, so most hotspots never need the rule list. A quick field owns the
 // last rule for its verb when that rule is plain: no conditions, exactly one
 // `narrate`, `once` off.
@@ -44,7 +44,7 @@ export function ownedQuickRules(owner: RuleOwnerRef, rules: readonly AnyRule[]):
 
 /**
  * Types into a quick field: an empty field gets a new plain rule at the bottom, a
- * plain one changes its narration, and clearing it deletes that rule (D118).
+ * plain one changes its narration, and clearing it deletes that rule.
  */
 export function setQuickText(p: Project, owner: RuleOwnerRef, verb: QuickVerb, text: string): Project {
   if (!hasQuickFields(owner)) throw new CommandError("This has no quick fields.");

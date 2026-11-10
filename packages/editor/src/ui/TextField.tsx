@@ -5,7 +5,7 @@ import { Textarea } from "./components/ui/textarea.tsx";
 
 /**
  * A text field that edits project data as you type. Every keystroke within a
- * second is one undo step; leaving the field ends the step (D84). Invalid values
+ * second is one undo step; leaving the field ends the step. Invalid values
  * (e.g. empty) stay in the box without being applied.
  */
 export function TextField(props: {

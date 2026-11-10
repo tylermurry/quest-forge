@@ -8,7 +8,7 @@ import { fitViewport } from "../src/viewport.ts";
 import type { Vec } from "../src/vec.ts";
 import { narrate, rule, testImages, testProject } from "./support/project.ts";
 
-// Player UI (spec 06, D76, D79, D80): 44 CSS px controls, touch-only play, no hover needs.
+// Player UI: 44 CSS px controls, touch-only play, no hover needs.
 
 /** CSS px per scene px for a CSS viewport (device pixel ratio cancels out). */
 const cssScaleFor = (w: number, h: number) => fitViewport(w, h).scale;
@@ -16,7 +16,7 @@ const center = (r: Rect): Vec => [r.x + r.w / 2, r.y + r.h / 2];
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const inside = (r: Rect) => r.x >= 0 && r.y >= 0 && r.x + r.w <= SCENE_WIDTH && r.y + r.h <= SCENE_HEIGHT;
 
-describe("layout (D76)", () => {
+describe("layout", () => {
   const screens: [string, number, number][] = [
     ["iPhone 14 landscape", 844, 390],
     ["iPhone SE landscape", 667, 375],
@@ -81,7 +81,7 @@ const bar = (ui: PlayerUi, id: string) => center(ui.layout.barButtons.find((b) =
 const inv = (ui: PlayerUi, id: string) => center(ui.layout.inventory.buttons.find((b) => b.id === id)!.rect);
 const cell = (ui: PlayerUi, i: number) => center(ui.layout.inventory.cells[i]!);
 
-describe("touch play (spec 06)", () => {
+describe("touch play", () => {
   it("a tap walks with the current verb; the tab opens the bar to change it", () => {
     const { s, ui } = make({ yard: { hotspots: [{ id: "pot", name: "flowerpot", shape: [[300, 300], [340, 300], [340, 340], [300, 340]], rules: [rule({ type: "look" }, [narrate("A pot.")])] }] } });
     expect(ui.tabVisible).toBe(false);
@@ -101,7 +101,7 @@ describe("touch play (spec 06)", () => {
     expect(s.text).toBe(null);
   });
 
-  it("tap-and-hold shows the name and doesn't act (D79)", () => {
+  it("tap-and-hold shows the name and doesn't act", () => {
     const { s, ui } = make();
     ui.pointerDown(POT, "touch");
     run(s, ui, 0.5);
@@ -129,7 +129,7 @@ describe("touch play (spec 06)", () => {
     expect(s.world.walking).toBe(false);
   });
 
-  it("the bar won't open during a sequence (D72)", () => {
+  it("the bar won't open during a sequence", () => {
     const { s, ui } = make({ yard: { rules: [rule({ type: "scene_enter" }, [{ type: "wait", seconds: 2 }])] } });
     ui.touchSeen = true;
     expect(s.busy).toBe(true);
@@ -139,7 +139,7 @@ describe("touch play (spec 06)", () => {
   });
 });
 
-describe("inventory (D80)", () => {
+describe("inventory", () => {
   const combine = rule({ type: "combine", item: "stick", with: "string" }, [
     { type: "take_item", item: "stick" },
     { type: "take_item", item: "string" },
@@ -190,7 +190,7 @@ describe("inventory (D80)", () => {
   });
 });
 
-describe("settings and endings (D71, D80)", () => {
+describe("settings and endings", () => {
   it("Restart from settings resets the game; Save opens the slots and Cancel comes back", () => {
     const { s, ui } = make();
     s.state.inventory.push("key");
@@ -223,7 +223,7 @@ describe("settings and endings (D71, D80)", () => {
   });
 });
 
-describe("mouse play (spec 06)", () => {
+describe("mouse play", () => {
   it("the top 8 CSS px reveal the bar; hover labels; right-click cycles verbs", () => {
     const { s, ui } = make();
     ui.setScale(1);

@@ -7,7 +7,7 @@ import { GameBuilder, type BuildHost } from "../src/model/build.ts";
 import { WorkspaceState } from "../src/model/workspace.ts";
 import { m1Copy } from "./support/fixtures.ts";
 
-// File ▸ Build Game (D153).
+// File ▸ Build Game.
 
 async function setup(host: Partial<BuildHost> = {}) {
   const { dir, fs } = await m1Copy();

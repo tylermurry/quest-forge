@@ -5,7 +5,7 @@ import { Editor } from "../src/model/editor.ts";
 import { cellAt, effectiveOrigin, fitZoom, formatFrames, frameCountOf, originAt, parseFrames, setOrigin, sheetFromCells, sheetFromGrid, sliceImage } from "../src/model/sprites.ts";
 import { m1Project } from "./support/fixtures.ts";
 
-// Spritesheet slicing and origins (spec 05, D66, D114, D115).
+// Spritesheet slicing and origins.
 
 const img = (p: Project, id: string) => p.assets!.data.images.find((i) => i.id === id)!;
 const SHEET = { w: 256, h: 192 }; // an 8×4 sheet of 32×48 frames
@@ -19,7 +19,7 @@ describe("slicing", () => {
     expect(sheetFromCells(SHEET, 32, 48)).toEqual({ columns: 8, rows: 4, cellWidth: 32, cellHeight: 48 });
   });
 
-  it("ignores leftover pixels when the size doesn't divide evenly (D115)", () => {
+  it("ignores leftover pixels when the size doesn't divide evenly", () => {
     expect(sheetFromGrid({ w: 100, h: 50 }, 3, 2)).toEqual({ columns: 3, rows: 2, cellWidth: 33, cellHeight: 25 });
     expect(sheetFromCells({ w: 100, h: 50 }, 30, 20)).toEqual({ columns: 3, rows: 2, cellWidth: 30, cellHeight: 20 });
   });
@@ -40,7 +40,7 @@ describe("slicing", () => {
     expect(img(p, "hero_sheet").sheet!.columns).toBe(4); // immutable
   });
 
-  it("clears an origin that would fall outside the new frame (D115)", async () => {
+  it("clears an origin that would fall outside the new frame", async () => {
     const p = await m1Project();
     const next = sliceImage(p, "hero_sheet", { w: 128, h: 96 }, { columns: 8, rows: 4, cellWidth: 16, cellHeight: 24 });
     expect(img(next, "hero_sheet").origin).toBeUndefined();

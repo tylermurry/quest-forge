@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { DialogueFile, SceneFile } from "../src/index.ts";
 
-// The spec 01 example scene, filled in, with D55 (asset IDs) and D60 (placed characters).
+// An example scene, filled in, with asset IDs and placed characters.
 const beachYaml = `
 schemaVersion: 2
 id: beach
@@ -78,7 +78,7 @@ nodes:
 `;
 
 describe("scene schema", () => {
-  it("parses the spec 01 example scene", () => {
+  it("parses the example scene", () => {
     const scene = SceneFile.parse(parse(beachYaml));
     expect(scene.objects.map((o) => o.id)).toEqual(["palm", "rock"]);
     expect(Object.keys(scene.spawns)).toEqual(["default", "from_path"]);
@@ -94,7 +94,7 @@ describe("scene schema", () => {
     expect(SceneFile.safeParse(scene2).success).toBe(false);
   });
 
-  it("rejects path-valued backgrounds (D55) and invalid spawn IDs", () => {
+  it("rejects path-valued backgrounds and invalid spawn IDs", () => {
     expect(SceneFile.safeParse({ ...parse(beachYaml), background: "assets/images/beach.png" }).success).toBe(false);
     const scene = parse(beachYaml);
     scene.spawns["From Path"] = scene.spawns.from_path;

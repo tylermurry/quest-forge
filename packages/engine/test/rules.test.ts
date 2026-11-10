@@ -3,7 +3,7 @@ import { GameFile, GameRule, InteractRule, SceneFile, type Condition, type Trigg
 import { checkCondition, defaultResponse, firstMatch, ruleKey, triggerMatches, type RuleContext, type RuleOwner } from "../src/rules.ts";
 import { award, giveItem, initialState, markFired, markVisited, setObjectVisible } from "../src/state.ts";
 
-// Spec 02 evaluation (D40): first match, `once`, conditions, default fallbacks.
+// Spec 02 evaluation: first match, `once`, conditions, default fallbacks.
 
 const game = GameFile.parse({
   schemaVersion: 2,
@@ -43,7 +43,7 @@ const owner: RuleOwner = { kind: "hotspot", scene: "yard", id: "door" };
 const look: Trigger = { type: "look" };
 const text = (m: { rule: { do: unknown[] } } | null) => (m ? (m.rule.do[0] as { text: string }).text : null);
 
-describe("rule keys (D117)", () => {
+describe("rule keys", () => {
   it("name the rule by its owner and stable ID", () => {
     expect(ruleKey(owner, "rule_2")).toBe("yard/hotspot:door/rule_2");
     expect(ruleKey({ kind: "scene", scene: "yard" }, "rule_1")).toBe("yard/scene/rule_1");
@@ -60,7 +60,7 @@ describe("rule keys (D117)", () => {
   });
 });
 
-describe("first match (D40)", () => {
+describe("first match", () => {
   it("runs the first rule whose conditions pass, top to bottom", () => {
     const rules = [
       rule({ type: "hand" }, [], "hand"),
@@ -134,7 +134,7 @@ describe("triggers", () => {
     expect(triggerMatches({ type: "look" }, { type: "hand" })).toBe(false);
   });
 
-  it("combine matches in either order (D80)", () => {
+  it("combine matches in either order", () => {
     const rules = [GameRule.parse({ id: "rule_1", when: { type: "combine", item: "stick", with: "string" }, if: [], do: say("rod"), once: false })];
     const c = ctx();
     expect(text(firstMatch(rules, { kind: "game" }, { type: "combine", item: "string", with: "stick" }, c))).toBe("rod");

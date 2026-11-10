@@ -127,7 +127,7 @@ describe("walking", () => {
     expect(w.drawList().find((d) => d.id === "hero")!.dest.h).toBeLessThan(nearHeight);
   });
 
-  it("can't pass a visible obstacle, and can once it's hidden (D42)", () => {
+  it("can't pass a visible obstacle, and can once it's hidden", () => {
     const w = make();
     w.walkTo([320, 220]);
     run(w, 15);
@@ -173,7 +173,7 @@ describe("occlusion by baseline", () => {
   });
 });
 
-describe("hit-testing (D69)", () => {
+describe("hit-testing", () => {
   it("prefers hotspots, then named sprites topmost first", () => {
     const w = make();
     expect(w.hitTest([300, 300])).toEqual({ kind: "hotspot", id: "pond", name: "pond" });
@@ -187,7 +187,7 @@ describe("hit-testing (D69)", () => {
 });
 
 describe("approach and actors", () => {
-  it("approaches a hotspot at its walk-to point and a character from the side (D74)", () => {
+  it("approaches a hotspot at its walk-to point and a character from the side", () => {
     const w = make();
     expect(w.approach({ kind: "hotspot", id: "pond", name: "pond" }, [300, 300])).toEqual({ dest: [320, 340], facing: "up", toward: [300, 300] });
     const a = w.approach({ kind: "character", id: "gardener", name: "Gardener" }, [560, 360]);
@@ -222,7 +222,7 @@ describe("approach and actors", () => {
     expect(w.npcs[0]!.pos).toEqual([10, 390]);
   });
 
-  it("plays a one-shot slot then returns to the normal animation (D71)", () => {
+  it("plays a one-shot slot then returns to the normal animation", () => {
     const w = make();
     // Looping slots report 0 (they don't block); one-shots their length.
     expect(w.playSlot("gardener", "walk_right")).toBe(0);

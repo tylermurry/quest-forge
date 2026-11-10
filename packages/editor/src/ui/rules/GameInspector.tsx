@@ -12,7 +12,7 @@ import { flashElement } from "../flash.ts";
 const DT = "text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase";
 
 /**
- * The "Game" item (spec 10): where play starts, the max score, the default verb
+ * The "Game" item: where play starts, the max score, the default verb
  * responses and game-level `combine` / `dialogue_end` rules.
  */
 export function GameInspector({ actions }: { actions: Actions }) {
@@ -21,7 +21,7 @@ export function GameInspector({ actions }: { actions: Actions }) {
   const root = useRef<HTMLDivElement | null>(null);
   const game = p.game;
 
-  // Jump-to a game setting flashes its field; rule spots are handled by their cards (D120).
+  // Jump-to a game setting flashes its field; rule spots are handled by their cards.
   const highlight = ws.highlight;
   useEffect(() => {
     if (!highlight || !game || highlight.location.file !== game.path || highlight.location.path[0] === "rules") return;

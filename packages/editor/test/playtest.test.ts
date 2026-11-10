@@ -5,8 +5,8 @@ import { CommandRegistry, commandForKey, isPlainShortcut } from "../src/model/ap
 import { hereSpawn } from "../src/model/playtest/playtest.ts";
 import { playtestEditor } from "./support/playtest.ts";
 
-// Playtest runs (spec 12, D128, D131, D132): Play, Play from here, Restart,
-// Restart scene, Stop, and the validation gate (D38).
+// Playtest runs: Play, Play from here, Restart,
+// Restart scene, Stop, and the validation gate.
 
 const POND: [number, number] = [310, 320];
 const editScene = (p: Project, id: string, f: (s: SceneFile) => SceneFile): Project => ({
@@ -18,7 +18,7 @@ const pondLook = (text: string) => (s: SceneFile): SceneFile => ({
   hotspots: s.hotspots.map((h) => (h.id === "pond" ? { ...h, rules: h.rules.map((r) => (r.id === "rule_1" ? { ...r, do: [{ type: "narrate" as const, text }] } : r)) } : h)),
 });
 
-describe("Play and the validation gate (D38)", () => {
+describe("Play and the validation gate", () => {
   it("Play starts at the game start", async () => {
     const { playtest, session, dispose } = await playtestEditor();
     expect(playtest.play()).toBe(true);
@@ -39,7 +39,7 @@ describe("Play and the validation gate (D38)", () => {
     dispose();
   });
 
-  it("warnings don't block Play (D132)", async () => {
+  it("warnings don't block Play", async () => {
     const { playtest, editor, dispose } = await playtestEditor();
     editor.validateNow();
     expect(editor.problems.some((p) => p.severity === "warning")).toBe(true);
@@ -48,7 +48,7 @@ describe("Play and the validation gate (D38)", () => {
   });
 });
 
-describe("Play from here (D132)", () => {
+describe("Play from here", () => {
   it("picks the selected spawn, else default, else the first", () => {
     const scene = { spawns: { a: { x: 1, y: 1, facing: "up" }, default: { x: 2, y: 2, facing: "up" } } } as unknown as SceneFile;
     expect(hereSpawn(scene, "a")).toBe("a");
@@ -74,7 +74,7 @@ describe("Play from here (D132)", () => {
   });
 });
 
-describe("Restart, Restart scene and Stop (D128)", () => {
+describe("Restart, Restart scene and Stop", () => {
   it("an edit made during play applies on Restart scene, keeping the entry state", async () => {
     const { playtest, editor, session, tap, dispose } = await playtestEditor();
     playtest.play();
@@ -109,7 +109,7 @@ describe("Restart, Restart scene and Stop (D128)", () => {
     const { playtest, ws, session, tap, dispose } = await playtestEditor();
     ws.open({ section: "scene", id: "shed" });
     playtest.playHere();
-    // The door spawn stands in the west exit: step out, then back in (D72).
+    // The door spawn stands in the west exit: step out, then back in.
     tap("walk", [300, 380]);
     tap("walk", [40, 385]);
     expect(session().scene.id).toBe("garden");
@@ -154,7 +154,7 @@ describe("Restart, Restart scene and Stop (D128)", () => {
   });
 });
 
-describe("Play commands (D131)", () => {
+describe("Play commands", () => {
   it("F5, F6 and Shift+F5 are accelerators, not plain shortcuts", () => {
     expect(isPlainShortcut("F5")).toBe(false);
     expect(isPlainShortcut("Shift+F5")).toBe(false);
