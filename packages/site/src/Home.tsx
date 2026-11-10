@@ -121,7 +121,7 @@ const SPECS: [string, string][] = [
   ["Touch, too", "Every game plays on phones and tablets: big enough targets, no hover needed."],
 ];
 
-export const HOME_TITLE = "Questforge — make point-and-click adventures";
+const HOME_TITLE = "Questforge — make point-and-click adventures";
 
 export function Home() {
   useEffect(() => {

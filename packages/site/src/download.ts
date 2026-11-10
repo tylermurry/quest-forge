@@ -1,7 +1,7 @@
 // Which installer to offer (D156). Pure, so it's tested in Node.
 
 export type OS = "mac" | "windows" | "linux" | "mobile" | "unknown";
-export type DesktopOS = "mac" | "windows" | "linux";
+type DesktopOS = "mac" | "windows" | "linux";
 
 export const REPO = "tylermurry/quest-forge";
 export const RELEASES_URL = `https://github.com/${REPO}/releases`;
