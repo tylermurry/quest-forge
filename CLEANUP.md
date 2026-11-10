@@ -93,4 +93,44 @@ These are not fixed here. Each needs a decision, or a check only a person can do
 
 ## Results
 
-Filled in when the work is done.
+Done on 2026-11-09. All 19 items in the three workstreams are finished, one commit each, on
+branch `docs-standards`.
+
+**Checked after combining the work:** `corepack pnpm check` passes (91 test files, 802 tests,
+up from 757), the site and docs builds pass, `pnpm audit` reports 1 low finding (was 15), and
+`knip` reports no unused code outside the copied shadcn components.
+
+| # | Result |
+|---|---|
+| A1 | Done. The three unused components are deleted. |
+| A2 | Done. 6 dead exports deleted, 43 made file-local. |
+| A3 | Done. A failed preset save now shows a notice saying the presets will be lost when the editor closes. Tested. |
+| A4 | Done. Every case was a correct fallback; each now says why. |
+| A5 | Done. All 7 suppressions carry a reason; one cast removed, three kept with a reason. |
+| A6 | Done. With reduced motion the highlight shows and switches off without fading. Not looked at in a browser. |
+| A7 | Done. 9 new tests for scene hit-testing, snapping and polygon helpers. `frame.ts` holds only types and needs none. |
+| B1 | Done. 1 dead function deleted, 11 exports made file-local. Schema had none. |
+| B2 | Done. All 8 were correct fallbacks; each now says why. |
+| B3 | Done. A sprite sheet that does not fit its image now appears as a note in the playtest log. The message is tested; the wiring in `game.ts` is not, because it needs a real image decoder. |
+| B4 | Done. All 4 casts kept, each with its reason. |
+| B5 | Done. `migrate`, `references` and `warnings` were already covered. 13 new tests for `restore` and `geometry`. |
+| C1 | Done. `wrangler` upgraded; three narrow overrides for Docusaurus's build tools, to remove when Docusaurus catches up. `deepmerge` (low) has no patch. |
+| C2 | Done. |
+| C3 | Done. |
+| C4 | Done. The two third-party actions are pinned to commits. The workflows have not been run since. |
+| C5 | Done. 21 new tests. The two React hooks are tested against a stand-in for React, not real rendering. |
+| C6 | Done. Not looked at in a browser. |
+| C7 | Done. `README.md` added. |
+
+### Left over
+
+- **O1–O6** above still need the owner.
+- **Three more unexplained casts** in `packages/editor/src/model/playtest/log.ts` (lines 80–82)
+  were missed by the audit, so A5 did not cover them (MNT-3).
+- **A flaky test:** `packages/editor/test/rule-inspector-ui.test.tsx` timed out several times
+  while three agents ran the suite at once, and passes when the machine is not overloaded. It
+  breaks TST-4 in spirit (a test should not depend on the machine it runs on) and is worth a
+  look.
+- **`removeFolder` in `schema/src/node.ts`** ignores every error from reading the folder, not
+  only "the folder is gone". Narrowing it is a small behaviour change nobody asked for.
+- **The workflow changes (C3, C4)** are only proven when the workflows next run.
