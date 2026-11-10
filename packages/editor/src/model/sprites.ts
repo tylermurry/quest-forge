@@ -36,9 +36,6 @@ export function sheetFromCells(size: Size, cellWidth: number, cellHeight: number
   return { columns: Math.floor(size.w / cellWidth), rows: Math.floor(size.h / cellHeight), cellWidth, cellHeight };
 }
 
-/** The slicing mode an image shows in the tab: "grid" for any sliced image, since both fill the same fields. */
-export const sliceModeOf = (img: ImageAsset): SliceMode => (img.sheet ? "grid" : "single");
-
 /** Size of one frame: a sheet cell, or the whole image when unsliced. */
 export const frameSizeOf = (img: ImageAsset, size: Size): Size => (img.sheet ? { w: img.sheet.cellWidth, h: img.sheet.cellHeight } : size);
 

@@ -17,7 +17,7 @@ export const LAYER_LABEL: Record<Layer, string> = {
   background: "Background",
 };
 
-export const TOOLS = ["select", "polygon", "rect", "spawn", "walkto"] as const;
+const TOOLS = ["select", "polygon", "rect", "spawn", "walkto"] as const;
 export type Tool = (typeof TOOLS)[number];
 
 export const TOOL_LABEL: Record<Tool, string> = {
@@ -57,7 +57,7 @@ export interface SceneUi {
   zoom: Zoom;
 }
 
-export const defaultSceneUi = (): SceneUi => ({
+const defaultSceneUi = (): SceneUi => ({
   layer: "walkable",
   tool: "select",
   hidden: [],
@@ -201,7 +201,7 @@ export class SceneUiStore {
 
 const toggle = <T>(list: T[], x: T) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
 
-export const isHiddenLayer = (ui: SceneUi, layer: Layer) => ui.hidden.includes(layer);
-export const isLockedLayer = (ui: SceneUi, layer: Layer) => ui.locked.includes(layer);
+const isHiddenLayer = (ui: SceneUi, layer: Layer) => ui.hidden.includes(layer);
+const isLockedLayer = (ui: SceneUi, layer: Layer) => ui.locked.includes(layer);
 /** A layer whose contents can be clicked and edited. */
 export const isEditable = (ui: SceneUi, layer: Layer) => !isHiddenLayer(ui, layer) && !isLockedLayer(ui, layer);

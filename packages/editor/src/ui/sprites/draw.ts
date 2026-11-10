@@ -7,7 +7,7 @@ import { effectiveOrigin, frameSizeOf } from "../../model/sprites.ts";
 
 type Ctx = CanvasRenderingContext2D;
 
-export const SPRITE_COLORS = { grid: "rgba(96, 165, 250, 0.7)", selected: "#60a5fa", origin: "#f43f5e", label: "rgba(248, 250, 252, 0.85)" };
+const SPRITE_COLORS = { grid: "rgba(96, 165, 250, 0.7)", selected: "#60a5fa", origin: "#f43f5e", label: "rgba(248, 250, 252, 0.85)" };
 
 /** Sizes a canvas for `w` × `h` CSS px at the device pixel ratio; returns a context in CSS px. */
 export function prepare(canvas: HTMLCanvasElement, w: number, h: number): Ctx | null {

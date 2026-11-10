@@ -149,11 +149,6 @@ export function moveAction(p: Project, owner: RuleOwnerRef, id: string, from: nu
   return updateRule(p, owner, id, (r) => ({ ...r, do: actions.move(r.do, from, to) }));
 }
 
-export function moveCondition(p: Project, owner: RuleOwnerRef, id: string, from: number, to: number): Project {
-  if (from === to) return p;
-  return updateRule(p, owner, id, (r) => ({ ...r, if: conditions.move(r.if, from, to) }));
-}
-
 /** Applies a list edit (parts.ts) to a rule's conditions or actions; for shared UI rows. */
 export function editRuleList<K extends "if" | "do">(p: Project, owner: RuleOwnerRef, id: string, key: K, f: (list: AnyRule[K], d: RuleDefaults) => AnyRule[K]): Project {
   const d = defaults(p, owner);

@@ -6,7 +6,7 @@ import { problemThing } from "./scene/problems.ts";
 import type { ThingList } from "./scene/things.ts";
 import type { EntryRef } from "./workspace.ts";
 
-export type JumpTarget =
+type JumpTarget =
   /** A browser entry: an asset (opens its tab), a flag, an image or a sound. */
   | { kind: "entry"; entry: EntryRef }
   /** A thing on a scene canvas. */

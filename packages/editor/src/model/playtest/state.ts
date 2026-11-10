@@ -7,7 +7,7 @@ import { pickerOptions, type PickOption } from "../rules/pickers.ts";
 import { hereSpawn } from "./playtest.ts";
 
 /** An award ID and the points it gives first (D132); the catalog is the engine's (shared with loading saves). */
-export interface AwardOption {
+interface AwardOption {
   id: string;
   points: number;
 }

@@ -33,7 +33,7 @@ export interface Highlight {
 export type FlashTone = "problem" | "log";
 
 export const refKey = (r: EntryRef) => `${r.section}:${r.id}`;
-export const folderKey = (section: Section, path: string) => `${section}/${path}`;
+const folderKey = (section: Section, path: string) => `${section}/${path}`;
 
 export class WorkspaceState {
   tabs: EntryRef[] = [];

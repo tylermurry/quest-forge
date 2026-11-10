@@ -5,15 +5,15 @@ import { CommandError } from "../commands.ts";
 import { sceneOf, updateScene } from "../scene/commands.ts";
 
 /** Scene things that have rules. */
-export type RuleThingList = "objects" | "characters" | "hotspots" | "regions";
+type RuleThingList = "objects" | "characters" | "hotspots" | "regions";
 
 export type RuleOwnerRef =
   | { kind: "thing"; scene: string; list: RuleThingList; key: string }
   | { kind: "scene"; scene: string }
   | { kind: "game" };
 
-export const RULE_THING_LISTS: readonly RuleThingList[] = ["objects", "characters", "hotspots", "regions"];
-export const isRuleThingList = (list: string): list is RuleThingList => (RULE_THING_LISTS as readonly string[]).includes(list);
+const RULE_THING_LISTS: readonly RuleThingList[] = ["objects", "characters", "hotspots", "regions"];
+const isRuleThingList = (list: string): list is RuleThingList => (RULE_THING_LISTS as readonly string[]).includes(list);
 
 export type TriggerType = Trigger["type"];
 

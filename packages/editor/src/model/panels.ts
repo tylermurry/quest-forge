@@ -2,7 +2,7 @@
 // the inspector and the Problems dock; the next shows the ones that were showing.
 
 export type PanelName = "browser" | "inspector" | "dock";
-export const PANELS: readonly PanelName[] = ["browser", "inspector", "dock"];
+const PANELS: readonly PanelName[] = ["browser", "inspector", "dock"];
 
 export type PanelsShown = Record<PanelName, boolean>;
 

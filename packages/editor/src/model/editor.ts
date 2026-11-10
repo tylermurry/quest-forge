@@ -21,7 +21,7 @@ import { History, withDiskState } from "./history.ts";
 /** Autosave runs this long after the last change (spec 08). */
 export const AUTOSAVE_DELAY_MS = 1000;
 /** Waits between retries of a failed save (D85); the last one repeats. */
-export const RETRY_DELAYS_MS = [2000, 5000, 10000];
+const RETRY_DELAYS_MS = [2000, 5000, 10000];
 /** Watcher events are gathered this long before the disk is checked. */
 export const WATCH_SETTLE_MS = 200;
 /** Validation runs this long after the last change (D120). */

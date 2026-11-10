@@ -2,7 +2,7 @@
 // hotspot and region shapes, and object obstacles (D42). DOM-free.
 import type { Polygon, SceneFile } from "@questforge/schema";
 import type { Layer } from "./sceneUi.ts";
-import { holeIndex, holeKey, LIST_LAYER, type ThingRef } from "./things.ts";
+import { holeIndex, holeKey, type ThingRef } from "./things.ts";
 
 /** One polygon: a thing's shape, or an object's obstacle. */
 export interface PolyRef {
@@ -61,5 +61,3 @@ export function scenePolygons(scene: SceneFile): { pr: PolyRef; poly: Polygon; l
   for (const o of [...scene.objects].reverse()) if (o.obstacle) out.push({ pr: { ref: { list: "objects", key: o.id }, obstacle: true }, poly: o.obstacle, layer: "objects" });
   return out;
 }
-
-export const polyLayer = (pr: PolyRef): Layer => LIST_LAYER[pr.ref.list];

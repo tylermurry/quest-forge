@@ -3,7 +3,7 @@ import { usePlatform } from "./hooks.ts";
 import { cn } from "./lib/utils.ts";
 
 /** Whether the app draws its own title bar under the macOS traffic lights (overlay style, D92). */
-export const hasOverlayTitleBar = (kind: string) => kind === "tauri" && /Mac/i.test(navigator.userAgent);
+const hasOverlayTitleBar = (kind: string) => kind === "tauri" && /Mac/i.test(navigator.userAgent);
 
 /**
  * The window's top bar. In the macOS app it is the title bar itself: dragging it

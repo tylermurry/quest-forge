@@ -6,7 +6,7 @@ import { cloneState, readState, type GameState } from "@questforge/engine";
 import type { ProjectFs } from "@questforge/schema";
 
 // Reading and sanitizing a stored state is the engine's, shared with save slots (spec 07).
-export { readState, sanitizeState, type Sanitized } from "@questforge/engine";
+export { readState, sanitizeState } from "@questforge/engine";
 
 export const PRESETS_FILE = ".editor/presets.json";
 

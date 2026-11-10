@@ -34,7 +34,7 @@ function listEdit<T>(list: readonly T[], index: number, f: (t: T) => T | null): 
   return next;
 }
 
-export function moveIn<T>(list: readonly T[], from: number, to: number): T[] {
+function moveIn<T>(list: readonly T[], from: number, to: number): T[] {
   if (from < 0 || from >= list.length) throw new CommandError("That's no longer there.");
   const next = [...list];
   const [m] = next.splice(from, 1);

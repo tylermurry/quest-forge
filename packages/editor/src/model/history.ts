@@ -4,7 +4,7 @@
 import type { Project } from "@questforge/schema";
 
 /** Spec 08 asks for at least 200 steps per session (D84). */
-export const HISTORY_LIMIT = 500;
+const HISTORY_LIMIT = 500;
 /** Edits with the same merge key closer together than this are one step (typing, D84). */
 export const MERGE_WINDOW_MS = 1000;
 

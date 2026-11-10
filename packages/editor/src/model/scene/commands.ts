@@ -83,7 +83,7 @@ const clampY = (y: number) => Math.min(SCENE_HEIGHT, Math.max(0, Math.round(y)))
  * Shrinks a whole-pixel move so every point stays inside the scene, keeping the
  * shape intact (rather than squashing it against the edge).
  */
-export function clampDelta(points: readonly (readonly [number, number])[], dx: number, dy: number): [number, number] {
+function clampDelta(points: readonly (readonly [number, number])[], dx: number, dy: number): [number, number] {
   let rx = Math.round(dx);
   let ry = Math.round(dy);
   for (const [x, y] of points) {
@@ -99,14 +99,6 @@ function needPolygon(s: SceneFile, pr: PolyRef): Polygon {
   const poly = getPolygon(s, pr);
   if (!poly) throw gone();
   return poly;
-}
-
-/** Replaces one polygon (a vertex drag, a redraw). */
-export function setPolygon(p: Project, sceneId: string, pr: PolyRef, poly: Polygon): Project {
-  return updateScene(p, sceneId, (s) => {
-    needPolygon(s, pr);
-    return withPolygon(s, pr, poly.map(([x, y]) => [clampX(x), clampY(y)]));
-  });
 }
 
 /** Moves one vertex to a scene point. */
@@ -307,7 +299,7 @@ export function setSpawn(p: Project, sceneId: string, id: string, at: Placement)
 // ── Objects layer (spec 09, D95, D106) ───────────────────────────────────────
 
 /** An object ID from its image's ID: `palm_img` → `palm`. */
-export const objectIdFor = (imageId: string) => imageId.replace(/_(img|image|sprite|png)$/, "") || imageId;
+const objectIdFor = (imageId: string) => imageId.replace(/_(img|image|sprite|png)$/, "") || imageId;
 
 /**
  * Places an image as a new object with its bottom-centre at the drop point (where

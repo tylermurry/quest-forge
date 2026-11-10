@@ -105,7 +105,7 @@ function defaultImage(p: Project, hint: RegExp): string {
 }
 
 /** Starting data for a new asset of each kind (dangling picks show as problems until set). */
-export function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
+function newAssetData(p: Project, kind: AssetKind, id: string, name: string) {
   switch (kind) {
     case "scene":
       // An empty scene: no background, no walkable area yet, a default spawn (D97).

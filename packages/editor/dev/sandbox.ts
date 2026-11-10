@@ -12,7 +12,7 @@ import type { Plugin } from "vite";
 export const SANDBOX = resolve(import.meta.dirname, "../.sandbox");
 const M1_FIXTURE = resolve(import.meta.dirname, "../../engine/fixtures/m1");
 /** The sandbox copy of the engine fixture used as "an existing project" (never the fixture itself). */
-export const SEED_NAME = "garden-m1";
+const SEED_NAME = "garden-m1";
 
 /** Resolves a project folder name to a path inside the sandbox, or throws. */
 export function sandboxPath(root: string): string {
@@ -37,7 +37,7 @@ const send = (res: ServerResponse, status: number, data: unknown) => {
 const MIME: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav" };
 
 /** Copies the m1 fixture into the sandbox once, so the dev page has a project to open. */
-export async function seedSandbox() {
+async function seedSandbox() {
   await mkdir(SANDBOX, { recursive: true });
   const target = join(SANDBOX, SEED_NAME);
   if (!(await stat(target).catch(() => null))) await cp(M1_FIXTURE, target, { recursive: true });

@@ -3,11 +3,11 @@
 // Nodes Start can't reach go in the columns after. Pure; positions are integers (D62).
 import { nodePorts, type DialogueFile, type DialogueNode } from "@questforge/schema";
 
-export const COLUMN_WIDTH = 320;
+const COLUMN_WIDTH = 320;
 const GAP_Y = 48;
 
 /** A rough height of a node's card, so stacked cards don't overlap. */
-export function nodeHeight(n: DialogueNode): number {
+function nodeHeight(n: DialogueNode): number {
   switch (n.type) {
     case "start":
     case "end":

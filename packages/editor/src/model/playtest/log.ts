@@ -9,7 +9,7 @@ import { pickerOptions } from "../rules/pickers.ts";
 import { ACTION_LABEL, ACTION_PARTS, CONDITION_LABEL, CONDITION_PARTS, TRIGGER_LABEL, TRIGGER_PARTS, type Part } from "../rules/vocab.ts";
 
 /** The log keeps this many lines (D132). */
-export const LOG_LIMIT = 500;
+const LOG_LIMIT = 500;
 
 export type LogTone = "trigger" | "match" | "skip" | "default" | "action" | "scene" | "note";
 
@@ -23,7 +23,7 @@ export interface LogLine {
 }
 
 /** The editor's name for an engine rule owner. */
-export function ownerRef(o: RuleOwner): RuleOwnerRef {
+function ownerRef(o: RuleOwner): RuleOwnerRef {
   switch (o.kind) {
     case "game":
       return { kind: "game" };
@@ -79,7 +79,7 @@ function sentence(p: Project, label: string, parts: Part[], values: Record<strin
 
 export const conditionText = (p: Project, c: Condition) => sentence(p, CONDITION_LABEL[c.type], CONDITION_PARTS[c.type], c as unknown as Record<string, unknown>);
 export const actionText = (p: Project, a: Action) => sentence(p, ACTION_LABEL[a.type], ACTION_PARTS[a.type], a as unknown as Record<string, unknown>);
-export const triggerText = (p: Project, t: Trigger) => sentence(p, TRIGGER_LABEL[t.type], TRIGGER_PARTS[t.type], t as unknown as Record<string, unknown>);
+const triggerText = (p: Project, t: Trigger) => sentence(p, TRIGGER_LABEL[t.type], TRIGGER_PARTS[t.type], t as unknown as Record<string, unknown>);
 
 /** What the player clicked or walked into, e.g. `pond`, `Gardener`, `region exit_shed`, `Game`. */
 function ownerName(p: Project, o: RuleOwner): string {
