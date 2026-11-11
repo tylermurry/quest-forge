@@ -329,14 +329,15 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
-        {/* Game-level rules, default responses and score. */}
+        {/* Game settings: a click selects, double-click or Enter opens the Game Settings tab. */}
         {!searching && (
           <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
             <div
               tabIndex={0}
               className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
               onClick={() => ws.select({ kind: "game" })}
-              onKeyDown={(e) => e.key === "Enter" && ws.select({ kind: "game" })}
+              onDoubleClick={() => ws.openGame()}
+              onKeyDown={(e) => e.key === "Enter" && ws.openGame()}
             >
               <Gamepad2 className="text-muted-foreground size-3.5" />
               <span className="flex-1">Game</span>

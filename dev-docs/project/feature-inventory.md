@@ -112,7 +112,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
 | Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images | One tree per kind of thing, with a count. | Shipped |
-| Game | Top row, "rules & settings" | Opens the game-wide settings and rules in the Inspector. | Shipped |
+| Game | Top row, "rules & settings" | Click selects it; double-click or Enter opens the Game Settings tab in the center (the Inspector is hidden while it is up). | Shipped |
 | Search | "Search names and IDs" | Filters every section by name or ID. | Shipped |
 | Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organizes any section into folders. | Shipped |
 | Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images and audio are imported instead. | Shipped |
@@ -126,11 +126,12 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Start | Game ▸ Details: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
-| Score | Game ▸ Details: Max score | The total the score counts towards ("0 of 25"). | Shipped |
-| Default responses | Game ▸ Details | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
+| Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
+| Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
+| Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
+| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Labelled placeholders; the controls arrive in later updates. | Planned |
 | Game title and player character | — | Set when the project is created; the editor can't change either afterwards. | Partial |
-| Game rules | Game ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
+| Game rules | Game Settings ▸ General ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
 
 ## 5. Scene editor
 

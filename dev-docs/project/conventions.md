@@ -88,7 +88,7 @@ change.
   (section trees, search), `commands.ts` (pure Project → Project browser commands, reference summaries),
   `history.ts` (undo snapshots, merge keys, 500 steps), `editor.ts` (`Editor`: project + history +
   autosave + save errors + outside-change reload), `workspace.ts` (tabs, selection, expanded folders; UI
-  state, never undone), `actions.ts` (UI intents → one labelled undo step each), `importing.ts`,
+  state, never undone), `gameSettings.ts` (the Game Settings tab's areas and subsections), `actions.ts` (UI intents → one labelled undo step each), `importing.ts`,
   `template.ts` (blank project) + `png.ts`, `locate.ts` (jump-to), `recent.ts`, `appCommands.ts`
   (File/Edit/View command registry + shortcuts). `platform/` adapts the host: `platform.ts`
   (interface), `browser.ts` (dev page, HTTP to the sandbox), `tauri.ts` (typed Rust commands + native
@@ -177,7 +177,7 @@ change.
   (problems by rule and part), `pointPick.ts` (Pick on canvas). `model/game.ts` edits game settings; `model/locate.ts`
   returns a `Jump` (`ws.jumpTo` opens, selects, activates the layer and sets `ws.highlight` for the card to flash);
   `model/problemList.ts` filters the panel. UI in `ui/rules/` (`RuleInspector`, `RuleCard`, `PartFields`, `Picker`,
-  `GameInspector`); `Dock.tsx` is the Problems panel. Every Inspector page goes through `ui/InspectorShell.tsx` (sticky
+  `ui/game/GameSettings.tsx` is the Game row's center editor); `Dock.tsx` is the Problems panel. The Game Settings tab is a singleton (`ws.openGame()`, active key `GAME_TAB`, subsection in `ws.gameNav`) opened by double-click or Enter on the Game row; while it is active the Workspace collapses the Inspector (and restores it on leaving), and `ws.jumpTo` for a game field opens its General subsection, where `GameSettings` flashes and focuses the `data-game` field. Single-click on Game still selects it; the Inspector then only offers "Open Game Settings". Every Inspector page goes through `ui/InspectorShell.tsx` (sticky
   title, Details / Rules tabs for rule owners, tab in `ws.inspectorTab`). Rule cards are dnd-kit sortables tagged `kind: "ruleCard"`.
 
 ### Playtest

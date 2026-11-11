@@ -14,7 +14,7 @@ Filters every section to the names and IDs that match what you type.
 
 ## Game
 
-Opens the game's settings and game-wide rules in the Inspector. See [Game settings](./04-game-settings.md).
+Click it to select it; double-click it, or press **Enter**, to open the **Game Settings** tab. See [Game settings](./04-game-settings.md).
 
 ## Sections
 

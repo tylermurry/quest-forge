@@ -116,7 +116,7 @@ Use the **Select / Move Tool** (press **V**):
 
 ## Choose where the game starts
 
-Select **Game** at the top of the **Project Browser**. Under **Start**, choose the scene and the spawn point
+Double-click **Game** at the top of the **Project Browser**. In **Game Settings**, under **General** then **Start**, choose the scene and the spawn point
 the game begins at.
 
 ## More

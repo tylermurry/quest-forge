@@ -5,7 +5,7 @@ import type { Reference } from "@questforge/schema";
 import { entryReferences, groupReferences, renameEntry } from "../model/commands.ts";
 import { locate } from "../model/locate.ts";
 import { SceneSettings, SceneThingInspector } from "./scene/SceneInspector.tsx";
-import { GameInspector } from "./rules/GameInspector.tsx";
+import { Button } from "./components/ui/button.tsx";
 import { NodeInspector } from "./dialogue/NodeInspector.tsx";
 import { InspectorShell } from "./InspectorShell.tsx";
 import { TextField } from "./TextField.tsx";
@@ -43,7 +43,14 @@ export function Inspector({ actions }: { actions: Actions }) {
   }
 
   if (sel.kind === "game") {
-    return <GameInspector actions={actions} />;
+    return (
+      <InspectorShell actions={actions} title={p.game?.data.title ?? "Game"} subtitle="Game settings and rules that work anywhere">
+        <p className="text-muted-foreground text-[12px]">Start, score, default responses, rules and styling are edited in the Game Settings tab.</p>
+        <Button variant="outline" size="sm" className="w-fit" onClick={() => ws.openGame()}>
+          Open Game Settings
+        </Button>
+      </InspectorShell>
+    );
   }
 
   if (sel.kind === "dialogueNode") {

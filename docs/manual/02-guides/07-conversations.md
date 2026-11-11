@@ -59,7 +59,7 @@ The rule waits while the conversation plays, then carries on with any actions af
 ## When it ends
 
 When a dialogue reaches an **End** node, or a port with nothing connected, it runs the game's **Dialogue ends**
-rule for that dialogue, if there is one. To add one, select **Game**, open **Rules**, and add a rule with the
+rule for that dialogue, if there is one. To add one, double-click **Game**, open **General** then **Rules**, and add a rule with the
 trigger **Dialogue ends**.
 
 ## Test a conversation

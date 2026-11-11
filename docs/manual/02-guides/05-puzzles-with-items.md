@@ -38,7 +38,7 @@ The player selects the item in their inventory, then clicks the pond.
 
 To let the player join two inventory items together:
 
-1. Select **Game** in the **Project Browser** and open **Rules**.
+1. Double-click **Game** in the **Project Browser** and, in **Game Settings**, open **General** then **Rules**.
 2. Add a rule with the trigger **Combine**, and choose both items. The order doesn't matter.
 3. Add actions, such as **Take item** for each part and **Give item** for the result.
 
@@ -73,7 +73,7 @@ it stays that way when the player comes back.
 
 ## Award points
 
-1. Select **Game** and set **Max score** under **Score**. The game shows it as "Score: 5 of 25".
+1. Double-click **Game** and set **Max score** under **General** then **Score**. The game shows it as "Score: 5 of 25".
 2. In any rule, add **Award points**: a number of points, **for** an award name such as `caught_fish`.
 
 Each award only counts once, even if the rule runs again.
