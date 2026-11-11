@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Review a pull request, a branch or the current changes against the written engineering standards in docs/standards, and report in plain English whether it is ready for the owner to merge. Use when asked to review a PR, check a change against the standards, or say whether something is ready to merge.
+description: Review a pull request, a branch or the current changes against the written engineering standards in dev-docs/standards, and report in plain English whether it is ready for the owner to merge. Use when asked to review a PR, check a change against the standards, or say whether something is ready to merge.
 ---
 
 # PR review against the standards
@@ -9,7 +9,7 @@ You are standing in for the owner's review. The owner decides what merges and do
 code. Your report is what they decide from, so it must be accurate, complete and written in
 plain English.
 
-The rules you apply live in `docs/standards/`. You do not review by taste: every finding
+The rules you apply live in `dev-docs/standards/`. You do not review by taste: every finding
 cites a rule ID.
 
 ## 1. Find the change
@@ -31,13 +31,13 @@ install or run its code unless the owner asks you to in this conversation.
 
 ## 2. Read the standards that apply
 
-1. Read `docs/standards/index.mdx`. It lists every page and which kinds of change each
+1. Read `dev-docs/standards/index.mdx`. It lists every page and which kinds of change each
    applies to.
 2. Always read **Change hygiene** and **AI collaboration**.
 3. Read every other page whose "applies to" matches the files and behaviour changed. When
    unsure whether a page applies, read it.
 4. If the project keeps its own rules next to the standards (a decision log or specs, for
-   example in `docs/project/`), read the parts that cover the area changed. A change that
+   example in `dev-docs/project/`), read the parts that cover the area changed. A change that
    contradicts a recorded decision is a finding under AIC-3, and you cite the decision's
    own ID as well.
 

@@ -3,12 +3,12 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Questforge docs",
-  tagline: "Engineering standards and the Questforge project specs",
+  title: "Questforge developer docs",
+  tagline: "Engineering standards and Questforge's conventions",
   // PLACEHOLDER: replace with the production domain of the Cloudflare site.
   url: "https://questforge.example.com",
-  // Served under /docs/ of the Cloudflare site (the build is copied into the site's assets).
-  baseUrl: "/docs/",
+  // Served under /dev-docs/ of the Cloudflare site (the build is copied into the site's assets).
+  baseUrl: "/dev-docs/",
   // "always" builds /x/y/index.html and links to /x/y/. Workers static assets' default html
   // handling serves /x/y/ from x/y/index.html, so nested pages never fall through to the
   // site's single-page-application fallback.
@@ -56,7 +56,7 @@ const config = {
 
   themeConfig: {
     navbar: {
-      title: "Questforge docs",
+      title: "Questforge developer docs",
       items: [
         { to: "/standards/", label: "Standards", position: "left", activeBaseRegex: "/standards/" },
         { to: "/project/conventions/", label: "Project", position: "left", activeBaseRegex: "/project/" },

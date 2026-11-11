@@ -1,19 +1,19 @@
 packages:
   - packages/*
-  - docs
+  - dev-docs
 
 # Wrangler's bundler and local runtime (packages/site, D157) need their install scripts.
 allowBuilds:
   esbuild: true
   workerd: true
-  # Docusaurus (docs): core-js only prints a donation banner.
+  # Docusaurus (dev-docs): core-js only prints a donation banner.
   core-js: false
 
 minimumReleaseAgeExclude:
   - miniflare@5.20261109.0-beta
   - wrangler@4.159.0
 
-# Security advisories in Docusaurus's build-time dependencies (docs, DEP-4). Docusaurus 3.10.2 is the
+# Security advisories in Docusaurus's build-time dependencies (dev-docs, DEP-4). Docusaurus 3.10.2 is the
 # latest release and still pulls the vulnerable versions. Each entry only matches the vulnerable range,
 # so remove it once Docusaurus ships a patched dependency.
 overrides:

@@ -1,11 +1,11 @@
 {
-  "name": "@questforge/docs",
+  "name": "@questforge/dev-docs",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "docusaurus start --port 5179",
+    "dev": "docusaurus start --port 5180",
     "build": "docusaurus build",
-    "serve": "docusaurus serve --port 5179",
+    "serve": "docusaurus serve --port 5180",
     "clear": "docusaurus clear"
   },
   "dependencies": {
