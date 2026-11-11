@@ -138,6 +138,14 @@ describe("dragging across sections", () => {
     expect(a.editor.history.canUndo).toBe(false);
   });
 
+  it("lists an imported font under Fonts", async () => {
+    const a = await mount();
+    expect(screen.getByRole("treeitem", { name: "Fonts" }).textContent).toContain("0");
+    await act(async () => void a.importFiles("font", "", [{ name: "hand.woff2", bytes: new Uint8Array([0x77, 0x4f, 0x46, 0x32, 1]) }]));
+    expect(screen.getByRole("treeitem", { name: "Fonts" }).textContent).toContain("1");
+    expect(screen.getByRole("treeitem", { name: "font hand" })).toBeTruthy();
+  });
+
   it("each top-level section header shows a decorative icon", async () => {
     await mount();
     for (const { title } of SECTIONS) {

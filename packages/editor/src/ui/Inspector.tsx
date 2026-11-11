@@ -62,6 +62,7 @@ export function Inspector({ actions }: { actions: Actions }) {
   const refs = entryReferences(p, sel.section, sel.id);
   const image = sel.section === "image" ? p.assets?.data.images.find((i) => i.id === sel.id) : undefined;
   const audio = sel.section === "audio" ? p.assets?.data.audio.find((i) => i.id === sel.id) : undefined;
+  const font = sel.section === "font" ? p.assets?.data.fonts?.find((i) => i.id === sel.id) : undefined;
   const sceneOwner = sel.section === "scene" ? ({ kind: "scene", scene: sel.id } as const) : null;
   return (
     <InspectorShell actions={actions} title={entry.name} subtitle={NOUN[sel.section][0]!.toUpperCase() + NOUN[sel.section].slice(1)} owner={sceneOwner}>
@@ -106,11 +107,11 @@ export function Inspector({ actions }: { actions: Actions }) {
             <dd>{entry.detail}</dd>
           </>
         )}
-        {(image ?? audio) && (
+        {(image ?? audio ?? font) && (
           <>
             <dt className={DT}>File</dt>
             <dd>
-              <code className="font-mono text-[12px] selectable">{(image ?? audio)!.path}</code>
+              <code className="font-mono text-[12px] selectable">{(image ?? audio ?? font)!.path}</code>
             </dd>
           </>
         )}

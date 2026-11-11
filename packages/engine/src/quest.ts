@@ -12,6 +12,8 @@ const TYPES: Record<string, string> = {
   mp3: "audio/mpeg",
   ogg: "audio/ogg",
   wav: "audio/wav",
+  woff2: "font/woff2",
+  woff: "font/woff",
 };
 
 /** The MIME type for an asset path, by its extension. */

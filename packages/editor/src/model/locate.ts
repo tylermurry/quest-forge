@@ -36,10 +36,11 @@ function locateTarget(project: Project, { file, path }: Location): JumpTarget | 
     const flag = project.flags.data.flags[path[1]];
     return flag ? { kind: "entry", entry: { section: "flag", id: flag.id } } : null;
   }
-  if (file === project.assets?.path && (path[0] === "images" || path[0] === "audio") && typeof path[1] === "number") {
-    const list = path[0] === "images" ? project.assets.data.images : project.assets.data.audio;
+  if (file === project.assets?.path && (path[0] === "images" || path[0] === "audio" || path[0] === "fonts") && typeof path[1] === "number") {
+    const data = project.assets.data;
+    const list = path[0] === "images" ? data.images : path[0] === "audio" ? data.audio : data.fonts ?? [];
     const a = list[path[1]];
-    return a ? { kind: "entry", entry: { section: path[0] === "images" ? "image" : "audio", id: a.id } } : null;
+    return a ? { kind: "entry", entry: { section: path[0] === "images" ? "image" : path[0] === "audio" ? "audio" : "font", id: a.id } } : null;
   }
   for (const { kind, doc } of allDocs(project)) {
     if (doc.path !== file || !(kind in ASSET_LAYOUT)) continue;

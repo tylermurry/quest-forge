@@ -46,7 +46,7 @@ export interface Project {
   trash: string[];
 }
 
-/** Where deleted image and audio files wait so undo can bring them back. */
+/** Where deleted image, audio and font files wait so undo can bring them back. */
 export const TRASH_DIR = ".editor/trash";
 
 export const SCHEMAS = {
@@ -72,7 +72,7 @@ export const ASSET_LAYOUT = {
 type ListKey = (typeof ASSET_LAYOUT)[AssetKind]["list"];
 
 /** Kinds that live in a browser section made of real folders. */
-export type FolderSection = AssetKind | "image" | "audio";
+export type FolderSection = AssetKind | "image" | "audio" | "font";
 
 /** The folder each section's folders live under. */
 export const SECTION_ROOTS: Record<FolderSection, string> = {
@@ -82,6 +82,7 @@ export const SECTION_ROOTS: Record<FolderSection, string> = {
   dialogue: "dialogues",
   image: "assets/images",
   audio: "assets/audio",
+  font: "assets/fonts",
 };
 
 /** Which section a project folder path belongs to, if any (section roots themselves aren't folders). */
@@ -221,7 +222,7 @@ export interface SavePlan {
   writes: { path: string; content: string }[];
   /** Imported files to write. */
   binaryWrites: { path: string; bytes: Uint8Array }[];
-  /** Image/audio files that follow `assets.yaml`: moved, sent to trash, or restored. */
+  /** Image/audio/font files that follow `assets.yaml`: moved, sent to trash, or restored. */
   moves: { from: string; to: string }[];
   deletes: string[];
   /** Folders that were removed from the project. Deepest first; only removed once empty. */
@@ -242,7 +243,7 @@ export const isEmptyPlan = (plan: SavePlan) =>
 const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
 /**
- * How image and audio files follow `assets.yaml`. Compares the manifest as
+ * How image, audio and font files follow `assets.yaml`. Compares the manifest as
  * last saved with the current one: an entry whose file isn't on disk gets it from
  * its old path (same ID, else same file name), from the pending imports, or back
  * from the trash; files no entry uses any more go to the trash.
@@ -386,12 +387,13 @@ export function folderOf(path: string): string {
   return path.split("/").slice(1, -1).join("/");
 }
 
-/** Every image and audio entry of an assets manifest. */
-export function assetEntries(assets: AssetsFile | undefined): { kind: "image" | "audio"; id: string; path: string }[] {
+/** Every image, audio and font entry of an assets manifest. */
+export function assetEntries(assets: AssetsFile | undefined): { kind: "image" | "audio" | "font"; id: string; path: string }[] {
   if (!assets) return [];
   return [
     ...assets.images.map((a) => ({ kind: "image" as const, id: a.id, path: a.path })),
     ...assets.audio.map((a) => ({ kind: "audio" as const, id: a.id, path: a.path })),
+    ...(assets.fonts ?? []).map((a) => ({ kind: "font" as const, id: a.id, path: a.path })),
   ];
 }
 

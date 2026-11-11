@@ -87,6 +87,7 @@ const LIST_LABEL: Record<string, (item: unknown, index: number) => string> = {
   options: (it, i) => `Choice "${str(get(it, "id")) ?? i + 1}"`,
   flags: (it, i) => `Flag "${str(get(it, "id")) ?? i + 1}"`,
   images: (it, i) => `Image "${str(get(it, "id")) ?? i + 1}"`,
+  fonts: (it, i) => `Font "${str(get(it, "id")) ?? i + 1}"`,
   audio: (it, i) => `Sound "${str(get(it, "id")) ?? i + 1}"`,
   rules: (_it, i) => `Rule ${i + 1}`,
   if: (_it, i) => `Condition ${i + 1}`,

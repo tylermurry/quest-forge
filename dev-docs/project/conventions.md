@@ -32,7 +32,10 @@ change.
   `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (blocking errors), `warnings.ts` (non-blocking
   warnings and empty rule text; `logicBlocks` walks every rule and dialogue node, `awardTotal`), `migrate.ts`
   (`MIGRATIONS`; v2 gives rules IDs, `withRuleIds` also builds test data), `zip.ts` (dependency-free zip read/write) and
-  `quest.ts` (the built game: `compileGame`, `buildQuest`, `readQuest`, `usedAssetIds`). The test fixture project is
+  `quest.ts` (the built game: `compileGame`, `buildQuest`, `readQuest`, `usedAssetIds`).
+  Font assets (WOFF2/WOFF, `assets/fonts/`) are an optional `fonts` list in `assets.yaml` (absent until the first
+  import, so older files are unchanged), the `font` `RefKind` (counted from `style.typography.font`) and a
+  `FolderSection`; they follow images and audio through rename, `planSave` moves and Build Game. The test fixture project is
   `packages/schema/test/fixtures/mini`. It must stay canonical and problem-free (no warnings either). To change it, load it,
   edit the Project and save it with `saveProject` (a throwaway script), never by hand.
 - Rules have a required `id` (`rule_<n>`, unique within the list, never shown); fired keys are `<owner>/<id>`. Rule
@@ -60,7 +63,10 @@ change.
   shapes), `restore.ts` (`readState`/`sanitizeState`: any stored GameState made safe for the project, shared by
   save slots and playtest presets), `saves.ts` (`SaveSlots` over a `KeyValueStore`, volumes, `MemoryStore` for tests), `audio.ts` (`AudioSync`: music follows `state.music`, `session.sounds` drained; `sceneAudioIds`),
   `webaudio.ts` (the Web Audio backend, unlocked from pointer events), `quest.ts` (`loadQuest`: a `.quest` file →
-  a `ProjectBundle` with blob asset URLs). `Session.load(state)` restores a save
+  a `ProjectBundle` with blob asset URLs, `font/woff2` and `font/woff` types), `styleassets.ts` (DOM-free: which
+  style images to preload, `loadStyleAssets` with injected loaders, the font-family fallback). `createGame` preloads the
+  skin's images and registers the custom font with `FontFace` on the canvas's own document before the session starts;
+  a failure logs a warning and falls back. `Game.fontFamily` is the CSS family text should use. `Session.load(state)` restores a save
   exactly (no `scene_enter`); `Session.tryAgain()` returns to the scene-entry snapshot.
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.
   Only `game.ts`, `render.ts`, `webaudio.ts`, `ui/draw.ts` and `ui/icons.ts` touch the canvas, DOM or Web Audio.
@@ -90,7 +96,7 @@ change.
   (section trees, search), `commands.ts` (pure Project → Project browser commands, reference summaries),
   `history.ts` (undo snapshots, merge keys, 500 steps), `editor.ts` (`Editor`: project + history +
   autosave + save errors + outside-change reload), `workspace.ts` (tabs, selection, expanded folders; UI
-  state, never undone), `gameSettings.ts` (the Game Settings tab's areas and subsections), `actions.ts` (UI intents → one labelled undo step each), `importing.ts`,
+  state, never undone), `gameSettings.ts` (the Game Settings tab's areas and subsections), `actions.ts` (UI intents → one labelled undo step each), `importing.ts` (images, sounds and fonts; a font must start with its format's signature),
   `template.ts` (blank project) + `png.ts`, `locate.ts` (jump-to), `recent.ts`, `appCommands.ts`
   (File/Edit/View command registry + shortcuts). `platform/` adapts the host: `platform.ts`
   (interface), `browser.ts` (dev page, HTTP to the sandbox), `tauri.ts` (typed Rust commands + native

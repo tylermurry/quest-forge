@@ -111,14 +111,14 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images | One tree per kind of thing, with a count. | Shipped |
+| Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images, Fonts | One tree per kind of thing, with a count. | Shipped |
 | Game | Top row, "rules & settings" | Click selects it; double-click or Enter opens the Game Settings tab in the center (the Inspector is hidden while it is up). | Shipped |
 | Search | "Search names and IDs" | Filters every section by name or ID. | Shipped |
 | Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organizes any section into folders. | Shipped |
-| Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images and audio are imported instead. | Shipped |
+| Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images, audio and fonts are imported instead. | Shipped |
 | Rename / Change ID… / Duplicate / Delete | Row menu (…) or right-click | Names are what players see; IDs are what rules use. Change ID updates every reference. Delete lists what will break. | Shipped |
 | Move between folders | Drag rows; also from the keyboard | Moves things into folders within the same section. | Shipped |
-| Import files… | Images and Audio sections; or drop files from the computer | Imports PNG, JPG, WebP images and MP3, OGG, WAV audio. Other files are refused. | Shipped |
+| Import files… | Images, Audio and Fonts sections; or drop files from the computer | Imports PNG, JPG, WebP images, MP3, OGG, WAV audio and WOFF2/WOFF fonts (checked by their file signature). Other files are refused. A used font is built into the game. | Shipped |
 | Details | Inspector when a browser row is selected | Name, ID, type, folder, file path, and **Used by** (every place it is referenced, each a link). | Shipped |
 | Listen | Inspector for an audio file | Plays the sound. | Shipped |
 

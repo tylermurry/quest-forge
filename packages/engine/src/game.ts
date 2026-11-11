@@ -3,6 +3,7 @@ import {
   SCENE_WIDTH,
   formatProblem,
   hasBlockingErrors,
+  resolveStyle,
   validateProject,
   type CharacterFile,
   type ImageAsset,
@@ -14,6 +15,7 @@ import { AudioSync, sceneAudioIds } from "./audio.ts";
 import { DEBUG_OFF, type DebugFlags } from "./debug.ts";
 import { drawLoading, drawSession, present } from "./render.ts";
 import { SaveSlots, readSettings, writeSettings, type KeyValueStore } from "./saves.ts";
+import { loadStyleAssets, resolveFontFamily, type LoadedFont } from "./styleassets.ts";
 import { Session, linkedScenes, type SessionStart } from "./session.ts";
 import type { GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
@@ -64,6 +66,8 @@ export interface Game {
   /** The playing scene, once loaded. */
   readonly world: World | null;
   readonly debug: DebugFlags;
+  /** CSS font-family for the game's text: the custom font once loaded, else the built-in family. */
+  readonly fontFamily: string;
   /** Audio state, for debugging: has a gesture unlocked it, and which track is sounding. Null with `audio: false`. */
   readonly audio: { readonly unlocked: boolean; readonly playing: string | null } | null;
   destroy(): void;
@@ -75,6 +79,9 @@ export class ProjectErrors extends Error {
     super(`This project has ${problems.length} problem(s) to fix before it can play:\n${problems.map(formatProblem).join("\n")}`);
   }
 }
+
+/** Numbers font family names, so no two loaded fonts share one. */
+let fontNumber = 0;
 
 export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, options: GameOptions = {}): Game {
   const { project } = bundle;
@@ -111,6 +118,19 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   let audioScene: string | null = null;
   let destroyed = false;
   let raf = 0;
+  let fontFamily = resolveFontFamily(resolveStyle(game.style).typography, null);
+  let releaseFont = () => {};
+  /** Registers a font asset with the canvas's own document, ready before any text is laid out. */
+  const loadFont = async (id: string): Promise<LoadedFont> => {
+    const asset = project.assets!.data.fonts?.find((f) => f.id === id);
+    if (!asset) throw new Error(`there is no font asset ${id}`);
+    // One family name per load, so a restarted game never shares a name with the one it replaces.
+    const family = `qf-font-${id}-${++fontNumber}`;
+    const face = new view.FontFace(family, `url("${bundle.assetUrl(asset.path)}")`);
+    await face.load();
+    doc.fonts.add(face);
+    return { family, release: () => doc.fonts.delete(face) };
+  };
 
   // Size the canvas to its CSS box in device pixels so nearest-neighbor stays crisp.
   const resize = () => {
@@ -200,8 +220,22 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   // The first scene (and every item icon) before play starts; later scenes load on
   // change_scene and are prefetched on entry.
   const itemIcons = project.items.map((i) => i.data.icon);
-  const ready = Promise.all([images.loadScene(scene), images.load(itemIcons)]).then(() => {
-    if (destroyed) return;
+  // The skin's images and font come with the game, not with a scene, and load before the first
+  // text layout. A failure falls back (loadStyleAssets never rejects), so it can't hold up startup.
+  const style = resolveStyle(game.style);
+  const warnStyle = (m: string) => {
+    console.warn(m);
+    note(m);
+  };
+  const styleLoaded = loadStyleAssets(
+    style,
+    { loadImage: (id) => images.load([id]), loadFont },
+    warnStyle,
+  );
+  const ready = Promise.all([images.loadScene(scene), images.load(itemIcons), styleLoaded]).then(([, , styleAssets]) => {
+    fontFamily = styleAssets.fontFamily;
+    releaseFont = styleAssets.release;
+    if (destroyed) return releaseFont();
     const start: SessionStart = {
       ...(options.scene ? { scene: options.scene } : {}),
       ...(options.spawn ? { spawn: options.spawn } : {}),
@@ -233,6 +267,9 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       return session?.world ?? null;
     },
     debug,
+    get fontFamily() {
+      return fontFamily;
+    },
     audio,
     destroy() {
       destroyed = true;
@@ -241,6 +278,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       for (const [type, fn] of listeners) canvas.removeEventListener(type, fn as EventListener);
       doc.removeEventListener("visibilitychange", onVisibility);
       audio?.close();
+      releaseFont();
     },
   };
 }
@@ -270,11 +308,18 @@ export function sceneImageIds(scene: SceneFile, characters: Map<string, Characte
   return [...ids];
 }
 
+async function decodeImage(url: string) {
+  const el = new Image();
+  el.src = url;
+  await el.decode();
+  return { el, size: { w: el.naturalWidth, h: el.naturalHeight } };
+}
+
 /**
  * Loads images by ID once and keeps them. A scene is ready when all its
  * images are; `prefetch` starts loading in the background.
  */
-class ImageCache {
+export class ImageCache {
   readonly loaded = new Map<string, LoadedImage>();
   private readonly started = new Set<string>();
   private readonly assets: Map<string, ImageAsset>;
@@ -284,6 +329,8 @@ class ImageCache {
     private readonly characters: Map<string, CharacterFile>,
     private readonly assetUrl: (path: string) => string,
     private readonly onProblem: (message: string) => void,
+    /** Fetches and decodes one image. The browser one by default; tests pass a fake. */
+    private readonly decode: (url: string) => Promise<{ el: HTMLImageElement; size: { w: number; h: number } }> = decodeImage,
   ) {
     this.assets = new Map(project.assets!.data.images.map((a) => [a.id, a]));
   }
@@ -310,14 +357,17 @@ class ImageCache {
       ids.map(async (id) => {
         if (this.started.has(id)) return;
         this.started.add(id);
-        const asset = this.assets.get(id)!;
-        const el = new Image();
-        el.src = this.assetUrl(asset.path);
-        await el.decode();
-        const size = { w: el.naturalWidth, h: el.naturalHeight };
-        const problem = sheetProblem(asset, size);
-        if (problem) this.onProblem(problem);
-        this.loaded.set(id, { asset, size, el });
+        try {
+          const asset = this.assets.get(id)!;
+          const { el, size } = await this.decode(this.assetUrl(asset.path));
+          const problem = sheetProblem(asset, size);
+          if (problem) this.onProblem(problem);
+          this.loaded.set(id, { asset, size, el });
+        } catch (e) {
+          // A failed image is not "started": a scene that needs it tries again instead of waiting for ever.
+          this.started.delete(id);
+          throw e;
+        }
       }),
     );
   }

@@ -27,6 +27,7 @@ Click it to select it; double-click it, or press **Enter**, to open the **Game S
 | **Flags** | Flags and counters. | — (shown in the Inspector) |
 | **Audio** | Imported music and sound effects. | — (shown in the Inspector) |
 | **Images** | Imported pictures. | The image's slicing and origin. |
+| **Fonts** | Imported fonts (WOFF2 or WOFF). | — (shown in the Inspector) |
 
 Each heading shows how many things the section holds. Click it to fold the section away.
 
@@ -38,7 +39,7 @@ Open with the **…** button or by right-clicking.
 |---|---|
 | **New folder** | Adds a folder. |
 | **New scene / item / character / dialogue / flag** | Adds one, in this folder. |
-| **Import files…** | (Images and Audio) Imports pictures or sounds from your computer. |
+| **Import files…** | (Images, Audio and Fonts) Imports pictures, sounds or fonts from your computer. |
 | **Rename folder** | Renames the folder. |
 | **Delete folder** | Deletes the folder. |
 
@@ -58,8 +59,9 @@ Open with the **…** button or by right-clicking a row.
 
 - Drag rows onto a folder to move them there. Rows only move within their own section.
 - Drag images and characters onto a scene's canvas to place them.
-- Drag files from your computer onto the Project Browser to import them: PNG, JPG and WebP pictures, and MP3,
-  OGG and WAV sounds.
+- Drag files from your computer onto the Project Browser to import them: PNG, JPG and WebP pictures, MP3,
+  OGG and WAV sounds, and WOFF2 or WOFF fonts. A font file must really be a WOFF2 or WOFF font; a file that only has
+  the right ending is refused.
 
 ## Inspector details
 
@@ -71,7 +73,7 @@ Select a row to see its details in the Inspector:
 | **ID** | What rules use. **Change ID…** in the row menu changes it. |
 | **Folder** | The folder it's in, or **(top level)**. |
 | **Type** | For flags: a flag (true or false) or a counter, and what it starts as. |
-| **File** | For images and sounds: the file in the project folder, with a preview or a player. |
+| **File** | For images, sounds and fonts: the file in the project folder, with a preview or a player. |
 | **Used by** | Every place that uses it. Click one to jump there. |
 
 A selected scene also shows its **Background** and **Music**, and has a **Rules** tab for its scene rules.

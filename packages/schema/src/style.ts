@@ -37,8 +37,6 @@ export const TEXT_SIZE_MAX = 72;
 
 /**
  * Text look. Either `family` (a built-in) or `font` (a font asset ID), not both.
- * `font` is only an ID here: the `font` asset kind, its reference kind and its
- * missing-asset check arrive with the font asset pipeline (#45).
  */
 export const Typography = z
   .strictObject({

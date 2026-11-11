@@ -7,8 +7,8 @@ import { m1Project } from "./support/fixtures.ts";
 const outline = (n: FolderNode): unknown[] => [...n.folders.map((f) => ({ [`${f.name}/`]: outline(f) })), ...n.entries.map((e) => e.name)];
 
 describe("project browser model", () => {
-  it("has the seven sections in order", () => {
-    expect(SECTIONS.map((s) => s.title)).toEqual(["Scenes", "Items", "Characters", "Dialogues", "Flags", "Audio", "Images"]);
+  it("has the eight sections in order", () => {
+    expect(SECTIONS.map((s) => s.title)).toEqual(["Scenes", "Items", "Characters", "Dialogues", "Flags", "Audio", "Images", "Fonts"]);
   });
 
   it("builds the m1 fixture's trees, sorted by display name", async () => {

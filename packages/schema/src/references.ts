@@ -23,6 +23,7 @@ export type RefKind =
   | "counter"
   | "image"
   | "audio"
+  | "font"
   | "spawn"
   | "object"
   | "node"
@@ -175,12 +176,10 @@ function dialogueRefs(d: DialogueFile, push: Push) {
   });
 }
 
-/**
- * Image IDs the skin uses. `typography.font` is not pushed yet: #45 adds the font asset kind,
- * its RefKind and one push for it here.
- */
+/** Image and font IDs the skin uses. */
 function styleRefs(style: NonNullable<GameFile["style"]>, push: Push) {
   const at = ["style"];
+  if (style.typography?.font !== undefined) push("font", style.typography.font, [...at, "typography", "font"]);
   if (style.sharedFrame?.image !== undefined) push("image", style.sharedFrame.image, [...at, "sharedFrame", "image"]);
   const bar = style.iconBar;
   if (bar?.frame?.image !== undefined) push("image", bar.frame.image, [...at, "iconBar", "frame", "image"]);
@@ -233,7 +232,7 @@ export function describeReference(project: Project, ref: Reference): string {
 }
 
 /** Kinds the project-wide Rename command handles. Flags and counters share one namespace. */
-export type RenameKind = AssetKind | "flag" | "image" | "audio";
+export type RenameKind = AssetKind | "flag" | "image" | "audio" | "font";
 
 export class RenameError extends Error {}
 
@@ -252,6 +251,8 @@ export function definedIds(project: Project, kind: RenameKind): string[] {
       return project.assets?.data.images.map((a) => a.id) ?? [];
     case "audio":
       return project.assets?.data.audio.map((a) => a.id) ?? [];
+    case "font":
+      return project.assets?.data.fonts?.map((a) => a.id) ?? [];
     default:
       return (project[ASSET_LAYOUT[kind].list] as Doc<{ id: string }>[]).map((d) => d.data.id);
   }
@@ -294,8 +295,8 @@ export function renameId(project: Project, kind: RenameKind, from: string, to: s
     project.assets &&
     edit(
       project.assets,
-      kind === "image" || kind === "audio"
-        ? (d) => d[kind === "image" ? "images" : "audio"].forEach((a) => a.id === from && (a.id = to))
+      kind === "image" || kind === "audio" || kind === "font"
+        ? (d) => (kind === "font" ? (d.fonts ?? []) : d[kind === "image" ? "images" : "audio"]).forEach((a) => a.id === from && (a.id = to))
         : undefined,
     );
   for (const assetKind of Object.keys(ASSET_LAYOUT) as AssetKind[]) {

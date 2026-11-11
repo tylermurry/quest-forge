@@ -76,6 +76,15 @@ describe("backgrounds and empty scenes", () => {
     dispose();
   });
 
+  it("a font dropped on the canvas is imported with a notice saying where it went", async () => {
+    const { c, editor, scene, at, dispose } = await sceneEditor(blankProject("T"), "first_scene");
+    c.dropFiles([{ name: "Hand.woff2", bytes: new Uint8Array([0x77, 0x4f, 0x46, 0x32, 1]) }], at([10, 10]).screen);
+    expect(editor.project.assets!.data.fonts!.map((f) => f.id)).toEqual(["hand"]);
+    expect(scene().background).toBe("first_scene_bg");
+    expect(editor.notice).toMatchObject({ kind: "info", text: "Imported a font; find it under Fonts." });
+    dispose();
+  });
+
   it("choosing and removing a background are undo steps; the row deletes it", async () => {
     const { c, editor, scene, dispose } = await sceneEditor(blankProject("T"), "first_scene");
     c.chooseBackground("player_sprite");

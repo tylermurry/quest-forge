@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2, Image as ImageIcon, type LucideIcon, Map as MapIcon, MessagesSquare, Music, Package, Search, User } from "lucide-react";
+import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2, Image as ImageIcon, type LucideIcon, Map as MapIcon, MessagesSquare, Music, Package, Search, Type, User } from "lucide-react";
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
-import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
+import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, isFileSection, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
@@ -12,7 +12,7 @@ import { cn } from "./lib/utils.ts";
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
 
-const SECTION_ICON: Record<Section, LucideIcon> = { scene: MapIcon, item: Package, character: User, dialogue: MessagesSquare, flag: Flag, audio: Music, image: ImageIcon };
+const SECTION_ICON: Record<Section, LucideIcon> = { scene: MapIcon, item: Package, character: User, dialogue: MessagesSquare, flag: Flag, audio: Music, image: ImageIcon, font: Type };
 
 type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
@@ -152,14 +152,14 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     ...(opensTab(e.section) ? [{ label: "Open", onSelect: () => ws.open({ section: e.section, id: e.id }) }] : []),
     { label: "Rename", onSelect: () => setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name }) },
     ...(isAssetKind(e.section) ? [{ label: "Change ID…", onSelect: () => setPopup({ kind: "changeId", section: e.section, id: e.id }) }] : []),
-    ...(e.section !== "image" && e.section !== "audio" ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
+    ...(!isFileSection(e.section) ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
     { label: "Delete", separated: true, destructive: true, onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)) },
   ];
 
   const folderMenu = (section: Section, path: string): MenuItem[] => [
     { label: "New folder", onSelect: () => startNewFolder(section, path) },
-    ...(section !== "image" && section !== "audio" ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
-    ...(section === "image" || section === "audio"
+    ...(!isFileSection(section) ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
+    ...(isFileSection(section)
       ? [
           {
             label: "Import files…",
@@ -317,7 +317,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         multiple
         hidden
         aria-label="Import files"
-        accept=".png,.jpg,.jpeg,.webp,.mp3,.ogg,.wav"
+        accept=".png,.jpg,.jpeg,.webp,.mp3,.ogg,.wav,.woff2,.woff"
         onChange={(e) => {
           const files = [...(e.target.files ?? [])];
           e.target.value = "";
