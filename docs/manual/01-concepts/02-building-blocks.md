@@ -67,8 +67,8 @@ None of the building blocks do anything on their own. **Rules** do. A rule says 
 **If** some things are true, **Do** these actions. "When the player uses the fishing rod on the pond, if they
 haven't caught the fish yet, give them the fish."
 
-Objects, placed characters, hotspots, regions, scenes and the game itself can all have rules. Rules: how a
-click becomes an action explains exactly how they run.
+Objects, placed characters, hotspots, regions, scenes and the game itself can all have rules.
+[Rules: how a click becomes an action](./03-rules.md) explains exactly how they run.
 
 ## How it fits together
 
@@ -112,5 +112,6 @@ Folders are only for you. They never change how the game plays.
 
 ## Where to next
 
-Next, Rules: how a click becomes an action explains how the player's clicks turn into what happens on screen.
-To start making things, see Build a scene and Make things interactive.
+Next, [Rules: how a click becomes an action](./03-rules.md) explains how the player's clicks turn into what
+happens on screen. To start making things, see [Build a scene](../02-guides/03-build-a-scene.md) and
+[Make things interactive](../02-guides/04-make-things-interactive.md).

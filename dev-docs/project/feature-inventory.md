@@ -32,7 +32,7 @@ share the `.quest`**.
 |---|---|---|
 | **Game** | The whole adventure and its settings. | Title, the player character, where play starts (scene + spawn point), max score, default responses, game rules (Combine, Dialogue ends). |
 | **Scene** | One room or screen, always 640 × 400. | A background image, music, a walkable area, depth lines, spawn points, and the things the player meets: objects, placed characters, hotspots, regions. Scene rules (enter, leave). |
-| **Object** | A picture placed in a scene: a tree, a key on a table. | An image (or an animation), a position, a baseline, visible or hidden, an optional obstacle, a walk-to point, rules. With no name it is scenery the player can't click. |
+| **Object** | A picture placed in a scene: a tree, a key on a table. | An image (or an animation), a position, a baseline, visible or hidden, an optional obstacle, rules. With no name it is scenery the player can't click. |
 | **Hotspot** | A clickable area painted into the background: a pond, a window. | A shape, a name the player sees, a walk-to point, rules. |
 | **Region** | An invisible area of floor. | A shape, rules that run when the player walks in. |
 | **Spawn point** | A named place where the player appears. | A position and a facing. The game's start, and every Change scene, name one. |
@@ -70,7 +70,8 @@ Dialogues hold their own conditions and actions, like rules.
 ### How a game runs
 
 1. The player picks a **verb** (Walk, Look, Hand, Talk, or an item to Use) and clicks a thing.
-2. The player walks to its walk-to point (or, if it has none, the nearest place they can stand).
+2. For Hand, Talk, Use and Walk the player first walks over: to a hotspot's walk-to point, or else the nearest place
+   they can stand. Look runs from where the player stands.
 3. That thing's rules are checked **top to bottom**. The first rule whose trigger matches and whose
    conditions are all true runs its actions in order. A rule marked Once never runs again.
 4. If no rule matches, the game's **default response** for that verb is shown.
@@ -167,9 +168,9 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Spawn points | Guides layer | Named places the player appears (scene start, Change scene). Position and facing. | Shipped |
 | Hotspots | Hotspots layer | Clickable areas with a name shown to the player, a walk-to point and rules. | Shipped |
 | Regions | Regions layer | Invisible areas that run rules when the player walks in. | Shipped |
-| Objects | Drop an image from the browser or the computer onto the canvas | A picture in the scene: name (empty = scenery the player can't click), image, position, Visible when the scene starts, Baseline (automatic or set), obstacle (Add obstacle), walk-to point, animations, rules. | Shipped |
-| Placed characters | Drop a character from the browser onto the canvas | The character's position, facing, visible or hidden, baseline, walk-to point, rules. One placement per character per scene. | Shipped |
-| Baseline | Objects and characters | The line that decides who draws in front: lower baselines draw in front. | Shipped |
+| Objects | Drop an image from the browser or the computer onto the canvas | A picture in the scene: name (empty = scenery the player can't click), image, position, Visible when the scene starts, Baseline (automatic or set), obstacle (Add obstacle), animations, rules. | Shipped |
+| Placed characters | Drop a character from the browser onto the canvas | Where the character's feet are, its facing, visible or hidden, rules. One placement per character per scene. | Shipped |
+| Baseline | Objects (characters use their feet) | The line that decides who draws in front: lower baselines draw in front. | Shipped |
 | Scene rules | Scene ▸ Rules | **Player enters the scene**, **Player leaves the scene**. | Shipped |
 
 ## 6. Items, characters and images (tabs)
@@ -250,7 +251,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
 | Icon bar | Move the mouse to the top, or tap the tab on touch | Walk, Look, Hand, Talk, the current item, Inventory, Settings, and the score. | Shipped |
-| Verbs | Icon bar; right-click cycles verbs | Click the scene with the current verb. The player walks to the walk-to point first. | Shipped |
+| Verbs | Icon bar; right-click cycles verbs | Click the scene with the current verb. For everything but Look the player walks over first. | Shipped |
 | Labels | Hover, or tap and hold on touch | Shows the name of what's under the pointer. | Shipped |
 | Text | Narration and speech boxes | Click anywhere to skip. | Shipped |
 | Inventory | Icon bar ▸ Inventory | Look at an item, pick one to use, combine two. | Shipped |
