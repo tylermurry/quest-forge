@@ -70,6 +70,17 @@
         "dev"
       ],
       "port": 5179
+    },
+    {
+      "name": "dev-docs-dev",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": [
+        "pnpm",
+        "--filter",
+        "@questforge/dev-docs",
+        "dev"
+      ],
+      "port": 5180
     }
   ]
 }

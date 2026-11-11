@@ -53,16 +53,16 @@ Stop and ask the owner, before moving anything, when:
 - two issues need conflicting changes to the same code;
 - the batch is too large to review in one sitting (CHG-7): roughly more than six issues,
   or any `L`/`XL` item alongside others. Propose a split; the owner decides;
-- an issue touches `docs/standards/`. That must be its own PR (CHG-4); leave it out of the
+- an issue touches `dev-docs/standards/`. That must be its own PR (CHG-4); leave it out of the
   batch and tell the owner.
 
 ## 3. Plan
 
 1. Start from an up-to-date `main` with a clean working tree. Create a branch
    `ready/<yyyy-mm-dd>`.
-2. Read `CLAUDE.md`, `docs/standards/index.mdx`, Change hygiene, AI collaboration, every
+2. Read `CLAUDE.md`, `dev-docs/standards/index.mdx`, Change hygiene, AI collaboration, every
    standards page whose row matches the batch, and the sections of
-   `docs/project/conventions.md` for each package touched (AIC-1).
+   `dev-docs/project/conventions.md` for each package touched (AIC-1).
 3. Write the plan: for each issue, the files it will change, the tests that prove its
    Done-when, the standards pages that apply, and its order. Group issues whose files
    overlap so one subagent does them in sequence; issues with no overlap may run in
@@ -78,7 +78,7 @@ For each issue, in plan order:
    Its prompt is self-contained: the issue's full text, the files to change, the tests to
    add, the standards pages and conventions sections to read first, and these rules:
    - change only the files named, and nothing outside the issue's Scope (AIC-4);
-   - do not commit, push, or touch `docs/standards/`;
+   - do not commit, push, or touch `dev-docs/standards/`;
    - run `corepack pnpm check` and report the real output (AIC-5);
    - never weaken, skip or delete a test or check to make it pass (AIC-6);
    - if the issue is unclear, stop and report the question instead of guessing.
@@ -95,7 +95,7 @@ If an issue is dropped (blocked, owner says no), revert its files, move it back 
 ## 5. Check the whole batch
 
 1. Run `corepack pnpm check` on the final branch, and the docs build
-   (`corepack pnpm --filter @questforge/docs build`) when docs changed. Both must pass
+   (`corepack pnpm --filter @questforge/dev-docs build`) when docs changed. Both must pass
    (CHG-6).
 2. Run the `pr-review` skill on the branch. Fix every `Must` finding before opening the PR.
 

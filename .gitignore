@@ -8,3 +8,5 @@ coverage/
 .wrangler/
 docs/.docusaurus/
 docs/build/
+dev-docs/.docusaurus/
+dev-docs/build/

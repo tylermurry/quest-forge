@@ -1,10 +1,11 @@
 // @ts-check
 // Plain JS on purpose: the repo root uses TypeScript 7 and this package is not typechecked.
+// The user manual. The developer docs are a separate site in dev-docs/, served at /dev-docs/.
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Questforge docs",
-  tagline: "Engineering standards and the Questforge project specs",
+  title: "Quest Forge manual",
+  tagline: "How to make point-and-click adventures with Quest Forge",
   // PLACEHOLDER: replace with the production domain of the Cloudflare site.
   url: "https://questforge.example.com",
   // Served under /docs/ of the Cloudflare site (the build is copied into the site's assets).
@@ -14,9 +15,10 @@ const config = {
   // site's single-page-application fallback.
   trailingSlash: true,
   onBrokenLinks: "throw",
-  // `.md` is CommonMark (the project specs contain `<`, `{` and tables); `.mdx` is MDX.
+  // `.md` is CommonMark, `.mdx` is MDX. Mermaid renders ```mermaid blocks as diagrams.
   markdown: {
     format: "detect",
+    mermaid: true,
     hooks: { onBrokenMarkdownLinks: "throw" },
   },
 
@@ -25,42 +27,34 @@ const config = {
       "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: false,
+        // The manual's pages live in manual/ and are served from the site root (/docs/).
+        docs: {
+          path: "manual",
+          routeBasePath: "/",
+          sidebarPath: "./sidebars.js",
+        },
         blog: false,
-        pages: {},
         theme: {},
       }),
     ],
   ],
 
+  // Diagrams in the manual (dev-docs/project/manual-style.md).
+  themes: ["@docusaurus/theme-mermaid"],
+  clientModules: [require.resolve("./src/d3-transition.js")],
   plugins: [
-    [
-      "@docusaurus/plugin-content-docs",
-      {
-        id: "standards",
-        path: "standards",
-        routeBasePath: "standards",
-        sidebarPath: "./sidebars.js",
-      },
-    ],
-    [
-      "@docusaurus/plugin-content-docs",
-      {
-        id: "project",
-        path: "project",
-        routeBasePath: "project",
-        sidebarPath: "./sidebars.js",
-      },
-    ],
+    // The Mermaid theme has an optional, heavy layout package (@mermaid-js/layout-elk) we don't use. Under pnpm the
+    // client bundle still tries to resolve it and fails, so tell the bundler it is empty.
+    () => ({
+      name: "mermaid-without-elk",
+      configureWebpack: () => ({ resolve: { alias: { "@mermaid-js/layout-elk": false } } }),
+    }),
   ],
 
   themeConfig: {
     navbar: {
-      title: "Questforge docs",
-      items: [
-        { to: "/standards/", label: "Standards", position: "left", activeBaseRegex: "/standards/" },
-        { to: "/project/conventions/", label: "Project", position: "left", activeBaseRegex: "/project/" },
-      ],
+      title: "Quest Forge manual",
+      items: [],
     },
   },
 };
