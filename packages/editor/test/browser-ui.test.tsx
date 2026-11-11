@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { Actions } from "../src/model/actions.ts";
-import { sectionEntries } from "../src/model/browser.ts";
+import { SECTIONS, sectionEntries } from "../src/model/browser.ts";
 import { Editor } from "../src/model/editor.ts";
 import { WorkspaceState } from "../src/model/workspace.ts";
 import { ProjectBrowser } from "../src/ui/ProjectBrowser.tsx";
@@ -136,5 +136,14 @@ describe("dragging across sections", () => {
     const a = await mount();
     await dragRow(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!, screen.getByRole("treeitem", { name: "Scenes" }).firstElementChild!);
     expect(a.editor.history.canUndo).toBe(false);
+  });
+
+  it("each top-level section header shows a decorative icon", async () => {
+    await mount();
+    for (const { title } of SECTIONS) {
+      const icon = screen.getByRole("treeitem", { name: title }).querySelector("svg:not(button svg)");
+      expect(icon?.getAttribute("aria-hidden")).toBe("true");
+      expect(icon?.parentElement?.textContent).toContain(title);
+    }
   });
 });

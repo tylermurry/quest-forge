@@ -139,7 +139,7 @@ change.
   drafts, delete, frame) and `tools.ts` (`SceneTools`: Select/Move, Polygon, Rectangle, Spawn, Walk-to,
   drops, reorder, ghost/path aids). Drags call `preview(label, run)` and `commit()` on release, so a drag is
   one undo step and an unclosed polygon never enters history.
-  UI in `ui/scene/`: `SceneEditor.tsx` (toolbar, Layers panel, registry handlers), `SceneCanvas.tsx`
+  UI in `ui/scene/`: `SceneEditor.tsx` (top bar, floating tool bar, Layers panel, registry handlers), `SceneCanvas.tsx`
   (forwards pointer/wheel/space input, counts clicks itself), `draw.ts` (the only canvas drawing: engine
   `drawSprites` for the scene, screen-px overlays), `images.ts` (one `CanvasImages` per workspace via
   `CanvasImagesContext`), `SceneInspector.tsx`. The engine's `sceneDrawables`/`drawSprites`/`sceneNav`/

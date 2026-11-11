@@ -58,6 +58,46 @@ describe("workspace", () => {
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
 
+  it("each layer header reads name first, then the eye and lock, with no count", async () => {
+    await mount();
+    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const header = within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("button", { name: "Hotspots" }).parentElement!;
+    const names = [...header.querySelectorAll("button")].map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(names).toEqual(["Hotspots", "Hide Hotspots", "Lock Hotspots"]);
+    expect(header.textContent).toBe("Hotspots");
+  });
+
+  it("highlights the selected row but never its layer header", async () => {
+    await mount();
+    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const layer = screen.getByRole("region", { name: "Hotspots layer" });
+    const row = within(layer).getAllByRole("listitem")[0]!;
+    fireEvent.click(within(row).getAllByRole("button")[0]!);
+    const section = screen.getByRole("region", { name: "Hotspots layer" });
+    expect(within(section).getAllByRole("listitem")[0]!.className).toContain("bg-selection");
+    const header = within(section).getByRole("button", { name: "Hotspots" });
+    expect(header.getAttribute("aria-current")).toBe("true");
+    expect(header.parentElement!.className).not.toContain("bg-selection");
+  });
+
+  it("the floating Scene tools bar holds the tools and toggles; the top bar keeps the zoom controls", async () => {
+    await mount();
+    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const tools = screen.getByRole("toolbar", { name: "Scene tools" });
+    const view = screen.getByRole("toolbar", { name: "Scene view" });
+    expect(within(tools).getByRole("button", { name: /^Select/ })).toBeTruthy();
+    for (const name of [/^Snapping/, /^Depth preview/, /^Shade/, /^Path preview/]) {
+      const toggle = within(tools).getByRole("button", { name });
+      expect(within(view).queryByRole("button", { name })).toBeNull();
+      const before = toggle.getAttribute("aria-pressed");
+      fireEvent.click(toggle);
+      expect(within(screen.getByRole("toolbar", { name: "Scene tools" })).getByRole("button", { name }).getAttribute("aria-pressed")).not.toBe(before);
+    }
+    expect(within(view).getByRole("button", { name: "Zoom in" })).toBeTruthy();
+    expect(within(view).getByRole("button", { name: "Zoom out" })).toBeTruthy();
+    expect(within(view).queryByRole("button", { name: /^Select/ })).toBeNull();
+  });
+
   it("deleting a referenced object asks first", async () => {
     const ed = await mount();
     fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);

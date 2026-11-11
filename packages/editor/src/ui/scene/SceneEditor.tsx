@@ -46,7 +46,7 @@ function ToolButton({ label, pressed, disabled, onClick, children }: { label: st
   );
 }
 
-/** A scene tab: toolbar, Layers panel and canvas. */
+/** A scene tab: top bar, Layers panel, canvas and floating tool bar. */
 export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: string }) {
   const { ws, editor } = actions;
   const registry = useCommands();
@@ -131,26 +131,8 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="bg-panel flex h-9 shrink-0 items-center gap-0.5 border-b px-2" role="toolbar" aria-label="Scene tools">
-        {LAYER_TOOLS[ui.layer].map((tool) => (
-          <ToolButton key={tool} label={`${TOOL_LABEL[tool]} (${TOOL_KEY[tool]})`} pressed={ui.tool === tool} onClick={() => c.setTool(tool)}>
-            {TOOL_ICON[tool]}
-          </ToolButton>
-        ))}
-        <span className="bg-border mx-1.5 h-5 w-px" />
-        <ToolButton label={ui.snap ? "Snapping to vertices and edges is on" : "Snapping to vertices and edges is off"} pressed={ui.snap} onClick={() => c.toggleSnap()}>
-          <Magnet />
-        </ToolButton>
-        <ToolButton label="Depth preview (ghost of the player)" pressed={ui.aids.ghost} onClick={() => setAid("ghost")}>
-          <Ghost />
-        </ToolButton>
-        <ToolButton label="Shade the walkable area" pressed={ui.aids.shading} onClick={() => setAid("shading")}>
-          <Scan />
-        </ToolButton>
-        <ToolButton label="Path preview from the default spawn" pressed={ui.aids.path} onClick={() => setAid("path")}>
-          <Route />
-        </ToolButton>
-        <span className="text-muted-foreground ml-3 truncate text-[12px]">{c.hint}</span>
+      <div className="bg-panel flex h-9 shrink-0 items-center gap-0.5 border-b px-2" role="toolbar" aria-label="Scene view">
+        <span className="text-muted-foreground truncate text-[12px]">{c.hint}</span>
         <div className="ml-auto flex items-center gap-0.5">
           <ToolButton label="Zoom out" onClick={() => c.zoomOut()}>
             <ZoomOut />
@@ -179,6 +161,33 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
           highlight={draggingEntry && canvasDrop.isOver}
         >
           {!scene.background && !ui.hidden.includes("background") && <EmptyBackground c={c} />}
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+            <div
+              className="bg-popover/95 pointer-events-auto flex items-center gap-0.5 rounded-md border px-1.5 py-1 shadow-md"
+              role="toolbar"
+              aria-label="Scene tools"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {LAYER_TOOLS[ui.layer].map((tool) => (
+                <ToolButton key={tool} label={`${TOOL_LABEL[tool]} (${TOOL_KEY[tool]})`} pressed={ui.tool === tool} onClick={() => c.setTool(tool)}>
+                  {TOOL_ICON[tool]}
+                </ToolButton>
+              ))}
+              <span className="bg-border mx-1.5 h-5 w-px" />
+              <ToolButton label={ui.snap ? "Snapping to vertices and edges is on" : "Snapping to vertices and edges is off"} pressed={ui.snap} onClick={() => c.toggleSnap()}>
+                <Magnet />
+              </ToolButton>
+              <ToolButton label="Depth preview (ghost of the player)" pressed={ui.aids.ghost} onClick={() => setAid("ghost")}>
+                <Ghost />
+              </ToolButton>
+              <ToolButton label="Shade the walkable area" pressed={ui.aids.shading} onClick={() => setAid("shading")}>
+                <Scan />
+              </ToolButton>
+              <ToolButton label="Path preview from the default spawn" pressed={ui.aids.path} onClick={() => setAid("path")}>
+                <Route />
+              </ToolButton>
+            </div>
+          </div>
         </SceneCanvas>
       </div>
       {confirm && (
@@ -275,8 +284,11 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
         const locked = ui.locked.includes(layer);
         const active = ui.layer === layer;
         return (
-          <section key={layer} aria-label={`${LAYER_LABEL[layer]} layer`} className="mb-1">
-            <div className={cn("group flex h-7 items-center gap-0.5 px-1", active && "bg-selection")}>
+          <section key={layer} aria-label={`${LAYER_LABEL[layer]} layer`} className="mb-3 py-1">
+            <div className="group flex h-7 items-center gap-0.5 px-1">
+              <button className={cn("min-w-0 flex-1 truncate py-1 pl-1 text-left font-semibold", hidden && "text-muted-foreground")} aria-current={active} onClick={() => c.setLayer(layer)}>
+                {LAYER_LABEL[layer]}
+              </button>
               <button
                 className="hover:bg-muted flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
                 aria-label={`${hidden ? "Show" : "Hide"} ${LAYER_LABEL[layer]}`}
@@ -293,10 +305,6 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
               >
                 {locked ? <Lock /> : <LockOpen className="text-muted-foreground opacity-40 group-hover:opacity-100" />}
               </button>
-              <button className={cn("min-w-0 flex-1 truncate py-1 text-left font-semibold", hidden && "text-muted-foreground")} aria-current={active} onClick={() => c.setLayer(layer)}>
-                {LAYER_LABEL[layer]}
-              </button>
-              <span className="text-muted-foreground pr-1">{rows[layer].length || ""}</span>
             </div>
             <ul>
               {rows[layer].map((row, index) => {
