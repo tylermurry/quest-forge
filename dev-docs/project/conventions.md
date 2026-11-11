@@ -58,7 +58,7 @@ change.
   stable IDs; endings), `session.ts` (a game being played: state, verbs, scene changes, regions,
   text, the dialogue playing and its `choices`), `ui/` (`textbox.ts` layout and timing, `layout.ts` 44 CSS px controls
   and `choiceLayout` for the dialogue list box, `controller.ts` pointer input → bar/inventory/list box/session,
-  `icons.ts` + `draw.ts` drawing), `render.ts` (Canvas 2D),
+  `nineslice.ts` nine-slice tile geometry (`nineSliceTiles`), `icons.ts` + `draw.ts` drawing, including `drawNineSlice`), `render.ts` (Canvas 2D),
   `game.ts` (`createGame`, image cache, DOM glue), `trace.ts` (playtest trace events), `debug.ts` (debug layer
   shapes), `restore.ts` (`readState`/`sanitizeState`: any stored GameState made safe for the project, shared by
   save slots and playtest presets), `saves.ts` (`SaveSlots` over a `KeyValueStore`, volumes, `MemoryStore` for tests), `audio.ts` (`AudioSync`: music follows `state.music`, `session.sounds` drained; `sceneAudioIds`),

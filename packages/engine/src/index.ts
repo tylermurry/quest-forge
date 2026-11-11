@@ -13,6 +13,8 @@ export { Sequence, type SequenceHost } from "./sequence.ts";
 export { DialogueRun, choiceKey, dialogueFiredKey, type ChoiceList, type DialogueEndReason, type OptionVerdict } from "./dialogue.ts";
 export type { RuleReport, RuleVerdict, Trace, TraceEvent } from "./trace.ts";
 export { layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
+export { nineSliceTiles, type NineSliceTile } from "./ui/nineslice.ts";
+export { drawNineSlice } from "./ui/draw.ts";
 export { PlayerUi, NOTICE_SECONDS, type Panel, type PointerKind, type UiServices } from "./ui/controller.ts";
 export { choiceLayout, computeLayout, unitFor, MIN_HIT_CSS, type ChoiceBox, type Layout } from "./ui/layout.ts";
 export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";

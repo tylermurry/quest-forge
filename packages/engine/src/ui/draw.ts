@@ -1,10 +1,11 @@
-import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
 import { VOLUME_STEPS } from "../saves.ts";
 import type { Session } from "../session.ts";
 import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
 import type { PlayerUi } from "./controller.ts";
 import { drawIcon, type IconId } from "./icons.ts";
+import { nineSliceTiles } from "./nineslice.ts";
 import { TEXT_FONT, TEXT_LINE, wrap } from "./textbox.ts";
 
 // Draws the player UI into the back buffer: icon bar, touch tab,
@@ -19,6 +20,15 @@ const BUTTON = "#4a3a2a";
 const ACTIVE = "#c89a3c";
 const EDGE = "#e8d8a8";
 const DIM = "rgba(255,255,255,0.35)";
+
+/**
+ * Draws a nine-slice frame: native-scale corners, tiled edges and centre (see `nineSliceTiles`). Smoothing is
+ * off so pixel art stays crisp, and nothing is filled behind it, so the image's transparency shows through.
+ */
+export function drawNineSlice(ctx: Ctx, image: CanvasImageSource & { width: number; height: number }, insets: FrameInsets, dest: Rect) {
+  ctx.imageSmoothingEnabled = false;
+  for (const t of nineSliceTiles(image, insets, dest)) ctx.drawImage(image, t.sx, t.sy, t.sw, t.sh, t.dx, t.dy, t.dw, t.dh);
+}
 
 function button(ctx: Ctx, r: Rect, active = false, enabled = true) {
   ctx.fillStyle = active ? ACTIVE : BUTTON;
