@@ -1,10 +1,10 @@
 ---
-title: Organise your project
+title: Organize your project
 description: Create, find, rename and tidy everything in your game with the Project Browser.
 sidebar_position: 2
 ---
 
-# Organise your project
+# Organize your project
 
 Everything in your game lives in the **Project Browser**, on the left of the editor. This guide shows how to
 add things, find them, and keep them tidy.
@@ -51,7 +51,7 @@ Folders keep big games tidy, for example one folder of scenes per chapter.
 - **Rename folder** and **Delete folder**: in the folder's **…** menu.
 - **Move things into a folder** by dragging them onto it. Things can only move within their own section.
 
-Folders only organise the Project Browser. They don't change how the game plays.
+Folders only organize the Project Browser. They don't change how the game plays.
 
 ## Import pictures and sounds
 

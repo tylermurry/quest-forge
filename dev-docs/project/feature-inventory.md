@@ -65,7 +65,7 @@ Dialogues hold their own conditions and actions, like rules.
 
 - **Names and IDs.** A name is what the player reads ("fishing rod"). An ID (`rod`) is what rules use. Rename
   freely; Change ID… updates every rule that uses it. "Used by" shows every reference.
-- **Folders** only organise the Project Browser. They never change how the game plays.
+- **Folders** only organize the Project Browser. They never change how the game plays.
 
 ### How a game runs
 
@@ -114,7 +114,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images | One tree per kind of thing, with a count. | Shipped |
 | Game | Top row, "rules & settings" | Opens the game-wide settings and rules in the Inspector. | Shipped |
 | Search | "Search names and IDs" | Filters every section by name or ID. | Shipped |
-| Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organises any section into folders. | Shipped |
+| Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organizes any section into folders. | Shipped |
 | Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images and audio are imported instead. | Shipped |
 | Rename / Change ID… / Duplicate / Delete | Row menu (…) or right-click | Names are what players see; IDs are what rules use. Change ID updates every reference. Delete lists what will break. | Shipped |
 | Move between folders | Drag rows; also from the keyboard | Moves things into folders within the same section. | Shipped |

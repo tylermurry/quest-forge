@@ -13,7 +13,7 @@ place them in scenes, and animate objects.
 
 A **sprite sheet** is one picture holding many frames of animation in a grid.
 
-1. Import the picture (see [Organise your project](./02-organise-your-project.md#import-pictures-and-sounds)),
+1. Import the picture (see [Organize your project](./02-organize-your-project.md#import-pictures-and-sounds)),
    then double-click it in the **Images** section to open it.
 2. Click **Slice image**.
 3. Set the grid by **Frame size** (each frame's width and height) or by **Rows × columns**.

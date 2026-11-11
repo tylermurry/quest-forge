@@ -13,7 +13,7 @@ can play in a web browser, on a computer or a phone.
 
 This manual is for anyone with a story to tell. You don't need to know how to program.
 
-## How this manual is organised
+## How this manual is organized
 
 - **[Concepts](./01-concepts/01-how-quest-forge-works.md)** explain how Quest Forge thinks about a game. Read these
   first: every other page builds on them.

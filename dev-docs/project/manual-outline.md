@@ -8,7 +8,7 @@ pages to [manual-style.md](manual-style.md).
 
 | # | Page | Purpose |
 |---|---|---|
-| | **Home** (`index.md`) | What Quest Forge is, who the manual is for, and how it's organised. |
+| | **Home** (`index.md`) | What Quest Forge is, who the manual is for, and how it's organized. |
 | **C** | **Concepts** | |
 | C1 | How Quest Forge works | You describe a game and the engine plays it; a project is a folder; the working loop; the editor window at a glance. |
 | C2 | The building blocks | Every core object, what it holds, how they connect (diagram); names vs IDs; folders. |
@@ -17,7 +17,7 @@ pages to [manual-style.md](manual-style.md).
 | C5 | From editor to player | Problems, Playtest, Build Game, the `.quest` file, playing on the website (diagram). |
 | **G** | **Guides** | |
 | G1 | Start and save a project | New project, open a folder, recent projects, saving, undo and redo, the panels. |
-| G2 | Organise your project | The Project Browser: sections, folders, search, create, rename, change ID, duplicate, delete, import, Used by. |
+| G2 | Organize your project | The Project Browser: sections, folders, search, create, rename, change ID, duplicate, delete, import, Used by. |
 | G3 | Build a scene | Background, walkable area and holes, depth lines, spawn points, objects, baselines and draw order, obstacles, layers, tools, snapping, zoom, aids, where play starts. |
 | G4 | Make things interactive | Hotspots, names, walk-to points, quick text, your first rules, rule order and Once, regions, scene enter and leave, default responses. |
 | G5 | Puzzles with items | Items, giving and taking, Use with, Combine, flags and counters, conditions, score and awards, showing and hiding objects, changing scene, dying and winning. |

@@ -29,16 +29,6 @@ So what you see in Playtest is what your players get.
 
 Making a game is a loop you go round many times:
 
-```mermaid
-flowchart LR
-  Make["Make things"] --> Rules["Give them rules"]
-  Rules --> Problems["Fix what Problems reports"]
-  Problems --> Play["Playtest"]
-  Play --> Make
-  Play --> Build["Build Game"]
-  Build --> Share["Share the .quest file"]
-```
-
 1. **Make things**: scenes, objects, items, characters.
 2. **Give them rules** that say what happens when the player clicks on them.
 3. **Fix what Problems reports.** Quest Forge checks your game as you work and lists anything that's broken.
