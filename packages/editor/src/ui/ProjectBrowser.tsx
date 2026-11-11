@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Ellipsis, Folder, FolderOpen, Gamepad2, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2, Image as ImageIcon, type LucideIcon, Map as MapIcon, MessagesSquare, Music, Package, Search, User } from "lucide-react";
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
@@ -11,6 +11,8 @@ import { cn } from "./lib/utils.ts";
 
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
+
+const SECTION_ICON: Record<Section, LucideIcon> = { scene: MapIcon, item: Package, character: User, dialogue: MessagesSquare, flag: Flag, audio: Music, image: ImageIcon };
 
 type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
@@ -346,8 +348,9 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           const shown = filterTree(tree, ws.search);
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
+          const Icon = SECTION_ICON[section];
           return (
-            <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-1.5">
+            <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-3">
               <DndRow
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
@@ -359,6 +362,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                 <button className="flex size-4 shrink-0 items-center justify-center" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}>
                   {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
                 </button>
+                <Icon className="size-3.5 shrink-0" aria-hidden="true" />
                 <span className="flex-1">{title}</span>
                 <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
               </DndRow>
