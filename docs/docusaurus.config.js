@@ -4,8 +4,8 @@
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Questforge manual",
-  tagline: "How to make point-and-click adventures with Questforge",
+  title: "Quest Forge manual",
+  tagline: "How to make point-and-click adventures with Quest Forge",
   // PLACEHOLDER: replace with the production domain of the Cloudflare site.
   url: "https://questforge.example.com",
   // Served under /docs/ of the Cloudflare site (the build is copied into the site's assets).
@@ -15,9 +15,10 @@ const config = {
   // site's single-page-application fallback.
   trailingSlash: true,
   onBrokenLinks: "throw",
-  // `.md` is CommonMark, `.mdx` is MDX.
+  // `.md` is CommonMark, `.mdx` is MDX. Mermaid renders ```mermaid blocks as diagrams.
   markdown: {
     format: "detect",
+    mermaid: true,
     hooks: { onBrokenMarkdownLinks: "throw" },
   },
 
@@ -38,9 +39,20 @@ const config = {
     ],
   ],
 
+  // Diagrams in the manual (dev-docs/project/manual-style.md).
+  themes: ["@docusaurus/theme-mermaid"],
+  plugins: [
+    // The Mermaid theme has an optional, heavy layout package (@mermaid-js/layout-elk) we don't use. Under pnpm the
+    // client bundle still tries to resolve it and fails, so tell the bundler it is empty.
+    () => ({
+      name: "mermaid-without-elk",
+      configureWebpack: () => ({ resolve: { alias: { "@mermaid-js/layout-elk": false } } }),
+    }),
+  ],
+
   themeConfig: {
     navbar: {
-      title: "Questforge manual",
+      title: "Quest Forge manual",
       items: [],
     },
   },
