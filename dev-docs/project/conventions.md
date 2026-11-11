@@ -26,6 +26,8 @@ change.
   a jump-to `location` (`file` + data `path`).
 - Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas; `dialogue.ts` also has the
   graph helpers `nodePorts` (ports `next` / `then` / `else` / `option:<id>`), `reachableNodes` and `silentLoops`),
+  `style.ts` (the optional game-wide `style` in `game.yaml`: schemas, `LEGACY_STYLE` and `AUTHOR_DEFAULTS`, the one
+  `resolveStyle` the engine and editor read, `frameInsetProblems`; an absent style or section resolves to today's look),
   `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
   `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (blocking errors), `warnings.ts` (non-blocking
   warnings and empty rule text; `logicBlocks` walks every rule and dialogue node, `awardTotal`), `migrate.ts`

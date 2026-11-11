@@ -99,6 +99,12 @@ const FIELD_LABEL: Record<string, string> = {
   obstacle: "Obstacle",
   depth: "Depth",
   defaultResponses: "Default responses",
+  style: "Styling",
+  sharedFrame: "Shared frame",
+  typography: "Typography",
+  iconBar: "Icon bar",
+  frame: "Frame",
+  dialogueChoices: "Dialogue choices",
 };
 
 /**

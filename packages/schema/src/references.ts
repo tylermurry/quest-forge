@@ -7,6 +7,7 @@ import { describePath, type DataPath, type FileKind, type Location } from "./pro
 import { ASSET_LAYOUT, allDocs, assetPath, folderOf, type AssetKind, type Doc, type Project } from "./project.ts";
 import type { Action, AnyRule, Condition, Trigger } from "./rules.ts";
 import type { SceneFile } from "./scene.ts";
+import { ICON_IDS } from "./style.ts";
 
 /**
  * What an ID points at. `spawn` and `object` IDs are scoped to a scene; `node` to a dialogue;
@@ -174,11 +175,27 @@ function dialogueRefs(d: DialogueFile, push: Push) {
   });
 }
 
+/**
+ * Image IDs the skin uses. `typography.font` is not pushed yet: #45 adds the font asset kind,
+ * its RefKind and one push for it here.
+ */
+function styleRefs(style: NonNullable<GameFile["style"]>, push: Push) {
+  const at = ["style"];
+  if (style.sharedFrame?.image !== undefined) push("image", style.sharedFrame.image, [...at, "sharedFrame", "image"]);
+  const bar = style.iconBar;
+  if (bar?.frame?.image !== undefined) push("image", bar.frame.image, [...at, "iconBar", "frame", "image"]);
+  for (const icon of ICON_IDS) {
+    const id = bar?.icons?.[icon];
+    if (id !== undefined) push("image", id, [...at, "iconBar", "icons", icon]);
+  }
+}
+
 function gameRefs(g: GameFile, push: Push) {
   push("scene", g.startScene, ["startScene"]);
   push("spawn", g.startSpawn, ["startSpawn"], g.startScene);
   push("character", g.player, ["player"]);
   rulesRefs(g.rules, ["rules"], push);
+  if (g.style) styleRefs(g.style, push);
 }
 
 function characterRefs(c: CharacterFile, push: Push) {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Id, Text, schemaVersion } from "./common.ts";
 import { GameRule } from "./rules.ts";
+import { GameStyle } from "./style.ts";
 
 /** Reply when no rule matches a verb. */
 export const DefaultResponses = z.strictObject({
@@ -26,5 +27,7 @@ export const GameFile = z.strictObject({
   defaultResponses: DefaultResponses,
   /** Game-level rules: `combine` and `dialogue_end`. */
   rules: z.array(GameRule),
+  /** Game-wide skin. Absent: the look from before styling existed. */
+  style: GameStyle.optional(),
 });
 export type GameFile = z.infer<typeof GameFile>;
