@@ -41,6 +41,7 @@ const config = {
 
   // Diagrams in the manual (dev-docs/project/manual-style.md).
   themes: ["@docusaurus/theme-mermaid"],
+  clientModules: [require.resolve("./src/d3-transition.js")],
   plugins: [
     // The Mermaid theme has an optional, heavy layout package (@mermaid-js/layout-elk) we don't use. Under pnpm the
     // client bundle still tries to resolve it and fails, so tell the bundler it is empty.
