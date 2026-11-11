@@ -19,6 +19,10 @@ Questforge is a no-code desktop editor for Sierra-style point-and-click adventur
 - `packages/schema` (`@questforge/schema`): zod schemas, project load/save, references/rename,
   validation, and the `.quest` format. Node-only code (fs adapter) is exported from `@questforge/schema/node`.
 - `packages/engine`: web runtime. Canvas 2D, no runtime dependencies besides the schema. `packages/editor`: Tauri + React editor.
+- `docs` (`@questforge/docs`): the user manual, a Docusaurus site for people making games with Questforge. Pages
+  live in `docs/manual/` (served from the site root). Dev: `corepack pnpm --filter @questforge/docs dev` (port 5179,
+  `docs-dev` in `.claude/launch.json`); build: `corepack pnpm --filter @questforge/docs build` (CI runs it). `site.yml`
+  copies the build into the site's assets under `/docs/` (`baseUrl: "/docs/"`, `trailingSlash: true`).
 - `dev-docs` (`@questforge/dev-docs`): the developer docs, a Docusaurus site with two sections. `dev-docs/standards/`
   holds portable, project-agnostic engineering standards (`.mdx`, keep it free of Questforge specifics so it can be
   copied to other repos); `dev-docs/project/` holds Questforge's conventions and ideas (plain `.md`,
