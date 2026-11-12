@@ -129,7 +129,8 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
 | Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
 | Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
-| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Labelled placeholders; the controls arrive in later updates. | Planned |
+| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Typography, Icon Bar and Dialogue Choices are labelled placeholders; the controls arrive in later updates. | Partial |
+| Shared Frames | Game Settings ▸ Styling ▸ Shared Frames: Image picker, Import image…, four draggable guides, four border boxes, legend, preview | One image frames every panel, cut into a nine-slice with guides or typed pixel borders. Warns when no centre is left. The preview draws samples (narration, speech, inventory, choices) in several shapes with the engine's nine-slice drawing. | Partial: the game doesn't draw the chosen frame yet, a later update does |
 | Game title and player character | — | Set when the project is created; the editor can't change either afterwards. | Partial |
 | Game rules | Game Settings ▸ General ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
 

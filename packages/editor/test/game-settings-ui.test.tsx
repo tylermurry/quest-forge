@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
 import { Editor } from "../src/model/editor.ts";
@@ -9,7 +9,12 @@ import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
 import { m1Project } from "./support/fixtures.ts";
 
-afterEach(cleanup);
+// The Styling tab draws a canvas preview, which jsdom can't do.
+beforeEach(() => vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null));
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 async function mount() {
   const fs = new MemoryFs();

@@ -12,6 +12,7 @@ import { flashElement } from "../flash.ts";
 import { NumberField } from "../NumberField.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { RuleInspector } from "../rules/RuleInspector.tsx";
+import { SharedFrames } from "./SharedFrames.tsx";
 import { TextField } from "../TextField.tsx";
 
 const H = "text-base font-semibold";
@@ -61,7 +62,7 @@ export function GameSettings({ actions }: { actions: Actions }) {
   const rulesCount = own?.rules.length ?? 0;
 
   return (
-    <div ref={root} className="flex max-w-4xl flex-col gap-3">
+    <div ref={root} className={`flex flex-col gap-3 ${nav.area === "styling" ? "max-w-6xl" : "max-w-4xl"}`}>
       <header>
         <h2 className="text-lg font-semibold">{game.data.title}</h2>
         <p className={HINT}>Game settings and rules that work anywhere</p>
@@ -118,13 +119,17 @@ export function GameSettings({ actions }: { actions: Actions }) {
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className="min-w-0 max-w-2xl flex-1">
+            <div className="min-w-0 flex-1">
               {STYLING_SECTIONS.map((s) => (
                 <TabsContent key={s.section} value={s.section}>
-                  <section aria-label={s.title} className="grid gap-1.5">
-                    <h3 className={H}>{s.title}</h3>
-                    <p className="text-muted-foreground text-[13px]">Nothing to set here yet. This section is coming in a later update.</p>
-                  </section>
+                  {s.section === "sharedFrames" ? (
+                    <SharedFrames actions={actions} />
+                  ) : (
+                    <section aria-label={s.title} className="grid gap-1.5">
+                      <h3 className={H}>{s.title}</h3>
+                      <p className="text-muted-foreground text-[13px]">Nothing to set here yet. This section is coming in a later update.</p>
+                    </section>
+                  )}
                 </TabsContent>
               ))}
             </div>

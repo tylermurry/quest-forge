@@ -50,8 +50,43 @@ See [Rules](./08-rules.md) and [Triggers](./09-triggers.md).
 
 ## Styling
 
-The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**. They are
-placeholders for now and have nothing to set yet.
+The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**. Only
+**Shared Frames** has controls so far. The others are placeholders and have nothing to set yet.
+
+### Shared Frames
+
+One picture can frame every panel in your game: narration, speech, the dialogue choices and the inventory. You
+make the picture in any art program and import it like any other image (PNG or WebP). A frame with see-through
+parts shows the game behind it.
+
+For now this section sets up and previews the frame. Your game does not draw it on its panels yet; that arrives in a
+later update.
+
+Click the **Image** menu to pick a picture from your Images, or click **Import image…** to add a new one from
+your computer. Click **Use built-in look** to go back to the game's own panels. The picture stays in your Images
+either way.
+
+Questforge cuts the picture into nine pieces so it fits panels of any size:
+
+- The four **corners** are never changed.
+- The four **edges** repeat along each side to fit.
+- The **centre** repeats to fill the middle.
+
+You choose where the cuts are. The picture is shown large with four lines, called guides, one for each side.
+
+- Drag a guide to move it. One drag is one step for **Undo**.
+- Click a guide and press the arrow keys to move it one pixel at a time. Hold **Shift** to move ten.
+- Or type the border sizes, in pixels, into **Left border**, **Right border**, **Top border** and **Bottom border**.
+  The numbers and the guides always match.
+
+Guides stay inside the picture. If the left and right borders (or the top and bottom borders) use up the whole
+picture, a warning appears: there is no centre left to repeat, so the game draws only the corners and leaves the
+middle of the panel empty. Move a guide back to fix it.
+
+The preview on the right draws the frame the way the game does, on a sample background so you can see any
+see-through parts. Pick a **Sample** (one sentence of narration, several paragraphs, a character speaking, the
+inventory or dialogue choices) to see the same frame on each panel. Pick a **Shape** (narrow, wide, tall or short)
+to see how it stretches, and **Zoom** to look closer. The preview doesn't change your game.
 
 When you click a problem about the game's start, score, default responses or rules in the **Problems** panel, the
 Game Settings tab opens on the right section and highlights the setting.
