@@ -11,11 +11,11 @@ objects in it.
 
 ## Open a scene
 
-Double-click a scene in the **Project Browser** to open it in a tab. To make a new one, choose **New scene**
+Click a scene in the **Project Browser** to open it in a tab. To make a new one, choose **New scene**
 from the **Scenes** section's **…** menu.
 
-The scene editor has three parts: a toolbar along the top, the **Layers** panel on the left, and the canvas.
-The toolbar also shows a hint for whatever tool you're using.
+The scene editor has two parts: the **Layers** panel on the left and the canvas. Two bars float at the bottom of
+the canvas: the tools, and the zoom controls to their right.
 
 ## 1. Set the background
 
@@ -116,7 +116,7 @@ Use the **Select / Move Tool** (press **V**):
 
 ## Choose where the game starts
 
-Double-click **Game** at the top of the **Project Browser**. In **Game Settings**, under **General** then **Start**, choose the scene and the spawn point
+Click **Game** at the top of the **Project Browser**. In **Game Settings**, under **General** then **Start**, choose the scene and the spawn point
 the game begins at.
 
 ## More

@@ -86,34 +86,6 @@ export class SceneTools extends SceneController {
     }
   }
 
-  /** One line of help for the toolbar. */
-  get hint(): string {
-    const ui = this.ui;
-    if (this.host.ws.pointPick?.scene === this.sceneId) return "Click the scene to place the action's point · Esc cancels";
-    if (ui.tool === "polygon" || ui.tool === "rect") {
-      const target = this.drawTarget();
-      if (typeof target === "string") return target;
-      const what = { outline: "the walkable outline", hole: "a hole", hotspot: "a new hotspot", region: "a new region", obstacle: "the obstacle" }[target.kind];
-      if (ui.tool === "rect") return `Drag to draw ${what}`;
-      if (this.drawing) return `Click to add points · double-click, Enter or click the first point to close · Backspace undoes a point · Esc cancels`;
-      return `Click to start ${what}`;
-    }
-    if (ui.tool === "spawn") return "Click to add a spawn point · drag from it to set which way the player faces";
-    if (ui.tool === "walkto") {
-      if (this.selection?.list === "hotspots") return "Click where the player stands to use this hotspot · drag to set the facing";
-      return "Click a hotspot to choose it, then click where the player should stand";
-    }
-    if (ui.tool === "select") {
-      if (this.selection && this.hasVertices(this.selection)) return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
-      return "Click to select · drag to move";
-    }
-    return "";
-  }
-
-  private hasVertices(ref: ThingRef) {
-    return ref.list === "walkable" || ref.list === "hotspots" || ref.list === "regions" || (ref.list === "objects" && !!this.scene?.objects.find((o) => o.id === ref.key)?.obstacle);
-  }
-
   override get cursor(): string {
     if (this.ui.tool !== "select" || this.host.ws.pointPick?.scene === this.sceneId) return "crosshair";
     if (this.move) return "grabbing";

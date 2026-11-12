@@ -41,7 +41,7 @@ On the left. Every building block in your game. See [Project Browser](./03-proje
 
 ## Editor tabs
 
-In the middle. Double-click a scene, item, character, dialogue or image in the Project Browser to open it here.
+In the middle. Click a scene, item, character, dialogue or image in the Project Browser to open it here.
 Each opens in its own tab. Close a tab with its **×**.
 
 ## Inspector

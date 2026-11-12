@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { MemoryFs, loadProject, resolveStyle, saveProject, type FrameInsets } from "@questforge/schema";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { dragGuide, imageOptions, insetWarnings, maxInset, nudgeGuide, setFrameImage, setFrameInsets, toImagePixels, withSide } from "../src/model/style.ts";
-import { layoutSample, SAMPLES, SHAPES } from "../src/model/stylePreview.ts";
+import { BUILT_IN_FRAME, applyBuiltInFrame, narrationOf, setFrameScale, setNarrationCenter, setNarrationTop, setNarrationWidth, setSpeechNameColor, borderOf, dragGuide, imageOptions, isBuiltInFrame, insetWarnings, maxBorder, nudgeGuide, setFrameImage, setFrameInsets, toImagePixels, uniformInsets } from "../src/model/style.ts";
+import { frameScale, layoutSample, SAMPLES } from "../src/model/stylePreview.ts";
 import { m1Project } from "./support/fixtures.ts";
 
 const SIZE = { width: 48, height: 32 };
@@ -22,7 +22,7 @@ describe("frame commands", () => {
     const p0 = await m1Project();
     expect(p0.game!.data.style).toBeUndefined();
     const picked = setFrameInsets(setFrameImage(p0, "sharedFrame", "garden_bg"), "sharedFrame", insets(4, 4, 6, 6));
-    expect(resolveStyle(picked.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 4, 6, 6) });
+    expect(resolveStyle(picked.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 4, 6, 6), scale: 16 });
     const other = setFrameImage(picked, "sharedFrame", "palm_img");
     expect(other.game!.data.style!.sharedFrame).toEqual({ image: "palm_img", insets: insets(4, 4, 6, 6) });
     const cleared = setFrameImage(other, "sharedFrame", undefined);
@@ -54,24 +54,89 @@ describe("frame commands", () => {
   });
 });
 
-describe("guide math", () => {
-  it("a drag sets the border from the pointer, rounded and held inside the image", () => {
-    expect(dragGuide(ZERO, "left", { x: 10.4, y: 0 }, SIZE)).toEqual(insets(10, 0, 0, 0));
-    expect(dragGuide(ZERO, "right", { x: 40, y: 0 }, SIZE)).toEqual(insets(0, 8, 0, 0));
-    expect(dragGuide(ZERO, "top", { x: 0, y: 5 }, SIZE)).toEqual(insets(0, 0, 5, 0));
-    expect(dragGuide(ZERO, "bottom", { x: 0, y: 30 }, SIZE)).toEqual(insets(0, 0, 0, 2));
-    expect(dragGuide(insets(5, 0, 0, 0), "left", { x: -20, y: 0 }, SIZE).left).toBe(0);
-    expect(dragGuide(insets(0, 10, 0, 0), "left", { x: 500, y: 0 }, SIZE).left).toBe(38);
-    expect(dragGuide(ZERO, "top", { x: 0, y: Number.NaN }, SIZE).top).toBe(0);
+describe("built-in frame", () => {
+  const BYTES = new Uint8Array([0xff, 0xd8, 0xff]);
+
+  it("adds the picture to the Styling folder and picks it with its borders", async () => {
+    const p0 = await m1Project();
+    expect(isBuiltInFrame(p0)).toBe(false);
+    const p = applyBuiltInFrame(p0, BYTES);
+    expect(p.assets!.data.images.find((i) => i.path === BUILT_IN_FRAME.path)).toEqual({ id: "frame", path: "assets/images/Styling/frame.jpg" });
+    expect(p.pendingFiles[BUILT_IN_FRAME.path]).toBe(BYTES);
+    expect(p.game!.data.style!.sharedFrame).toEqual({ image: "frame", insets: insets(12, 12, 12, 12) });
+    expect(isBuiltInFrame(p)).toBe(true);
+    // Another picture, then back: the one already in the library is reused, not added again.
+    const back = applyBuiltInFrame(setFrameImage(p, "sharedFrame", "garden_bg"), BYTES);
+    expect(isBuiltInFrame(back)).toBe(true);
+    expect(back.assets!.data.images.filter((i) => i.path === BUILT_IN_FRAME.path)).toHaveLength(1);
   });
 
-  it("guides can meet but not cross, and arrow nudges follow the screen direction", () => {
-    expect(maxInset("left", insets(0, 20, 0, 0), SIZE)).toBe(28);
-    expect(nudgeGuide(insets(3, 5, 0, 0), "left", 1, SIZE).left).toBe(4);
-    expect(nudgeGuide(insets(3, 5, 0, 0), "right", 1, SIZE).right).toBe(4);
-    expect(nudgeGuide(insets(3, 5, 0, 0), "right", -1, SIZE).right).toBe(6);
-    expect(nudgeGuide(insets(0, 0, 0, 0), "top", -1, SIZE).top).toBe(0);
-    expect(withSide(insets(0, 40, 0, 0), "left", 30, SIZE).left).toBe(8);
+  it("gets a fresh ID when another image is already called frame", async () => {
+    const p0 = await m1Project();
+    const taken = { ...p0, assets: { ...p0.assets!, data: { ...p0.assets!.data, images: [...p0.assets!.data.images, { id: "frame", path: "assets/images/other.png" }] } } };
+    const p = applyBuiltInFrame(taken, BYTES);
+    expect(p.game!.data.style!.sharedFrame!.image).toBe("frame_2");
+    expect(isBuiltInFrame(p)).toBe(true);
+  });
+});
+
+describe("scale, narration and name colour commands", () => {
+  it("sets the frame scale within 8 to 64 px, keeping the picture and borders", async () => {
+    const p = setFrameScale(setFrameInsets(setFrameImage(await m1Project(), "sharedFrame", "garden_bg"), "sharedFrame", insets(6, 6, 6, 6)), 32);
+    expect(p.game!.data.style!.sharedFrame).toEqual({ image: "garden_bg", insets: insets(6, 6, 6, 6), scale: 32 });
+    expect(resolveStyle(p.game!.data.style).sharedFrame.scale).toBe(32);
+    for (const bad of [7, 65, 12.5]) expect(() => setFrameScale(p, bad)).toThrow(CommandError);
+  });
+
+  it("places narration: top, centre (which keeps the top for later) and width", async () => {
+    const p0 = await m1Project();
+    expect(narrationOf(p0)).toBeUndefined();
+    const top = setNarrationTop(p0, 120);
+    expect(narrationOf(top)).toEqual({ top: 120 });
+    const centred = setNarrationCenter(setNarrationWidth(top, 80), true);
+    expect(narrationOf(centred)).toEqual({ top: 120, width: 80, center: true });
+    expect(resolveStyle(centred.game!.data.style).narration).toEqual({ top: "center", width: 80 });
+    expect(narrationOf(setNarrationCenter(centred, false))).toEqual({ top: 120, width: 80 });
+    expect(() => setNarrationTop(p0, -1)).toThrow(CommandError);
+    expect(() => setNarrationTop(p0, 401)).toThrow(CommandError);
+    expect(() => setNarrationWidth(p0, 19)).toThrow(CommandError);
+    expect(() => setNarrationWidth(p0, 101)).toThrow(CommandError);
+  });
+
+  it("sets one name colour for every speaker, without touching the other sections", async () => {
+    const p = setSpeechNameColor(await m1Project(), "#AABBCC");
+    expect(p.game!.data.style).toEqual({ speech: { name: "#aabbcc" } });
+    expect(() => setSpeechNameColor(p, "gold")).toThrow(CommandError);
+  });
+});
+
+describe("guide math", () => {
+  const all = (n: number) => insets(n, n, n, n);
+
+  it("a drag on any guide sets all four borders from the pointer, rounded and held inside the image", () => {
+    expect(dragGuide("left", { x: 10.4, y: 0 }, SIZE)).toEqual(all(10));
+    expect(dragGuide("right", { x: 40, y: 0 }, SIZE)).toEqual(all(8));
+    expect(dragGuide("top", { x: 0, y: 5 }, SIZE)).toEqual(all(5));
+    expect(dragGuide("bottom", { x: 0, y: 30 }, SIZE)).toEqual(all(2));
+    expect(dragGuide("left", { x: -20, y: 0 }, SIZE)).toEqual(ZERO);
+    expect(dragGuide("top", { x: 0, y: Number.NaN }, SIZE)).toEqual(ZERO);
+  });
+
+  it("the border never leaves less than one pixel of centre, and arrow nudges follow the screen direction", () => {
+    // 48×32: the short side leaves 15 + 1 + 15... rounded down, so at most 15.
+    expect(maxBorder(SIZE)).toBe(15);
+    expect(dragGuide("left", { x: 500, y: 0 }, SIZE)).toEqual(all(15));
+    expect(uniformInsets(30, SIZE)).toEqual(all(15));
+    expect(uniformInsets(4.6, SIZE)).toEqual(all(5));
+    expect(nudgeGuide(all(3), "left", 1, SIZE)).toEqual(all(4));
+    expect(nudgeGuide(all(3), "right", 1, SIZE)).toEqual(all(2));
+    expect(nudgeGuide(all(3), "bottom", -1, SIZE)).toEqual(all(4));
+    expect(nudgeGuide(ZERO, "top", -1, SIZE)).toEqual(ZERO);
+  });
+
+  it("a frame saved with unequal borders reads as its thickest, and the next move makes them equal", () => {
+    expect(borderOf(insets(3, 5, 0, 2))).toBe(5);
+    expect(nudgeGuide(insets(3, 5, 0, 2), "left", 1, SIZE)).toEqual(all(6));
   });
 
   it("turns a pointer position into image pixels through the shown box", () => {
@@ -120,7 +185,7 @@ describe("history and saving", () => {
     editor.apply("Borders", (p) => setFrameInsets(p, "sharedFrame", insets(4, 5, 6, 7)));
     await editor.flush();
     const reopened = await Editor.open({ fs }, { autosave: false });
-    expect(resolveStyle(reopened.project.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 5, 6, 7) });
+    expect(resolveStyle(reopened.project.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 5, 6, 7), scale: 16 });
     reopened.apply("Clear", (p) => setFrameImage(p, "sharedFrame", undefined));
     expect(reopened.project.assets!.data.images.some((i) => i.id === "garden_bg")).toBe(true);
     await reopened.flush();
@@ -132,33 +197,59 @@ describe("history and saving", () => {
 describe("preview layout", () => {
   const measure = (s: string) => s.length * 6;
   const text = { size: 10 };
+  const PLACE = { top: 50, width: 60 } as const;
+  const look = (i: FrameInsets, scale = 16) => ({ insets: i, scale });
 
-  it("lays out every sample at every shape inside the 640×400 screen without negative sizes", () => {
+  it("lays out every sample inside the 640×400 screen without negative sizes", () => {
     for (const s of SAMPLES) {
-      for (const shape of SHAPES) {
-        const l = layoutSample(s.id, shape.id, insets(8, 8, 8, 8), text, measure);
-        expect(l.frame.w).toBeGreaterThan(0);
-        expect(l.frame.h).toBeGreaterThan(0);
-        expect(l.inner.w).toBeGreaterThanOrEqual(0);
-        expect(l.inner.h).toBeGreaterThanOrEqual(0);
-        expect(l.items.length).toBeGreaterThan(0);
-      }
+      if (s.id === "iconBar") continue;
+      const l = layoutSample(s.id, look(insets(8, 8, 8, 8)), PLACE, text, measure);
+      expect(l.frame.w).toBeGreaterThan(0);
+      expect(l.frame.h).toBeGreaterThan(0);
+      expect(l.inner.w).toBeGreaterThanOrEqual(0);
+      expect(l.inner.h).toBeGreaterThanOrEqual(0);
+      expect(l.items.length).toBeGreaterThan(0);
     }
   });
 
-  it("fixed shapes are narrow, wide, tall and short, and longer narration makes a taller fitted panel", () => {
-    const at = (shape: (typeof SHAPES)[number]["id"]) => layoutSample("narrationShort", shape, ZERO, text, measure).frame;
-    expect(at("narrow").w).toBeLessThan(at("tall").w + 1);
-    expect(at("wide").w).toBeGreaterThan(at("narrow").w * 2);
-    expect(at("tall").h).toBeGreaterThan(at("short").h * 4);
-    const short = layoutSample("narrationShort", "fit", ZERO, text, measure).frame;
-    const long = layoutSample("narrationLong", "fit", ZERO, text, measure).frame;
+  it("narration is the set percentage of the screen wide, and longer narration only makes the panel taller", () => {
+    const short = layoutSample("narrationShort", look(ZERO), PLACE, text, measure).frame;
+    const long = layoutSample("narrationLong", look(ZERO), PLACE, text, measure).frame;
+    expect(short.w).toBe(384);
+    expect(long.w).toBe(384);
     expect(long.h).toBeGreaterThan(short.h);
+    expect(layoutSample("narrationShort", look(ZERO), { top: 50, width: 25 }, text, measure).frame.w).toBe(160);
+    expect(layoutSample("narrationShort", look(ZERO), { top: 50, width: 100 }, text, measure).frame).toMatchObject({ x: 0, w: 640 });
   });
 
-  it("borders push the content inward so it stays inside the frame art", () => {
-    const l = layoutSample("speech", "fit", insets(20, 20, 20, 20), text, measure);
-    expect(l.inner.x - l.frame.x).toBe(26);
-    expect(l.inner.y - l.frame.y).toBe(26);
+  it("narration sits `top` pixels down, or in the middle when centred, and stays on the screen", () => {
+    expect(layoutSample("narrationShort", look(ZERO), PLACE, text, measure).frame.y).toBe(50);
+    expect(layoutSample("narrationShort", look(ZERO), { top: 0, width: 60 }, text, measure).frame.y).toBe(0);
+    const centred = layoutSample("narrationShort", look(ZERO), { top: "center", width: 60 }, text, measure).frame;
+    expect(centred.y).toBe(Math.round((400 - centred.h) / 2));
+    const low = layoutSample("narrationShort", look(ZERO), { top: 400, width: 60 }, text, measure).frame;
+    expect(low.y + low.h).toBe(400);
+    // The other panels keep to the upper third.
+    const speech = layoutSample("speech", look(ZERO), { top: 0, width: 60 }, text, measure).frame;
+    expect(speech.y).toBe(Math.round(400 / 3 - speech.h / 2));
+  });
+
+  it("the drawn borders are the only padding: content starts right inside them", () => {
+    const none = layoutSample("speech", look(ZERO), PLACE, text, measure);
+    expect(none.inner).toEqual(none.frame);
+    // 10 px borders drawn at the default 16.
+    const l = layoutSample("speech", look(insets(10, 10, 10, 10)), PLACE, text, measure);
+    expect(l.inner.x - l.frame.x).toBe(16);
+    expect(l.inner.y - l.frame.y).toBe(16);
+  });
+
+  it("Scale sets how thick the thickest border is drawn, whatever the picture's size", () => {
+    expect(frameScale(look(insets(12, 12, 12, 12)))).toBe(16 / 12);
+    expect(frameScale(look(insets(48, 48, 24, 24), 8))).toBe(8 / 48);
+    expect(frameScale(look(ZERO, 64))).toBe(1);
+    const l = layoutSample("speech", look(insets(48, 48, 24, 24), 24), PLACE, text, measure);
+    expect(l.scale).toBe(0.5);
+    expect(l.inner.x - l.frame.x).toBe(24);
+    expect(l.inner.y - l.frame.y).toBe(12);
   });
 });

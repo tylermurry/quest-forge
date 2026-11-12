@@ -98,7 +98,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 |---|---|---|---|
 | Panels | Project Browser (left), Inspector (right), Problems (bottom), editor tabs (middle) | The four areas every task uses. | Shipped |
 | Show and hide panels | View ▸ Project Browser (Mod+1), Inspector (Mod+2), Problems (Mod+3), Hide All Panels (Ctrl+\\); title bar buttons | Toggles each panel, or all of them for a bigger canvas. | Shipped |
-| Editor tabs | Middle area | Double-click a scene, item, character, dialogue or image to open it in a tab. | Shipped |
+| Editor tabs | Middle area | Click a scene, item, character, dialogue or image to open it in a tab. | Shipped |
 | Save | File ▸ Save (Mod+S); title bar Save; save status | Saving is manual. The title bar shows Unsaved changes / Saving…. | Shipped |
 | Unsaved-changes guard | Back to project selector | Asks "Go back without saving?" before losing changes. | Shipped |
 | Undo / Redo | Edit ▸ Undo (Mod+Z), Redo (Mod+Shift+Z; Ctrl+Y on Windows/Linux); title bar arrows | Undoes any edit, one labelled step at a time (e.g. "Undo Delete hotspot"), up to 500 steps. | Shipped |
@@ -112,7 +112,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
 | Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images, Fonts | One tree per kind of thing, with a count. | Shipped |
-| Game | Top row, "rules & settings" | Click selects it; double-click or Enter opens the Game Settings tab in the center (the Inspector is hidden while it is up). | Shipped |
+| Game | Top row, "rules & settings" | A click or Enter opens the Game Settings tab in the center (the Inspector is hidden while it is up): a fixed left menu with General and Styling headings over their sections. | Shipped |
 | Search | "Search names and IDs" | Filters every section by name or ID. | Shipped |
 | Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organizes any section into folders. | Shipped |
 | Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images, audio and fonts are imported instead. | Shipped |
@@ -129,12 +129,13 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
 | Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
 | Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
-| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Four sections, each with a live preview. | Shipped |
-| Icon Bar styling | Game Settings ▸ Styling ▸ Icon Bar: Bar frame (picker, Import image…, the nine-slice editor), seven button pictures, Hover / Active effect (Brighten, Darken), preview | The bar's own frame and borders, a picture per button (Walk, Look, Hand, Talk, Item, Inventory, Settings) fitted without stretching, built-in icons as the fallback, one effect on the hovered and selected icon only. The Item picture shows while no item is selected. No icon bar section keeps the original look. The preview is the engine's real bar over a fixed gradient. | Shipped |
-| Dialogue Choices styling | Game Settings ▸ Styling ▸ Dialogue Choices: Highlight colour, Separator colour, preview | The highlight fills the whole hovered or selected row and its text turns black or white by WCAG contrast; the separator is a thin line at the top of the choices. No section keeps the original gold highlight and no extra line. The preview shows the shared frame, a prompt and four choices drawn by the engine's choices code; point at a row, click it or use the arrow keys. Layout, paging and hit areas are unchanged. | Shipped |
+| Styling tab | Game Settings ▸ Styling: Frames, Typography, Character Dialogue, Inventory, Icon Bar | Five sections under one preview in a resizable pane that stays put: all six samples (Short Narration, Long Narration, Character Speech, Dialogue Choice, Inventory, Icon Bar), switched to the section's own sample on opening (Typography keeps the current one); the game screen fills the pane's height in the game's shape, and Actual game size (shown only when it isn't 640×400) sizes the pane to fit it exactly. | Shipped |
+| Icon Bar styling | Game Settings ▸ Styling ▸ Icon Bar: Bar frame (picker, Import image…, the nine-slice editor), seven button pictures, Hover / Active effect (Brighten, Darken) | The bar's own frame and borders, a picture per button (Walk, Look, Hand, Talk, Item, Inventory, Settings) fitted without stretching, built-in icons as the fallback, one effect on the hovered and selected icon only. The Item picture shows while no item is selected. No icon bar section keeps the original look. The preview's Icon Bar sample is the engine's real bar. | Shipped |
+| Character Dialogue styling | Game Settings ▸ Styling ▸ Character Dialogue: Name colour, Highlight colour, Separator colour | One name colour (pale gold until set) for every speaker in the game; speech text uses the Typography colour and the box outline keeps the character's colour. The highlight fills the whole hovered or selected row and its text turns black or white by WCAG contrast; the separator is a thin line at the top of the choices. No choices section keeps the original gold highlight and no extra line. Layout, paging and hit areas are unchanged. | Shipped |
+| Inventory styling | Game Settings ▸ Styling ▸ Inventory | No settings yet; opening it shows the Inventory sample in the preview. | Partial: settings arrive later |
 | Typography | Game Settings ▸ Styling ▸ Typography: Font picker (built-in or imported), Import font…, Text size, Text colour, preview | One font, size (6–72 px, 16 px once customised) and colour for all game text; no typography keeps the original 10 px look. A character's colour stays on their name and box outline. The preview uses the shared frame and the engine's text drawing. | Shipped |
 | Text size (player) | Settings ▸ Text size | Players scale all text 75%–200% of the author's size, kept per game in the browser. | Shipped |
-| Shared Frames | Game Settings ▸ Styling ▸ Shared Frames: Image picker, Import image…, four draggable guides, four border boxes, legend, preview | One image frames every panel, cut into a nine-slice with guides or typed pixel borders. Warns when no centre is left. The preview draws samples (narration, speech, inventory, choices) in several shapes with the engine's nine-slice drawing. | Partial: the game doesn't draw the chosen frame yet, a later update does |
+| Frames | Game Settings ▸ Styling ▸ Frames: Image picker, Import image…, Use default look, Border size slider, four draggable guides, Scale (8–64 px), Position: Top / Center / Width (%) | One image frames every panel, cut into a nine-slice whose four borders move in lock step (the slider, or any guide for fine tuning). Scale is how thick the borders are drawn; the borders are the only padding. New projects start on the default `Styling/frame.jpg`; Use default look restores it. Narration starts 50 px down (or centred) and is a percentage of the screen wide. | Partial: the game doesn't draw the frame, scale or narration placement yet, a later update does |
 | Game title and player character | — | Set when the project is created; the editor can't change either afterwards. | Partial |
 | Game rules | Game Settings ▸ General ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
 
@@ -151,7 +152,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Walk-to Point Tool | W | Click a hotspot, then where the player stands to use it; drag to set the facing. | Shipped |
 | What a shape becomes | Depends on the active layer | Walkable: outline, then holes. Hotspots: a new hotspot. Regions: a new region. Objects: the selected object's obstacle. | Shipped |
 | Snap to Vertices and Edges | Scene menu; toolbar | Snaps points to nearby shapes. | Shipped |
-| Zoom | Zoom In (Mod+=), Zoom Out (Mod+-), Zoom to Fit (Mod+0), Actual Size (1×); toolbar | Zooms the canvas. Space-drag and the mouse wheel pan and zoom. | Shipped |
+| Zoom | Zoom In (Mod+=), Zoom Out (Mod+-), Zoom to Fit (Mod+0), Actual Size (1×); floating Zoom bar beside the tool bar | Zooms the canvas. Space-drag and the mouse wheel pan and zoom. | Shipped |
 | Aids | Toolbar toggles | Depth preview (ghost of the player), Path preview from the default spawn, Shade the walkable area. | Shipped |
 
 ### Layers panel

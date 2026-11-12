@@ -36,7 +36,7 @@ async function styled(style: Style): Promise<Project> {
 }
 
 const FULL: Style = {
-  sharedFrame: { image: "palm_img", insets: { left: 4, right: 4, top: 6, bottom: 6 } },
+  sharedFrame: { image: "palm_img", insets: { left: 4, right: 4, top: 6, bottom: 6 }, scale: 24 },
   typography: { family: "serif", size: 14, color: "#ffeecc" },
   iconBar: {
     frame: { image: "boulder_img", insets: { left: 2, right: 2, top: 2, bottom: 2 } },
@@ -44,6 +44,8 @@ const FULL: Style = {
     effect: "darken",
   },
   dialogueChoices: { highlight: "#112233", separator: "#445566" },
+  narration: { top: 120, center: true, width: 75 },
+  speech: { name: "#aabbcc" },
 };
 
 describe("GameStyle schema", () => {
@@ -97,8 +99,22 @@ describe("resolveStyle", () => {
   });
 
   it("resolves the frames, with zero insets when none are given", () => {
-    expect(resolveStyle({ sharedFrame: { image: "a" } }).sharedFrame).toEqual({ image: "a", insets: { left: 0, right: 0, top: 0, bottom: 0 } });
-    expect(resolveStyle(FULL).sharedFrame).toEqual({ image: "palm_img", insets: { left: 4, right: 4, top: 6, bottom: 6 } });
+    expect(resolveStyle({ sharedFrame: { image: "a" } }).sharedFrame).toEqual({ image: "a", insets: { left: 0, right: 0, top: 0, bottom: 0 }, scale: 16 });
+    expect(resolveStyle(FULL).sharedFrame).toEqual({ image: "palm_img", insets: { left: 4, right: 4, top: 6, bottom: 6 }, scale: 24 });
+  });
+
+  it("places narration 50 px from the top and 60% wide unless set; center wins over top", () => {
+    expect(resolveStyle(undefined).narration).toEqual({ top: 50, width: 60 });
+    expect(resolveStyle({ narration: { width: 80 } }).narration).toEqual({ top: 50, width: 80 });
+    expect(resolveStyle(FULL).narration).toEqual({ top: "center", width: 75 });
+    expect(GameStyle.safeParse({ narration: { width: 10 } }).success).toBe(false);
+    expect(GameStyle.safeParse({ narration: { center: false } }).success).toBe(false);
+    expect(GameStyle.safeParse({ sharedFrame: { scale: 65 } }).success).toBe(false);
+  });
+
+  it("draws every speaker's name in one colour: pale gold, or the one picked", () => {
+    expect(resolveStyle(undefined).speech).toEqual({ name: "#e8d8a8" });
+    expect(resolveStyle(FULL).speech).toEqual({ name: "#aabbcc" });
   });
 
   it("brightens by default once the icon bar is configured, and keeps the icons", () => {

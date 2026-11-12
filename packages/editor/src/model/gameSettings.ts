@@ -5,7 +5,7 @@ import type { DataPath } from "@questforge/schema";
 
 export type GameArea = "general" | "styling";
 export type GeneralSection = "start" | "score" | "defaultResponses" | "rules";
-export type StylingSection = "sharedFrames" | "typography" | "iconBar" | "dialogueChoices";
+export type StylingSection = "frames" | "typography" | "characterDialogue" | "inventory" | "iconBar";
 export type GameSection = GeneralSection | StylingSection;
 
 export interface GameSettingsNav {
@@ -14,7 +14,7 @@ export interface GameSettingsNav {
   styling: StylingSection;
 }
 
-export const INITIAL_GAME_NAV: GameSettingsNav = { area: "general", general: "start", styling: "sharedFrames" };
+export const INITIAL_GAME_NAV: GameSettingsNav = { area: "general", general: "start", styling: "frames" };
 
 export const GAME_AREAS: { area: GameArea; title: string }[] = [
   { area: "general", title: "General" },
@@ -29,10 +29,11 @@ export const GENERAL_SECTIONS: { section: GeneralSection; title: string }[] = [
 ];
 
 export const STYLING_SECTIONS: { section: StylingSection; title: string }[] = [
-  { section: "sharedFrames", title: "Shared Frames" },
+  { section: "frames", title: "Frames" },
   { section: "typography", title: "Typography" },
+  { section: "characterDialogue", title: "Character Dialogue" },
+  { section: "inventory", title: "Inventory" },
   { section: "iconBar", title: "Icon Bar" },
-  { section: "dialogueChoices", title: "Dialogue Choices" },
 ];
 
 /** The General subsection a game.yaml data path belongs to; anything unknown lands on Start. */

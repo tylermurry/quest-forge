@@ -24,7 +24,7 @@ async function mount() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+  fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
   return editor;
 }
 

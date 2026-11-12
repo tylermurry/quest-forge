@@ -1,41 +1,60 @@
 import { CircleAlert } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
 import { awardTotal } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
 import { RESPONSE_LABEL, RESPONSE_VERBS, setDefaultResponse, setMaxScore, setStart } from "../../model/game.ts";
 import { GAME_AREAS, GENERAL_SECTIONS, STYLING_SECTIONS, generalSectionFor, type GameArea, type GameSection, type GeneralSection } from "../../model/gameSettings.ts";
 import { pickerOptions } from "../../model/rules/pickers.ts";
+import { SECTION_SAMPLE, type SampleId } from "../../model/stylePreview.ts";
 import { ownerRules } from "../../model/rules/owner.ts";
 import { ruleProblems } from "../../model/rules/problems.ts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.tsx";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../components/ui/resizable.tsx";
 import { flashElement } from "../flash.ts";
+import { cn } from "../lib/utils.ts";
+import { SECTION_HEADING } from "../SectionHeading.tsx";
 import { NumberField } from "../NumberField.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { RuleInspector } from "../rules/RuleInspector.tsx";
-import { DialogueChoices } from "./DialogueChoices.tsx";
+import { CharacterDialogue } from "./CharacterDialogue.tsx";
 import { IconBar } from "./IconBar.tsx";
-import { SharedFrames } from "./SharedFrames.tsx";
+import { Inventory } from "./Inventory.tsx";
+import { FrameDraftContext, useFrameDrafts } from "./FrameControls.tsx";
+import { Frames } from "./Frames.tsx";
+import { StylePreview } from "./StylePreview.tsx";
 import { Typography } from "./Typography.tsx";
 import { TextField } from "../TextField.tsx";
 
-const H = "text-base font-semibold";
+const H = "text-xl font-semibold";
 /** The `data-game` field each General subsection flashes on a jump-to. */
 const GAME_FIELD: Record<GeneralSection, string> = { start: "startScene", score: "maxScore", defaultResponses: "defaultResponses", rules: "rules" };
 const HINT = "text-muted-foreground text-[12px]";
+/** The Styling preview pane's starting height: the samples row, the 640×400 game and a little room around it. */
+const PREVIEW_PANE_HEIGHT = 464;
 
 /** The first thing in a flashed field that takes focus (a text box, a picker), so a jump-to leaves the cursor there. */
 const FOCUSABLE = "input, textarea, button, [role=combobox], [tabindex]";
 
 /**
- * The Game settings editor in the center: General (start, score, default responses, game
- * rules) and Styling (Shared Frames, Typography, Icon Bar and Dialogue Choices), each with a vertical
- * list of subsections. Open tab and subsection are UI state in `ws.gameNav`.
+ * The Game settings editor in the center: a menu on the left that stays put while the page scrolls, with General
+ * (start, score, default responses, game rules) and Styling (Frames, Typography, Character Dialogue, Inventory and
+ * Icon Bar) as headings over their subsections, and the chosen subsection on the right. Styling splits the right
+ * side: the one preview on top, in a pane that stays put and can be resized, and the section's settings below.
+ * The open subsection is UI state in `ws.gameNav`.
  */
 export function GameSettings({ actions }: { actions: Actions }) {
   const { editor, ws } = actions;
   const root = useRef<HTMLDivElement | null>(null);
   const game = editor.project.game;
   const nav = ws.gameNav;
+  const drafts = useFrameDrafts();
+  const previewPane = useRef<PanelImperativeHandle | null>(null);
+  // The one Styling preview's sample: opening a section switches to its sample (Typography keeps what is showing).
+  const [sample, setSample] = useState<SampleId>(SECTION_SAMPLE[nav.styling] ?? "narrationShort");
+  useEffect(() => {
+    const next = SECTION_SAMPLE[nav.styling];
+    if (next) setSample(next);
+  }, [nav.styling]);
 
   // Jump-to a game setting flashes and focuses its field; rule spots are handled by their cards.
   // The target subsection mounts a render after the nav changes, so wait for the field to appear
@@ -64,82 +83,91 @@ export function GameSettings({ actions }: { actions: Actions }) {
   const rulesInvalid = own ? ruleProblems(editor.problems, own).byRule.size > 0 : false;
   const rulesCount = own?.rules.length ?? 0;
 
+  const current: GameSection = nav.area === "general" ? nav.general : nav.styling;
+  const menu: { area: GameArea; title: string; sections: { section: GameSection; title: string }[] }[] = GAME_AREAS.map((a) => ({
+    ...a,
+    sections: a.area === "general" ? GENERAL_SECTIONS : STYLING_SECTIONS,
+  }));
+
   return (
-    <div ref={root} className={`flex flex-col gap-3 ${nav.area === "styling" ? "max-w-6xl" : "max-w-4xl"}`}>
-      <header>
-        <h2 className="text-lg font-semibold">{game.data.title}</h2>
-        <p className={HINT}>Game settings and rules that work anywhere</p>
-      </header>
-      <Tabs value={nav.area} onValueChange={(v) => ws.setGameArea(v as GameArea)} className="gap-3">
-        <TabsList variant="line" aria-label="Game settings area" className="h-8 justify-start gap-1 border-b p-0">
-          {GAME_AREAS.map((a) => (
-            <TabsTrigger key={a.area} value={a.area} className="flex-none px-3 text-[13px]">
-              {a.title}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <TabsContent value="general">
-          <Tabs value={nav.general} onValueChange={(v) => ws.setGameSection(v as GameSection)} orientation="vertical" className="gap-6">
-            <TabsList variant="line" aria-label="General sections" className="w-44 shrink-0 items-stretch justify-start gap-0.5 p-0">
-              {GENERAL_SECTIONS.map((s) => (
-                <TabsTrigger key={s.section} value={s.section} className="data-[state=active]:bg-muted data-[state=active]:font-semibold data-[state=active]:text-foreground justify-start px-2 text-[13px]">
+    <div ref={root} className="flex h-full min-h-0">
+      <nav aria-label="Game settings" className="bg-panel w-48 shrink-0 overflow-y-auto border-r px-2 py-4">
+        {menu.map((m) => (
+          <div key={m.area} role="group" aria-labelledby={`game-area-${m.area}`} className="mb-5 grid gap-0.5">
+            <h2 id={`game-area-${m.area}`} className={cn(SECTION_HEADING, "px-2 pb-1")}>
+              {m.title}
+            </h2>
+            {m.sections.map((s) => {
+              const selected = nav.area === m.area && current === s.section;
+              return (
+                <button
+                  key={s.section}
+                  type="button"
+                  aria-current={selected ? "page" : undefined}
+                  onClick={() => ws.setGameSection(s.section)}
+                  className={cn("hover:bg-muted flex h-7 items-center gap-1.5 rounded-sm px-2 text-left text-[13px]", selected && "bg-muted text-foreground font-semibold")}
+                >
                   {s.title}
                   {s.section === "rules" && (
                     <>
-                      <span className="text-muted-foreground ml-auto tabular-nums">{rulesCount}</span>
+                      <span className="text-muted-foreground ml-auto font-normal tabular-nums">{rulesCount}</span>
                       {rulesInvalid && <CircleAlert className="text-err size-3.5" aria-label="Some rules have problems" />}
                     </>
                   )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <div className="min-w-0 max-w-2xl flex-1">
-              <TabsContent value="start">
-                <StartSection actions={actions} />
-              </TabsContent>
-              <TabsContent value="score">
-                <ScoreSection actions={actions} />
-              </TabsContent>
-              <TabsContent value="defaultResponses">
-                <DefaultResponsesSection actions={actions} />
-              </TabsContent>
-              <TabsContent value="rules">
-                <section aria-label="Rules" className="grid gap-1.5">
-                  <h3 className={H}>Rules</h3>
-                  <p className={HINT}>Rules that work anywhere in the game (first match wins).</p>
-                  <RuleInspector actions={actions} owner={{ kind: "game" }} />
-                </section>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </TabsContent>
-        <TabsContent value="styling">
-          <Tabs value={nav.styling} onValueChange={(v) => ws.setGameSection(v as GameSection)} orientation="vertical" className="gap-6">
-            <TabsList variant="line" aria-label="Styling sections" className="w-44 shrink-0 items-stretch justify-start gap-0.5 p-0">
-              {STYLING_SECTIONS.map((s) => (
-                <TabsTrigger key={s.section} value={s.section} className="data-[state=active]:bg-muted data-[state=active]:font-semibold data-[state=active]:text-foreground justify-start px-2 text-[13px]">
-                  {s.title}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <div className="min-w-0 flex-1">
-              {STYLING_SECTIONS.map((s) => (
-                <TabsContent key={s.section} value={s.section}>
-                  {s.section === "sharedFrames" ? (
-                    <SharedFrames actions={actions} />
-                  ) : s.section === "typography" ? (
-                    <Typography actions={actions} />
-                  ) : s.section === "iconBar" ? (
-                    <IconBar actions={actions} />
-                  ) : (
-                    <DialogueChoices actions={actions} />
-                  )}
-                </TabsContent>
-              ))}
-            </div>
-          </Tabs>
-        </TabsContent>
-      </Tabs>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      {nav.area === "general" ? (
+        <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="max-w-2xl">
+            {current === "start" ? (
+              <StartSection actions={actions} />
+            ) : current === "score" ? (
+              <ScoreSection actions={actions} />
+            ) : current === "defaultResponses" ? (
+              <DefaultResponsesSection actions={actions} />
+            ) : (
+              <section aria-label="Rules" className="grid gap-1.5">
+                <h3 className={H}>Rules</h3>
+                <p className={HINT}>Rules that work anywhere in the game (first match wins).</p>
+                <RuleInspector actions={actions} owner={{ kind: "game" }} />
+              </section>
+            )}
+          </div>
+        </div>
+      ) : (
+        // Styling: the one preview on top (it stays put and can be resized), the section's settings scrolling below.
+        <FrameDraftContext.Provider value={drafts}>
+          <div className="min-w-0 flex-1">
+            <ResizablePanelGroup orientation="vertical" id="questforge.stylingPreview">
+              <ResizablePanel id="preview" panelRef={previewPane} defaultSize={`${PREVIEW_PANE_HEIGHT}px`} minSize="140px" maxSize="85%">
+                <StylePreview actions={actions} sample={sample} onSample={setSample} onResizePane={(delta) => previewPane.current?.resize(`${Math.round((previewPane.current?.getSize().inPixels ?? 0) + delta)}px`)} />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel id="settings" minSize="15%">
+                <div className="h-full overflow-y-auto px-6 py-5">
+                  <div className="max-w-6xl">
+                    {current === "frames" ? (
+                      <Frames actions={actions} />
+                    ) : current === "typography" ? (
+                      <Typography actions={actions} />
+                    ) : current === "characterDialogue" ? (
+                      <CharacterDialogue actions={actions} />
+                    ) : current === "inventory" ? (
+                      <Inventory />
+                    ) : (
+                      <IconBar actions={actions} />
+                    )}
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        </FrameDraftContext.Provider>
+      )}
     </div>
   );
 }

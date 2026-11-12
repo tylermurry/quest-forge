@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Color, Id } from "./common.ts";
+import { Color, Id, SCENE_HEIGHT } from "./common.ts";
 
 // The game-wide skin: one optional `style` object in `game.yaml`.
 //
@@ -18,12 +18,22 @@ export const FrameInsets = z.strictObject({
 });
 export type FrameInsets = z.infer<typeof FrameInsets>;
 
+export const FRAME_SCALE_MIN = 8;
+export const FRAME_SCALE_MAX = 64;
+/** How thick a frame's borders are drawn with no `scale` set, in game pixels. */
+export const FRAME_SCALE_DEFAULT = 16;
+
 /** One nine-slice frame. Shared by the panels' `sharedFrame` and the `iconBar`. Absent image: built-in art. */
 export const Frame = z.strictObject({
   /** Image asset ID. */
   image: Id.optional(),
   /** Absent: all zero. */
   insets: FrameInsets.optional(),
+  /**
+   * How thick the borders are drawn, in game pixels: the picture is scaled so its thickest border is this wide.
+   * Panels only (`sharedFrame`); the icon bar ignores it. Absent: FRAME_SCALE_DEFAULT.
+   */
+  scale: z.int().min(FRAME_SCALE_MIN).max(FRAME_SCALE_MAX).optional(),
 });
 export type Frame = z.infer<typeof Frame>;
 
@@ -80,11 +90,34 @@ export const DialogueChoices = z.strictObject({
 });
 export type DialogueChoices = z.infer<typeof DialogueChoices>;
 
+export const NARRATION_WIDTH_MIN = 20;
+export const NARRATION_WIDTH_MAX = 100;
+
+/** Where the narration panel goes. */
+export const Narration = z.strictObject({
+  /** Game pixels from the top of the screen to the panel. Absent: AUTHOR_DEFAULTS.narration.top. */
+  top: z.int().min(0).max(SCENE_HEIGHT).optional(),
+  /** Centred up and down instead of `top`, which is kept for when this is turned off. Absent: false. */
+  center: z.literal(true).optional(),
+  /** Width as a percentage of the screen. Absent: AUTHOR_DEFAULTS.narration.width. */
+  width: z.int().min(NARRATION_WIDTH_MIN).max(NARRATION_WIDTH_MAX).optional(),
+});
+export type Narration = z.infer<typeof Narration>;
+
+/** Character speech. */
+export const Speech = z.strictObject({
+  /** The colour of every speaker's name. Absent: AUTHOR_DEFAULTS.speech.name. */
+  name: Color.optional(),
+});
+export type Speech = z.infer<typeof Speech>;
+
 export const GameStyle = z.strictObject({
   sharedFrame: Frame.optional(),
   typography: Typography.optional(),
   iconBar: IconBar.optional(),
   dialogueChoices: DialogueChoices.optional(),
+  narration: Narration.optional(),
+  speech: Speech.optional(),
 });
 export type GameStyle = z.infer<typeof GameStyle>;
 
@@ -93,6 +126,8 @@ export interface EffectiveFrame {
   /** Image asset ID; undefined means the built-in art. */
   image: string | undefined;
   insets: FrameInsets;
+  /** How thick the borders are drawn, in game pixels. */
+  scale: number;
 }
 export interface EffectiveStyle {
   sharedFrame: EffectiveFrame;
@@ -113,10 +148,14 @@ export interface EffectiveStyle {
     effect: IconEffect | "none";
   };
   dialogueChoices: { highlight: string; separator: string };
+  /** `top` in game pixels, or "center"; `width` in percent of the screen. */
+  narration: { top: number | "center"; width: number };
+  /** `name`: the colour every speaker's name is drawn in. */
+  speech: { name: string };
 }
 
 const NO_INSETS: FrameInsets = { left: 0, right: 0, top: 0, bottom: 0 };
-const NO_FRAME: EffectiveFrame = { image: undefined, insets: NO_INSETS };
+const NO_FRAME: EffectiveFrame = { image: undefined, insets: NO_INSETS, scale: FRAME_SCALE_DEFAULT };
 
 /** Line height is a fixed ratio of the size, so one number drives both. Legacy 10 px text has 12 px lines. */
 export const TEXT_LINE_RATIO = 1.2;
@@ -131,6 +170,9 @@ export const LEGACY_STYLE: EffectiveStyle = {
   typography: { family: "monospace", font: undefined, size: 10, lineHeight: 12, color: "#ffffff" },
   iconBar: { frame: NO_FRAME, icons: {}, effect: "none" },
   dialogueChoices: { highlight: "#c89a3c", separator: "#e8d8a8" },
+  narration: { top: 50, width: 60 },
+  // Names have one colour whether or not the creator styled speech; it no longer comes from the character.
+  speech: { name: "#e8d8a8" },
 };
 
 /** What a section shows for fields the creator left out once they have configured it. */
@@ -138,9 +180,11 @@ export const AUTHOR_DEFAULTS = {
   typography: { family: "monospace", size: 16, color: "#ffffff" },
   iconBar: { effect: "brighten" },
   dialogueChoices: { highlight: LEGACY_STYLE.dialogueChoices.highlight, separator: LEGACY_STYLE.dialogueChoices.separator },
-} as const satisfies { typography: Typography; iconBar: IconBar; dialogueChoices: DialogueChoices };
+  narration: { top: 50, width: 60 },
+  speech: { name: LEGACY_STYLE.speech.name },
+} as const satisfies { typography: Typography; iconBar: IconBar; dialogueChoices: DialogueChoices; narration: Narration; speech: Speech };
 
-const frameOf = (f: Frame | undefined): EffectiveFrame => (f ? { image: f.image, insets: f.insets ?? NO_INSETS } : NO_FRAME);
+const frameOf = (f: Frame | undefined): EffectiveFrame => (f ? { image: f.image, insets: f.insets ?? NO_INSETS, scale: f.scale ?? FRAME_SCALE_DEFAULT } : NO_FRAME);
 
 /**
  * The style to draw with. An absent style, or an absent section, gives LEGACY_STYLE's values
@@ -168,6 +212,10 @@ export function resolveStyle(style: GameStyle | undefined): EffectiveStyle {
     dialogueChoices: choices
       ? { highlight: choices.highlight ?? AUTHOR_DEFAULTS.dialogueChoices.highlight, separator: choices.separator ?? AUTHOR_DEFAULTS.dialogueChoices.separator }
       : LEGACY_STYLE.dialogueChoices,
+    narration: style?.narration
+      ? { top: style.narration.center ? "center" : (style.narration.top ?? AUTHOR_DEFAULTS.narration.top), width: style.narration.width ?? AUTHOR_DEFAULTS.narration.width }
+      : LEGACY_STYLE.narration,
+    speech: { name: style?.speech?.name ?? AUTHOR_DEFAULTS.speech.name },
   };
 }
 

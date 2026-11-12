@@ -49,11 +49,11 @@ describe("the Game Settings tab", () => {
 
   it("keeps the area and subsection per area, across closing", () => {
     const ws = new WorkspaceState();
-    expect(ws.gameNav).toEqual({ area: "general", general: "start", styling: "sharedFrames" });
+    expect(ws.gameNav).toEqual({ area: "general", general: "start", styling: "frames" });
     ws.setGameSection("defaultResponses");
     ws.setGameSection("iconBar");
     expect(ws.gameNav).toEqual({ area: "styling", general: "defaultResponses", styling: "iconBar" });
-    ws.setGameArea("general");
+    ws.setGameSection("defaultResponses");
     ws.openGame();
     ws.closeGame();
     expect(ws.gameNav).toEqual({ area: "general", general: "defaultResponses", styling: "iconBar" });

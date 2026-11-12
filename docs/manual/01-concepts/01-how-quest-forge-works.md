@@ -42,7 +42,7 @@ The editor window has four areas:
 | Area | Where | What it's for |
 |---|---|---|
 | **Project Browser** | Left | Everything in your game, sorted into Scenes, Items, Characters, Dialogues, Flags, Audio and Images. |
-| **Editor tabs** | Middle | Whatever you're working on: a scene, an item, a character, a dialogue or an image. Double-click something in the Project Browser to open it. |
+| **Editor tabs** | Middle | Whatever you're working on: a scene, an item, a character, a dialogue or an image. Click something in the Project Browser to open it. |
 | **Inspector** | Right | The details and rules of whatever is selected. |
 | **Problems** | Bottom | Everything that's wrong with the game right now. |
 

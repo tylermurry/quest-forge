@@ -41,7 +41,7 @@ const garden = (ed: Editor) => ed.project.scenes.find((s) => s.data.id === "gard
 describe("workspace", () => {
   it("opens a scene with its Layers panel; deleting a hotspot with rules is undone by Cmd+Z", async () => {
     const ed = await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     expect(screen.getByRole("tab", { name: "Garden" })).toBeTruthy();
     const hotspot = garden(ed).hotspots.find((h) => h.rules.length > 0)!;
     const hotspots = screen.getByRole("region", { name: "Hotspots layer" });
@@ -58,18 +58,51 @@ describe("workspace", () => {
     expect(garden(ed).hotspots.map((h) => h.id)).not.toContain(hotspot.id);
   });
 
-  it("each layer header reads name first, then the eye and lock, with no count", async () => {
+  it("each layer header is a Project Browser section header without the chevron: icon, name, then the eye and lock", async () => {
     await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
-    const header = within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("button", { name: "Hotspots" }).parentElement!;
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const layer = screen.getByRole("region", { name: "Hotspots layer" });
+    const header = within(layer).getByRole("button", { name: "Hotspots" }).closest("div.group")!;
     const names = [...header.querySelectorAll("button")].map((b) => b.getAttribute("aria-label") ?? b.textContent);
     expect(names).toEqual(["Hotspots", "Hide Hotspots", "Lock Hotspots"]);
     expect(header.textContent).toBe("Hotspots");
+    expect(header.querySelectorAll("svg[aria-hidden='true']").length).toBeGreaterThan(0);
+  });
+
+  it("a click anywhere on a layer, outside its rows, makes it active and outlined; the eye and lock don't", async () => {
+    await mount();
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const layer = () => screen.getByRole("region", { name: "Regions layer" });
+    const isActive = () => within(layer()).getByRole("button", { name: "Regions" }).getAttribute("aria-current") === "true";
+    const box = () => layer().querySelector("[data-layer-box]")!;
+    expect(box().className).toContain("border-transparent");
+    expect(layer().className).toContain("cursor-pointer");
+    // Layers touch: spacing is padding inside each layer, never a margin between them.
+    expect(layer().className).not.toMatch(/\bm[ybt]?-/);
+    expect(within(layer()).getByRole("list").className).toContain("cursor-default");
+    fireEvent.click(within(layer()).getByRole("button", { name: "Hide Regions" }));
+    expect(isActive()).toBe(false);
+    fireEvent.click(layer());
+    expect(isActive()).toBe(true);
+    expect(box().className).toContain("border-primary/70");
+    // A click on the layer's own padding, outside the box, still counts.
+    fireEvent.click(screen.getByRole("region", { name: "Hotspots layer" }));
+    expect(within(screen.getByRole("region", { name: "Hotspots layer" })).getByRole("button", { name: "Hotspots" }).getAttribute("aria-current")).toBe("true");
+  });
+
+  it("a row's indent is part of its button, so clicking its left edge selects it", async () => {
+    await mount();
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const row = within(screen.getByRole("region", { name: "Hotspots layer" })).getAllByRole("listitem")[0]!;
+    const button = within(row).getAllByRole("button")[0]!;
+    expect(row.className).not.toMatch(/\bp[lx]-/);
+    expect(button.className).toContain("pl-7");
+    expect(button.className).toContain("h-full");
   });
 
   it("highlights the selected row but never its layer header", async () => {
     await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     const layer = screen.getByRole("region", { name: "Hotspots layer" });
     const row = within(layer).getAllByRole("listitem")[0]!;
     fireEvent.click(within(row).getAllByRole("button")[0]!);
@@ -80,11 +113,16 @@ describe("workspace", () => {
     expect(header.parentElement!.className).not.toContain("bg-selection");
   });
 
-  it("the floating Scene tools bar holds the tools and toggles; the top bar keeps the zoom controls", async () => {
+  it("two floating bars: Scene tools holds the tools and toggles, Zoom sits to its right; no top bar", async () => {
     await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     const tools = screen.getByRole("toolbar", { name: "Scene tools" });
-    const view = screen.getByRole("toolbar", { name: "Scene view" });
+    const view = screen.getByRole("toolbar", { name: "Zoom" });
+    expect(screen.queryByRole("toolbar", { name: "Scene view" })).toBeNull();
+    expect(screen.queryByText("Click to select · drag to move")).toBeNull();
+    // Side by side in one floating row, tools first.
+    expect(view.parentElement).toBe(tools.parentElement);
+    expect(tools.compareDocumentPosition(view) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(tools).getByRole("button", { name: /^Select/ })).toBeTruthy();
     for (const name of [/^Snapping/, /^Depth preview/, /^Shade/, /^Path preview/]) {
       const toggle = within(tools).getByRole("button", { name });
@@ -95,12 +133,14 @@ describe("workspace", () => {
     }
     expect(within(view).getByRole("button", { name: "Zoom in" })).toBeTruthy();
     expect(within(view).getByRole("button", { name: "Zoom out" })).toBeTruthy();
+    expect(within(view).getByRole("button", { name: "Zoom to fit" })).toBeTruthy();
+    expect(within(view).getByRole("button", { name: "Zoom to 1×" })).toBeTruthy();
     expect(within(view).queryByRole("button", { name: /^Select/ })).toBeNull();
   });
 
   it("deleting a referenced object asks first", async () => {
     const ed = await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     const objects = screen.getByRole("region", { name: "Objects layer" });
     fireEvent.click(within(objects).getByRole("button", { name: /^Delete .*boulder/ }));
     expect(screen.getByRole("alertdialog").textContent).toContain("Used by");
@@ -164,7 +204,7 @@ describe("workspace", () => {
 
   it("item details edit as one undo step per field", async () => {
     const ed = await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!);
     const box = screen.getByLabelText("Description");
     fireEvent.focus(box);
     for (const v of ["A", "A s", "A stick."]) fireEvent.change(box, { target: { value: v } });

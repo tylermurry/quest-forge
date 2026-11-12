@@ -1,8 +1,8 @@
 // The game-wide skin, as the Styling editor edits it: pure Project → Project commands for the frames and the
 // typography and the icon bar, the guide-drag math of the nine-slice editor, and the warnings for insets that
 // don't fit the image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
-import { Color, DialogueChoices, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
-import { CommandError } from "./commands.ts";
+import { Color, DialogueChoices, FRAME_SCALE_MAX, FRAME_SCALE_MIN, NARRATION_WIDTH_MAX, NARRATION_WIDTH_MIN, Narration, SCENE_HEIGHT, SCHEMA_VERSION, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, definedIds, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
+import { CommandError, uniqueId } from "./commands.ts";
 import type { PickOption } from "./rules/pickers.ts";
 
 export type FrameKey = "sharedFrame" | "iconBar";
@@ -68,6 +68,42 @@ export function setFrameInsets(p: Project, which: FrameKey, insets: FrameInsets)
   const { insets: _old, ...rest } = frameOf(p, which) ?? {};
   const zero = GUIDE_SIDES.every((s) => insets[s] === 0);
   return withFrame(p, which, zero ? rest : { ...rest, insets: { left: insets.left, right: insets.right, top: insets.top, bottom: insets.bottom } });
+}
+
+/**
+ * The default look for panels: a picture in the project's Images library, already cut into nine pieces. New
+ * projects have it; Use default look puts it back. Its bytes come from `builtInFrame.ts`.
+ */
+export const BUILT_IN_FRAME = { id: "frame", path: "assets/images/Styling/frame.jpg", insets: { left: 12, right: 12, top: 12, bottom: 12 } } as const;
+
+/** Whether the shared frame is the built-in picture. */
+export function isBuiltInFrame(p: Project): boolean {
+  const id = frameOf(p, "sharedFrame")?.image;
+  return id !== undefined && p.assets?.data.images.some((i) => i.id === id && i.path === BUILT_IN_FRAME.path) === true;
+}
+
+/**
+ * Makes the built-in picture the shared frame, with its borders. Adds it to the Images library (in Styling) when
+ * it isn't there, and reuses it when it is. `bytes` is the picture, written with the project's next save.
+ */
+export function applyBuiltInFrame(p: Project, bytes: Uint8Array): Project {
+  const images = p.assets?.data.images ?? [];
+  let q = p;
+  let id = images.find((i) => i.path === BUILT_IN_FRAME.path)?.id;
+  if (id === undefined) {
+    id = uniqueId(BUILT_IN_FRAME.id, definedIds(p, "image"));
+    const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: SCHEMA_VERSION, images: [], audio: [] } };
+    // A file already at that path is left as it is; it is only listed.
+    const pendingFiles = p.files.includes(BUILT_IN_FRAME.path) ? p.pendingFiles : { ...p.pendingFiles, [BUILT_IN_FRAME.path]: bytes };
+    q = { ...p, assets: { ...assets, data: { ...assets.data, images: [...images, { id, path: BUILT_IN_FRAME.path }] } }, pendingFiles };
+  }
+  return setFrameInsets(setFrameImage(q, "sharedFrame", id), "sharedFrame", BUILT_IN_FRAME.insets);
+}
+
+/** How thick the panels' frame borders are drawn, in game pixels, a whole number from FRAME_SCALE_MIN to FRAME_SCALE_MAX. */
+export function setFrameScale(p: Project, scale: number): Project {
+  if (!Number.isInteger(scale) || scale < FRAME_SCALE_MIN || scale > FRAME_SCALE_MAX) throw new CommandError(`The scale is a whole number of pixels from ${FRAME_SCALE_MIN} to ${FRAME_SCALE_MAX}.`);
+  return withFrame(p, "sharedFrame", { ...frameOf(p, "sharedFrame"), scale });
 }
 
 /** Images a frame can use, for the picker. */
@@ -164,33 +200,78 @@ export const setChoiceHighlight = (p: Project, color: string): Project => choice
 /** The colour of the line above the choices, as #rrggbb. */
 export const setChoiceSeparator = (p: Project, color: string): Project => choiceColor(p, "separator", color, "separator colour");
 
+// ── Speech ───────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The colour of every speaker's name, as #rrggbb. Creates the speech section; the others are left as they are. */
+export function setSpeechNameColor(p: Project, color: string): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const hex = color.toLowerCase();
+  if (!Color.safeParse(hex).success) throw new CommandError("The name colour is a colour like #ffcc00.");
+  const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, speech: { ...p.game.data.style?.speech, name: hex } } } } };
+}
+
+// ── Narration ────────────────────────────────────────────────────────────────────────────────────────────
+
+/** Where narration goes, as saved, or undefined while the creator has never set it. */
+export const narrationOf = (p: Project): Narration | undefined => p.game?.data.style?.narration;
+
+function withNarration(p: Project, narration: Narration): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const checked = Narration.safeParse(narration);
+  if (!checked.success) throw new CommandError("That narration placement isn't valid.");
+  const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, narration: checked.data } } } };
+}
+
+/** Game pixels from the top of the screen to the narration panel, a whole number from 0 to the screen height. */
+export function setNarrationTop(p: Project, top: number): Project {
+  if (!Number.isInteger(top) || top < 0 || top > SCENE_HEIGHT) throw new CommandError(`The top is a whole number of pixels from 0 to ${SCENE_HEIGHT}.`);
+  return withNarration(p, { ...narrationOf(p), top });
+}
+
+/** Centres narration up and down (the top is kept for when centring is turned off), or stops centring. */
+export function setNarrationCenter(p: Project, center: boolean): Project {
+  const { center: _old, ...rest } = narrationOf(p) ?? {};
+  return withNarration(p, center ? { ...rest, center: true } : rest);
+}
+
+/** The narration panel's width, a whole percentage of the screen from NARRATION_WIDTH_MIN to NARRATION_WIDTH_MAX. */
+export function setNarrationWidth(p: Project, width: number): Project {
+  if (!Number.isInteger(width) || width < NARRATION_WIDTH_MIN || width > NARRATION_WIDTH_MAX) throw new CommandError(`The width is a whole percentage from ${NARRATION_WIDTH_MIN} to ${NARRATION_WIDTH_MAX}.`);
+  return withNarration(p, { ...narrationOf(p), width });
+}
+
 // ── Guides ───────────────────────────────────────────────────────────────────────────────────────────────
 
-/** The largest value a side can take with the opposite side as it is: the borders may meet but not cross. */
-export function maxInset(side: GuideSide, insets: FrameInsets, size: ImageSize): number {
-  const total = side === "left" || side === "right" ? size.width : size.height;
-  const opposite = side === "left" ? insets.right : side === "right" ? insets.left : side === "top" ? insets.bottom : insets.top;
-  return Math.max(0, total - Math.min(opposite, total));
+// The four borders move in lock step: every corner is the same square, so a frame is one border size.
+
+/** The thickest border a picture can have: always leaves at least one pixel of centre to repeat. */
+export function maxBorder(size: ImageSize): number {
+  return Math.max(0, Math.floor((Math.min(size.width, size.height) - 1) / 2));
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
-/** `insets` with one side set, rounded to a whole pixel and held inside the image. */
-export function withSide(insets: FrameInsets, side: GuideSide, value: number, size: ImageSize): FrameInsets {
-  const v = Number.isFinite(value) ? Math.round(value) : 0;
-  return { ...insets, [side]: clamp(v, 0, maxInset(side, insets, size)) };
+/** All four borders set to `value`, rounded to a whole pixel and held to `maxBorder`. */
+export function uniformInsets(value: number, size: ImageSize): FrameInsets {
+  const v = clamp(Number.isFinite(value) ? Math.round(value) : 0, 0, maxBorder(size));
+  return { left: v, right: v, top: v, bottom: v };
 }
 
-/** Where a pointer at (`x`, `y`) in image pixels puts a guide: the left guide at x means a left border of x. */
-export function dragGuide(insets: FrameInsets, side: GuideSide, at: { x: number; y: number }, size: ImageSize): FrameInsets {
+/** The one border size of `insets`; a frame saved with unequal borders reads as its thickest. */
+export const borderOf = (insets: FrameInsets): number => Math.max(insets.left, insets.right, insets.top, insets.bottom);
+
+/** Where a pointer at (`x`, `y`) in image pixels puts every guide: the left guide at x means a border of x. */
+export function dragGuide(side: GuideSide, at: { x: number; y: number }, size: ImageSize): FrameInsets {
   const value = side === "left" ? at.x : side === "right" ? size.width - at.x : side === "top" ? at.y : size.height - at.y;
-  return withSide(insets, side, value, size);
+  return uniformInsets(value, size);
 }
 
-/** A guide moved `delta` image pixels in the direction it points on screen (right/down is positive). */
+/** Every guide moved `delta` image pixels, in the direction the moved guide points on screen (right/down is positive). */
 export function nudgeGuide(insets: FrameInsets, side: GuideSide, delta: number, size: ImageSize): FrameInsets {
   const signed = side === "left" || side === "top" ? delta : -delta;
-  return withSide(insets, side, insets[side] + signed, size);
+  return uniformInsets(borderOf(insets) + signed, size);
 }
 
 /** A pointer position in the shown image (its on-screen box) as image pixels. */

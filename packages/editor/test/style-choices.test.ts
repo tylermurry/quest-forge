@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { MemoryFs, loadProject, resolveStyle, saveProject } from "@questforge/schema";
-import { separatorRect } from "@questforge/engine";
+import { MemoryFs, loadProject, resolveStyle, saveProject, type FrameInsets } from "@questforge/schema";
+import { separatorRect, type Measure } from "@questforge/engine";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
 import { dialogueChoicesOf, setChoiceHighlight, setChoiceSeparator, setTypographySize } from "../src/model/style.ts";
-import { layoutSample } from "../src/model/stylePreview.ts";
+import { layoutSample, type PanelSampleId } from "../src/model/stylePreview.ts";
 import { m1Project } from "./support/fixtures.ts";
+
+/** Lays a sample out with its borders drawn at their own size and narration where a new project puts it. */
+const lay = (sample: PanelSampleId, i: FrameInsets, text: { size: number }, measure: Measure) =>
+  layoutSample(sample, { insets: i, scale: Math.max(i.left, i.right, i.top, i.bottom) || 16 }, { top: 50, width: 60 }, text, measure);
+
 
 // Styling > Dialogue Choices: the two colour commands, their undo steps, saving, and the preview's choices.
 
@@ -59,14 +64,14 @@ describe("preview of the choices", () => {
   const ZERO = { left: 0, right: 0, top: 0, bottom: 0 };
 
   it("has a prompt and 2 to 4 choice rows laid out as the engine's choice box, inside the panel", () => {
-    const l = layoutSample("choices", "fit", { left: 8, right: 8, top: 8, bottom: 8 }, { size: 16 }, measure);
+    const l = lay("choices", { left: 8, right: 8, top: 8, bottom: 8 }, { size: 16 }, measure);
     const choices = l.items.flatMap((it) => (it.kind === "choices" ? [it] : []));
     expect(choices).toHaveLength(1);
     const { box, options } = choices[0]!;
     expect(options.length).toBeGreaterThanOrEqual(2);
     expect(options.length).toBeLessThanOrEqual(4);
     expect(box.rows).toHaveLength(options.length);
-    expect(l.items.some((it) => it.kind === "text" && it.tone === "speech")).toBe(true);
+    expect(l.items.some((it) => it.kind === "text" && it.tone === "speaker")).toBe(true);
     const sep = separatorRect(box);
     expect(sep.y).toBeLessThan(box.rows[0]!.y);
     for (const r of [...box.rows, sep]) {
@@ -78,8 +83,8 @@ describe("preview of the choices", () => {
   });
 
   it("grows with the typography size", () => {
-    const small = layoutSample("choices", "fit", ZERO, { size: 10 }, measure);
-    const big = layoutSample("choices", "fit", ZERO, { size: 20 }, measure);
+    const small = lay("choices", ZERO, { size: 10 }, measure);
+    const big = lay("choices", ZERO, { size: 20 }, measure);
     expect(big.frame.h).toBeGreaterThan(small.frame.h);
   });
 });

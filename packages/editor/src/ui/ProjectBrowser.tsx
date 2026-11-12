@@ -2,12 +2,13 @@ import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
-import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, isFileSection, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
+import { SECTIONS, buildSection, filterTree, isAssetKind, isFileSection, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
 import { ConfirmDelete, MenuItems, Prompt, type MenuItem, type MenuParts } from "./Dialogs.tsx";
 import { cn } from "./lib/utils.ts";
+import { SECTION_HEADING, SectionHeading } from "./SectionHeading.tsx";
 
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
@@ -284,8 +285,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                   aria-selected={selected}
                   tabIndex={0}
                   drag={isEditing ? undefined : { section: e.section, kind: "entry", id: e.id }}
-                  onClick={() => ws.select({ kind: "entry", section: e.section, id: e.id })}
-                  onDoubleClick={() => opensTab(e.section) && ws.open({ section: e.section, id: e.id })}
+                  onClick={() => (opensTab(e.section) ? ws.open({ section: e.section, id: e.id }) : ws.select({ kind: "entry", section: e.section, id: e.id }))}
                   onKeyDown={(ev) => {
                     if (ev.key === "F2") setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name });
                     if (ev.key === "Enter" && opensTab(e.section)) ws.open({ section: e.section, id: e.id });
@@ -329,14 +329,13 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
-        {/* Game settings: a click selects, double-click or Enter opens the Game Settings tab. */}
+        {/* Game settings: a click or Enter selects it and opens the Game Settings tab. */}
         {!searching && (
           <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
             <div
               tabIndex={0}
               className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
-              onClick={() => ws.select({ kind: "game" })}
-              onDoubleClick={() => ws.openGame()}
+              onClick={() => ws.openGame()}
               onKeyDown={(e) => e.key === "Enter" && ws.openGame()}
             >
               <Gamepad2 className="text-muted-foreground size-3.5" />
@@ -349,23 +348,17 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           const shown = filterTree(tree, ws.search);
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
-          const Icon = SECTION_ICON[section];
           return (
             <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-3">
               <DndRow
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
-                className={cn("text-muted-foreground text-[11px] font-semibold tracking-wider uppercase", rowClass(false))}
+                className={cn(SECTION_HEADING, rowClass(false))}
                 drop={{ kind: "browserFolder", section, folder: "" }}
                 onFiles={filesInto(section, "")}
                 onClick={() => ws.toggleFolder(section, "")}
               >
-                <button className="flex size-4 shrink-0 items-center justify-center" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}>
-                  {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-                </button>
-                <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-                <span className="flex-1">{title}</span>
-                <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
+                <SectionHeading toggle={{ open, onToggle: () => ws.toggleFolder(section, "") }} name={title} icon={SECTION_ICON[section]} title={title} />
               </DndRow>
               {open && shown && <ul role="group">{renderFolder(shown, 1, searching)}</ul>}
             </li>

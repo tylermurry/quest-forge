@@ -11,8 +11,10 @@ import {
   type Project,
   type ProjectFs,
 } from "@questforge/schema";
+import { builtInFrameBytes } from "./builtInFrame.ts";
 import { slugify } from "./commands.ts";
 import { Bitmap, type RGBA } from "./png.ts";
+import { applyBuiltInFrame } from "./style.ts";
 
 /** A folder name made from a title: no path separators or reserved characters, not hidden. */
 export function folderNameFor(title: string): string {
@@ -118,7 +120,8 @@ export function blankProject(title: string): Project {
       }),
     },
   ];
-  return p;
+  // Panels start on the built-in frame picture, in the Images library's Styling folder.
+  return applyBuiltInFrame(p, builtInFrameBytes());
 }
 
 /** Writes a blank project into an empty folder. */

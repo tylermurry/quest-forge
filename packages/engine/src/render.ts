@@ -68,8 +68,8 @@ export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
 }
 
 /**
- * A `narrate` or `say` box. Speech keeps the speaker's colour on the name and the outline; the body text
- * is the author's text colour, or, with no typography configured, the speaker's colour as it always was.
+ * A `narrate` or `say` box. Speech keeps the speaker's colour on the outline; the name is drawn in the one
+ * name colour (`style.speech.name`) and the body text in the text colour, for every speaker.
  * With typography configured, narration is drawn on the dark panel speech uses, so the author's text
  * colour (white by default) can be read; without it narration keeps its white box and black text.
  */
@@ -91,8 +91,8 @@ function drawTextBox(ctx: Ctx, box: TextBox, t: TextStyle) {
   ctx.fillRect(l.x, l.y, l.w, l.h);
   ctx.strokeStyle = color;
   ctx.strokeRect(l.x + 1.5, l.y + 1.5, l.w - 3, l.h - 3);
-  if (l.name) at(l.name, l.textY - l.line, color, true);
-  l.lines.forEach((line, i) => at(line, l.textY + i * l.line, t.custom ? t.color : color));
+  if (l.name) at(l.name, l.textY - l.line, t.name, true);
+  l.lines.forEach((line, i) => at(line, l.textY + i * l.line, t.color));
 }
 
 function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {

@@ -15,7 +15,7 @@ The Project Browser has one section for each kind of building block: **Scenes**,
 **Dialogues**, **Flags**, **Audio** and **Images**. Each shows how many it holds. Click a section's heading to
 fold it away.
 
-Double-click the **Game** row at the top to open your game's settings and game-wide rules.
+Click the **Game** row at the top to open your game's settings and game-wide rules.
 
 ## Add something new
 

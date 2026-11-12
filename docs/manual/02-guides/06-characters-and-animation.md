@@ -14,7 +14,7 @@ place them in scenes, and animate objects.
 A **sprite sheet** is one picture holding many frames of animation in a grid.
 
 1. Import the picture (see [Organize your project](./02-organize-your-project.md#import-pictures-sounds-and-fonts)),
-   then double-click it in the **Images** section to open it.
+   then click it in the **Images** section to open it.
 2. Click **Slice image**.
 3. Set the grid by **Frame size** (each frame's width and height) or by **Rows × columns**.
 
@@ -30,7 +30,7 @@ In the image's tab, click in the frame preview where the feet are. Or type **Ori
 
 ## Animate a character
 
-1. Double-click a character in the **Characters** section.
+1. Click a character in the **Characters** section.
 2. The character's tab lists its **animation slots**: idle, walk and talk, each facing down, up, left and right.
 3. Click a slot. Choose an **Image**, then pick its frames: click frames on the sheet, or click a row under
    **Take a row:** to take all of it.
@@ -59,7 +59,7 @@ These actions work in any rule or dialogue:
 
 | Action | What it does |
 |---|---|
-| **Say** | A character says a line, in their own text colour, with their talk animation. |
+| **Say** | A character says a line, in a box outlined in their own text colour, with their talk animation. |
 | **Walk player to** | The player walks to a point. Use **Pick on canvas** to choose it. |
 | **Walk character to** | Another character walks to a point. |
 | **Face** | The player turns to face a direction. |

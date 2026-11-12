@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
@@ -46,9 +46,8 @@ async function openTypography() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Styling" }));
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Typography" }));
+  fireEvent.click(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Game settings" })).getByRole("button", { name: "Typography" }));
   return editor;
 }
 

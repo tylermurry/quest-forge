@@ -6,7 +6,7 @@ sidebar_position: 12
 
 # Dialogue editor
 
-The tab that opens when you double-click a dialogue. A dialogue is a graph of **nodes** joined by connections,
+The tab that opens when you click a dialogue. A dialogue is a graph of **nodes** joined by connections,
 starting at its **Start** node.
 
 ## The graph

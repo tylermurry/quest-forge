@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
@@ -45,14 +45,12 @@ async function openIconBar() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Styling" }));
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Icon Bar" }));
+  fireEvent.click(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Game settings" })).getByRole("button", { name: "Icon Bar" }));
   return editor;
 }
 
 const bar = (e: Editor) => e.project.game!.data.style?.iconBar;
-const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
 
 async function pick(combobox: string, image: RegExp) {
   fireEvent.click(screen.getByRole("combobox", { name: combobox }));
@@ -75,8 +73,8 @@ describe("Icon Bar", () => {
     const left = await screen.findByRole("slider", { name: "Left guide" });
     left.focus();
     fireEvent.keyDown(left, { key: "ArrowRight", shiftKey: true });
-    expect(field("Left border (px)").value).toBe("10");
-    expect(bar(editor)?.frame).toEqual({ image: "garden_bg", insets: { left: 10, right: 0, top: 0, bottom: 0 } });
+    expect(left.getAttribute("aria-valuenow")).toBe("10");
+    expect(bar(editor)?.frame).toEqual({ image: "garden_bg", insets: { left: 10, right: 10, top: 10, bottom: 10 } });
     expect(editor.project.game!.data.style?.sharedFrame).toBeUndefined();
   });
 
@@ -105,13 +103,14 @@ describe("Icon Bar", () => {
     expect(bar(editor)?.effect).toBe("darken");
   });
 
-  it("the preview selects the clicked button, and the arrow keys move the selection", async () => {
+  it("opening Icon Bar shows the Icon Bar sample; a click selects a button and the arrow keys move the selection", async () => {
     await openIconBar();
+    expect(screen.getByRole("radio", { name: "Icon Bar", checked: true })).toBeTruthy();
     const preview = screen.getByRole("img", { name: /Preview of the icon bar/ });
     expect(preview.getAttribute("aria-label")).toMatch(/walk button is selected/);
-    preview.getBoundingClientRect = () => ({ left: 0, top: 0, width: 640, height: 96, right: 640, bottom: 96, x: 0, y: 0, toJSON() {} });
+    preview.getBoundingClientRect = () => ({ left: 0, top: 0, width: 640, height: 400, right: 640, bottom: 400, x: 0, y: 0, toJSON() {} });
     // Look is the second button, at x 52–96.
-    fireEvent.pointerDown(preview, { clientX: 70, clientY: 20 });
+    fireEvent.click(preview, { clientX: 70, clientY: 20 });
     expect(preview.getAttribute("aria-label")).toMatch(/look button is selected/);
     fireEvent.keyDown(preview, { key: "ArrowRight" });
     expect(preview.getAttribute("aria-label")).toMatch(/hand button is selected/);

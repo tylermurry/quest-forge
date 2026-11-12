@@ -1,11 +1,6 @@
 import { AUTHOR_DEFAULTS, resolveStyle } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
-import { dialogueChoicesOf, setChoiceHighlight, setChoiceSeparator } from "../../model/style.ts";
-import { useCanvasImages } from "../scene/images.ts";
-import { FramePreview } from "./FramePreview.tsx";
-import { useStyleFont } from "./useStyleFont.ts";
-
-const SAMPLES = [{ id: "choices", label: "Dialogue choices" }] as const;
+import { dialogueChoicesOf, setChoiceHighlight, setChoiceSeparator, setSpeechNameColor } from "../../model/style.ts";
 
 /** One colour box, like Typography's text colour: edits merge while the picker is dragged and break on blur. */
 function ColorField(props: { label: string; value: string; onChange(color: string): void; onBlur(): void }) {
@@ -21,29 +16,35 @@ function ColorField(props: { label: string; value: string; onChange(color: strin
 }
 
 /**
- * Game Settings > Styling > Dialogue Choices: the colour behind the hovered or selected answer and the colour of the
- * line above the choices, beside a preview drawn by the engine on the shared frame with the game's text. The
- * answers' own text colour comes from the highlight, so it stays readable.
+ * Game Settings > Styling > Character Dialogue: the colour of every speaker's name (their words use the text colour
+ * from Typography), the colour behind the hovered or selected answer and the colour of the line above the choices,
+ * under the shared Styling preview. The answers' own text colour comes
+ * from the highlight, so it stays readable.
  */
-export function DialogueChoices({ actions }: { actions: Actions }) {
+export function CharacterDialogue({ actions }: { actions: Actions }) {
   const { editor } = actions;
   const p = editor.project;
-  const images = useCanvasImages(p);
   const style = p.game?.data.style;
   const saved = dialogueChoicesOf(p);
-  const font = useStyleFont(p, style, images);
   // What the controls show: what the creator set, and for the rest what customising starts from.
   const shown = resolveStyle({ ...style, dialogueChoices: saved ?? {} }).dialogueChoices;
-  const frame = resolveStyle(style).sharedFrame;
+  const { speech } = resolveStyle(style);
 
   return (
-    <section aria-label="Dialogue Choices" className="grid gap-3">
-      <header className="grid gap-1">
-        <h3 className="text-base font-semibold">Dialogue Choices</h3>
-        <p className="text-muted-foreground text-[12px]">How the answers a player can pick look when you talk to someone. They use your Shared Frame and your Typography; here you pick two colours.</p>
-      </header>
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <div className="grid gap-3">
+    <section aria-label="Character Dialogue" className="grid gap-5">
+      <h3 className="text-xl font-semibold">Character Dialogue</h3>
+      <div className="grid max-w-3xl gap-8">
+        <div role="group" aria-label="Speech" className="grid gap-1.5">
+          <h4 className="text-[13px] font-semibold">Speech</h4>
+          <ColorField
+            label="Name colour"
+            value={speech.name}
+            onChange={(c) => editor.apply("Change name colour", (q) => setSpeechNameColor(q, c), "style:speech:name")}
+            onBlur={() => editor.history.breakMerge()}
+          />
+        </div>
+        <div role="group" aria-label="Choices" className="grid gap-1.5">
+          <h4 className="text-[13px] font-semibold">Choices</h4>
           {saved === undefined && <p className="text-muted-foreground text-[12px]">Not customised yet: the game keeps its original gold highlight ({AUTHOR_DEFAULTS.dialogueChoices.highlight}) and no line above the choices. Changing a colour here adds the line.</p>}
           <div className="flex flex-wrap items-end gap-4">
             <ColorField
@@ -59,9 +60,7 @@ export function DialogueChoices({ actions }: { actions: Actions }) {
               onBlur={() => editor.history.breakMerge()}
             />
           </div>
-          <p className="text-muted-foreground text-[12px]">The highlight fills the whole answer the player points at, and its text turns black or white on its own so it stays easy to read. The separator is the thin line at the top of the choices. Point at an answer in the preview, or click it, to see the highlight.</p>
         </div>
-        <FramePreview frame={frame} style={style} images={images} family={font.family} samples={SAMPLES} shapes={false} />
       </div>
     </section>
   );

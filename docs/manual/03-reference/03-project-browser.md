@@ -14,7 +14,7 @@ Filters every section to the names and IDs that match what you type.
 
 ## Game
 
-Click it to select it; double-click it, or press **Enter**, to open the **Game Settings** tab. See [Game settings](./04-game-settings.md).
+Click it, or press **Enter**, to open the **Game Settings** tab. See [Game settings](./04-game-settings.md).
 
 ## Sections
 
@@ -29,7 +29,7 @@ Click it to select it; double-click it, or press **Enter**, to open the **Game S
 | **Images** | Imported pictures. | The image's slicing and origin. |
 | **Fonts** | Imported fonts (WOFF2 or WOFF). | — (shown in the Inspector) |
 
-Each heading shows how many things the section holds. Click it to fold the section away.
+Click a section's heading to fold the section away.
 
 ## Section and folder menu
 

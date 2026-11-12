@@ -27,7 +27,7 @@ on, a spawn point and a player character. Click **Play** to walk around in it st
 
 | Area | What it's for |
 |---|---|
-| **Project Browser** (left) | Everything in your game. Double-click something to open it in a tab. |
+| **Project Browser** (left) | Everything in your game. Click something to open it in a tab. |
 | **Editor tabs** (middle) | The scene, item, character, dialogue or image you're working on. |
 | **Inspector** (right) | The details and rules of what's selected. |
 | **Problems** (bottom) | What's wrong with your game right now. |

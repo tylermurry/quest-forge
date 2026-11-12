@@ -1,8 +1,8 @@
-import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import type { FrameInsets } from "@questforge/schema";
-import { GUIDE_SIDES, dragGuide, insetWarnings, maxInset, nudgeGuide, toImagePixels, type GuideSide } from "../../model/style.ts";
-import { NumberField } from "../NumberField.tsx";
+import { GUIDE_SIDES, borderOf, dragGuide, insetWarnings, maxBorder, nudgeGuide, toImagePixels, uniformInsets, type GuideSide } from "../../model/style.ts";
 import { cn } from "../lib/utils.ts";
+import { SliderField } from "./SliderField.tsx";
 
 /** The source picture, with the dimensions the guides are measured in. */
 export interface FrameImage {
@@ -21,21 +21,23 @@ const REGION = { corner: "bg-amber-400/35", edge: "bg-sky-400/30", centre: "bg-e
 const CHECKER = "repeating-conic-gradient(#3a3a3a 0% 25%, #2a2a2a 0% 50%) 50% / 12px 12px";
 
 /**
- * Edits the four borders of a nine-slice frame: the source picture with a draggable guide on each side (arrow
- * keys move a focused guide; Shift moves ten pixels) and four number boxes that stay in step with them. The
- * caller keeps the borders. Gestures: a drag calls `onPreview` while moving and `onCommit` on release, so it
- * is one undo step; a key press or number calls `onChange` with the side it changed (the caller merges typing).
- * Reused by the Icon Bar.
+ * Edits the borders of a nine-slice frame, which move in lock step so all four corners are the same square: a
+ * Border size slider for the rough size, and the source picture with a draggable guide on each side for fine
+ * tuning (arrow keys move a focused guide; Shift moves ten pixels), the nine pieces tinted. The caller keeps the
+ * borders. Gestures: a guide drag calls `onPreview` while moving and `onCommit` on release, so it is one undo
+ * step; the slider and a key press call `onChange` (the caller merges a burst into one step). Reused by the Icon Bar.
  */
 export function NineSliceEditor(props: {
   image: FrameImage | null;
   insets: FrameInsets;
-  onChange(insets: FrameInsets, side: GuideSide): void;
+  onChange(insets: FrameInsets): void;
   /** The borders while a drag is in progress; null drops the drag. */
   onPreview(insets: FrameInsets | null): void;
   onCommit(): void;
-  /** A number box lost focus. */
+  /** A guide or the slider lost focus. */
   onBlurField(): void;
+  /** Shown right under the Border size slider (the Frames section's Scale). */
+  belowBorder?: ReactNode;
 }) {
   const { image, insets } = props;
   const box = useRef<HTMLDivElement | null>(null);
@@ -48,7 +50,7 @@ export function NineSliceEditor(props: {
   const move = (side: GuideSide, e: PointerEvent) => {
     if (dragging.current !== side || !size || !box.current) return;
     const at = toImagePixels({ x: e.clientX, y: e.clientY }, box.current.getBoundingClientRect(), size);
-    props.onPreview(dragGuide(insets, side, at, size));
+    props.onPreview(dragGuide(side, at, size));
   };
   const key = (side: GuideSide, e: KeyboardEvent) => {
     if (!size) return;
@@ -57,11 +59,16 @@ export function NineSliceEditor(props: {
     if (e.key !== forward && e.key !== back) return;
     e.preventDefault();
     const step = e.shiftKey ? 10 : 1;
-    props.onChange(nudgeGuide(insets, side, e.key === forward ? step : -step, size), side);
+    props.onChange(nudgeGuide(insets, side, e.key === forward ? step : -step, size));
   };
 
+  const border = borderOf(insets);
   return (
     <div className="grid gap-3" aria-label="Nine-slice editor">
+      {size && (
+        <SliderField label="Border size" min={0} max={maxBorder(size)} value={border} unit="px" unitName="pixels" onChange={(n) => props.onChange(uniformInsets(n, size))} onBlur={props.onBlurField} />
+      )}
+      {props.belowBorder}
       {image && size ? (
         <div className="overflow-auto">
           <div
@@ -83,7 +90,7 @@ export function NineSliceEditor(props: {
                   aria-label={`${SIDE_LABEL[side]} guide`}
                   aria-orientation={VERTICAL[side] ? "horizontal" : "vertical"}
                   aria-valuemin={0}
-                  aria-valuemax={maxInset(side, insets, size)}
+                  aria-valuemax={maxBorder(size)}
                   aria-valuenow={insets[side]}
                   aria-valuetext={`${insets[side]} pixels`}
                   className={cn("group absolute flex items-center justify-center outline-none touch-none", VERTICAL[side] ? "top-0 bottom-0 w-3 cursor-ew-resize" : "left-0 right-0 h-3 cursor-ns-resize")}
@@ -114,23 +121,7 @@ export function NineSliceEditor(props: {
             })}
           </div>
         </div>
-      ) : (
-        <p className="text-muted-foreground text-[13px]">{image === null ? "Choose an image to set its borders." : ""}</p>
-      )}
-      <div className="grid grid-cols-4 gap-2">
-        {GUIDE_SIDES.map((side) => (
-          <NumberField
-            key={side}
-            label={`${SIDE_LABEL[side]} border (px)`}
-            integer
-            min={0}
-            max={size ? maxInset(side, insets, size) : undefined}
-            value={insets[side]}
-            onChange={(n) => props.onChange({ ...insets, [side]: n }, side)}
-            onBlur={props.onBlurField}
-          />
-        ))}
-      </div>
+      ) : null}
       {warnings.length > 0 && (
         <div role="alert" className="text-warn grid gap-0.5 text-[12px]">
           {warnings.map((w) => (
@@ -138,23 +129,7 @@ export function NineSliceEditor(props: {
           ))}
         </div>
       )}
-      <ul aria-label="Legend" className="text-muted-foreground grid gap-1 text-[12px]">
-        <Legend swatch={REGION.corner} name="Corners" text="stay exactly as drawn." />
-        <Legend swatch={REGION.edge} name="Edges" text="repeat along each side to fit the panel." />
-        <Legend swatch={REGION.centre} name="Centre" text="repeats to fill the middle." />
-      </ul>
     </div>
-  );
-}
-
-function Legend(props: { swatch: string; name: string; text: string }) {
-  return (
-    <li className="flex items-center gap-2">
-      <span className={cn("size-3 shrink-0 rounded-sm border border-white/30", props.swatch)} />
-      <span>
-        <strong className="text-foreground font-medium">{props.name}</strong> {props.text}
-      </span>
-    </li>
   );
 }
 

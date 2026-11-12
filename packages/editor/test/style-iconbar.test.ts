@@ -77,7 +77,7 @@ describe("history and saving", () => {
     await editor.flush();
     const reopened = await Editor.open({ fs }, { autosave: false });
     expect(resolveStyle(reopened.project.game!.data.style).iconBar).toEqual({
-      frame: { image: "palm_img", insets: { left: 3, right: 3, top: 4, bottom: 4 } },
+      frame: { image: "palm_img", insets: { left: 3, right: 3, top: 4, bottom: 4 }, scale: 16 },
       icons: { settings: "garden_bg" },
       effect: "darken",
     });

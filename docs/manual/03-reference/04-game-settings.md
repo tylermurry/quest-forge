@@ -6,11 +6,12 @@ sidebar_position: 4
 
 # Game settings
 
-Double-click **Game** at the top of the Project Browser (or select it and press **Enter**). The **Game Settings**
-tab opens in the middle of the window, with the Inspector hidden to give it room. Closing the tab or switching to
-another tab brings the Inspector back. Selecting **Game** with a single click only shows a button that opens the tab.
+Click **Game** at the top of the Project Browser (or select it and press **Enter**). The **Game Settings** tab opens
+in the middle of the window, with the Inspector hidden to give it room. Closing the tab or switching to another tab
+brings the Inspector back.
 
-The tab has two parts: **General** and **Styling**. Each has a list of sections down the left.
+A menu down the left lists the sections under two headings, **General** and **Styling**. Click a section to show it.
+The menu stays where it is while you scroll through a long section.
 
 ## General
 
@@ -50,43 +51,68 @@ See [Rules](./08-rules.md) and [Triggers](./09-triggers.md).
 
 ## Styling
 
-The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**.
-Each one has a preview on the right that shows your changes at once.
+The sections of **Styling** are **Frames**, **Typography**, **Character Dialogue**, **Inventory** and **Icon Bar**.
+One preview sits above all of them and shows your changes at once. It stays where it is while you scroll through a
+section's settings below it.
 
-### Shared Frames
+- Pick a **Sample** to see: **Short Narration**, **Long Narration**, **Character Speech**, **Dialogue Choice**,
+  **Inventory** or **Icon Bar**. Opening a section switches to its sample (Frames to **Short Narration**, Character
+  Dialogue to **Character Speech**, Inventory to **Inventory**, Icon Bar to **Icon Bar**); Typography keeps
+  whichever sample is showing.
+- Drag the bar between the preview and the settings to make the preview taller or shorter. The game screen grows
+  and shrinks to fill it, keeping its shape.
+- While the game screen isn't exactly the game's own size (640 by 400 pixels), **Actual game size** appears.
+  Click it to size the preview so the game screen is exactly that size.
+- With **Dialogue Choice**, point at an answer, click it, or press the up and down arrow keys to see its highlight.
+  With **Icon Bar**, move the pointer over the bar to see the hover look, and click a button, or press the left
+  and right arrow keys, to see the selected look.
 
-One picture can frame every panel in your game: narration, speech, the dialogue choices and the inventory. You
-make the picture in any art program and import it like any other image (PNG or WebP). A frame with see-through
-parts shows the game behind it.
+The preview draws everything the way the game does, on the same checkerboard a scene with no background shows, so
+you can see any see-through parts. It doesn't change your game.
+
+### Frames
+
+One picture frames every panel in your game: narration, speech, the dialogue choices and the inventory. You make
+the picture in any art program and import it like any other image (PNG or WebP). A frame with see-through parts
+shows the game behind it.
 
 For now this section sets up and previews the frame. Your game does not draw it on its panels yet; that arrives in a
 later update.
 
-Click the **Image** menu to pick a picture from your Images, or click **Import image…** to add a new one from
-your computer. Click **Use built-in look** to go back to the game's own panels. The picture stays in your Images
-either way.
+Beside the Frames heading, a bar switches between its two parts, **Panel Frame** and **Position**. The frame is set
+up in **Panel Frame**. A new project starts with a default frame: a simple gold-edged panel, the picture `frame.jpg` in the **Styling**
+folder of your Images. Click the **Image** menu to pick another picture from your Images, or click **Import image…**
+to add a new one from your computer. Click **Use default look** to go back to the default frame; if you deleted
+`frame.jpg`, it is added back. The button is hidden while the default frame is in use. Pictures you pick stay in your
+Images either way.
 
-Questforge cuts the picture into nine pieces so it fits panels of any size:
+Questforge cuts the picture into nine pieces so it fits panels of any size: the four corners stay as drawn, the
+four edges repeat along each side, and the centre repeats to fill the middle. The four borders always move
+together, so every corner is the same square.
 
-- The four **corners** are never changed.
-- The four **edges** repeat along each side to fit.
-- The **centre** repeats to fill the middle.
-
-You choose where the cuts are. The picture is shown large with four lines, called guides, one for each side.
-
-- Drag a guide to move it. One drag is one step for **Undo**.
+- Drag the **Border size** slider to set the borders roughly. **Scale** sits right under it (see below).
+- Drag any of the four guides on the picture to fine-tune. All four move together, and one drag is one step for
+  **Undo**.
 - Click a guide and press the arrow keys to move it one pixel at a time. Hold **Shift** to move ten.
-- Or type the border sizes, in pixels, into **Left border**, **Right border**, **Top border** and **Bottom border**.
-  The numbers and the guides always match.
 
-Guides stay inside the picture. If the left and right borders (or the top and bottom borders) use up the whole
-picture, a warning appears: there is no centre left to repeat, so the game draws only the corners and leaves the
-middle of the panel empty. Move a guide back to fix it.
+The borders always leave at least one pixel in the middle to repeat. A frame from an older project whose borders
+use up the whole picture shows a warning: the game draws only the corners and leaves the middle of the panel empty.
+Move the slider or a guide to fix it.
 
-The preview on the right draws the frame the way the game does, on a sample background so you can see any
-see-through parts. Pick a **Sample** (one sentence of narration, several paragraphs, a character speaking, the
-inventory or dialogue choices) to see the same frame on each panel. Pick a **Shape** (narrow, wide, tall or short)
-to see how it stretches, and **Zoom** to look closer. The preview doesn't change your game.
+**Scale**, under **Border size**, sets how thick the borders are drawn in the game, from 8 to 64 pixels (16 to start with). The picture is
+drawn bigger or smaller so that its borders are that thick, whatever size you made it, and everything else scales
+with it. There is no extra padding: the words start right inside the borders, so the borders you cut decide how
+much room there is around them.
+
+In **Position**, where narration goes:
+
+- **Top**: how far down the screen the narration panel starts, in pixels (50 to start with).
+- **Center**: puts the panel in the middle of the screen, top to bottom. The **Top** slider is turned off while it
+  is ticked, and keeps its value for when you untick it.
+- **Width**: how wide the panel is, as a percentage of the screen (60% to start with), so it stays in proportion
+  to the game. The panel grows taller to fit its words.
+
+For now these narration settings only change the preview, like the frame itself.
 
 ### Typography
 
@@ -103,34 +129,34 @@ change you make switches to your own typography, starting from **16 pixel** whit
 - **Text size**: the size in pixels, from 6 to 72.
 - **Text colour**: click the colour square to pick one.
 
-A character's own colour stays on their name and on the outline of their speech box. Your text colour is used for
-the words themselves. Once you pick your own typography, narration is shown on the same dark panel as speech, so
+Your text colour is used for the words themselves, speech included. Speakers' names use the name colour from
+[Character Dialogue](#character-dialogue), and a character's own colour stays on the outline of their speech box. Once you pick your own typography, narration is shown on the same dark panel as speech, so
 white text can be read.
 
 Players can make all the text larger or smaller in the game's **Settings**. Their choice is a percentage of the
 size you set here, so what you pick is always the starting point. Very long text is shown a little smaller when it
 would not fit on the screen, so it is never cut off.
 
-The preview on the right uses your frame from **Shared Frames** and draws text the way the game does. Pick a
-**Sample** (one sentence of narration, several paragraphs, a character speaking or dialogue choices) and **Zoom**
-to look closer. Each change shows at once.
+### Character Dialogue
 
-### Dialogue Choices
+How speech and conversation choices look. They use your frame from **Frames** and your text from **Typography**.
 
-How the answers look when a conversation offers choices. The answers use your frame from **Shared Frames** and your
-text from **Typography**. Here you pick two colours:
-
+- **Name colour**: the colour of every speaker's name, pale gold to start with. One colour is used for every
+  character, so names always match. What they say uses your text colour from **Typography**.
 - **Highlight colour**: fills the whole answer the player points at or selects. Its text turns black or white on
   its own, whichever is easier to read on your colour.
 - **Separator colour**: the colour of the thin line along the top of the choices. Its thickness and spacing are
   set by the game.
 
-Until you change a colour, the choices keep their original look: a gold highlight and no extra line. The first
-change you make adds the line, using the game's pale gold unless you pick another colour.
+Until you change the highlight or separator, the choices keep their original look: a gold highlight and no extra
+line. The first change you make to either adds the line, using the game's pale gold unless you pick another colour.
 
-The preview shows a character speaking and four answers in your frame and text. Point at an answer, click it, or
-press the up and down arrow keys to see its highlight. The choices stay where they are in the game, and long
-lists still have pages.
+The choices stay where they are in the game, and long lists still have pages.
+
+### Inventory
+
+For now this section has no settings: opening it shows the inventory panel in your frame in the preview, so you can
+see how the frame looks around it. Settings for the inventory arrive in a later update.
 
 ### Icon Bar
 
@@ -142,7 +168,7 @@ Until you change something here, the bar keeps its original look, with a gold sq
 using. The first change you make switches to your own look, with the **Brighten** effect.
 
 - **Bar frame**: pick a picture (PNG or WebP) from your Images, or click **Import image…**, and cut it into nine
-  pieces with the same guides and border boxes as [Shared Frames](#shared-frames). The bar's borders are its own;
+  pieces with the same **Border size** slider and guides as [Frames](#frames). The bar's borders are its own;
   they don't change the panels' frame. The frame is drawn across the whole bar, so see-through parts show the game
   behind it. With a frame, the buttons have no background of their own: only the pictures show on it. If the
   picture can't be loaded, the bar keeps its original look.
@@ -155,10 +181,7 @@ using. The first change you make switches to your own look, with the **Brighten*
   current verb get the same effect, on the picture only: see-through parts stay see-through and the button behind
   it does not change.
 
-The preview on the right is the real bar, drawn the way the game draws it, over a soft multicoloured background so
-you can see any see-through parts. Move the pointer over it to see the hover look, and click a button, or press the
-left and right arrow keys, to see the selected look. Each change shows at once. The preview doesn't change your
-game.
+The preview's **Icon Bar** sample is the real bar, drawn the way the game draws it, across the top of the screen.
 
 When you click a problem about the game's start, score, default responses or rules in the **Problems** panel, the
 Game Settings tab opens on the right section and highlights the setting.

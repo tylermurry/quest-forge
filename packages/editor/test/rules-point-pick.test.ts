@@ -33,7 +33,6 @@ describe("Pick on canvas", () => {
     ws.select({ kind: "sceneThing", scene: "garden", list: "hotspots", key: "pond" });
     const selection = ws.selection;
     ws.startPointPick({ owner: POND, ruleId: "rule_4", index: 1, scene: "garden" });
-    expect(c.hint).toMatch(/Click the scene/);
     expect(c.cursor).toBe("crosshair");
     click([123, 345]);
     expect(action(editor.project, POND, "rule_4", 1)).toEqual({ type: "walk_player_to", x: 123, y: 345 });

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Image as ImageIcon, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, Pentagon, Route, Scan, Square, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { Box, Eye, EyeOff, Image as ImageIcon, Footprints, Ghost, Lock, LockOpen, Magnet, MapPin, Maximize, MousePointer2, MousePointerClick, Pentagon, Route, Ruler, Scan, Square, SquareDashed, Trash2, ZoomIn, ZoomOut, type LucideIcon } from "lucide-react";
 import { useDndMonitor, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Actions, DeleteWarning } from "../../model/actions.ts";
@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/toolti
 import { ConfirmDelete } from "../Dialogs.tsx";
 import { useCommands } from "../hooks.ts";
 import { cn } from "../lib/utils.ts";
+import { SECTION_HEADING, SectionHeading } from "../SectionHeading.tsx";
 import { useCanvasImages } from "./images.ts";
 import { SceneCanvas } from "./SceneCanvas.tsx";
 
@@ -46,7 +47,7 @@ function ToolButton({ label, pressed, disabled, onClick, children }: { label: st
   );
 }
 
-/** A scene tab: top bar, Layers panel, canvas and floating tool bar. */
+/** A scene tab: Layers panel and canvas, with two floating bars at the bottom: the tools, then zoom. */
 export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: string }) {
   const { ws, editor } = actions;
   const registry = useCommands();
@@ -131,23 +132,6 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="bg-panel flex h-9 shrink-0 items-center gap-0.5 border-b px-2" role="toolbar" aria-label="Scene view">
-        <span className="text-muted-foreground truncate text-[12px]">{c.hint}</span>
-        <div className="ml-auto flex items-center gap-0.5">
-          <ToolButton label="Zoom out" onClick={() => c.zoomOut()}>
-            <ZoomOut />
-          </ToolButton>
-          <button className="hover:bg-muted h-7 min-w-16 rounded-md px-1.5 text-[12px] tabular-nums" aria-label="Zoom to 1×" onClick={() => c.zoomActual()}>
-            {zoomLabel(ui.zoom, t)}
-          </button>
-          <ToolButton label="Zoom in" onClick={() => c.zoomIn()}>
-            <ZoomIn />
-          </ToolButton>
-          <ToolButton label="Zoom to fit" pressed={ui.zoom.fit} onClick={() => c.zoomFit()}>
-            <Maximize />
-          </ToolButton>
-        </div>
-      </div>
       <div className="flex min-h-0 flex-1">
         <LayersPanel c={c} onDelete={remove} />
         <SceneCanvas
@@ -161,7 +145,7 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
           highlight={draggingEntry && canvasDrop.isOver}
         >
           {!scene.background && !ui.hidden.includes("background") && <EmptyBackground c={c} />}
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center gap-2">
             <div
               className="bg-popover/95 pointer-events-auto flex items-center gap-0.5 rounded-md border px-1.5 py-1 shadow-md"
               role="toolbar"
@@ -185,6 +169,25 @@ export function SceneEditor({ actions, sceneId }: { actions: Actions; sceneId: s
               </ToolButton>
               <ToolButton label="Path preview from the default spawn" pressed={ui.aids.path} onClick={() => setAid("path")}>
                 <Route />
+              </ToolButton>
+            </div>
+            <div
+              className="bg-popover/95 pointer-events-auto flex items-center gap-0.5 rounded-md border px-1.5 py-1 shadow-md"
+              role="toolbar"
+              aria-label="Zoom"
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <ToolButton label="Zoom out" onClick={() => c.zoomOut()}>
+                <ZoomOut />
+              </ToolButton>
+              <button className="hover:bg-muted h-7 min-w-16 rounded-md px-1.5 text-[12px] tabular-nums" aria-label="Zoom to 1×" onClick={() => c.zoomActual()}>
+                {zoomLabel(ui.zoom, t)}
+              </button>
+              <ToolButton label="Zoom in" onClick={() => c.zoomIn()}>
+                <ZoomIn />
+              </ToolButton>
+              <ToolButton label="Zoom to fit" pressed={ui.zoom.fit} onClick={() => c.zoomFit()}>
+                <Maximize />
               </ToolButton>
             </div>
           </div>
@@ -270,7 +273,12 @@ function LayerRowItem({ row, index, className, label, children }: { row: LayerRo
   );
 }
 
-/** The fixed layer stack: show/lock per layer, and what's on it. */
+const LAYER_ICON: Record<Layer, LucideIcon> = { guides: Ruler, regions: SquareDashed, hotspots: MousePointerClick, walkable: Footprints, objects: Box, background: ImageIcon };
+
+/**
+ * The fixed layer stack: show/lock per layer, and what's on it, under the Project Browser's section headers (no
+ * chevron). The active layer is outlined and shaded; clicking anywhere on a layer, outside its rows, makes it active.
+ */
 function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): void }) {
   const scene = c.scene!;
   const ui = c.ui;
@@ -278,41 +286,53 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
   const store = c.host.ws.sceneUi;
   const sel = c.selection;
   return (
-    <nav aria-label="Layers" className="bg-panel w-56 shrink-0 overflow-y-auto border-r py-1 text-[12px]">
+    <nav aria-label="Layers" className="bg-panel w-56 shrink-0 overflow-y-auto border-r py-0.5 text-[12px]">
       {LAYERS.map((layer: Layer) => {
         const hidden = ui.hidden.includes(layer);
         const locked = ui.locked.includes(layer);
         const active = ui.layer === layer;
+        const stop = (e: React.MouseEvent) => e.stopPropagation();
         return (
-          <section key={layer} aria-label={`${LAYER_LABEL[layer]} layer`} className="mb-3 py-1">
-            <div className="group flex h-7 items-center gap-0.5 px-1">
-              <button className={cn("min-w-0 flex-1 truncate py-1 pl-1 text-left font-semibold", hidden && "text-muted-foreground")} aria-current={active} onClick={() => c.setLayer(layer)}>
-                {LAYER_LABEL[layer]}
-              </button>
-              <button
-                className="hover:bg-muted flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
-                aria-label={`${hidden ? "Show" : "Hide"} ${LAYER_LABEL[layer]}`}
-                aria-pressed={!hidden}
-                onClick={() => store.toggleHidden(c.sceneId, layer)}
+          // The whole layer is a target: a click anywhere on it (not on a row) makes it the active layer. Layers touch,
+          // with padding (not margins) between their boxes, so there is no dead gap between two layers.
+          <section key={layer} aria-label={`${LAYER_LABEL[layer]} layer`} className="group/layer cursor-pointer px-1 py-1" onClick={() => c.setLayer(layer)}>
+            <div data-layer-box className={cn("rounded-md border py-1", active ? "border-primary/70 bg-muted" : "group-hover/layer:bg-muted/60 border-transparent")}>
+            <div className={cn("group flex h-6 items-center gap-1 rounded-sm px-1.5", SECTION_HEADING, active && "text-foreground", hidden && "opacity-60")}>
+              <SectionHeading
+                name={LAYER_LABEL[layer]}
+                icon={LAYER_ICON[layer]}
+                title={
+                  <button className="min-w-0 flex-1 cursor-pointer truncate text-left uppercase" aria-current={active} onClick={() => c.setLayer(layer)}>
+                    {LAYER_LABEL[layer]}
+                  </button>
+                }
               >
-                {hidden ? <EyeOff className="text-muted-foreground" /> : <Eye />}
-              </button>
-              <button
-                className="hover:bg-muted flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
-                aria-label={`${locked ? "Unlock" : "Lock"} ${LAYER_LABEL[layer]}`}
-                aria-pressed={locked}
-                onClick={() => store.toggleLocked(c.sceneId, layer)}
-              >
-                {locked ? <Lock /> : <LockOpen className="text-muted-foreground opacity-40 group-hover:opacity-100" />}
-              </button>
+                <button
+                  className="hover:bg-foreground/10 flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
+                  aria-label={`${hidden ? "Show" : "Hide"} ${LAYER_LABEL[layer]}`}
+                  aria-pressed={!hidden}
+                  onClick={(e) => (stop(e), store.toggleHidden(c.sceneId, layer))}
+                >
+                  {hidden ? <EyeOff /> : <Eye />}
+                </button>
+                <button
+                  className="hover:bg-foreground/10 flex size-6 items-center justify-center rounded-sm [&_svg]:size-3.5"
+                  aria-label={`${locked ? "Unlock" : "Lock"} ${LAYER_LABEL[layer]}`}
+                  aria-pressed={locked}
+                  onClick={(e) => (stop(e), store.toggleLocked(c.sceneId, layer))}
+                >
+                  {locked ? <Lock /> : <LockOpen className="opacity-40 group-hover:opacity-100" />}
+                </button>
+              </SectionHeading>
             </div>
-            <ul>
+            <ul className="cursor-default" onClick={stop}>
               {rows[layer].map((row, index) => {
                 const selected = sameThing(sel, row.ref);
                 return (
-                  <LayerRowItem key={`${row.ref.list}:${row.ref.key}`} row={row} index={index} className={cn("group/row hover:bg-muted flex h-6 items-center gap-1 pr-1 pl-8", selected && "bg-selection hover:bg-selection")} label={`${LAYER_LABEL[layer]}: ${row.title}`}>
+                  <LayerRowItem key={`${row.ref.list}:${row.ref.key}`} row={row} index={index} className={cn("group/row hover:bg-foreground/10 flex h-6 items-center gap-1 pr-1", selected && "bg-selection hover:bg-selection")} label={`${LAYER_LABEL[layer]}: ${row.title}`}>
                     <button
-                      className={cn("min-w-0 flex-1 truncate text-left", (hidden || locked) && "text-muted-foreground")}
+                      // The row's whole width is this button, indent included, so a click anywhere on the row selects it.
+                      className={cn("h-full min-w-0 flex-1 truncate pl-7 text-left", (hidden || locked) && "text-muted-foreground")}
                       aria-selected={selected}
                       onClick={() => {
                         c.setLayer(LIST_LAYER[row.ref.list]);
@@ -330,6 +350,7 @@ function LayersPanel({ c, onDelete }: { c: SceneTools; onDelete(ref: ThingRef): 
                 );
               })}
             </ul>
+            </div>
           </section>
         );
       })}

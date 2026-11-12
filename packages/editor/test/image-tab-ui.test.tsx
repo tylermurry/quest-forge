@@ -46,7 +46,7 @@ async function openHeroSheet() {
     </PlatformContext.Provider>,
   );
   fireEvent.change(screen.getByLabelText("Search"), { target: { value: "hero_sheet" } });
-  fireEvent.doubleClick((await screen.findByRole("treeitem", { name: "image hero_sheet" })).firstElementChild!);
+  fireEvent.click((await screen.findByRole("treeitem", { name: "image hero_sheet" })).firstElementChild!);
   await screen.findByLabelText("Sheet summary");
   return editor;
 }

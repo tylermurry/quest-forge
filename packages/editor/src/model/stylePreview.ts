@@ -1,37 +1,41 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
-import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
+import { SCENE_HEIGHT, SCENE_WIDTH, type EffectiveStyle, type FrameInsets } from "@questforge/schema";
 import { boxWidth, lineFor, shrinkToFit, wrap, type ChoiceBox, type Measure } from "@questforge/engine";
+import type { StylingSection } from "./gameSettings.ts";
 
 export const SAMPLES = [
-  { id: "narrationShort", label: "Narration, one sentence" },
-  { id: "narrationLong", label: "Narration, several paragraphs" },
-  { id: "speech", label: "Character speech" },
+  { id: "narrationShort", label: "Short Narration" },
+  { id: "narrationLong", label: "Long Narration" },
+  { id: "speech", label: "Character Speech" },
+  { id: "choices", label: "Dialogue Choice" },
   { id: "inventory", label: "Inventory" },
-  { id: "choices", label: "Dialogue choices" },
+  { id: "iconBar", label: "Icon Bar" },
 ] as const;
 export type SampleId = (typeof SAMPLES)[number]["id"];
-export type SampleChoice = { id: SampleId; label: string };
+/** The samples drawn as a panel on the shared frame; the Icon Bar sample is the engine's bar instead. */
+export type PanelSampleId = Exclude<SampleId, "iconBar">;
 
-/** The samples the Typography preview offers: the text ones, with a choice row. */
-export const TYPOGRAPHY_SAMPLES: readonly SampleChoice[] = SAMPLES.filter((s) => s.id !== "inventory");
-
-/** `fit` sizes the panel to its text; the others fix the panel's size to show how the frame stretches. */
-export const SHAPES = [
-  { id: "fit", label: "Fit to text" },
-  { id: "narrow", label: "Narrow" },
-  { id: "wide", label: "Wide" },
-  { id: "tall", label: "Tall" },
-  { id: "short", label: "Short" },
-] as const;
-export type PreviewShape = (typeof SHAPES)[number]["id"];
-
-const SHAPE_SIZE: Record<Exclude<PreviewShape, "fit">, { w: number; h: number }> = {
-  narrow: { w: 110, h: 150 },
-  wide: { w: 440, h: 90 },
-  tall: { w: 150, h: 320 },
-  short: { w: 300, h: 40 },
+/** The sample the one Styling preview switches to when a section opens; Typography keeps whatever is showing. */
+export const SECTION_SAMPLE: Record<StylingSection, SampleId | null> = {
+  frames: "narrationShort",
+  typography: null,
+  characterDialogue: "speech",
+  inventory: "inventory",
+  iconBar: "iconBar",
 };
+
+/** The frame as the preview draws it: its borders, and how thick they are drawn (`EffectiveFrame.scale`). */
+export interface PreviewFrame {
+  insets: FrameInsets;
+  scale: number;
+}
+
+/** How much the frame picture is scaled when drawn, so its thickest border is `scale` game pixels. 1 with no borders. */
+export function frameScale(f: PreviewFrame): number {
+  const thickest = Math.max(f.insets.left, f.insets.right, f.insets.top, f.insets.bottom);
+  return thickest > 0 ? f.scale / thickest : 1;
+}
 
 const SAMPLE_TEXT = {
   narrationShort: ["You see a small garden with a pond."],
@@ -49,12 +53,11 @@ const SPEAKER = "Gardener";
 const INVENTORY_CELLS = 8;
 const CELL = 32;
 const GAP = 4;
-/** Space between a frame's border and its content. */
-const PAD = 6;
 /** The gap inside the choices box around its rows, and between rows: GAP × 2 and GAP in the engine's `choiceLayout`. */
 const CHOICE_PAD = 8;
 const CHOICE_GAP = 4;
-const MAX_TEXT_WIDTH: Record<SampleId, number> = { narrationShort: 360, narrationLong: 360, speech: 240, inventory: 260, choices: 300 };
+/** Widest text for panels that fit their content (narration has a fixed panel width instead). */
+const MAX_TEXT_WIDTH: Record<Exclude<PanelSampleId, "narrationShort" | "narrationLong">, number> = { speech: 240, inventory: 260, choices: 300 };
 
 export interface PreviewRect {
   x: number;
@@ -63,7 +66,7 @@ export interface PreviewRect {
   h: number;
 }
 export type PreviewItem =
-  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; tone: "text" | "speaker" | "speech" }
+  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; /** `speaker`: a name, in the name colour; `text`: everything else, in the text colour. */ tone: "text" | "speaker" }
   | { kind: "cell"; rect: PreviewRect }
   /** The dialogue list box, drawn by the engine's own choices drawing. `box` has the engine's shape: its rows are the hit areas. */
   | { kind: "choices"; box: ChoiceBox; options: readonly string[] };
@@ -75,40 +78,49 @@ export interface SampleLayout {
   items: PreviewItem[];
   /** The text size used: the one asked for, or smaller when a panel that fits its text would be taller than the screen. */
   size: number;
+  /** How much the frame picture is scaled when drawn (`frameScale`). */
+  scale: number;
 }
 
-/** Lays out one sample panel, centred in the 640×400 game screen. `text.size` is the size to try. */
-export function layoutSample(sample: SampleId, shape: PreviewShape, insets: FrameInsets, text: { size: number }, measure: Measure): SampleLayout {
-  // Like the game's own text boxes, a panel sized to its text gets smaller text rather than run off the screen.
-  const fixed = shape === "fit" ? null : SHAPE_SIZE[shape];
-  return shrinkToFit(
-    text.size,
-    (size) => layoutAt(sample, fixed, insets, size, measure),
-    (l) => fixed !== null || (l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH),
-  ).result;
+/** Where narration goes: `top` in game pixels or "center", `width` in percent of the screen. */
+export type NarrationPlacement = EffectiveStyle["narration"];
+
+/**
+ * Lays out one sample panel in the 640×400 game screen, centred across. Narration is `narration.width` percent of
+ * the screen wide and sits `narration.top` pixels down (or in the middle); the other panels fit their content and
+ * sit in the upper third. Content starts right inside the drawn borders: the frame's borders are the padding.
+ * `text.size` is the size to try.
+ */
+export function layoutSample(sample: PanelSampleId, frame: PreviewFrame, narration: NarrationPlacement, text: { size: number }, measure: Measure): SampleLayout {
+  // Like the game's own text boxes, a panel taller than the screen gets smaller text rather than run off it.
+  return shrinkToFit(text.size, (size) => layoutAt(sample, frame, narration, size, measure), (l) => l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH).result;
 }
 
-function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, insets: FrameInsets, size: number, measureAt: Measure): SampleLayout {
+function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: NarrationPlacement, size: number, measureAt: Measure): SampleLayout {
   const lh = lineFor(size);
   const measure = (s: string, bold = false) => measureAt(s, size, bold);
-  const padL = insets.left + PAD;
-  const padR = insets.right + PAD;
-  const padT = insets.top + PAD;
-  const padB = insets.bottom + PAD;
-  const textWidth = fixed ? Math.max(8, fixed.w - padL - padR) : boxWidth(MAX_TEXT_WIDTH[sample], size);
+  const scale = frameScale(look);
+  const pad = (side: keyof FrameInsets) => Math.round(look.insets[side] * scale);
+  const padL = pad("left");
+  const padR = pad("right");
+  const padT = pad("top");
+  const padB = pad("bottom");
+  const narration = sample === "narrationShort" || sample === "narrationLong";
+  const narrationW = Math.round((SCENE_WIDTH * placement.width) / 100);
+  const textWidth = narration ? Math.max(8, narrationW - padL - padR) : boxWidth(MAX_TEXT_WIDTH[sample], size);
 
   // Content in panel-relative coordinates (origin: top-left of the inner area).
   const items: PreviewItem[] = [];
   let contentW = 0;
   let contentH = 0;
-  const addText = (s: string, tone: "text" | "speaker" | "speech", align: "center" | "left", bold = false, y = contentH) => {
+  const addText = (s: string, tone: "text" | "speaker", align: "center" | "left", bold = false, y = contentH) => {
     items.push({ kind: "text", text: s, x: 0, y, align, bold, tone });
     contentW = Math.max(contentW, measure(s, bold));
   };
   if (sample === "inventory") {
     addText("Inventory", "text", "center", true);
     contentH += lh + GAP;
-    const cols = Math.max(1, Math.floor(((fixed ? textWidth : 4 * (CELL + GAP) - GAP) + GAP) / (CELL + GAP)));
+    const cols = 4;
     for (let i = 0; i < INVENTORY_CELLS; i++) {
       const rect = { x: (i % cols) * (CELL + GAP), y: contentH + Math.floor(i / cols) * (CELL + GAP), w: CELL, h: CELL };
       items.push({ kind: "cell", rect });
@@ -119,7 +131,7 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
     addText(SPEAKER, "speaker", "center", true);
     contentH += lh;
     for (const line of wrap((t) => measure(t), CHOICES_PROMPT, textWidth)) {
-      addText(line, "speech", "center");
+      addText(line, "text", "center");
       contentH += lh;
     }
     contentH += CHOICE_GAP;
@@ -137,7 +149,7 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
     }
     for (const paragraph of SAMPLE_TEXT[sample === "speech" ? "speech" : sample]) {
       for (const line of wrap((t) => measure(t), paragraph, textWidth)) {
-        addText(line, sample === "speech" ? "speech" : "text", "center");
+        addText(line, "text", "center");
         contentH += lh;
       }
       if (sample === "narrationLong") contentH += Math.round(lh / 2);
@@ -145,9 +157,12 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
     if (sample === "narrationLong") contentH -= Math.round(lh / 2);
   }
 
-  const w = fixed ? fixed.w : Math.round(contentW) + padL + padR;
-  const h = fixed ? fixed.h : contentH + padT + padB;
-  const frame = { x: Math.round((SCENE_WIDTH - w) / 2), y: Math.round((SCENE_HEIGHT - h) / 2), w, h };
+  const w = narration ? narrationW : Math.round(contentW) + padL + padR;
+  const h = contentH + padT + padB;
+  // Down: narration where the creator put it; the others centred on the line a third of the way from the top. Kept on the screen.
+  const wanted = !narration ? SCENE_HEIGHT / 3 - h / 2 : placement.top === "center" ? (SCENE_HEIGHT - h) / 2 : placement.top;
+  const y = Math.max(0, Math.min(SCENE_HEIGHT - h, Math.round(wanted)));
+  const frame = { x: Math.round((SCENE_WIDTH - w) / 2), y, w, h };
   const inner = { x: frame.x + padL, y: frame.y + padT, w: Math.max(0, w - padL - padR), h: Math.max(0, h - padT - padB) };
   // Centred lines centre in the inner area; rows fill its width.
   const placed = items.map((it): PreviewItem => {
@@ -156,5 +171,5 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
     const { panel, rows } = it.box;
     return { ...it, box: { ...it.box, panel: { x: inner.x, y: inner.y + panel.y, w: inner.w, h: panel.h }, rows: rows.map((r) => ({ x: inner.x + CHOICE_PAD, y: inner.y + r.y, w: inner.w - CHOICE_PAD * 2, h: r.h })) } };
   });
-  return { frame, inner, items: placed, size };
+  return { frame, inner, items: placed, size, scale };
 }

@@ -30,6 +30,7 @@ describe("new blank project", () => {
     await createBlankProject(fs, "The Lighthouse");
     expect(await fs.list()).toEqual([
       "assets.yaml",
+      "assets/images/Styling/frame.jpg",
       "assets/images/first_scene_bg.png",
       "assets/images/player_sprite.png",
       "characters/player.character.yaml",
@@ -44,5 +45,8 @@ describe("new blank project", () => {
     expect(planSave(project)).toSatisfy(isEmptyPlan);
     expect(project.game?.data.id).toBe("the_lighthouse");
     expect(project.game?.data.title).toBe("The Lighthouse");
+    // Panels start on the built-in frame picture, a real JPEG in the Styling folder.
+    expect(project.game?.data.style?.sharedFrame).toEqual({ image: "frame", insets: { left: 12, right: 12, top: 12, bottom: 12 } });
+    expect([...(fs.bytes.get("assets/images/Styling/frame.jpg")!).subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
   });
 });

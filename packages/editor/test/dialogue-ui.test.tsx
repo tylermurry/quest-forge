@@ -40,7 +40,7 @@ async function mount() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "dialogue Chat" }).firstElementChild!);
+  fireEvent.click(screen.getByRole("treeitem", { name: "dialogue Chat" }).firstElementChild!);
   return { editor, registry };
 }
 

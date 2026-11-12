@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryFs, saveProject } from "@questforge/schema";
 import { CommandRegistry } from "../src/model/appCommands.ts";
@@ -31,20 +31,46 @@ async function openChoices() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Styling" }));
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Dialogue Choices" }));
+  fireEvent.click(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Game settings" })).getByRole("button", { name: "Character Dialogue" }));
   return editor;
 }
 
 const choices = (e: Editor) => e.project.game!.data.style?.dialogueChoices;
 const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
 
-describe("Dialogue Choices", () => {
-  it("has the two colour controls and nothing else to set, and each change is its own undo step", async () => {
+describe("Character Dialogue", () => {
+  it("sets one name colour for every speaker, starting from pale gold, as one undo step", async () => {
     const editor = await openChoices();
-    const section = screen.getByRole("region", { name: "Dialogue Choices" });
-    expect(section.querySelectorAll("input[type=color]")).toHaveLength(2);
+    expect(field("Name colour").value).toBe("#e8d8a8");
+    fireEvent.change(field("Name colour"), { target: { value: "#33cc66" } });
+    expect(editor.project.game!.data.style?.speech).toEqual({ name: "#33cc66" });
+    expect(field("Name colour").value).toBe("#33cc66");
+    editor.undo();
+    expect(editor.project.game!.data.style?.speech).toBeUndefined();
+  });
+
+  it("opening the section switches the preview to Character Speech; Typography keeps the sample", async () => {
+    await openChoices();
+    const pressed = () => within(screen.getByRole("radiogroup", { name: "Sample" })).getByRole("radio", { checked: true }).textContent;
+    expect(pressed()).toBe("Character Speech");
+    fireEvent.click(screen.getByRole("radio", { name: "Dialogue Choice" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Game settings" })).getByRole("button", { name: "Typography" }));
+    expect(pressed()).toBe("Dialogue Choice");
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Game settings" })).getByRole("button", { name: "Inventory" }));
+    expect(pressed()).toBe("Inventory");
+  });
+
+  it("shows Actual game size only while the canvas isn't 640×400", async () => {
+    await openChoices();
+    // jsdom lays nothing out, so the canvas shows at game size.
+    expect(screen.queryByRole("button", { name: "Actual game size" })).toBeNull();
+  });
+
+  it("has the colour controls and nothing else to set, and each change is its own undo step", async () => {
+    const editor = await openChoices();
+    const section = screen.getByRole("region", { name: "Character Dialogue" });
+    expect(section.querySelectorAll("input[type=color]")).toHaveLength(3);
     expect(section.querySelectorAll("input:not([type=color])")).toHaveLength(0);
     expect(screen.getByText(/Not customised yet/)).toBeTruthy();
     expect(field("Highlight colour").value).toBe("#c89a3c");
@@ -61,6 +87,7 @@ describe("Dialogue Choices", () => {
 
   it("shows a focusable preview that reacts to the pointer and the arrow keys without changing the project", async () => {
     const editor = await openChoices();
+    fireEvent.click(screen.getByRole("radio", { name: "Dialogue Choice" }));
     const preview = screen.getByRole("img", { name: /Point at a choice/ });
     expect(preview.getAttribute("tabindex")).toBe("0");
     fireEvent.keyDown(preview, { key: "ArrowDown" });

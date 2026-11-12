@@ -131,5 +131,3 @@ export function filterTree(tree: FolderNode, query: string): FolderNode | null {
   return out && (out.entries.length || out.folders.length) ? out : null;
 }
 
-/** Number of entries in a tree. */
-export const countEntries = (n: FolderNode): number => n.entries.length + n.folders.reduce((s, f) => s + countEntries(f), 0);

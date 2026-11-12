@@ -100,7 +100,7 @@ describe("jump-to for game fields", () => {
       [["rules", 0], "rules"],
     ] as const;
     for (const [path, section] of sections) {
-      ws.setGameArea("styling");
+      ws.setGameSection("typography");
       ws.jumpTo(locate(p, { file: "game.yaml", path: [...path] })!);
       expect(ws.gameActive).toBe(true);
       expect(ws.gameNav.area).toBe("general");

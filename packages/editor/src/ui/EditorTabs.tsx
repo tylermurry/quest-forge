@@ -64,7 +64,7 @@ export function EditorTabs({ actions }: { actions: Actions }) {
         })}
       </div>
       {ws.gameActive ? (
-        <div className="min-h-0 flex-1 overflow-auto px-6 py-5" role="tabpanel" aria-label="Game Settings">
+        <div className="min-h-0 flex-1 overflow-hidden" role="tabpanel" aria-label="Game Settings">
           <GameSettings actions={actions} />
         </div>
       ) : active?.section === "scene" ? (
@@ -77,7 +77,7 @@ export function EditorTabs({ actions }: { actions: Actions }) {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 py-5" role="tabpanel">
-          {!active && <p className="text-muted-foreground mt-16 text-center">Double-click a scene, item, character, dialogue, image or Game to open it here.</p>}
+          {!active && <p className="text-muted-foreground mt-16 text-center">Click a scene, item, character, dialogue, image or Game to open it here.</p>}
           {active?.section === "image" && <ImageEditor key={refKey(active)} actions={actions} imageId={active.id} />}
           {active && active.section !== "image" && <TabContent key={refKey(active)} actions={actions} entry={active} />}
         </div>

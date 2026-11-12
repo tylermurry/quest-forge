@@ -14,6 +14,8 @@ export interface TextStyle {
   line: number;
   /** Body text colour. */
   color: string;
+  /** The colour of every speaker's name (`style.speech.name`). */
+  name: string;
   /** The author configured typography. False is the legacy look, which keeps its own per-box colours. */
   custom: boolean;
 }
@@ -28,9 +30,10 @@ export function scaledSize(authorSize: number, percent: number): number {
 
 /** What to draw text with: the game's style, the font family that is ready, and the player's size in percent. */
 export function textStyle(style: GameStyle | undefined, family: string, percent: number): TextStyle {
-  const t = resolveStyle(style).typography;
+  const resolved = resolveStyle(style);
+  const t = resolved.typography;
   const size = scaledSize(t.size, percent);
-  return { family, size, line: lineFor(size), color: t.color, custom: style?.typography !== undefined };
+  return { family, size, line: lineFor(size), color: t.color, name: resolved.speech.name, custom: style?.typography !== undefined };
 }
 
 /** The Canvas `font` value for a size in this family. */

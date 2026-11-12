@@ -2,7 +2,7 @@
 // Not game data and never undone. DOM-free; React subscribes to it.
 import type { Location, Project } from "@questforge/schema";
 import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
-import { GENERAL_SECTIONS, INITIAL_GAME_NAV, generalSectionFor, type GameArea, type GameSection, type GameSettingsNav, type GeneralSection, type StylingSection } from "./gameSettings.ts";
+import { GENERAL_SECTIONS, INITIAL_GAME_NAV, generalSectionFor, type GameSection, type GameSettingsNav, type GeneralSection, type StylingSection } from "./gameSettings.ts";
 import type { Jump } from "./locate.ts";
 import type { PointPick } from "./rules/pointPick.ts";
 import { SceneUiStore } from "./scene/sceneUi.ts";
@@ -80,7 +80,7 @@ export class WorkspaceState {
     for (const l of this.listeners) l();
   }
 
-  /** Opens (or focuses) an entry's tab (double-click opens it in a tab). */
+  /** Opens (or focuses) an entry's tab and selects it (a click in the project browser). */
   open(ref: EntryRef) {
     if (!this.tabs.some((t) => refKey(t) === refKey(ref))) this.tabs = [...this.tabs, ref];
     this.active = refKey(ref);
@@ -126,12 +126,6 @@ export class WorkspaceState {
 
   get gameActive(): boolean {
     return this.active === GAME_TAB;
-  }
-
-  setGameArea(area: GameArea) {
-    if (this.gameNav.area === area) return;
-    this.gameNav = { ...this.gameNav, area };
-    this.changed();
   }
 
   /** Shows a subsection of the Game Settings tab (and its area). */

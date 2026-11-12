@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { MemoryFs, loadProject, resolveStyle, saveProject, SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { MemoryFs, loadProject, resolveStyle, saveProject, SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
+import type { Measure } from "@questforge/engine";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
 import { fontOptions, setFrameImage, setTypographyColor, setTypographyFamily, setTypographyFont, setTypographySize, typographyOf } from "../src/model/style.ts";
-import { layoutSample, TYPOGRAPHY_SAMPLES } from "../src/model/stylePreview.ts";
+import { layoutSample, type PanelSampleId } from "../src/model/stylePreview.ts";
 import { m1Project } from "./support/fixtures.ts";
+
+/** Lays a sample out with its borders drawn at their own size and narration where a new project puts it. */
+const TEXT_SAMPLES: PanelSampleId[] = ["narrationShort", "narrationLong", "speech", "choices"];
+const lay = (sample: PanelSampleId, i: FrameInsets, text: { size: number }, measure: Measure) =>
+  layoutSample(sample, { insets: i, scale: Math.max(i.left, i.right, i.top, i.bottom) || 16 }, { top: 50, width: 60 }, text, measure);
+
 
 // Styling > Typography: the commands, their undo steps, saving, and the preview layout at large sizes.
 
@@ -90,21 +97,20 @@ describe("typography preview layout", () => {
 
   it("keeps the panel on the screen at any size, shrinking the text rather than running off", () => {
     for (const size of [10, 16, 32, 72]) {
-      for (const sample of TYPOGRAPHY_SAMPLES) {
-        const l = layoutSample(sample.id, "fit", { left: 8, right: 8, top: 8, bottom: 8 }, { size }, measure);
+      for (const sample of TEXT_SAMPLES) {
+        const l = lay(sample, { left: 8, right: 8, top: 8, bottom: 8 }, { size }, measure);
         expect(l.frame.h).toBeLessThanOrEqual(SCENE_HEIGHT);
         expect(l.frame.w).toBeLessThanOrEqual(SCENE_WIDTH);
         expect(l.size).toBeLessThanOrEqual(size);
       }
     }
-    expect(layoutSample("narrationLong", "fit", ZERO, { size: 72 }, measure).size).toBeLessThan(72);
-    expect(layoutSample("narrationShort", "fit", ZERO, { size: 16 }, measure).size).toBe(16);
+    expect(lay("narrationLong", ZERO, { size: 72 }, measure).size).toBeLessThan(72);
+    expect(lay("narrationShort", ZERO, { size: 16 }, measure).size).toBe(16);
   });
 
-  it("larger text makes a larger panel, and offers narration, long narration, speech and choices", () => {
-    const small = layoutSample("narrationLong", "fit", ZERO, { size: 10 }, measure).frame;
-    const big = layoutSample("narrationLong", "fit", ZERO, { size: 20 }, measure).frame;
+  it("larger text makes a larger panel", () => {
+    const small = lay("narrationLong", ZERO, { size: 10 }, measure).frame;
+    const big = lay("narrationLong", ZERO, { size: 20 }, measure).frame;
     expect(big.h).toBeGreaterThan(small.h);
-    expect(TYPOGRAPHY_SAMPLES.map((s) => s.id)).toEqual(["narrationShort", "narrationLong", "speech", "choices"]);
   });
 });

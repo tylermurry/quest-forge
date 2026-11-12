@@ -32,16 +32,17 @@ async function mount() {
 }
 
 const gameRow = () => screen.getByRole("treeitem", { name: "Game" }).firstElementChild!;
-const openGame = () => fireEvent.doubleClick(gameRow());
+const openGame = () => fireEvent.click(gameRow());
 const inspectorShown = () => screen.getByRole("button", { name: "Show inspector" }).getAttribute("aria-pressed") === "true";
-const selectTab = (name: RegExp | string) => fireEvent.mouseDown(screen.getByRole("tab", { name }));
+const menu = () => screen.getByRole("navigation", { name: "Game settings" });
+const selectTab = (name: RegExp | string) => fireEvent.click(within(menu()).getByRole("button", { name }));
+/** The menu item that is showing, by name. */
+const current = (name: RegExp | string) => within(menu()).getByRole("button", { name, current: "page" });
 
 describe("the Game Settings tab", () => {
-  it("a single click selects the Game and the Inspector points to the tab; double-click opens one tab and hides the Inspector", async () => {
+  it("a single click opens one Game Settings tab and hides the Inspector", async () => {
     await mount();
-    fireEvent.click(gameRow());
-    expect(screen.queryByRole("tab", { name: "Game Settings" })).toBeNull();
-    fireEvent.click(within(screen.getByLabelText("Inspector")).getByRole("button", { name: "Open Game Settings" }));
+    openGame();
     expect(screen.getAllByRole("tab", { name: "Game Settings" })).toHaveLength(1);
     openGame();
     expect(screen.getAllByRole("tab", { name: "Game Settings" })).toHaveLength(1);
@@ -55,29 +56,33 @@ describe("the Game Settings tab", () => {
     expect(screen.getByRole("tab", { name: "Game Settings", selected: true })).toBeTruthy();
   });
 
-  it("General and Styling have their subsection menus, and Styling shows its sections", async () => {
+  it("General and Styling are headings over their subsections in one menu, with no title above", async () => {
     await mount();
     openGame();
-    const general = screen.getByRole("tablist", { name: "General sections" });
-    expect(within(general).getAllByRole("tab").map((t) => t.textContent?.replace(/\d+$/, ""))).toEqual(["Start", "Score", "Default Responses", "Rules"]);
-    selectTab("Styling");
-    const styling = screen.getByRole("tablist", { name: "Styling sections" });
-    expect(within(styling).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Shared Frames", "Typography", "Icon Bar", "Dialogue Choices"]);
+    const groups = within(menu()).getAllByRole("group");
+    expect(groups.map((g) => within(g).getByRole("heading").textContent)).toEqual(["General", "Styling"]);
+    expect(within(groups[0]!).getAllByRole("button").map((t) => t.textContent?.replace(/\d+$/, ""))).toEqual(["Start", "Score", "Default Responses", "Rules"]);
+    expect(within(groups[1]!).getAllByRole("button").map((t) => t.textContent)).toEqual(["Frames", "Typography", "Character Dialogue", "Inventory", "Icon Bar"]);
+    expect(screen.queryByText("Game settings and rules that work anywhere")).toBeNull();
+    expect(current("Start")).toBeTruthy();
     selectTab("Typography");
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
+    expect(current("Typography")).toBeTruthy();
+    expect(within(menu()).queryByRole("button", { name: "Start", current: "page" })).toBeNull();
     selectTab("Icon Bar");
     expect(screen.getByRole("heading", { name: "Icon Bar" })).toBeTruthy();
-    selectTab("Dialogue Choices");
-    expect(screen.getByRole("heading", { name: "Dialogue Choices" })).toBeTruthy();
+    selectTab("Character Dialogue");
+    expect(screen.getByRole("heading", { name: "Character Dialogue" })).toBeTruthy();
     expect(screen.getByLabelText("Highlight colour")).toBeTruthy();
-    // Each area remembers its subsection.
-    selectTab("General");
-    expect(screen.getByRole("tab", { name: "Start", selected: true })).toBeTruthy();
+    selectTab("Inventory");
+    expect(screen.getByRole("heading", { name: "Inventory" })).toBeTruthy();
+    selectTab("Score");
+    expect(screen.getByLabelText("Max score")).toBeTruthy();
   });
 
   it("leaving the tab brings the Inspector back for the other tabs, as it was", async () => {
     await mount();
-    fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
     expect(inspectorShown()).toBe(true);
     openGame();
     expect(screen.queryByLabelText("Inspector")).toBeNull();
@@ -128,7 +133,7 @@ describe("the Game Settings tab", () => {
   async function expectScoreFocused() {
     const field = screen.getByLabelText("Max score");
     await waitFor(() => expect(document.activeElement).toBe(field));
-    expect(screen.getByRole("tab", { name: "Score", selected: true })).toBeTruthy();
+    expect(current("Score")).toBeTruthy();
     // Only the field's section flashes, never the whole editor.
     expect(document.querySelector("[data-game=maxScore].qf-flash")).toBeTruthy();
     expect(document.querySelectorAll(".qf-flash")).toHaveLength(1);
@@ -152,7 +157,7 @@ describe("the Game Settings tab", () => {
   it("jump-to from the Styling area switches to General and focuses the field", async () => {
     await raiseScore();
     openGame();
-    selectTab("Styling");
+    selectTab("Typography");
     jumpToScoreProblem();
     await expectScoreFocused();
   });
@@ -162,9 +167,9 @@ describe("the Game Settings tab", () => {
     act(() => void editor.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "rod") })));
     act(() => editor.validateNow());
     openGame();
-    selectTab("Styling");
+    selectTab("Typography");
     fireEvent.click(within(screen.getByRole("list", { name: "Problems" })).getAllByText(/item rod/).find((e) => e.closest("li")?.textContent?.startsWith("Game settings"))!);
-    expect(screen.getByRole("tab", { name: /^Rules/, selected: true })).toBeTruthy();
+    expect(current(/^Rules/)).toBeTruthy();
     await waitFor(() => expect(document.querySelector("[data-rule-card].qf-flash, li[aria-label^='Rule 1'].qf-flash, .qf-flash")).toBeTruthy());
     expect(screen.getByRole("listitem", { name: "Rule 1" })).toBeTruthy();
   });

@@ -32,6 +32,11 @@ describe("effective text style", () => {
     expect(t).toMatchObject({ size: 10, line: 12, color: "#ffffff", custom: false });
   });
 
+  it("every speaker's name has one colour: pale gold, or the style's speech name colour", () => {
+    expect(textStyle(undefined, "monospace", 100).name).toBe("#e8d8a8");
+    expect(textStyle({ speech: { name: "#123456" } }, "monospace", 100).name).toBe("#123456");
+  });
+
   it("a style with no typography section is still the legacy look", () => {
     expect(textStyle({ sharedFrame: { image: "frame" } }, "monospace", 100)).toMatchObject({ size: 10, line: 12, custom: false });
   });
