@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MemoryFs, loadProject, resolveStyle, saveProject, SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { fontOptions, setSharedFrameImage, setTypographyColor, setTypographyFamily, setTypographyFont, setTypographySize, typographyOf } from "../src/model/style.ts";
+import { fontOptions, setFrameImage, setTypographyColor, setTypographyFamily, setTypographyFont, setTypographySize, typographyOf } from "../src/model/style.ts";
 import { layoutSample, TYPOGRAPHY_SAMPLES } from "../src/model/stylePreview.ts";
 import { m1Project } from "./support/fixtures.ts";
 
@@ -39,7 +39,7 @@ describe("typography commands", () => {
   });
 
   it("leaves the shared frame and the other sections alone", async () => {
-    const p = setTypographySize(setSharedFrameImage(await withFont(), "garden_bg"), 14);
+    const p = setTypographySize(setFrameImage(await withFont(), "sharedFrame", "garden_bg"), 14);
     expect(p.game!.data.style).toEqual({ sharedFrame: { image: "garden_bg" }, typography: { size: 14 } });
   });
 

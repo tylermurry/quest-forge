@@ -1,10 +1,54 @@
+import type { IconEffect } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 
 // Built-in placeholder icons, drawn with Canvas paths so projects need no UI
 // art. Each draws into a square `r`, in a 16×16 design grid scaled to fit.
+// Also the icon bar's Brighten / Darken effect, which changes only the icon's own pixels.
 
 export type IconId = "walk" | "look" | "hand" | "talk" | "inventory" | "settings";
 type Ctx = CanvasRenderingContext2D;
+
+/** How far the effect moves each icon pixel toward white (Brighten) or black (Darken). */
+export const EFFECT_AMOUNT = 0.35;
+
+/** `#rrggbb` with the effect applied: the colour the built-in vector icons are drawn in. */
+export function shadeColor(hex: string, effect: IconEffect): string {
+  const to = effect === "brighten" ? 255 : 0;
+  const channel = (i: number) => {
+    const c = Number.parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+    return Math.round(c + (to - c) * EFFECT_AMOUNT)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(1)}${channel(2)}`;
+}
+
+type SizedImage = CanvasImageSource & { width: number; height: number };
+const shaded = new WeakMap<object, Partial<Record<IconEffect, CanvasImageSource>>>();
+
+/**
+ * A copy of `image` with the effect applied, made once per image and effect (the bar redraws every frame).
+ * Drawing a translucent white or black with `source-atop` only paints where the image already has pixels, so
+ * transparency is kept exactly and nothing outside the icon changes. It needs no `ctx.filter`, which Safari lacks.
+ */
+export function shadedImage(image: SizedImage, effect: IconEffect): CanvasImageSource {
+  const made = shaded.get(image) ?? {};
+  const known = made[effect];
+  if (known) return known;
+  const copy = document.createElement("canvas");
+  copy.width = image.width;
+  copy.height = image.height;
+  const g = copy.getContext("2d");
+  if (!g) return image;
+  g.drawImage(image, 0, 0);
+  g.globalCompositeOperation = "source-atop";
+  g.globalAlpha = EFFECT_AMOUNT;
+  g.fillStyle = effect === "brighten" ? "#fff" : "#000";
+  g.fillRect(0, 0, copy.width, copy.height);
+  made[effect] = copy;
+  shaded.set(image, made);
+  return copy;
+}
 
 export function drawIcon(ctx: Ctx, id: IconId, r: Rect, color = "#fff") {
   const s = Math.min(r.w, r.h) / 16;

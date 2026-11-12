@@ -187,6 +187,15 @@ export function computeLayout(cssScale: number): Layout {
 
 export const inRect = (p: readonly [number, number], r: Rect) => p[0] >= r.x && p[0] < r.x + r.w && p[1] >= r.y && p[1] < r.y + r.h;
 
+/**
+ * Where an image of `size` is drawn to fit inside `box` without changing its proportions: scaled by one
+ * factor, centred, on whole pixels. Smaller images are enlarged to fit too.
+ */
+export function fitInside(size: { width: number; height: number }, box: Rect): Rect {
+  const k = Math.min(box.w / size.width, box.h / size.height);
+  return { x: Math.round(box.x + (box.w - size.width * k) / 2), y: Math.round(box.y + (box.h - size.height * k) / 2), w: size.width * k, h: size.height * k };
+}
+
 export function hitButton<Id extends string>(buttons: readonly Button<Id>[], p: readonly [number, number]): Id | null {
   return buttons.find((b) => inRect(p, b.rect))?.id ?? null;
 }

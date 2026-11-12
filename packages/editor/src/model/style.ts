@@ -1,7 +1,7 @@
 // The game-wide skin, as the Styling editor edits it: pure Project → Project commands for the frames and the
-// typography, the guide-drag math of the nine-slice editor, and the warnings for insets that don't fit the
-// image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
-import { Color, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type Project } from "@questforge/schema";
+// typography and the icon bar, the guide-drag math of the nine-slice editor, and the warnings for insets that
+// don't fit the image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
+import { Color, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
 import { CommandError } from "./commands.ts";
 import type { PickOption } from "./rules/pickers.ts";
 
@@ -29,16 +29,22 @@ function withFrame(p: Project, which: FrameKey, frame: Frame | undefined): Proje
   const { sharedFrame: _s, iconBar: _i, ...others } = p.game.data.style ?? {};
   const next: GameStyle = { ...others };
   const keepFrame = frame && !isEmpty(frame) ? frame : undefined;
-  if (which === "sharedFrame") {
-    if (keepFrame) next.sharedFrame = keepFrame;
-    if (p.game.data.style?.iconBar) next.iconBar = p.game.data.style.iconBar;
-  } else {
-    if (p.game.data.style?.sharedFrame) next.sharedFrame = p.game.data.style.sharedFrame;
+  if (which === "iconBar") {
     const { frame: _f, ...bar } = p.game.data.style?.iconBar ?? {};
-    const iconBar = keepFrame ? { ...bar, frame: keepFrame } : bar;
-    if (!isEmpty(iconBar)) next.iconBar = iconBar;
+    return withIconBar(p, keepFrame ? { ...bar, frame: keepFrame } : bar);
   }
+  if (keepFrame) next.sharedFrame = keepFrame;
+  if (p.game.data.style?.iconBar) next.iconBar = p.game.data.style.iconBar;
   const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: isEmpty(next) ? game : { ...game, style: next } } };
+}
+
+/** Writes the icon bar section (empty removes it) and drops a `style` left empty, so an untouched bar saves as nothing. */
+function withIconBar(p: Project, bar: IconBar): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const { iconBar: _old, ...others } = p.game.data.style ?? {};
+  const next: GameStyle = isEmpty(bar) ? others : { ...others, iconBar: bar };
+  const { style: _style, ...game } = p.game.data;
   return { ...p, game: { ...p.game, data: isEmpty(next) ? game : { ...game, style: next } } };
 }
 
@@ -49,12 +55,7 @@ function setImage(p: Project, which: FrameKey, imageId: string | undefined): Pro
   return withFrame(p, which, imageId === undefined ? rest : { ...rest, image: imageId });
 }
 
-/** Picks the image of the shared frame, or clears it (undefined) to go back to the built-in look. */
-export function setSharedFrameImage(p: Project, imageId: string | undefined): Project {
-  return setImage(p, "sharedFrame", imageId);
-}
-
-/** Picks the image of a frame (the icon bar's too), or clears it. */
+/** Picks the image of a frame (the shared one or the icon bar's), or clears it. */
 export function setFrameImage(p: Project, which: FrameKey, imageId: string | undefined): Project {
   return setImage(p, which, imageId);
 }
@@ -72,6 +73,26 @@ export function setFrameInsets(p: Project, which: FrameKey, insets: FrameInsets)
 /** Images a frame can use, for the picker. */
 export function imageOptions(p: Project): PickOption[] {
   return (p.assets?.data.images ?? []).map((i) => ({ id: i.id, label: i.id }));
+}
+
+// ── Icon bar ─────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The icon bar as saved, or undefined while the creator has never set any of it. */
+export const iconBarOf = (p: Project): IconBar | undefined => p.game?.data.style?.iconBar;
+
+/** Picks the picture of one bar button, or clears it (undefined) to go back to the built-in icon. */
+export function setIcon(p: Project, id: StyleIconId, imageId: string | undefined): Project {
+  if (imageId !== undefined && !p.assets?.data.images.some((i) => i.id === imageId)) throw new CommandError(`There's no image with ID ${imageId}.`);
+  const { icons, ...rest } = iconBarOf(p) ?? {};
+  const { [id]: _old, ...others } = icons ?? {};
+  const next = imageId === undefined ? others : { ...others, [id]: imageId };
+  return withIconBar(p, isEmpty(next) ? rest : { ...rest, icons: next });
+}
+
+/** The one Brighten / Darken effect for hovered and selected buttons. The first edit makes the bar styled. */
+export function setIconEffect(p: Project, effect: IconEffect): Project {
+  if (!IconEffect.safeParse(effect).success) throw new CommandError("The hover and active effect is Brighten or Darken.");
+  return withIconBar(p, { ...iconBarOf(p), effect });
 }
 
 // ── Typography ───────────────────────────────────────────────────────────────────────────────────────────

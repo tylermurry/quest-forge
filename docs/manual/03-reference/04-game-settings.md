@@ -51,7 +51,7 @@ See [Rules](./08-rules.md) and [Triggers](./09-triggers.md).
 ## Styling
 
 The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**.
-**Shared Frames** and **Typography** have controls so far. The others are placeholders and have nothing to set yet.
+**Shared Frames**, **Typography** and **Icon Bar** have controls so far. **Dialogue Choices** is a placeholder and has nothing to set yet.
 
 ### Shared Frames
 
@@ -114,6 +114,34 @@ would not fit on the screen, so it is never cut off.
 The preview on the right uses your frame from **Shared Frames** and draws text the way the game does. Pick a
 **Sample** (one sentence of narration, several paragraphs, a character speaking or dialogue choices) and **Zoom**
 to look closer. Each change shows at once.
+
+### Icon Bar
+
+The row of buttons across the top of your game: Walk, Look, Hand, Talk, Item, Inventory and Settings. You can give
+the bar its own frame and a picture for each button. Anything you leave alone keeps the game's own look, and the
+bar stays the same size and in the same place.
+
+Until you change something here, the bar keeps its original look, with a gold square under the button you are
+using. The first change you make switches to your own look, with the **Brighten** effect.
+
+- **Bar frame**: pick a picture (PNG or WebP) from your Images, or click **Import image…**, and cut it into nine
+  pieces with the same guides and border boxes as [Shared Frames](#shared-frames). The bar's borders are its own;
+  they don't change the panels' frame. The frame is drawn across the whole bar, so see-through parts show the game
+  behind it. With a frame, the buttons have no background of their own: only the pictures show on it. If the
+  picture can't be loaded, the bar keeps its original look.
+- **Button pictures**: pick a picture for each of the seven buttons. Each one is fitted inside its button with its
+  proportions kept, so it is never stretched. A button with no picture keeps its built-in icon, and **Use built-in**
+  puts it back. Make the pictures in any art program; you don't need a sprite sheet. The **Item** picture shows
+  while the player has no inventory item selected. Once they select an item, the button shows that item's own
+  picture, as it always has.
+- **Hover / Active effect**: choose **Brighten** or **Darken**. The button under the mouse and the button for the
+  current verb get the same effect, on the picture only: see-through parts stay see-through and the button behind
+  it does not change.
+
+The preview on the right is the real bar, drawn the way the game draws it, over a soft multicoloured background so
+you can see any see-through parts. Move the pointer over it to see the hover look, and click a button, or press the
+left and right arrow keys, to see the selected look. Each change shows at once. The preview doesn't change your
+game.
 
 When you click a problem about the game's start, score, default responses or rules in the **Problems** panel, the
 Game Settings tab opens on the right section and highlights the setting.

@@ -67,6 +67,8 @@ describe("the Game Settings tab", () => {
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
     selectTab("Icon Bar");
     expect(screen.getByRole("heading", { name: "Icon Bar" })).toBeTruthy();
+    selectTab("Dialogue Choices");
+    expect(screen.getByRole("heading", { name: "Dialogue Choices" })).toBeTruthy();
     expect(screen.getByText(/coming in a later update/)).toBeTruthy();
     // Each area remembers its subsection.
     selectTab("General");

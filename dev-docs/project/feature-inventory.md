@@ -129,7 +129,8 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
 | Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
 | Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
-| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Icon Bar and Dialogue Choices are labelled placeholders; the controls arrive in later updates. | Partial |
+| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Dialogue Choices is a labelled placeholder; its controls arrive in a later update. | Partial |
+| Icon Bar styling | Game Settings ▸ Styling ▸ Icon Bar: Bar frame (picker, Import image…, the nine-slice editor), seven button pictures, Hover / Active effect (Brighten, Darken), preview | The bar's own frame and borders, a picture per button (Walk, Look, Hand, Talk, Item, Inventory, Settings) fitted without stretching, built-in icons as the fallback, one effect on the hovered and selected icon only. The Item picture shows while no item is selected. No icon bar section keeps the original look. The preview is the engine's real bar over a fixed gradient. | Shipped |
 | Typography | Game Settings ▸ Styling ▸ Typography: Font picker (built-in or imported), Import font…, Text size, Text colour, preview | One font, size (6–72 px, 16 px once customised) and colour for all game text; no typography keeps the original 10 px look. A character's colour stays on their name and box outline. The preview uses the shared frame and the engine's text drawing. | Shipped |
 | Text size (player) | Settings ▸ Text size | Players scale all text 75%–200% of the author's size, kept per game in the browser. | Shipped |
 | Shared Frames | Game Settings ▸ Styling ▸ Shared Frames: Image picker, Import image…, four draggable guides, four border boxes, legend, preview | One image frames every panel, cut into a nine-slice with guides or typed pixel borders. Warns when no centre is left. The preview draws samples (narration, speech, inventory, choices) in several shapes with the engine's nine-slice drawing. | Partial: the game doesn't draw the chosen frame yet, a later update does |
@@ -254,7 +255,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Icon bar | Move the mouse to the top, or tap the tab on touch | Walk, Look, Hand, Talk, the current item, Inventory, Settings, and the score. | Shipped |
+| Icon bar | Move the mouse to the top, or tap the tab on touch | Walk, Look, Hand, Talk, the current item, Inventory, Settings, and the score. The maker can set its frame, button pictures and hover / active effect. | Shipped |
 | Verbs | Icon bar; right-click cycles verbs | Click the scene with the current verb. For everything but Look the player walks over first. | Shipped |
 | Labels | Hover, or tap and hold on touch | Shows the name of what's under the pointer. | Shipped |
 | Text | Narration and speech boxes | Click anywhere to skip. | Shipped |

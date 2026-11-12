@@ -1,6 +1,6 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { PlayerUi } from "./ui/controller.ts";
-import { canvasMeasure, drawText, drawUi, type IconImage } from "./ui/draw.ts";
+import { canvasMeasure, drawText, drawUi, type IconBarLook, type IconImage } from "./ui/draw.ts";
 import { layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { TextStyle } from "./ui/typography.ts";
 import type { Viewport } from "./viewport.ts";
@@ -16,7 +16,7 @@ export type Ctx = CanvasRenderingContext2D;
 const DEBUG_FONT = "10px monospace";
 
 /** Draws one frame of play into the back buffer in layer order. */
-export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags, text: TextStyle) {
+export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags, text: TextStyle, bar: IconBarLook) {
   const session = ui.session;
   const world = session.world;
   ctx.imageSmoothingEnabled = false;
@@ -27,7 +27,7 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
 
   const shapes = debugShapes(world, debug);
   if (shapes.length) drawDebug(ctx, shapes);
-  drawUi(ctx, ui, icons, text, () => session.text && drawTextBox(ctx, session.text, text));
+  drawUi(ctx, ui, icons, text, bar, () => session.text && drawTextBox(ctx, session.text, text));
 }
 
 /** Blits sprites in the order given (back to front), mirroring flipped ones. Shared with the editor. */

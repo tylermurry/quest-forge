@@ -25,6 +25,8 @@ at the top.
 
 The bar also shows the score: "Score: 5 of 25".
 
+The game's maker can give the bar a frame and their own pictures for the buttons; they work the same way.
+
 ## Pointing and clicking
 
 | Mouse | Touch | What it does |

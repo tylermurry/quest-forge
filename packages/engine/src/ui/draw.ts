@@ -1,10 +1,12 @@
-import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
+import { SCENE_HEIGHT, SCENE_WIDTH, type EffectiveStyle, type FrameInsets, type IconEffect } from "@questforge/schema";
 import { TEXT_SCALE_MAX, TEXT_SCALE_MIN, VOLUME_STEPS } from "../saves.ts";
 import type { Session } from "../session.ts";
 import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
+import type { Vec } from "../vec.ts";
 import type { PlayerUi } from "./controller.ts";
-import { drawIcon, type IconId } from "./icons.ts";
+import { drawIcon, shadeColor, shadedImage, type IconId } from "./icons.ts";
+import { fitInside, inRect, type Layout } from "./layout.ts";
 import { nineSliceTiles } from "./nineslice.ts";
 import { wrap } from "./textbox.ts";
 import { fontOf, lineFor, shrinkToFit, type Measure, type TextStyle } from "./typography.ts";
@@ -96,13 +98,17 @@ function panel(ctx: Ctx, t: TextStyle, r: Rect, title: string) {
 
 const inset = (r: Rect, k: number): Rect => ({ x: r.x + r.w * k, y: r.y + r.h * k, w: r.w * (1 - 2 * k), h: r.h * (1 - 2 * k) });
 
+type SizedImage = CanvasImageSource & { width: number; height: number };
+
+/** A picture drawn aspect-fit and centred in `box`, never deformed; with an effect, only its own pixels change. */
+function drawPicture(ctx: Ctx, img: CanvasImageSource, box: Rect, effect?: IconEffect) {
+  const sized = img as SizedImage;
+  const at = fitInside(sized, box);
+  ctx.drawImage(effect ? shadedImage(sized, effect) : img, at.x, at.y, at.w, at.h);
+}
+
 function itemIcon(ctx: Ctx, img: CanvasImageSource | undefined, r: Rect) {
-  if (!img) return;
-  const w = (img as { width: number }).width;
-  const h = (img as { height: number }).height;
-  const box = inset(r, 0.12);
-  const k = Math.min(box.w / w, box.h / h);
-  ctx.drawImage(img, Math.round(box.x + (box.w - w * k) / 2), Math.round(box.y + (box.h - h * k) / 2), w * k, h * k);
+  if (img) drawPicture(ctx, img, inset(r, 0.12));
 }
 
 /** A line of panel text, shrunk to `maxW` wide when that is given. */
@@ -116,13 +122,16 @@ function buttonText(ctx: Ctx, t: TextStyle, text: string, r: Rect, o: TextOption
 }
 
 /** The whole UI layer over the scene. `drawText` draws the text box above panels. */
-export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, drawBoxes: () => void) {
+export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, bar: IconBarLook, drawBoxes: () => void) {
   const s = ui.session;
   const L = ui.layout;
   const itemImg = s.item ? icons(s.itemFile(s.item)?.icon ?? "") : undefined;
 
   if (ui.tabVisible) drawTab(ctx, ui, itemImg);
-  if (ui.barOpen) drawBar(ctx, ui, t, itemImg);
+  if (ui.barOpen) {
+    const scoreText = `Score: ${score(s.state)} of ${s.game.maxScore}`;
+    drawIconBar(ctx, { layout: L, selected: s.verb, itemHeld: !!s.item, itemImage: itemImg, hover: ui.cursor, scoreText }, t, bar, icons);
+  }
   if (ui.panel === "inventory") drawInventory(ctx, ui, t, icons, itemImg);
   if (ui.panel === "settings") drawSettings(ctx, ui, t);
   drawChoices(ctx, ui, t);
@@ -185,25 +194,63 @@ function drawTab(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined)
   else drawIcon(ctx, ui.session.verb, icon, EDGE);
 }
 
-function drawBar(ctx: Ctx, ui: PlayerUi, t: TextStyle, itemImg: CanvasImageSource | undefined) {
-  const s = ui.session;
-  const L = ui.layout;
-  ctx.fillStyle = PANEL;
-  ctx.fillRect(L.bar.x, L.bar.y, L.bar.w, L.bar.h);
-  ctx.fillStyle = EDGE;
-  ctx.fillRect(0, L.bar.h - 2, SCENE_WIDTH, 2);
+/** The icon bar's look: its frame, the picture for each button, and the Brighten / Darken effect (`none` is the legacy look). */
+export type IconBarLook = EffectiveStyle["iconBar"];
+
+/** What the bar shows besides its look: the session's state in play, sample values in the editor's preview. */
+export interface BarState {
+  layout: Layout;
+  /** The highlighted button (the current verb in play). */
+  selected: string;
+  /** An inventory item is selected, which enables the item button. */
+  itemHeld: boolean;
+  /** The held item's picture, once loaded. */
+  itemImage: CanvasImageSource | undefined;
+  /** The mouse position in scene pixels; null for touch. */
+  hover: Vec | null;
+  scoreText: string;
+}
+
+/**
+ * The icon bar, drawn by the game and by the editor's Icon Bar preview. With no icon bar style it is the
+ * original look (gold fill under the current verb). With one, the bar's frame replaces the dark strip, each
+ * button shows its own picture (else the built-in icon) and the one Brighten / Darken effect marks the
+ * hovered and the selected button, on the icon's pixels only: the button behind it never changes.
+ */
+export function drawIconBar(ctx: Ctx, bar: BarState, t: TextStyle, look: IconBarLook, image: IconImage) {
+  const L = bar.layout;
+  const effect = look.effect === "none" ? undefined : look.effect;
+  // A frame that is not configured or has not loaded leaves today's strip.
+  const frame = look.frame.image === undefined ? undefined : (image(look.frame.image) as SizedImage | undefined);
+  if (frame) drawNineSlice(ctx, frame, look.frame.insets, L.bar);
+  else {
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(L.bar.x, L.bar.y, L.bar.w, L.bar.h);
+    ctx.fillStyle = EDGE;
+    ctx.fillRect(0, L.bar.h - 2, SCENE_WIDTH, 2);
+  }
   for (const b of L.barButtons) {
-    const active = b.id === s.verb;
-    const enabled = b.id !== "item" || !!s.item;
-    button(ctx, b.rect, active, enabled);
-    if (b.id === "item") itemIcon(ctx, itemImg, b.rect);
-    else drawIcon(ctx, b.id as IconId, inset(b.rect, 0.18), active ? "#000" : EDGE);
+    const active = b.id === bar.selected;
+    const enabled = b.id !== "item" || bar.itemHeld;
+    if (!effect) {
+      button(ctx, b.rect, active, enabled);
+      if (b.id === "item") itemIcon(ctx, bar.itemImage, b.rect);
+      else drawIcon(ctx, b.id as IconId, inset(b.rect, 0.18), active ? "#000" : EDGE);
+      continue;
+    }
+    // The same effect for hover and selected; a frame stands in for the button backgrounds.
+    // A disabled button (the item button with nothing held) does not react to hover.
+    const marked = active || (enabled && !!bar.hover && inRect(bar.hover, b.rect)) ? effect : undefined;
+    if (!frame) button(ctx, b.rect, false, enabled);
+    // The held item shows its own picture; the item icon is for when none is held.
+    const own = b.id === "item" && bar.itemHeld ? bar.itemImage : look.icons[b.id] === undefined ? undefined : image(look.icons[b.id]!);
+    if (own) drawPicture(ctx, own, inset(b.rect, 0.12), marked);
+    else if (b.id !== "item") drawIcon(ctx, b.id as IconId, inset(b.rect, 0.18), marked ? shadeColor(EDGE, marked) : EDGE);
   }
   // Score; shrunk to the room beside the buttons, and hidden if even that doesn't fit.
-  const text = `Score: ${score(s.state)} of ${s.game.maxScore}`;
   const last = L.barButtons.at(-1)!.rect;
   const room = L.score.x - (last.x + last.w + 8);
-  if (fittedSize(ctx, t, text, room, L.bar.h).fits) label(ctx, t, text, L.score.x, L.score.y, "right", room);
+  if (fittedSize(ctx, t, bar.scoreText, room, L.bar.h).fits) label(ctx, t, bar.scoreText, L.score.x, L.score.y, "right", room);
 }
 
 function drawInventory(ctx: Ctx, ui: PlayerUi, t: TextStyle, icons: IconImage, itemImg: CanvasImageSource | undefined) {

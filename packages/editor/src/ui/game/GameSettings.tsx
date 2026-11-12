@@ -12,6 +12,7 @@ import { flashElement } from "../flash.ts";
 import { NumberField } from "../NumberField.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { RuleInspector } from "../rules/RuleInspector.tsx";
+import { IconBar } from "./IconBar.tsx";
 import { SharedFrames } from "./SharedFrames.tsx";
 import { Typography } from "./Typography.tsx";
 import { TextField } from "../TextField.tsx";
@@ -26,7 +27,7 @@ const FOCUSABLE = "input, textarea, button, [role=combobox], [tabindex]";
 
 /**
  * The Game settings editor in the center: General (start, score, default responses, game
- * rules) and Styling (Shared Frames and Typography so far; the other sections are placeholders until they land), each with a vertical
+ * rules) and Styling (Shared Frames, Typography and Icon Bar so far; Dialogue Choices is a placeholder until it lands), each with a vertical
  * list of subsections. Open tab and subsection are UI state in `ws.gameNav`.
  */
 export function GameSettings({ actions }: { actions: Actions }) {
@@ -127,6 +128,8 @@ export function GameSettings({ actions }: { actions: Actions }) {
                     <SharedFrames actions={actions} />
                   ) : s.section === "typography" ? (
                     <Typography actions={actions} />
+                  ) : s.section === "iconBar" ? (
+                    <IconBar actions={actions} />
                   ) : (
                     <section aria-label={s.title} className="grid gap-1.5">
                       <h3 className={H}>{s.title}</h3>

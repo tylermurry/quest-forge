@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { MemoryFs, loadProject, resolveStyle, saveProject, type FrameInsets } from "@questforge/schema";
 import { CommandError } from "../src/model/commands.ts";
 import { Editor } from "../src/model/editor.ts";
-import { dragGuide, imageOptions, insetWarnings, maxInset, nudgeGuide, setFrameImage, setFrameInsets, setSharedFrameImage, toImagePixels, withSide } from "../src/model/style.ts";
+import { dragGuide, imageOptions, insetWarnings, maxInset, nudgeGuide, setFrameImage, setFrameInsets, toImagePixels, withSide } from "../src/model/style.ts";
 import { layoutSample, SAMPLES, SHAPES } from "../src/model/stylePreview.ts";
 import { m1Project } from "./support/fixtures.ts";
 
@@ -21,11 +21,11 @@ describe("frame commands", () => {
   it("picks, keeps the borders on a new image, and clears back to the built-in look", async () => {
     const p0 = await m1Project();
     expect(p0.game!.data.style).toBeUndefined();
-    const picked = setFrameInsets(setSharedFrameImage(p0, "garden_bg"), "sharedFrame", insets(4, 4, 6, 6));
+    const picked = setFrameInsets(setFrameImage(p0, "sharedFrame", "garden_bg"), "sharedFrame", insets(4, 4, 6, 6));
     expect(resolveStyle(picked.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 4, 6, 6) });
-    const other = setSharedFrameImage(picked, "palm_img");
+    const other = setFrameImage(picked, "sharedFrame", "palm_img");
     expect(other.game!.data.style!.sharedFrame).toEqual({ image: "palm_img", insets: insets(4, 4, 6, 6) });
-    const cleared = setSharedFrameImage(other, undefined);
+    const cleared = setFrameImage(other, "sharedFrame", undefined);
     expect(cleared.game!.data.style!.sharedFrame).toEqual({ insets: insets(4, 4, 6, 6) });
     // Nothing left to say: no style at all, so the legacy look returns.
     const bare = setFrameInsets(cleared, "sharedFrame", ZERO);
@@ -34,13 +34,13 @@ describe("frame commands", () => {
 
   it("refuses an image that isn't in the library and borders that aren't whole pixels", async () => {
     const p0 = await m1Project();
-    expect(() => setSharedFrameImage(p0, "nope")).toThrow(CommandError);
+    expect(() => setFrameImage(p0, "sharedFrame", "nope")).toThrow(CommandError);
     expect(() => setFrameInsets(p0, "sharedFrame", insets(-1, 0, 0, 0))).toThrow(CommandError);
     expect(() => setFrameInsets(p0, "sharedFrame", insets(1.5, 0, 0, 0))).toThrow(CommandError);
   });
 
   it("the same commands edit the icon bar's frame without touching the shared one or the bar's other settings", async () => {
-    const p0 = setSharedFrameImage(await m1Project(), "garden_bg");
+    const p0 = setFrameImage(await m1Project(), "sharedFrame", "garden_bg");
     const p1 = setFrameInsets(setFrameImage(p0, "iconBar", "palm_img"), "iconBar", insets(2, 2, 2, 2));
     const style = p1.game!.data.style!;
     expect(style.sharedFrame).toEqual({ image: "garden_bg" });
@@ -94,7 +94,7 @@ describe("inset warnings", () => {
 describe("history and saving", () => {
   it("a drag committed as one apply is one undo step; typing in one box merges until blur", async () => {
     const { editor } = await open();
-    editor.apply("Pick shared frame image", (p) => setSharedFrameImage(p, "garden_bg"));
+    editor.apply("Pick shared frame image", (p) => setFrameImage(p, "sharedFrame", "garden_bg"));
     editor.history.breakMerge();
     // A guide drag: many previews (not applied), then one commit.
     const drag = insets(12, 0, 0, 0);
@@ -116,12 +116,12 @@ describe("history and saving", () => {
 
   it("persists the image and borders across save and reopen, and the image stays in the library when cleared", async () => {
     const { fs, editor } = await open();
-    editor.apply("Pick", (p) => setSharedFrameImage(p, "garden_bg"));
+    editor.apply("Pick", (p) => setFrameImage(p, "sharedFrame", "garden_bg"));
     editor.apply("Borders", (p) => setFrameInsets(p, "sharedFrame", insets(4, 5, 6, 7)));
     await editor.flush();
     const reopened = await Editor.open({ fs }, { autosave: false });
     expect(resolveStyle(reopened.project.game!.data.style).sharedFrame).toEqual({ image: "garden_bg", insets: insets(4, 5, 6, 7) });
-    reopened.apply("Clear", (p) => setSharedFrameImage(p, undefined));
+    reopened.apply("Clear", (p) => setFrameImage(p, "sharedFrame", undefined));
     expect(reopened.project.assets!.data.images.some((i) => i.id === "garden_bg")).toBe(true);
     await reopened.flush();
     const again = (await loadProject(fs)).project;
