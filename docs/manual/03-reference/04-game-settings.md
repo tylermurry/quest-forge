@@ -51,7 +51,7 @@ See [Rules](./08-rules.md) and [Triggers](./09-triggers.md).
 ## Styling
 
 The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**.
-**Shared Frames**, **Typography** and **Icon Bar** have controls so far. **Dialogue Choices** is a placeholder and has nothing to set yet.
+Each one has a preview on the right that shows your changes at once.
 
 ### Shared Frames
 
@@ -114,6 +114,23 @@ would not fit on the screen, so it is never cut off.
 The preview on the right uses your frame from **Shared Frames** and draws text the way the game does. Pick a
 **Sample** (one sentence of narration, several paragraphs, a character speaking or dialogue choices) and **Zoom**
 to look closer. Each change shows at once.
+
+### Dialogue Choices
+
+How the answers look when a conversation offers choices. The answers use your frame from **Shared Frames** and your
+text from **Typography**. Here you pick two colours:
+
+- **Highlight colour**: fills the whole answer the player points at or selects. Its text turns black or white on
+  its own, whichever is easier to read on your colour.
+- **Separator colour**: the colour of the thin line along the top of the choices. Its thickness and spacing are
+  set by the game.
+
+Until you change a colour, the choices keep their original look: a gold highlight and no extra line. The first
+change you make adds the line, using the game's pale gold unless you pick another colour.
+
+The preview shows a character speaking and four answers in your frame and text. Point at an answer, click it, or
+press the up and down arrow keys to see its highlight. The choices stay where they are in the game, and long
+lists still have pages.
 
 ### Icon Bar
 

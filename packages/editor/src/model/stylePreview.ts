@@ -1,7 +1,7 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
 import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
-import { boxWidth, lineFor, shrinkToFit, wrap, type Measure } from "@questforge/engine";
+import { boxWidth, lineFor, shrinkToFit, wrap, type ChoiceBox, type Measure } from "@questforge/engine";
 
 export const SAMPLES = [
   { id: "narrationShort", label: "Narration, one sentence" },
@@ -41,14 +41,19 @@ const SAMPLE_TEXT = {
     "Perhaps it would be wise to leave the rod alone.",
   ],
   speech: ["Mind the flowers, you clumsy lump. I planted those myself."],
-  choices: ["Ask about the pond", "Ask about the rod", "Say goodbye"],
+  choices: ["Ask about the pond", "Ask about the rod", "Ask about the weather", "Say goodbye"],
 } as const;
+/** The line the choices answer, said by the speaker above them. */
+const CHOICES_PROMPT = "Well? What do you want to know?";
 const SPEAKER = "Gardener";
 const INVENTORY_CELLS = 8;
 const CELL = 32;
 const GAP = 4;
 /** Space between a frame's border and its content. */
 const PAD = 6;
+/** The gap inside the choices box around its rows, and between rows: GAP × 2 and GAP in the engine's `choiceLayout`. */
+const CHOICE_PAD = 8;
+const CHOICE_GAP = 4;
 const MAX_TEXT_WIDTH: Record<SampleId, number> = { narrationShort: 360, narrationLong: 360, speech: 240, inventory: 260, choices: 300 };
 
 export interface PreviewRect {
@@ -58,9 +63,10 @@ export interface PreviewRect {
   h: number;
 }
 export type PreviewItem =
-  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; tone: "text" | "speaker" | "speech" | "choice" | "choiceHighlight" }
+  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; tone: "text" | "speaker" | "speech" }
   | { kind: "cell"; rect: PreviewRect }
-  | { kind: "row"; rect: PreviewRect; highlighted: boolean };
+  /** The dialogue list box, drawn by the engine's own choices drawing. `box` has the engine's shape: its rows are the hit areas. */
+  | { kind: "choices"; box: ChoiceBox; options: readonly string[] };
 export interface SampleLayout {
   /** The panel, where the frame is drawn. */
   frame: PreviewRect;
@@ -95,7 +101,7 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
   const items: PreviewItem[] = [];
   let contentW = 0;
   let contentH = 0;
-  const addText = (s: string, tone: "text" | "speaker" | "speech" | "choice" | "choiceHighlight", align: "center" | "left", bold = false, y = contentH) => {
+  const addText = (s: string, tone: "text" | "speaker" | "speech", align: "center" | "left", bold = false, y = contentH) => {
     items.push({ kind: "text", text: s, x: 0, y, align, bold, tone });
     contentW = Math.max(contentW, measure(s, bold));
   };
@@ -110,14 +116,20 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
     }
     contentH += Math.ceil(INVENTORY_CELLS / cols) * (CELL + GAP) - GAP;
   } else if (sample === "choices") {
+    addText(SPEAKER, "speaker", "center", true);
+    contentH += lh;
+    for (const line of wrap((t) => measure(t), CHOICES_PROMPT, textWidth)) {
+      addText(line, "speech", "center");
+      contentH += lh;
+    }
+    contentH += CHOICE_GAP;
+    // Row text is cut to the room it has, as the engine does; the box is as wide as its longest row.
+    const options = SAMPLE_TEXT.choices.map((c) => wrap((t) => measure(t), c, textWidth)[0] ?? c);
     const rowH = lh + 4;
-    SAMPLE_TEXT.choices.forEach((c, i) => {
-      items.push({ kind: "row", rect: { x: 0, y: contentH, w: 0, h: rowH }, highlighted: i === 0 });
-      addText(wrap((t) => measure(t), c, textWidth)[0] ?? c, i === 0 ? "choiceHighlight" : "choice", "left", false, contentH + 2);
-      contentH += rowH + 2;
-    });
-    contentH -= 2;
-    contentW += 8;
+    const h = CHOICE_PAD * 2 + options.length * (rowH + CHOICE_GAP) - CHOICE_GAP;
+    items.push({ kind: "choices", box: { panel: { x: 0, y: contentH, w: 0, h }, rows: options.map((_, i) => ({ x: 0, y: contentH + CHOICE_PAD + i * (rowH + CHOICE_GAP), w: 0, h: rowH })), first: 0, more: null, pages: 1 }, options });
+    contentW = Math.max(contentW, ...options.map((o) => measure(o) + 16 + CHOICE_PAD * 2));
+    contentH += h;
   } else {
     if (sample === "speech") {
       addText(SPEAKER, "speaker", "center", true);
@@ -141,7 +153,8 @@ function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, inse
   const placed = items.map((it): PreviewItem => {
     if (it.kind === "text") return { ...it, x: it.align === "center" ? inner.x + inner.w / 2 : inner.x + 4, y: inner.y + it.y };
     if (it.kind === "cell") return { ...it, rect: { ...it.rect, x: inner.x + it.rect.x, y: inner.y + it.rect.y } };
-    return { ...it, rect: { ...it.rect, x: inner.x, y: inner.y + it.rect.y, w: inner.w } };
+    const { panel, rows } = it.box;
+    return { ...it, box: { ...it.box, panel: { x: inner.x, y: inner.y + panel.y, w: inner.w, h: panel.h }, rows: rows.map((r) => ({ x: inner.x + CHOICE_PAD, y: inner.y + r.y, w: inner.w - CHOICE_PAD * 2, h: r.h })) } };
   });
   return { frame, inner, items: placed, size };
 }

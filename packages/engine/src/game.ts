@@ -13,6 +13,7 @@ import {
 } from "@questforge/schema";
 import { AudioSync, sceneAudioIds } from "./audio.ts";
 import { DEBUG_OFF, type DebugFlags } from "./debug.ts";
+import { choicesLook } from "./ui/choices.ts";
 import { drawLoading, drawSession, present } from "./render.ts";
 import { SaveSlots, readSettings, writeSettings, type KeyValueStore } from "./saves.ts";
 import { loadStyleAssets, resolveFontFamily, type LoadedFont } from "./styleassets.ts";
@@ -135,6 +136,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   let destroyed = false;
   let raf = 0;
   const style = resolveStyle(game.style);
+  const choices = choicesLook(game.style);
   let fontFamily = resolveFontFamily(style.typography, null);
   let releaseFont = () => {};
   /** Registers a font asset with the canvas's own document, ready before any text is laid out. */
@@ -224,7 +226,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     const loading = session ? session.loading : scene;
     // The game's typography, the font that loaded, and the player's Text Size.
     const text = textStyle(game.style, fontFamily, ui?.settings.textSize ?? settings.textSize);
-    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug, text, style.iconBar);
+    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug, text, style.iconBar, choices);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0, text);
     present(screen, back, viewport);
     raf = view.requestAnimationFrame(frame);

@@ -214,6 +214,15 @@ export interface ChoiceBox {
 
 const CHOICE_WIDTH = 560;
 
+/** The separator line's thickness. */
+const SEPARATOR_THICKNESS = 2;
+
+/** The separator line at the top of the choices region: inside the box's top padding, inset like the rows. */
+export function separatorRect(box: ChoiceBox): Rect {
+  const pad = GAP * 2;
+  return { x: box.panel.x + pad, y: box.panel.y + (pad - SEPARATOR_THICKNESS) / 2, w: box.panel.w - pad * 2, h: SEPARATOR_THICKNESS };
+}
+
 export function choiceLayout(unit: number, count: number, page: number): ChoiceBox {
   const pad = GAP * 2;
   const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - pad * 2 + GAP) / (unit + GAP)));

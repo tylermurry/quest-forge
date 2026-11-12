@@ -1,7 +1,7 @@
 // The game-wide skin, as the Styling editor edits it: pure Project → Project commands for the frames and the
 // typography and the icon bar, the guide-drag math of the nine-slice editor, and the warnings for insets that
 // don't fit the image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
-import { Color, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
+import { Color, DialogueChoices, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
 import { CommandError } from "./commands.ts";
 import type { PickOption } from "./rules/pickers.ts";
 
@@ -139,6 +139,30 @@ export function setTypographyColor(p: Project, color: string): Project {
 export function fontOptions(p: Project): PickOption[] {
   return (p.assets?.data.fonts ?? []).map((f) => ({ id: f.id, label: f.id }));
 }
+
+// ── Dialogue choices ─────────────────────────────────────────────────────────────────────────────────────
+
+/** The dialogue choices as saved, or undefined while the creator has never set any of it. */
+export const dialogueChoicesOf = (p: Project): DialogueChoices | undefined => p.game?.data.style?.dialogueChoices;
+
+/** Writes the dialogue choices section. The first edit creates it; the other style sections are left as they are. */
+function withDialogueChoices(p: Project, choices: DialogueChoices): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, dialogueChoices: choices } } } };
+}
+
+function choiceColor(p: Project, key: keyof DialogueChoices, color: string, what: string): Project {
+  const hex = color.toLowerCase();
+  if (!Color.safeParse(hex).success) throw new CommandError(`The ${what} is a colour like #ffcc00.`);
+  return withDialogueChoices(p, { ...dialogueChoicesOf(p), [key]: hex });
+}
+
+/** The background colour of the hovered or selected choice row, as #rrggbb. */
+export const setChoiceHighlight = (p: Project, color: string): Project => choiceColor(p, "highlight", color, "highlight colour");
+
+/** The colour of the line above the choices, as #rrggbb. */
+export const setChoiceSeparator = (p: Project, color: string): Project => choiceColor(p, "separator", color, "separator colour");
 
 // ── Guides ───────────────────────────────────────────────────────────────────────────────────────────────
 

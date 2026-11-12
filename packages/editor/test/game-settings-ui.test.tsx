@@ -55,7 +55,7 @@ describe("the Game Settings tab", () => {
     expect(screen.getByRole("tab", { name: "Game Settings", selected: true })).toBeTruthy();
   });
 
-  it("General and Styling have their subsection menus, and Styling shows honest placeholders", async () => {
+  it("General and Styling have their subsection menus, and Styling shows its sections", async () => {
     await mount();
     openGame();
     const general = screen.getByRole("tablist", { name: "General sections" });
@@ -69,7 +69,7 @@ describe("the Game Settings tab", () => {
     expect(screen.getByRole("heading", { name: "Icon Bar" })).toBeTruthy();
     selectTab("Dialogue Choices");
     expect(screen.getByRole("heading", { name: "Dialogue Choices" })).toBeTruthy();
-    expect(screen.getByText(/coming in a later update/)).toBeTruthy();
+    expect(screen.getByLabelText("Highlight colour")).toBeTruthy();
     // Each area remembers its subsection.
     selectTab("General");
     expect(screen.getByRole("tab", { name: "Start", selected: true })).toBeTruthy();

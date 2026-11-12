@@ -5,8 +5,9 @@ import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
 import type { Vec } from "../vec.ts";
 import type { PlayerUi } from "./controller.ts";
+import { legibleInk, type ChoicesLook } from "./choices.ts";
 import { drawIcon, shadeColor, shadedImage, type IconId } from "./icons.ts";
-import { fitInside, inRect, type Layout } from "./layout.ts";
+import { fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
 import { nineSliceTiles } from "./nineslice.ts";
 import { wrap } from "./textbox.ts";
 import { fontOf, lineFor, shrinkToFit, type Measure, type TextStyle } from "./typography.ts";
@@ -77,8 +78,8 @@ function drawFitted(ctx: Ctx, t: TextStyle, text: string, x: number, y: number, 
 /** Text on the game's panels and buttons: the author's colour, or the legacy gold when there is no typography. */
 const ink = (t: TextStyle) => (t.custom ? t.color : EDGE);
 
-function button(ctx: Ctx, r: Rect, active = false, enabled = true) {
-  ctx.fillStyle = active ? ACTIVE : BUTTON;
+function button(ctx: Ctx, r: Rect, active = false, enabled = true, activeFill = ACTIVE) {
+  ctx.fillStyle = active ? activeFill : BUTTON;
   ctx.fillRect(r.x, r.y, r.w, r.h);
   ctx.strokeStyle = enabled ? EDGE : DIM;
   ctx.lineWidth = 1;
@@ -122,7 +123,7 @@ function buttonText(ctx: Ctx, t: TextStyle, text: string, r: Rect, o: TextOption
 }
 
 /** The whole UI layer over the scene. `drawText` draws the text box above panels. */
-export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, bar: IconBarLook, drawBoxes: () => void) {
+export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, bar: IconBarLook, choices: ChoicesLook, drawBoxes: () => void) {
   const s = ui.session;
   const L = ui.layout;
   const itemImg = s.item ? icons(s.itemFile(s.item)?.icon ?? "") : undefined;
@@ -134,7 +135,7 @@ export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, b
   }
   if (ui.panel === "inventory") drawInventory(ctx, ui, t, icons, itemImg);
   if (ui.panel === "settings") drawSettings(ctx, ui, t);
-  drawChoices(ctx, ui, t);
+  drawChoices(ctx, ui, t, choices);
   drawBoxes();
   if (s.ending) drawEnding(ctx, ui, t, s, L.ending);
   if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui, t);
@@ -153,29 +154,56 @@ function fit(ctx: Ctx, text: string, width: number): string {
   return `${t.trimEnd()}…`;
 }
 
-/** The dialogue list box: the options the player can pick. */
-function drawChoices(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
-  const box = ui.choiceBox;
-  const list = ui.session.choices;
-  if (!box || !list) return;
-  const { panel: r } = box;
-  ctx.fillStyle = "rgba(20,14,10,0.92)";
-  ctx.fillRect(r.x, r.y, r.w, r.h);
-  ctx.strokeStyle = EDGE;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-  const hover = ui.cursor;
+/** What the choices drawing needs: where the rows are, their texts, and where the pointer is (null for touch). */
+export interface ChoicesView {
+  box: ChoiceBox;
+  /** The text of each row of `box`, top to bottom; a missing one leaves the row undrawn. */
+  options: readonly (string | undefined)[];
+  hover: Vec | null;
+}
+
+/**
+ * The rows of the dialogue list box, without the box behind them: the separator line at the top of the choices
+ * region (once the author has styled Dialogue Choices; the legacy box edge already marks it), then each option
+ * on a button. The row under the pointer is filled with the highlight colour and its text turns black or white,
+ * whichever reads better on that colour. The game and the editor's Dialogue Choices preview both draw with this.
+ */
+export function drawChoiceRows(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook) {
+  const { box, hover } = v;
+  if (look.styled) {
+    const sep = separatorRect(box);
+    ctx.fillStyle = look.separator;
+    ctx.fillRect(sep.x, sep.y, sep.w, sep.h);
+  }
   box.rows.forEach((row, i) => {
-    const option = list.options[box.first + i];
-    if (!option) return;
+    const text = v.options[i];
+    if (text === undefined) return;
     const over = !!hover && hover[0] >= row.x && hover[0] < row.x + row.w && hover[1] >= row.y && hover[1] < row.y + row.h;
-    button(ctx, row, over);
-    drawFitted(ctx, t, option.text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? "#000" : ink(t), baseline: "middle" });
+    button(ctx, row, over, true, look.highlight);
+    drawFitted(ctx, t, text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? legibleInk(look.highlight) : ink(t), baseline: "middle" });
   });
   if (box.more) {
     button(ctx, box.more);
     buttonText(ctx, t, "More…", box.more);
   }
+}
+
+/** The dialogue list box: its dark panel and edge, then the rows. */
+export function drawChoiceBox(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook) {
+  const { panel: r } = v.box;
+  ctx.fillStyle = "rgba(20,14,10,0.92)";
+  ctx.fillRect(r.x, r.y, r.w, r.h);
+  ctx.strokeStyle = EDGE;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  drawChoiceRows(ctx, v, t, look);
+}
+
+function drawChoices(ctx: Ctx, ui: PlayerUi, t: TextStyle, look: ChoicesLook) {
+  const box = ui.choiceBox;
+  const list = ui.session.choices;
+  if (!box || !list) return;
+  drawChoiceBox(ctx, { box, options: box.rows.map((_, i) => list.options[box.first + i]?.text), hover: ui.cursor }, t, look);
 }
 
 function drawTab(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined) {

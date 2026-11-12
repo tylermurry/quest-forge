@@ -1,0 +1,71 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryFs, saveProject } from "@questforge/schema";
+import { CommandRegistry } from "../src/model/appCommands.ts";
+import { Editor } from "../src/model/editor.ts";
+import type { Platform } from "../src/platform/platform.ts";
+import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
+import { Workspace } from "../src/ui/Workspace.tsx";
+import { m1Project } from "./support/fixtures.ts";
+
+// Styling > Dialogue Choices through the real Workspace: exactly two colour controls and the preview.
+
+beforeEach(() => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+async function openChoices() {
+  const fs = new MemoryFs();
+  await saveProject(fs, { ...(await m1Project()), saved: {}, files: [], savedFolders: [] });
+  const editor = await Editor.open({ fs }, { autosave: false });
+  const platform = { assetUrl: (_r: string, path: string) => path } as unknown as Platform;
+  render(
+    <PlatformContext.Provider value={platform}>
+      <CommandsContext.Provider value={new CommandRegistry()}>
+        <Workspace root="m1" editor={editor} onClose={() => {}} />
+      </CommandsContext.Provider>
+    </PlatformContext.Provider>,
+  );
+  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "Game" }).firstElementChild!);
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Styling" }));
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Dialogue Choices" }));
+  return editor;
+}
+
+const choices = (e: Editor) => e.project.game!.data.style?.dialogueChoices;
+const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
+
+describe("Dialogue Choices", () => {
+  it("has the two colour controls and nothing else to set, and each change is its own undo step", async () => {
+    const editor = await openChoices();
+    const section = screen.getByRole("region", { name: "Dialogue Choices" });
+    expect(section.querySelectorAll("input[type=color]")).toHaveLength(2);
+    expect(section.querySelectorAll("input:not([type=color])")).toHaveLength(0);
+    expect(screen.getByText(/Not customised yet/)).toBeTruthy();
+    expect(field("Highlight colour").value).toBe("#c89a3c");
+    expect(field("Separator colour").value).toBe("#e8d8a8");
+    expect(choices(editor)).toBeUndefined();
+    fireEvent.change(field("Highlight colour"), { target: { value: "#2040a0" } });
+    expect(choices(editor)).toEqual({ highlight: "#2040a0" });
+    expect(screen.queryByText(/Not customised yet/)).toBeNull();
+    fireEvent.change(field("Separator colour"), { target: { value: "#ff0000" } });
+    expect(choices(editor)).toEqual({ highlight: "#2040a0", separator: "#ff0000" });
+    editor.undo();
+    expect(choices(editor)).toEqual({ highlight: "#2040a0" });
+  });
+
+  it("shows a focusable preview that reacts to the pointer and the arrow keys without changing the project", async () => {
+    const editor = await openChoices();
+    const preview = screen.getByRole("img", { name: /Point at a choice/ });
+    expect(preview.getAttribute("tabindex")).toBe("0");
+    fireEvent.keyDown(preview, { key: "ArrowDown" });
+    fireEvent.mouseMove(preview, { clientX: 10, clientY: 10 });
+    fireEvent.click(preview, { clientX: 10, clientY: 10 });
+    expect(choices(editor)).toBeUndefined();
+  });
+});
