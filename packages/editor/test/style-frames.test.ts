@@ -131,7 +131,7 @@ describe("history and saving", () => {
 
 describe("preview layout", () => {
   const measure = (s: string) => s.length * 6;
-  const text = { lineHeight: 12 };
+  const text = { size: 10 };
 
   it("lays out every sample at every shape inside the 640×400 screen without negative sizes", () => {
     for (const s of SAMPLES) {

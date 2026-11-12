@@ -119,22 +119,35 @@ export class SaveSlots {
   }
 }
 
-/** Player settings that outlive a game: volumes 0–10. Not game state. */
+/** Player settings that outlive a game: volumes 0–10 and text size. Not game state. */
 export interface PlayerSettings {
   music: number;
   sfx: number;
+  /** Text size as a percentage of the size the author chose (TEXT_SCALE_MIN to TEXT_SCALE_MAX). */
+  textSize: number;
 }
 
 export const VOLUME_STEPS = 10;
-export const DEFAULT_SETTINGS: PlayerSettings = { music: 7, sfx: 8 };
+/** The player's text size choices, in percent of the author's size, a step apart. */
+export const TEXT_SCALE_MIN = 75;
+export const TEXT_SCALE_MAX = 200;
+export const TEXT_SCALE_STEP = 25;
+export const DEFAULT_SETTINGS: PlayerSettings = { music: 7, sfx: 8, textSize: 100 };
 
 const volume = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(VOLUME_STEPS, Math.round(v))) : d);
+
+/** Holds a stored text size to the allowed range and the nearest step; anything that isn't a number is 100%. */
+export function clampTextScale(v: unknown): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return DEFAULT_SETTINGS.textSize;
+  const stepped = Math.round(v / TEXT_SCALE_STEP) * TEXT_SCALE_STEP;
+  return Math.max(TEXT_SCALE_MIN, Math.min(TEXT_SCALE_MAX, stepped));
+}
 
 export function readSettings(store: KeyValueStore | null, gameId: string): PlayerSettings {
   try {
     const raw = JSON.parse(store?.getItem(settingsKey(gameId)) ?? "null") as unknown;
     if (!isRecord(raw)) return { ...DEFAULT_SETTINGS };
-    return { music: volume(raw.music, DEFAULT_SETTINGS.music), sfx: volume(raw.sfx, DEFAULT_SETTINGS.sfx) };
+    return { music: volume(raw.music, DEFAULT_SETTINGS.music), sfx: volume(raw.sfx, DEFAULT_SETTINGS.sfx), textSize: clampTextScale(raw.textSize) };
   } catch {
     // Blocked or unreadable storage: the defaults are the right volumes to play with.
     return { ...DEFAULT_SETTINGS };

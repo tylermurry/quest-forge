@@ -65,6 +65,8 @@ describe("the Game Settings tab", () => {
     expect(within(styling).getAllByRole("tab").map((t) => t.textContent)).toEqual(["Shared Frames", "Typography", "Icon Bar", "Dialogue Choices"]);
     selectTab("Typography");
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
+    selectTab("Icon Bar");
+    expect(screen.getByRole("heading", { name: "Icon Bar" })).toBeTruthy();
     expect(screen.getByText(/coming in a later update/)).toBeTruthy();
     // Each area remembers its subsection.
     selectTab("General");

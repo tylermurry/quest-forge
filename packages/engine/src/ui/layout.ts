@@ -17,9 +17,10 @@ export const unitFor = (cssScale: number) => Math.max(DESIGN_UNIT, Math.ceil(MIN
 type BarButtonId = "walk" | "look" | "hand" | "talk" | "item" | "inventory" | "settings";
 const BAR_BUTTONS: readonly BarButtonId[] = ["walk", "look", "hand", "talk", "item", "inventory", "settings"];
 export type InventoryButtonId = "look" | "select" | "item" | "ok";
-type SettingsButtonId = "restart" | "save" | "load" | "volume" | "close";
+type SettingsButtonId = "restart" | "save" | "load" | "volume" | "textsize" | "close";
 type SlotsButtonId = "act" | "more" | "cancel";
 type VolumeButtonId = "music_down" | "music_up" | "sfx_down" | "sfx_up" | "ok";
+type TextSizeButtonId = "size_down" | "size_up" | "ok";
 type EndingButtonId = "restore" | "restart" | "try_again";
 
 export interface Button<Id extends string = string> {
@@ -42,6 +43,8 @@ export interface Layout {
   slots: { panel: Rect; rows: Rect[]; perPage: number; pages: number; buttons: Button<SlotsButtonId>[] };
   /** Music and sound-effect volume: a bar between − and + for each. */
   volume: { panel: Rect; music: Rect; sfx: Rect; labelX: number; buttons: Button<VolumeButtonId>[] };
+  /** Text size: a value between − and +. */
+  textSize: { panel: Rect; value: Rect; labelX: number; buttons: Button<TextSizeButtonId>[] };
   /** The death / win box: message, then Restore · Restart · Try again (death only). */
   ending: { panel: Rect; message: Rect; buttons: Button<EndingButtonId>[]; win: Button<EndingButtonId>[] };
   /** Short notices ("Game saved."), at the bottom centre. */
@@ -90,7 +93,7 @@ export function computeLayout(cssScale: number): Layout {
   const invButtons = row(["look", "select", "item", "ok"] as const, panel, btnY, Math.max(u, 64), u);
 
   // Settings: one column of wide buttons.
-  const sIds = ["restart", "save", "load", "volume", "close"] as const;
+  const sIds = ["restart", "save", "load", "volume", "textsize", "close"] as const;
   const sBtnW = Math.max(u * 4, 160);
   const sPanelH = Math.min(SCENE_HEIGHT - GAP * 4, title + pad * 2 + sIds.length * (u + GAP) - GAP);
   const sPanel = centered(sBtnW + pad * 2, sPanelH);
@@ -143,6 +146,18 @@ export function computeLayout(cssScale: number): Layout {
     ...row(["ok"] as const, volPanel, volPanel.y + volPanel.h - pad - u, Math.max(u * 2, 64), u),
   ];
 
+  // Text size: "Text size  [−] 100% [+]", then OK.
+  const sizeValueW = 72;
+  const sizePanel = centered(pad * 2 + labelW + u + GAP + sizeValueW + GAP + u, title + pad * 3 + (u + GAP) - GAP + u);
+  const sizeY = sizePanel.y + pad + title;
+  const sizeMinusX = sizePanel.x + pad + labelW;
+  const sizeValueX = sizeMinusX + u + GAP;
+  const sizeButtons: Button<TextSizeButtonId>[] = [
+    { id: "size_down", rect: { x: sizeMinusX, y: sizeY, w: u, h: u } },
+    { id: "size_up", rect: { x: sizeValueX + sizeValueW + GAP, y: sizeY, w: u, h: u } },
+    ...row(["ok"] as const, sizePanel, sizePanel.y + sizePanel.h - pad - u, Math.max(u * 2, 64), u),
+  ];
+
   // Ending: message area, then a row of buttons.
   const eBtnW = Math.max(Math.round(u * 2.5), 100);
   const ePanel = centered(Math.max(380, eBtnW * 3 + GAP * 2 + pad * 2), 120 + u);
@@ -159,6 +174,7 @@ export function computeLayout(cssScale: number): Layout {
     settings: { panel: sPanel, buttons: sButtons },
     slots: { panel: slotsPanel, rows: slotRows, perPage, pages, buttons: slotButtons },
     volume: { panel: volPanel, music: { x: barX, y: volRow(0), w: barW, h: u }, sfx: { x: barX, y: volRow(1), w: barW, h: u }, labelX: volPanel.x + pad, buttons: volButtons },
+    textSize: { panel: sizePanel, value: { x: sizeValueX, y: sizeY, w: sizeValueW, h: u }, labelX: sizePanel.x + pad, buttons: sizeButtons },
     ending: {
       panel: ePanel,
       message,

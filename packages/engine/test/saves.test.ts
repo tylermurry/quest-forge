@@ -259,11 +259,11 @@ describe("volume", () => {
     expect(ui.settings.music).toBe(10);
     expect(seen).toEqual([8, 9, 10]);
     tap(ui, button(ui.layout.volume.buttons, "sfx_down"));
-    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 7 });
+    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 7, textSize: 100 });
     tap(ui, button(ui.layout.volume.buttons, "ok"));
     expect(ui.panel).toBe("settings");
     store.setItem(settingsKey("t"), JSON.stringify({ music: 99, sfx: "loud" }));
-    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 8 });
+    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 8, textSize: 100 });
     expect(gainFor(0)).toBe(0);
     expect(gainFor(10)).toBe(1);
   });

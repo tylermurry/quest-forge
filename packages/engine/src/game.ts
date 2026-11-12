@@ -20,6 +20,7 @@ import { Session, linkedScenes, type SessionStart } from "./session.ts";
 import type { GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
 import { PlayerUi, type PointerKind } from "./ui/controller.ts";
+import { textStyle } from "./ui/typography.ts";
 import { sheetProblem } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
 import { WebAudio } from "./webaudio.ts";
@@ -83,6 +84,21 @@ export class ProjectErrors extends Error {
 /** Numbers font family names, so no two loaded fonts share one. */
 let fontNumber = 0;
 
+/**
+ * Loads a font file and registers it with `doc` under a family name of its own, ready to draw with.
+ * Rejects when the file can't be fetched or decoded. The editor's Styling preview uses this too.
+ */
+export async function registerFont(doc: Document, url: string, id: string): Promise<LoadedFont> {
+  const view = doc.defaultView as (Window & typeof globalThis) | null;
+  if (!view?.FontFace) throw new Error("this browser can't load custom fonts");
+  // One family name per load, so a restarted game never shares a name with the one it replaces.
+  const family = `qf-font-${id}-${++fontNumber}`;
+  const face = new view.FontFace(family, `url("${url}")`);
+  await face.load();
+  doc.fonts.add(face);
+  return { family, release: () => doc.fonts.delete(face) };
+}
+
 export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, options: GameOptions = {}): Game {
   const { project } = bundle;
   const problems = validateProject(project);
@@ -124,12 +140,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const loadFont = async (id: string): Promise<LoadedFont> => {
     const asset = project.assets!.data.fonts?.find((f) => f.id === id);
     if (!asset) throw new Error(`there is no font asset ${id}`);
-    // One family name per load, so a restarted game never shares a name with the one it replaces.
-    const family = `qf-font-${id}-${++fontNumber}`;
-    const face = new view.FontFace(family, `url("${bundle.assetUrl(asset.path)}")`);
-    await face.load();
-    doc.fonts.add(face);
-    return { family, release: () => doc.fonts.delete(face) };
+    return registerFont(doc, bundle.assetUrl(asset.path), id);
   };
 
   // Size the canvas to its CSS box in device pixels so nearest-neighbor stays crisp.
@@ -210,8 +221,10 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     loop.advance(now);
     syncAudio();
     const loading = session ? session.loading : scene;
-    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug);
-    else drawLoading(backCtx, loading ? images.progress(loading) : 0);
+    // The game's typography, the font that loaded, and the player's Text Size.
+    const text = textStyle(game.style, fontFamily, ui?.settings.textSize ?? settings.textSize);
+    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug, text);
+    else drawLoading(backCtx, loading ? images.progress(loading) : 0, text);
     present(screen, back, viewport);
     raf = view.requestAnimationFrame(frame);
   };

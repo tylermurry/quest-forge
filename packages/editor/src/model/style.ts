@@ -1,7 +1,7 @@
-// The game-wide skin's frames, as the Styling editor edits them: pure Project → Project commands, the
-// guide-drag math of the nine-slice editor, and the warnings for insets that don't fit the image. DOM-free.
-// `which` names the frame, so the Icon Bar editor reuses these commands unchanged.
-import { frameInsetProblems, type Frame, type FrameInsets, type GameStyle, type Project } from "@questforge/schema";
+// The game-wide skin, as the Styling editor edits it: pure Project → Project commands for the frames and the
+// typography, the guide-drag math of the nine-slice editor, and the warnings for insets that don't fit the
+// image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
+import { Color, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type Project } from "@questforge/schema";
 import { CommandError } from "./commands.ts";
 import type { PickOption } from "./rules/pickers.ts";
 
@@ -72,6 +72,51 @@ export function setFrameInsets(p: Project, which: FrameKey, insets: FrameInsets)
 /** Images a frame can use, for the picker. */
 export function imageOptions(p: Project): PickOption[] {
   return (p.assets?.data.images ?? []).map((i) => ({ id: i.id, label: i.id }));
+}
+
+// ── Typography ───────────────────────────────────────────────────────────────────────────────────────────
+
+/** The typography as saved, or undefined while the creator has never set any. */
+export const typographyOf = (p: Project): Typography | undefined => p.game?.data.style?.typography;
+
+/** Writes the typography section. The first edit creates it; the other style sections are left as they are. */
+function withTypography(p: Project, typography: Typography): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const checked = Typography.safeParse(typography);
+  if (!checked.success) throw new CommandError("That typography isn't valid.");
+  const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, typography: checked.data } } } };
+}
+
+/** Uses a built-in font family. Replaces a custom font if one was set. */
+export function setTypographyFamily(p: Project, family: FontFamily): Project {
+  const { family: _f, font: _font, ...rest } = typographyOf(p) ?? {};
+  return withTypography(p, { ...rest, family });
+}
+
+/** Uses a font from the Fonts library. Replaces a built-in family if one was set. */
+export function setTypographyFont(p: Project, fontId: string): Project {
+  if (!p.assets?.data.fonts?.some((f) => f.id === fontId)) throw new CommandError(`There's no font with ID ${fontId}.`);
+  const { family: _f, font: _font, ...rest } = typographyOf(p) ?? {};
+  return withTypography(p, { ...rest, font: fontId });
+}
+
+/** The text size in pixels, a whole number from TEXT_SIZE_MIN to TEXT_SIZE_MAX. */
+export function setTypographySize(p: Project, size: number): Project {
+  if (!Number.isInteger(size) || size < TEXT_SIZE_MIN || size > TEXT_SIZE_MAX) throw new CommandError(`The text size is a whole number of pixels from ${TEXT_SIZE_MIN} to ${TEXT_SIZE_MAX}.`);
+  return withTypography(p, { ...typographyOf(p), size });
+}
+
+/** The text colour, as #rrggbb. */
+export function setTypographyColor(p: Project, color: string): Project {
+  const hex = color.toLowerCase();
+  if (!Color.safeParse(hex).success) throw new CommandError("The text colour is a colour like #ffcc00.");
+  return withTypography(p, { ...typographyOf(p), color: hex });
+}
+
+/** Fonts the project has, for the picker. */
+export function fontOptions(p: Project): PickOption[] {
+  return (p.assets?.data.fonts ?? []).map((f) => ({ id: f.id, label: f.id }));
 }
 
 // ── Guides ───────────────────────────────────────────────────────────────────────────────────────────────

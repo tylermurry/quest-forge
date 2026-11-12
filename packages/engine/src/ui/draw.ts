@@ -1,12 +1,13 @@
 import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
-import { VOLUME_STEPS } from "../saves.ts";
+import { TEXT_SCALE_MAX, TEXT_SCALE_MIN, VOLUME_STEPS } from "../saves.ts";
 import type { Session } from "../session.ts";
 import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
 import type { PlayerUi } from "./controller.ts";
 import { drawIcon, type IconId } from "./icons.ts";
 import { nineSliceTiles } from "./nineslice.ts";
-import { TEXT_FONT, TEXT_LINE, wrap } from "./textbox.ts";
+import { wrap } from "./textbox.ts";
+import { fontOf, lineFor, shrinkToFit, type Measure, type TextStyle } from "./typography.ts";
 
 // Draws the player UI into the back buffer: icon bar, touch tab,
 // inventory, settings, the ending box, labels and the cursor.
@@ -30,6 +31,50 @@ export function drawNineSlice(ctx: Ctx, image: CanvasImageSource & { width: numb
   for (const t of nineSliceTiles(image, insets, dest)) ctx.drawImage(image, t.sx, t.sy, t.sw, t.sh, t.dx, t.dy, t.dw, t.dh);
 }
 
+/** A text measurer that asks Canvas, for the family the game draws with. */
+export function canvasMeasure(ctx: Ctx, family: string): Measure {
+  return (text, size, bold) => {
+    ctx.font = fontOf(family, size, bold);
+    return ctx.measureText(text).width;
+  };
+}
+
+export interface TextOptions {
+  align?: CanvasTextAlign;
+  baseline?: CanvasTextBaseline;
+  bold?: boolean;
+  /** Default: the style's body colour. */
+  color?: string;
+  /** Default: the style's size. */
+  size?: number;
+}
+
+/** Draws one line of text in the game's typography. Gameplay and the editor's Styling preview both draw text with this. */
+export function drawText(ctx: Ctx, t: TextStyle, text: string, x: number, y: number, o: TextOptions = {}) {
+  ctx.font = fontOf(t.family, o.size ?? t.size, o.bold);
+  ctx.fillStyle = o.color ?? t.color;
+  ctx.textAlign = o.align ?? "left";
+  ctx.textBaseline = o.baseline ?? "alphabetic";
+  ctx.fillText(text, x, y);
+}
+
+/** The largest size, up to the style's own, at which `text` fits `maxW` × `maxH`; `fits` is false when even the smallest allowed size doesn't. */
+function fittedSize(ctx: Ctx, t: TextStyle, text: string, maxW: number, maxH: number, bold?: boolean, from = t.size) {
+  const measure = canvasMeasure(ctx, t.family);
+  const { size, result } = shrinkToFit(from, (s) => ({ w: measure(text, s, bold), h: lineFor(s) }), (r) => r.w <= maxW && r.h <= maxH);
+  return { size, fits: result.w <= maxW && result.h <= maxH };
+}
+
+/** Text inside a control or panel: shrinks (never below the legacy size) to fit `maxW` × `maxH`, then cuts with an ellipsis. */
+function drawFitted(ctx: Ctx, t: TextStyle, text: string, x: number, y: number, maxW: number, maxH: number, o: TextOptions = {}) {
+  const { size } = fittedSize(ctx, t, text, maxW, maxH, o.bold, o.size);
+  ctx.font = fontOf(t.family, size, o.bold);
+  drawText(ctx, t, fit(ctx, text, maxW), x, y, { ...o, size });
+}
+
+/** Text on the game's panels and buttons: the author's colour, or the legacy gold when there is no typography. */
+const ink = (t: TextStyle) => (t.custom ? t.color : EDGE);
+
 function button(ctx: Ctx, r: Rect, active = false, enabled = true) {
   ctx.fillStyle = active ? ACTIVE : BUTTON;
   ctx.fillRect(r.x, r.y, r.w, r.h);
@@ -38,7 +83,7 @@ function button(ctx: Ctx, r: Rect, active = false, enabled = true) {
   ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 }
 
-function panel(ctx: Ctx, r: Rect, title: string) {
+function panel(ctx: Ctx, t: TextStyle, r: Rect, title: string) {
   ctx.fillStyle = "rgba(0,0,0,0.45)";
   ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
   ctx.fillStyle = PANEL;
@@ -46,11 +91,7 @@ function panel(ctx: Ctx, r: Rect, title: string) {
   ctx.strokeStyle = EDGE;
   ctx.lineWidth = 2;
   ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-  ctx.font = `bold ${TEXT_FONT}`;
-  ctx.fillStyle = EDGE;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText(title, r.x + r.w / 2, r.y + 8);
+  drawFitted(ctx, t, title, r.x + r.w / 2, r.y + 8, r.w - 16, 16, { bold: true, color: ink(t), align: "center", baseline: "top" });
 }
 
 const inset = (r: Rect, k: number): Rect => ({ x: r.x + r.w * k, y: r.y + r.h * k, w: r.w * (1 - 2 * k), h: r.h * (1 - 2 * k) });
@@ -64,31 +105,34 @@ function itemIcon(ctx: Ctx, img: CanvasImageSource | undefined, r: Rect) {
   ctx.drawImage(img, Math.round(box.x + (box.w - w * k) / 2), Math.round(box.y + (box.h - h * k) / 2), w * k, h * k);
 }
 
-function label(ctx: Ctx, text: string, x: number, y: number, align: CanvasTextAlign = "center") {
-  ctx.font = TEXT_FONT;
-  ctx.fillStyle = EDGE;
-  ctx.textAlign = align;
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, x, y);
+/** A line of panel text, shrunk to `maxW` wide when that is given. */
+function label(ctx: Ctx, t: TextStyle, text: string, x: number, y: number, align: CanvasTextAlign = "center", maxW = Infinity) {
+  drawFitted(ctx, t, text, x, y, maxW, Infinity, { color: ink(t), align, baseline: "middle" });
+}
+
+/** Text centred in a control, shrunk to fit it. */
+function buttonText(ctx: Ctx, t: TextStyle, text: string, r: Rect, o: TextOptions = {}) {
+  drawFitted(ctx, t, text, r.x + r.w / 2, r.y + r.h / 2, r.w - 8, r.h, { color: ink(t), align: "center", baseline: "middle", ...o });
 }
 
 /** The whole UI layer over the scene. `drawText` draws the text box above panels. */
-export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, drawText: () => void) {
+export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, drawBoxes: () => void) {
   const s = ui.session;
   const L = ui.layout;
   const itemImg = s.item ? icons(s.itemFile(s.item)?.icon ?? "") : undefined;
 
   if (ui.tabVisible) drawTab(ctx, ui, itemImg);
-  if (ui.barOpen) drawBar(ctx, ui, itemImg);
-  if (ui.panel === "inventory") drawInventory(ctx, ui, icons, itemImg);
-  if (ui.panel === "settings") drawSettings(ctx, ui);
-  drawChoices(ctx, ui);
-  drawText();
-  if (s.ending) drawEnding(ctx, ui, s, L.ending);
-  if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui);
-  if (ui.panel === "volume") drawVolume(ctx, ui);
-  if (ui.notice) drawNotice(ctx, ui.notice.text, L.notice);
-  if (ui.label) drawLabel(ctx, ui.label.text, ui.label.at);
+  if (ui.barOpen) drawBar(ctx, ui, t, itemImg);
+  if (ui.panel === "inventory") drawInventory(ctx, ui, t, icons, itemImg);
+  if (ui.panel === "settings") drawSettings(ctx, ui, t);
+  drawChoices(ctx, ui, t);
+  drawBoxes();
+  if (s.ending) drawEnding(ctx, ui, t, s, L.ending);
+  if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui, t);
+  if (ui.panel === "volume") drawVolume(ctx, ui, t);
+  if (ui.panel === "textsize") drawTextSize(ctx, ui, t);
+  if (ui.notice) drawNotice(ctx, t, ui.notice.text, L.notice);
+  if (ui.label) drawLabel(ctx, t, ui.label.text, ui.label.at);
   if (ui.cursor) drawCursor(ctx, ui, itemImg);
 }
 
@@ -101,7 +145,7 @@ function fit(ctx: Ctx, text: string, width: number): string {
 }
 
 /** The dialogue list box: the options the player can pick. */
-function drawChoices(ctx: Ctx, ui: PlayerUi) {
+function drawChoices(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
   const box = ui.choiceBox;
   const list = ui.session.choices;
   if (!box || !list) return;
@@ -111,21 +155,17 @@ function drawChoices(ctx: Ctx, ui: PlayerUi) {
   ctx.strokeStyle = EDGE;
   ctx.lineWidth = 2;
   ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
-  ctx.font = TEXT_FONT;
-  ctx.textBaseline = "middle";
-  ctx.textAlign = "left";
   const hover = ui.cursor;
   box.rows.forEach((row, i) => {
     const option = list.options[box.first + i];
     if (!option) return;
     const over = !!hover && hover[0] >= row.x && hover[0] < row.x + row.w && hover[1] >= row.y && hover[1] < row.y + row.h;
     button(ctx, row, over);
-    ctx.fillStyle = over ? "#000" : EDGE;
-    ctx.fillText(fit(ctx, option.text, row.w - 16), row.x + 8, row.y + row.h / 2);
+    drawFitted(ctx, t, option.text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? "#000" : ink(t), baseline: "middle" });
   });
   if (box.more) {
     button(ctx, box.more);
-    label(ctx, "More…", box.more.x + box.more.w / 2, box.more.y + box.more.h / 2);
+    buttonText(ctx, t, "More…", box.more);
   }
 }
 
@@ -145,7 +185,7 @@ function drawTab(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined)
   else drawIcon(ctx, ui.session.verb, icon, EDGE);
 }
 
-function drawBar(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined) {
+function drawBar(ctx: Ctx, ui: PlayerUi, t: TextStyle, itemImg: CanvasImageSource | undefined) {
   const s = ui.session;
   const L = ui.layout;
   ctx.fillStyle = PANEL;
@@ -159,17 +199,17 @@ function drawBar(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined)
     if (b.id === "item") itemIcon(ctx, itemImg, b.rect);
     else drawIcon(ctx, b.id as IconId, inset(b.rect, 0.18), active ? "#000" : EDGE);
   }
-  // Score; hidden if a very large unit leaves no room for it.
+  // Score; shrunk to the room beside the buttons, and hidden if even that doesn't fit.
   const text = `Score: ${score(s.state)} of ${s.game.maxScore}`;
-  ctx.font = TEXT_FONT;
   const last = L.barButtons.at(-1)!.rect;
-  if (L.score.x - ctx.measureText(text).width > last.x + last.w + 8) label(ctx, text, L.score.x, L.score.y, "right");
+  const room = L.score.x - (last.x + last.w + 8);
+  if (fittedSize(ctx, t, text, room, L.bar.h).fits) label(ctx, t, text, L.score.x, L.score.y, "right", room);
 }
 
-function drawInventory(ctx: Ctx, ui: PlayerUi, icons: IconImage, itemImg: CanvasImageSource | undefined) {
+function drawInventory(ctx: Ctx, ui: PlayerUi, t: TextStyle, icons: IconImage, itemImg: CanvasImageSource | undefined) {
   const s = ui.session;
   const L = ui.layout.inventory;
-  panel(ctx, L.panel, "Inventory");
+  panel(ctx, t, L.panel, "Inventory");
   const items = ui.items;
   L.cells.forEach((c, i) => {
     const id = items[i];
@@ -180,7 +220,7 @@ function drawInventory(ctx: Ctx, ui: PlayerUi, icons: IconImage, itemImg: Canvas
     ctx.strokeRect(c.x + 0.5, c.y + 0.5, c.w - 1, c.h - 1);
     if (id) itemIcon(ctx, icons(s.itemFile(id)?.icon ?? ""), c);
   });
-  if (items.length === 0) label(ctx, "You aren't carrying anything.", L.panel.x + L.panel.w / 2, L.cells[0]!.y + L.cells[0]!.h / 2);
+  if (items.length === 0) label(ctx, t, "You aren't carrying anything.", L.panel.x + L.panel.w / 2, L.cells[0]!.y + L.cells[0]!.h / 2, "center", L.panel.w - 16);
   for (const b of L.buttons) {
     const active = b.id === ui.inventoryMode;
     const enabled = b.id !== "item" || !!s.item;
@@ -190,13 +230,7 @@ function drawInventory(ctx: Ctx, ui: PlayerUi, icons: IconImage, itemImg: Canvas
     if (b.id === "look") drawIcon(ctx, "look", icon, color);
     else if (b.id === "select") drawIcon(ctx, "hand", icon, color);
     else if (b.id === "item") itemIcon(ctx, itemImg, b.rect);
-    else {
-      ctx.font = `bold ${TEXT_FONT}`;
-      ctx.fillStyle = EDGE;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("OK", b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
-    }
+    else buttonText(ctx, t, "OK", b.rect, { bold: true });
   }
 }
 
@@ -205,45 +239,38 @@ const SETTINGS_TEXT: Record<string, string> = {
   save: "Save game",
   load: "Load game",
   volume: "Volume",
+  textsize: "Text size",
   close: "Close",
 };
 
-function drawSettings(ctx: Ctx, ui: PlayerUi) {
+function drawSettings(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
   const L = ui.layout.settings;
-  panel(ctx, L.panel, "Settings");
+  panel(ctx, t, L.panel, "Settings");
   for (const b of L.buttons) {
     const enabled = b.id !== "load" || ui.slots.any;
     button(ctx, b.rect, false, enabled);
-    ctx.font = TEXT_FONT;
-    ctx.fillStyle = enabled ? EDGE : DIM;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(SETTINGS_TEXT[b.id]!, b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+    buttonText(ctx, t, SETTINGS_TEXT[b.id]!, b.rect, { color: enabled ? ink(t) : DIM });
   }
 }
 
 const ENDING_TEXT: Record<string, string> = { restore: "Restore", restart: "Restart", try_again: "Try again" };
 
 /** The Sierra death box: message, then Restore · Restart · Try again. A win offers Restore · Restart. */
-function drawEnding(ctx: Ctx, ui: PlayerUi, s: Session, L: PlayerUi["layout"]["ending"]) {
+function drawEnding(ctx: Ctx, ui: PlayerUi, t: TextStyle, s: Session, L: PlayerUi["layout"]["ending"]) {
   const e = s.ending!;
-  panel(ctx, L.panel, e.kind === "die" ? "You have died" : "You won!");
-  ctx.font = TEXT_FONT;
+  panel(ctx, t, L.panel, e.kind === "die" ? "You have died" : "You won!");
   const text = e.kind === "die" ? `${e.message}\n\nScore: ${score(s.state)} of ${s.game.maxScore}` : `Score: ${score(s.state)} of ${s.game.maxScore}`;
-  const lines = wrap((t) => ctx.measureText(t).width, text, L.message.w - 16);
-  const shown = lines.slice(0, Math.max(1, Math.floor(L.message.h / TEXT_LINE)));
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  shown.forEach((l, i) => ctx.fillText(l, L.message.x + L.message.w / 2, L.message.y + i * TEXT_LINE));
+  const measure = canvasMeasure(ctx, t.family);
+  // The message shrinks until it fits its area; at the smallest size a very long one still loses its last lines.
+  const { size, result } = shrinkToFit(t.size, (sz) => ({ sz, lines: wrap((x) => measure(x, sz), text, L.message.w - 16) }), (r) => r.lines.length * lineFor(r.sz) <= L.message.h);
+  const lines = result.lines;
+  const line = lineFor(size);
+  const shown = lines.slice(0, Math.max(1, Math.floor(L.message.h / line)));
+  shown.forEach((l, i) => drawText(ctx, t, l, L.message.x + L.message.w / 2, L.message.y + i * line, { size, align: "center", baseline: "top" }));
   for (const b of e.kind === "die" ? L.buttons : L.win) {
     const enabled = b.id !== "restore" || ui.slots.any;
     button(ctx, b.rect, false, enabled);
-    ctx.font = TEXT_FONT;
-    ctx.fillStyle = enabled ? EDGE : DIM;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(ENDING_TEXT[b.id]!, b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+    buttonText(ctx, t, ENDING_TEXT[b.id]!, b.rect, { color: enabled ? ink(t) : DIM });
   }
 }
 
@@ -257,10 +284,10 @@ const savedAt = (ms: number) => {
 };
 
 /** The save / load list: numbered slots, the picked one highlighted. */
-function drawSlots(ctx: Ctx, ui: PlayerUi) {
+function drawSlots(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
   const L = ui.layout.slots;
   const saving = ui.panel === "save";
-  panel(ctx, L.panel, saving ? "Save game" : "Load game");
+  panel(ctx, t, L.panel, saving ? "Save game" : "Load game");
   L.rows.forEach((r, row) => {
     const i = ui.slotAt(row);
     if (i === null) return;
@@ -268,44 +295,39 @@ function drawSlots(ctx: Ctx, ui: PlayerUi) {
     const picked = ui.slot === i;
     const usable = saving || slot !== null;
     button(ctx, r, picked, usable);
-    ctx.font = TEXT_FONT;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = picked ? "#000" : usable ? EDGE : DIM;
-    const head = `${i + 1}.`;
-    ctx.fillText(head, r.x + 6, r.y + r.h / 2);
+    // The two lines of a slot (name, time) share one size, small enough that both fit the row.
+    const size = shrinkToFit(t.size, (sz) => sz, (sz) => lineFor(sz) * 2 <= r.h - 4).size;
+    const half = lineFor(size) / 2;
+    const color = picked ? "#000" : usable ? ink(t) : DIM;
+    const mid = r.y + r.h / 2;
+    drawFitted(ctx, t, `${i + 1}.`, r.x + 6, mid, 22, r.h, { size, color, baseline: "middle" });
     const x = r.x + 28;
     const w = r.w - 34;
     if (!slot) {
-      ctx.fillText("Empty", x, r.y + r.h / 2);
+      drawFitted(ctx, t, "Empty", x, mid, w, r.h, { size, color, baseline: "middle" });
       return;
     }
-    ctx.fillText(fit(ctx, slot.name, w), x, r.y + r.h / 2 - TEXT_LINE / 2);
-    ctx.fillStyle = picked ? "#222" : DIM;
-    ctx.fillText(fit(ctx, savedAt(slot.savedAt), w), x, r.y + r.h / 2 + TEXT_LINE / 2);
+    drawFitted(ctx, t, slot.name, x, mid - half, w, r.h, { size, color, baseline: "middle" });
+    drawFitted(ctx, t, savedAt(slot.savedAt), x, mid + half, w, r.h, { size, color: picked ? "#222" : DIM, baseline: "middle" });
   });
   for (const b of L.buttons) {
     const enabled = b.id !== "act" || ui.slotActionEnabled;
     button(ctx, b.rect, false, enabled);
-    ctx.font = b.id === "act" ? `bold ${TEXT_FONT}` : TEXT_FONT;
-    ctx.fillStyle = enabled ? EDGE : DIM;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
     const text = b.id === "act" ? (saving ? "Save" : "Load") : b.id === "more" ? `More… (${ui.slotPage + 1}/${L.pages})` : "Cancel";
-    ctx.fillText(text, b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+    buttonText(ctx, t, text, b.rect, { bold: b.id === "act", color: enabled ? ink(t) : DIM });
   }
 }
 
 /** Music and sound-effect volume. */
-function drawVolume(ctx: Ctx, ui: PlayerUi) {
+function drawVolume(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
   const L = ui.layout.volume;
-  panel(ctx, L.panel, "Volume");
+  panel(ctx, t, L.panel, "Volume");
   const bars: [string, Rect, number][] = [
     ["Music", L.music, ui.settings.music],
     ["Sound effects", L.sfx, ui.settings.sfx],
   ];
   for (const [name, r, level] of bars) {
-    label(ctx, name, L.labelX, r.y + r.h / 2, "left");
+    label(ctx, t, name, L.labelX, r.y + r.h / 2, "left", L.buttons[0]!.rect.x - L.labelX - 6);
     const seg = (r.w - (VOLUME_STEPS - 1) * 2) / VOLUME_STEPS;
     for (let i = 0; i < VOLUME_STEPS; i++) {
       ctx.fillStyle = i < level ? ACTIVE : "#1a140e";
@@ -314,35 +336,46 @@ function drawVolume(ctx: Ctx, ui: PlayerUi) {
   }
   for (const b of L.buttons) {
     button(ctx, b.rect);
-    ctx.font = `bold ${TEXT_FONT}`;
-    ctx.fillStyle = EDGE;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(b.id === "ok" ? "OK" : b.id.endsWith("_up") ? "+" : "−", b.rect.x + b.rect.w / 2, b.rect.y + b.rect.h / 2);
+    buttonText(ctx, t, b.id === "ok" ? "OK" : b.id.endsWith("_up") ? "+" : "−", b.rect, { bold: true });
   }
 }
 
-function drawNotice(ctx: Ctx, text: string, at: { x: number; y: number }) {
-  ctx.font = TEXT_FONT;
-  const w = Math.ceil(ctx.measureText(text).width) + 16;
-  const h = 18;
-  ctx.fillStyle = "rgba(0,0,0,0.8)";
-  ctx.fillRect(Math.round(at.x - w / 2), Math.round(at.y - h / 2), w, h);
-  label(ctx, text, at.x, at.y);
+/** The player's Text Size: "Text size  [−] 100% [+]" and OK. */
+function drawTextSize(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
+  const L = ui.layout.textSize;
+  panel(ctx, t, L.panel, "Text size");
+  label(ctx, t, "Text size", L.labelX, L.value.y + L.value.h / 2, "left", L.buttons[0]!.rect.x - L.labelX - 6);
+  label(ctx, t, `${ui.settings.textSize}%`, L.value.x + L.value.w / 2, L.value.y + L.value.h / 2, "center", L.value.w);
+  for (const b of L.buttons) {
+    const enabled = b.id === "ok" || (b.id === "size_up" ? ui.settings.textSize < TEXT_SCALE_MAX : ui.settings.textSize > TEXT_SCALE_MIN);
+    button(ctx, b.rect, false, enabled);
+    buttonText(ctx, t, b.id === "ok" ? "OK" : b.id === "size_up" ? "+" : "−", b.rect, { bold: true, color: enabled ? ink(t) : DIM });
+  }
 }
 
-function drawLabel(ctx: Ctx, text: string, at: readonly [number, number]) {
-  ctx.font = TEXT_FONT;
+/** A short message on a dark strip, at the size that fits the screen's width. */
+function drawNotice(ctx: Ctx, t: TextStyle, text: string, at: { x: number; y: number }) {
+  const { size } = fittedSize(ctx, t, text, SCENE_WIDTH - 24, Infinity);
+  ctx.font = fontOf(t.family, size);
+  const w = Math.ceil(ctx.measureText(text).width) + 16;
+  const h = lineFor(size) + 6;
+  const cy = Math.min(at.y, SCENE_HEIGHT - 2 - h / 2);
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(Math.round(at.x - w / 2), Math.round(cy - h / 2), w, h);
+  drawText(ctx, t, text, at.x, cy, { size, color: ink(t), align: "center", baseline: "middle" });
+}
+
+/** The name under the pointer, on a dark strip kept on screen. */
+function drawLabel(ctx: Ctx, t: TextStyle, text: string, at: readonly [number, number]) {
+  const { size } = fittedSize(ctx, t, text, SCENE_WIDTH - 16, Infinity);
+  ctx.font = fontOf(t.family, size);
   const w = Math.ceil(ctx.measureText(text).width) + 8;
-  const h = 14;
+  const h = lineFor(size) + 2;
   const x = Math.round(Math.max(2, Math.min(SCENE_WIDTH - w - 2, at[0] + 12)));
   const y = Math.round(Math.max(2, at[1] - 22));
   ctx.fillStyle = "rgba(0,0,0,0.75)";
   ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, x + 4, y + h / 2 + 0.5);
+  drawText(ctx, t, text, x + 4, y + h / 2 + 0.5, { size, baseline: "middle" });
 }
 
 /** Drawn cursor: the active verb's icon centered on the pointer, or the item. */

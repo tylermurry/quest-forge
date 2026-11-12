@@ -37,6 +37,7 @@ describe("layout", () => {
         L.ending.buttons.map((b) => b.rect),
         [...L.slots.rows, ...L.slots.buttons.map((b) => b.rect)],
         L.volume.buttons.map((b) => b.rect),
+        L.textSize.buttons.map((b) => b.rect),
         [L.tab.hit],
       ];
       for (const group of groups) {

@@ -1,20 +1,22 @@
 // Runtime engine. Data in, no user code.
 export { SCHEMA_VERSION } from "@questforge/schema";
-export { createGame, ProjectErrors, sceneImageIds, type Game, type GameOptions, type ProjectBundle } from "./game.ts";
+export { createGame, registerFont, ProjectErrors, sceneImageIds, type Game, type GameOptions, type ProjectBundle } from "./game.ts";
+export { resolveFontFamily, type LoadedFont } from "./styleassets.ts";
 export { loadQuest, assetType, type QuestBundle } from "./quest.ts";
 export { World, type Drawable, type LoadedImage, type Target, type WorldOptions } from "./world.ts";
 export { Session, VERB_CYCLE, ALWAYS_READY, linkedScenes, type Ending, type SceneAssets, type SessionHooks, type SessionStart, type Verb } from "./session.ts";
 export { readState, sanitizeState, awardCatalog, type Sanitized } from "./restore.ts";
-export { SaveSlots, MemoryStore, SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, readSettings, writeSettings, savesKey, settingsKey, type KeyValueStore, type PlayerSettings, type SaveSlot } from "./saves.ts";
+export { SaveSlots, MemoryStore, SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, readSettings, writeSettings, clampTextScale, TEXT_SCALE_MIN, TEXT_SCALE_MAX, TEXT_SCALE_STEP, savesKey, settingsKey, type KeyValueStore, type PlayerSettings, type SaveSlot } from "./saves.ts";
 export { AudioSync, gainFor, sceneAudioIds, type AudioBackend, type AudioSource } from "./audio.ts";
 export { initialState, cloneState, score, objectVisible, type GameState, type Position } from "./state.ts";
 export { firstMatch, checkCondition, defaultResponse, ruleKey, triggerMatches, type RuleOwner } from "./rules.ts";
 export { Sequence, type SequenceHost } from "./sequence.ts";
 export { DialogueRun, choiceKey, dialogueFiredKey, type ChoiceList, type DialogueEndReason, type OptionVerdict } from "./dialogue.ts";
 export type { RuleReport, RuleVerdict, Trace, TraceEvent } from "./trace.ts";
-export { layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
+export { boxWidth, layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
+export { fontOf, lineFor, scaledSize, shrinkToFit, textStyle, type Measure, type TextStyle } from "./ui/typography.ts";
 export { nineSliceTiles, type NineSliceTile } from "./ui/nineslice.ts";
-export { drawNineSlice } from "./ui/draw.ts";
+export { canvasMeasure, drawNineSlice, drawText, type TextOptions } from "./ui/draw.ts";
 export { PlayerUi, NOTICE_SECONDS, type Panel, type PointerKind, type UiServices } from "./ui/controller.ts";
 export { choiceLayout, computeLayout, unitFor, MIN_HIT_CSS, type ChoiceBox, type Layout } from "./ui/layout.ts";
 export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";

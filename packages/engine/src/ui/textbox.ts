@@ -1,12 +1,11 @@
-import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { LEGACY_STYLE, SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
+import { lineFor, shrinkToFit, type Measure } from "./typography.ts";
 
 // Text boxes: `narrate` is a centered Sierra box; `say` sits over the
 // speaker in their color with their name. Boxes advance on a click/tap or after a
-// time based on length. Layout is pure: the renderer passes a text measurer.
+// time based on length. Layout is pure: the renderer passes a text measurer and the text size.
 
-export const TEXT_FONT = "10px monospace";
-export const TEXT_LINE = 12;
 const PAD = 10;
 const MARGIN = 4;
 const NARRATE_WIDTH = 360;
@@ -32,10 +31,8 @@ export function sayBox(text: string, speaker: NonNullable<TextBox["speaker"]>): 
   return { kind: "say", text, speaker, timeLeft: textDuration(text) };
 }
 
-export type Measure = (s: string) => number;
-
 /** Word-wraps to a pixel width. A word longer than the width gets a line of its own. */
-export function wrap(measure: Measure, text: string, width: number): string[] {
+export function wrap(measure: (s: string) => number, text: string, width: number): string[] {
   const lines: string[] = [];
   for (const para of text.split("\n")) {
     let line = "";
@@ -51,37 +48,54 @@ export function wrap(measure: Measure, text: string, width: number): string[] {
   return lines;
 }
 
+/** The widest a box's text can be and still leave the box (with its padding) inside the screen. */
+const MAX_TEXT_WIDTH = SCENE_WIDTH - MARGIN * 2 - PAD * 2;
+
+/** A text width designed for the legacy text size, grown with larger text and held inside the screen. */
+export const boxWidth = (base: number, size: number) => Math.min(MAX_TEXT_WIDTH, Math.round(base * Math.max(1, size / LEGACY_STYLE.typography.size)));
+
 export interface BoxLayout extends Rect {
   /** Speaker name line (say only), drawn above the text. */
   name: string | null;
   lines: string[];
   /** Top of the first text line. */
   textY: number;
+  /** The text size the box was laid out at: the one asked for, or smaller when the text wouldn't fit the screen. */
+  size: number;
+  /** Distance between lines at `size`. */
+  line: number;
 }
 
-/** Where a text box goes and how its text breaks, in scene space. */
-export function layoutTextBox(box: TextBox, measure: Measure): BoxLayout {
-  const maxW = box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH;
-  const lines = wrap(measure, box.text, maxW);
-  const name = box.kind === "say" && box.speaker ? box.speaker.name : null;
-  const widest = Math.max(...lines.map(measure), name ? measure(name) : 0);
-  const w = Math.round(Math.min(maxW, widest) + PAD * 2);
-  const rows = lines.length + (name ? 1 : 0);
-  const h = rows * TEXT_LINE + PAD * 2;
-  const clampX = (x: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_WIDTH - MARGIN - w, x)));
-  const clampY = (y: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_HEIGHT - MARGIN - h, y)));
+/**
+ * Where a text box goes and how its text breaks, in scene space. `text.size` is the size to try; a box
+ * that would be taller than the screen is laid out again one pixel smaller until it fits.
+ */
+export function layoutTextBox(box: TextBox, measure: Measure, text: { size: number } = LEGACY_STYLE.typography): BoxLayout {
+  const build = (size: number): BoxLayout => {
+    const line = lineFor(size);
+    const maxW = boxWidth(box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH, size);
+    const lines = wrap((t) => measure(t, size), box.text, maxW);
+    const name = box.kind === "say" && box.speaker ? box.speaker.name : null;
+    const widest = Math.max(...lines.map((l) => measure(l, size)), name ? measure(name, size, true) : 0);
+    const w = Math.round(Math.min(maxW, widest) + PAD * 2);
+    const rows = lines.length + (name ? 1 : 0);
+    const h = rows * line + PAD * 2;
+    const clampX = (x: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_WIDTH - MARGIN - w, x)));
+    const clampY = (y: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_HEIGHT - MARGIN - h, y)));
 
-  let x: number;
-  let y: number;
-  const anchor = box.speaker?.anchor;
-  if (box.kind === "say" && anchor) {
-    x = clampX(anchor.x + anchor.w / 2 - w / 2);
-    const above = anchor.y - MARGIN - h;
-    y = clampY(above >= MARGIN ? above : anchor.y + anchor.h + MARGIN);
-  } else {
-    // Centered, a little above the middle.
-    x = clampX((SCENE_WIDTH - w) / 2);
-    y = clampY((SCENE_HEIGHT - h) / 2 - 40);
-  }
-  return { x, y, w, h, name, lines, textY: y + PAD + (name ? TEXT_LINE : 0) };
+    let x: number;
+    let y: number;
+    const anchor = box.speaker?.anchor;
+    if (box.kind === "say" && anchor) {
+      x = clampX(anchor.x + anchor.w / 2 - w / 2);
+      const above = anchor.y - MARGIN - h;
+      y = clampY(above >= MARGIN ? above : anchor.y + anchor.h + MARGIN);
+    } else {
+      // Centered, a little above the middle.
+      x = clampX((SCENE_WIDTH - w) / 2);
+      y = clampY((SCENE_HEIGHT - h) / 2 - 40);
+    }
+    return { x, y, w, h, name, lines, textY: y + PAD + (name ? line : 0), size, line };
+  };
+  return shrinkToFit(text.size, build, (l) => l.h <= SCENE_HEIGHT - MARGIN * 2).result;
 }

@@ -50,8 +50,8 @@ See [Rules](./08-rules.md) and [Triggers](./09-triggers.md).
 
 ## Styling
 
-The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**. Only
-**Shared Frames** has controls so far. The others are placeholders and have nothing to set yet.
+The sections of **Styling** are **Shared Frames**, **Typography**, **Icon Bar** and **Dialogue Choices**.
+**Shared Frames** and **Typography** have controls so far. The others are placeholders and have nothing to set yet.
 
 ### Shared Frames
 
@@ -87,6 +87,33 @@ The preview on the right draws the frame the way the game does, on a sample back
 see-through parts. Pick a **Sample** (one sentence of narration, several paragraphs, a character speaking, the
 inventory or dialogue choices) to see the same frame on each panel. Pick a **Shape** (narrow, wide, tall or short)
 to see how it stretches, and **Zoom** to look closer. The preview doesn't change your game.
+
+### Typography
+
+The font, size and colour of the words in your game: narration, speech, the dialogue choices, the buttons and the
+panel titles.
+
+Until you change something here, your game keeps its original look: small, white, typewriter-style text. The first
+change you make switches to your own typography, starting from **16 pixel** white text.
+
+- **Font**: pick one of the built-in fonts (**Monospace**, **Serif** or **Sans-serif**), or a font you imported.
+  Click **Import font…** to add a WOFF2 or WOFF font file from your computer. The font is packed into your game
+  when you build it, so it works offline. If a font can't be loaded, the game uses a built-in font instead and the
+  words stay readable. The editor tells you when that happens.
+- **Text size**: the size in pixels, from 6 to 72.
+- **Text colour**: click the colour square to pick one.
+
+A character's own colour stays on their name and on the outline of their speech box. Your text colour is used for
+the words themselves. Once you pick your own typography, narration is shown on the same dark panel as speech, so
+white text can be read.
+
+Players can make all the text larger or smaller in the game's **Settings**. Their choice is a percentage of the
+size you set here, so what you pick is always the starting point. Very long text is shown a little smaller when it
+would not fit on the screen, so it is never cut off.
+
+The preview on the right uses your frame from **Shared Frames** and draws text the way the game does. Pick a
+**Sample** (one sentence of narration, several paragraphs, a character speaking or dialogue choices) and **Zoom**
+to look closer. Each change shows at once.
 
 When you click a problem about the game's start, score, default responses or rules in the **Problems** panel, the
 Game Settings tab opens on the right section and highlights the setting.

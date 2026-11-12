@@ -1,4 +1,4 @@
-import { SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, SaveSlots, type PlayerSettings } from "../saves.ts";
+import { SLOT_COUNT, TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP, VOLUME_STEPS, DEFAULT_SETTINGS, SaveSlots, type PlayerSettings } from "../saves.ts";
 import type { Session, Verb } from "../session.ts";
 import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
@@ -17,14 +17,14 @@ const REVEAL_CSS = 8;
 const HOLD_SECONDS = 0.4;
 const HOLD_SLOP_CSS = 10;
 
-/** `save` / `load` are the slot list; `volume` the volume panel. */
-export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | null;
+/** `save` / `load` are the slot list; `volume` the volume panel; `textsize` the player's text size. */
+export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | "textsize" | null;
 
-/** What the player UI keeps outside the game state: save slots and volumes. */
+/** What the player UI keeps outside the game state: save slots, volumes and text size. */
 export interface UiServices {
   slots: SaveSlots;
   settings: PlayerSettings;
-  /** Volumes changed: apply and store them. */
+  /** Volumes or text size changed: apply and store them. */
   onSettings?(s: PlayerSettings): void;
 }
 
@@ -186,6 +186,7 @@ export class PlayerUi {
     // The slot list and volume panel sit over everything, the death box included.
     if (this.panel === "save" || this.panel === "load") return this.slotsClick(p);
     if (this.panel === "volume") return this.volumeClick(p);
+    if (this.panel === "textsize") return this.textSizeClick(p);
     if (s.ending) return this.endingClick(p);
     // Text first: any click skips it, over the scene or the inventory.
     if (s.text) {
@@ -295,6 +296,9 @@ export class PlayerUi {
         return;
       case "volume":
         this.panel = "volume";
+        return;
+      case "textsize":
+        this.panel = "textsize";
         return;
       case "close":
         this.panel = null;
@@ -408,6 +412,20 @@ export class PlayerUi {
     const next = Math.max(0, Math.min(VOLUME_STEPS, this.settings[key] + step));
     if (next === this.settings[key]) return;
     this.settings = { ...this.settings, [key]: next };
+    this.onSettings?.(this.settings);
+  }
+
+  private textSizeClick(p: Vec) {
+    const id = hitButton(this.layout.textSize.buttons, p);
+    if (!id) return;
+    if (id === "ok") {
+      this.panel = "settings";
+      return;
+    }
+    const step = id === "size_up" ? TEXT_SCALE_STEP : -TEXT_SCALE_STEP;
+    const next = Math.max(TEXT_SCALE_MIN, Math.min(TEXT_SCALE_MAX, this.settings.textSize + step));
+    if (next === this.settings.textSize) return;
+    this.settings = { ...this.settings, textSize: next };
     this.onSettings?.(this.settings);
   }
 

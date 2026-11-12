@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { useCanvasImages } from "../scene/images.ts";
 import { FramePreview } from "./FramePreview.tsx";
+import { useStyleFont } from "./useStyleFont.ts";
 import { NineSliceEditor } from "./NineSliceEditor.tsx";
 
 const KEY = "style:sharedFrame";
@@ -25,6 +26,7 @@ export function SharedFrames({ actions }: { actions: Actions }) {
   const draftRef = useRef<FrameInsets | null>(null);
   const style = p.game?.data.style;
   const frame = resolveStyle(style).sharedFrame;
+  const font = useStyleFont(p, style, images);
   const insets = draft ?? frame.insets;
   const asset = frame.image === undefined ? undefined : p.assets?.data.images.find((i) => i.id === frame.image);
   const loaded = frame.image ? images.lookup(frame.image) : undefined;
@@ -91,7 +93,7 @@ export function SharedFrames({ actions }: { actions: Actions }) {
             onBlurField={() => editor.history.breakMerge()}
           />
         </div>
-        <FramePreview frame={{ image: frame.image, insets }} style={style} images={images} />
+        <FramePreview frame={{ image: frame.image, insets }} style={style} images={images} family={font.family} />
       </div>
     </section>
   );

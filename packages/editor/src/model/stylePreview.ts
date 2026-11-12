@@ -1,7 +1,7 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
 import { SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
-import { wrap } from "@questforge/engine";
+import { boxWidth, lineFor, shrinkToFit, wrap, type Measure } from "@questforge/engine";
 
 export const SAMPLES = [
   { id: "narrationShort", label: "Narration, one sentence" },
@@ -11,6 +11,10 @@ export const SAMPLES = [
   { id: "choices", label: "Dialogue choices" },
 ] as const;
 export type SampleId = (typeof SAMPLES)[number]["id"];
+export type SampleChoice = { id: SampleId; label: string };
+
+/** The samples the Typography preview offers: the text ones, with a choice row. */
+export const TYPOGRAPHY_SAMPLES: readonly SampleChoice[] = SAMPLES.filter((s) => s.id !== "inventory");
 
 /** `fit` sizes the panel to its text; the others fix the panel's size to show how the frame stretches. */
 export const SHAPES = [
@@ -54,7 +58,7 @@ export interface PreviewRect {
   h: number;
 }
 export type PreviewItem =
-  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; tone: "text" | "speaker" | "choice" | "choiceHighlight" }
+  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; tone: "text" | "speaker" | "speech" | "choice" | "choiceHighlight" }
   | { kind: "cell"; rect: PreviewRect }
   | { kind: "row"; rect: PreviewRect; highlighted: boolean };
 export interface SampleLayout {
@@ -63,30 +67,37 @@ export interface SampleLayout {
   /** The area inside the borders where content goes and is clipped. */
   inner: PreviewRect;
   items: PreviewItem[];
+  /** The text size used: the one asked for, or smaller when a panel that fits its text would be taller than the screen. */
+  size: number;
 }
 
-export interface PreviewText {
-  /** Distance between text lines. */
-  lineHeight: number;
+/** Lays out one sample panel, centred in the 640×400 game screen. `text.size` is the size to try. */
+export function layoutSample(sample: SampleId, shape: PreviewShape, insets: FrameInsets, text: { size: number }, measure: Measure): SampleLayout {
+  // Like the game's own text boxes, a panel sized to its text gets smaller text rather than run off the screen.
+  const fixed = shape === "fit" ? null : SHAPE_SIZE[shape];
+  return shrinkToFit(
+    text.size,
+    (size) => layoutAt(sample, fixed, insets, size, measure),
+    (l) => fixed !== null || (l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH),
+  ).result;
 }
 
-/** Lays out one sample panel, centred in the 640×400 game screen. */
-export function layoutSample(sample: SampleId, shape: PreviewShape, insets: FrameInsets, text: PreviewText, measure: (s: string) => number): SampleLayout {
-  const lh = text.lineHeight;
+function layoutAt(sample: SampleId, fixed: { w: number; h: number } | null, insets: FrameInsets, size: number, measureAt: Measure): SampleLayout {
+  const lh = lineFor(size);
+  const measure = (s: string, bold = false) => measureAt(s, size, bold);
   const padL = insets.left + PAD;
   const padR = insets.right + PAD;
   const padT = insets.top + PAD;
   const padB = insets.bottom + PAD;
-  const fixed = shape === "fit" ? null : SHAPE_SIZE[shape];
-  const textWidth = fixed ? Math.max(8, fixed.w - padL - padR) : MAX_TEXT_WIDTH[sample];
+  const textWidth = fixed ? Math.max(8, fixed.w - padL - padR) : boxWidth(MAX_TEXT_WIDTH[sample], size);
 
   // Content in panel-relative coordinates (origin: top-left of the inner area).
   const items: PreviewItem[] = [];
   let contentW = 0;
   let contentH = 0;
-  const addText = (s: string, tone: "text" | "speaker" | "choice" | "choiceHighlight", align: "center" | "left", bold = false, y = contentH) => {
+  const addText = (s: string, tone: "text" | "speaker" | "speech" | "choice" | "choiceHighlight", align: "center" | "left", bold = false, y = contentH) => {
     items.push({ kind: "text", text: s, x: 0, y, align, bold, tone });
-    contentW = Math.max(contentW, measure(s));
+    contentW = Math.max(contentW, measure(s, bold));
   };
   if (sample === "inventory") {
     addText("Inventory", "text", "center", true);
@@ -102,7 +113,7 @@ export function layoutSample(sample: SampleId, shape: PreviewShape, insets: Fram
     const rowH = lh + 4;
     SAMPLE_TEXT.choices.forEach((c, i) => {
       items.push({ kind: "row", rect: { x: 0, y: contentH, w: 0, h: rowH }, highlighted: i === 0 });
-      addText(wrap(measure, c, textWidth)[0] ?? c, i === 0 ? "choiceHighlight" : "choice", "left", false, contentH + 2);
+      addText(wrap((t) => measure(t), c, textWidth)[0] ?? c, i === 0 ? "choiceHighlight" : "choice", "left", false, contentH + 2);
       contentH += rowH + 2;
     });
     contentH -= 2;
@@ -113,8 +124,8 @@ export function layoutSample(sample: SampleId, shape: PreviewShape, insets: Fram
       contentH += lh;
     }
     for (const paragraph of SAMPLE_TEXT[sample === "speech" ? "speech" : sample]) {
-      for (const line of wrap(measure, paragraph, textWidth)) {
-        addText(line, sample === "speech" ? "speaker" : "text", "center");
+      for (const line of wrap((t) => measure(t), paragraph, textWidth)) {
+        addText(line, sample === "speech" ? "speech" : "text", "center");
         contentH += lh;
       }
       if (sample === "narrationLong") contentH += Math.round(lh / 2);
@@ -132,5 +143,5 @@ export function layoutSample(sample: SampleId, shape: PreviewShape, insets: Fram
     if (it.kind === "cell") return { ...it, rect: { ...it.rect, x: inner.x + it.rect.x, y: inner.y + it.rect.y } };
     return { ...it, rect: { ...it.rect, x: inner.x, y: inner.y + it.rect.y, w: inner.w } };
   });
-  return { frame, inner, items: placed };
+  return { frame, inner, items: placed, size };
 }

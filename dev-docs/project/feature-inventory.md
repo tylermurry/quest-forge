@@ -129,7 +129,9 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
 | Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
 | Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
-| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Typography, Icon Bar and Dialogue Choices are labelled placeholders; the controls arrive in later updates. | Partial |
+| Styling tab | Game Settings ▸ Styling: Shared Frames, Typography, Icon Bar, Dialogue Choices | Icon Bar and Dialogue Choices are labelled placeholders; the controls arrive in later updates. | Partial |
+| Typography | Game Settings ▸ Styling ▸ Typography: Font picker (built-in or imported), Import font…, Text size, Text colour, preview | One font, size (6–72 px, 16 px once customised) and colour for all game text; no typography keeps the original 10 px look. A character's colour stays on their name and box outline. The preview uses the shared frame and the engine's text drawing. | Shipped |
+| Text size (player) | Settings ▸ Text size | Players scale all text 75%–200% of the author's size, kept per game in the browser. | Shipped |
 | Shared Frames | Game Settings ▸ Styling ▸ Shared Frames: Image picker, Import image…, four draggable guides, four border boxes, legend, preview | One image frames every panel, cut into a nine-slice with guides or typed pixel borders. Warns when no centre is left. The preview draws samples (narration, speech, inventory, choices) in several shapes with the engine's nine-slice drawing. | Partial: the game doesn't draw the chosen frame yet, a later update does |
 | Game title and player character | — | Set when the project is created; the editor can't change either afterwards. | Partial |
 | Game rules | Game Settings ▸ General ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
@@ -258,7 +260,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Text | Narration and speech boxes | Click anywhere to skip. | Shipped |
 | Inventory | Icon bar ▸ Inventory | Look at an item, pick one to use, combine two. | Shipped |
 | Dialogue choices | List box | The player picks what to say. | Shipped |
-| Settings | Icon bar ▸ Settings | Restart, Save, Load, Volume (Music and Sound effects). | Shipped |
+| Settings | Icon bar ▸ Settings | Restart, Save, Load, Volume (Music and Sound effects), Text size. | Shipped |
 | Saves | Settings ▸ Save / Load | Ten save slots, kept in the browser. Old saves still load after the game is updated. | Shipped |
 | Death | Die action | "You have died" with Try again (back to the scene's start), Restore, Restart. | Shipped |
 | Winning | Win the game action | "You won!" | Shipped |
