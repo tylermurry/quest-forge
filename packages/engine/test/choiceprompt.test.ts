@@ -120,6 +120,20 @@ describe("the choice box's prompt", () => {
     }
   });
 
+  it("borrows the line that leads into a Choices node when play starts from that node", () => {
+    const s = new Session(testProject({ game: { style: STYLED }, dialogues: [SHOP] }), testImages);
+    s.startDialogue("shop", "menu");
+    untilChoices(s);
+    expect(s.choices?.prompt).toEqual({ character: "gardener", text: WELCOME });
+  });
+
+  it("borrows nothing when play starts from a Choices node no line leads into", () => {
+    const s = new Session(testProject({ game: { style: STYLED }, dialogues: [FIRST] }), testImages);
+    s.startDialogue("shop", "menu");
+    untilChoices(s);
+    expect(s.choices?.prompt).toBeNull();
+  });
+
   it("shows a narrator's line without a name", () => {
     const { s, ui } = setup(NARRATED);
     untilChoices(s);

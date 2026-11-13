@@ -97,6 +97,12 @@ export class DialogueRun {
     const start = node ?? this.dialogue.nodes.find((n) => n.type === "start")?.id ?? null;
     this.host.trace?.({ type: "dialogue_start", dialogue: this.id, node: node ?? null });
     if (start === null) return this.finish("dead_end");
+    // Playing from a Choices node skips the line that leads into it; borrow that line (the first one, in file order,
+    // whose `next` is this node) so the list box shows what the player would have just heard.
+    if (node !== undefined && this.byId.get(node)?.type === "choices") {
+      const into = this.dialogue.nodes.find((n): n is LineNode => n.type === "line" && n.next === node);
+      this.lastLine = into ? { character: into.character ?? null, text: into.text } : null;
+    }
     this.goto(start);
     this.advance();
   }

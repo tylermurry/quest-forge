@@ -180,7 +180,8 @@ When a character (or the narrator) speaks just before the choices appear, their 
 the separator line: the speaker's name in the name color, then what they said, as in the preview's **Dialogue
 Choice** sample. The box grows to fit it; a very long line gets smaller text and, if it still doesn't fit, ends with
 "…". If the choices come first in the conversation, or an action runs in between, there's no line above the
-separator. A project with its original choices look keeps its original box.
+separator. When you playtest with **Play from node** on a Choices node, the box shows the line that leads into that
+node, so you see what players would have just heard. A project with its original choices look keeps its original box.
 
 The choices go where you put the panels in **Frames**, and long lists still have pages.
 
