@@ -77,15 +77,19 @@ describe("GameStyle schema", () => {
 describe("resolveStyle", () => {
   it("gives today's engine values for a legacy (absent) style", () => {
     const s = resolveStyle(undefined);
-    expect(s).toEqual(LEGACY_STYLE);
+    expect(s).toEqual({ ...LEGACY_STYLE, dialogueChoices: { effect: "brighten", separator: "#e8d8a8" }, speech: { name: "#e8d8a8" } });
     expect(s.typography).toMatchObject({ family: "monospace", size: 10, lineHeight: 12, color: "#ffffff" });
-    expect(s.dialogueChoices).toEqual({ effect: "none", separator: "#e8d8a8" });
     expect(s.iconBar.effect).toBe("none");
     expect(s.sharedFrame.image).toBeUndefined();
   });
 
   it("treats a style with absent sections as legacy for those sections", () => {
-    expect(resolveStyle({})).toEqual(LEGACY_STYLE);
+    expect(resolveStyle({})).toEqual(resolveStyle(undefined));
+  });
+
+  it("has no legacy look for dialogue choices: an absent section is the author defaults", () => {
+    expect(resolveStyle(undefined).dialogueChoices).toEqual({ effect: AUTHOR_DEFAULTS.dialogueChoices.effect, separator: AUTHOR_DEFAULTS.dialogueChoices.separator });
+    expect(resolveStyle({ dialogueChoices: {} }).dialogueChoices).toEqual(resolveStyle(undefined).dialogueChoices);
   });
 
   it("fills a configured typography section with the author defaults", () => {

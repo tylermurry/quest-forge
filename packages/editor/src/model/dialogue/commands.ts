@@ -68,7 +68,7 @@ function newOptionId(d: DialogueFile): string {
   for (let i = 1; ; i++) if (!taken.has(`option_${i}`)) return `option_${i}`;
 }
 
-/** The speaker a new Line starts with: the line it follows, else the dialogue's character, else the narrator. */
+/** The speaker a new Line or Choices node starts with: the line it follows, else the dialogue's character, else the narrator. */
 function defaultSpeaker(p: Project, d: DialogueFile, from: string | undefined): string | undefined {
   const prev = from ? d.nodes.find((n) => n.id === from) : undefined;
   if (prev?.type === "line") return prev.character;
@@ -83,8 +83,10 @@ function freshNode(p: Project, d: DialogueFile, type: NodeType, id: string, pos:
       const character = defaultSpeaker(p, d, from);
       return { id, type, pos, ...(character !== undefined && { character }), text: "", next: null };
     }
-    case "choices":
-      return { id, type, pos, options: [{ id: newOptionId(d), text: "", if: [], once: false, next: null }] };
+    case "choices": {
+      const character = defaultSpeaker(p, d, from);
+      return { id, type, pos, ...(character !== undefined && { character }), text: "", options: [{ id: newOptionId(d), text: "", if: [], once: false, next: null }] };
+    }
     case "actions":
       return { id, type, pos, do: [], next: null };
     case "branch":
@@ -184,6 +186,15 @@ export function setLine(p: Project, dialogue: string, node: string, patch: { cha
 }
 
 // ── Choices ─────────────────────────────────────────────────────────────────
+
+/** Edits a Choices node's question. `character: null` makes the narrator ask. */
+export function setQuestion(p: Project, dialogue: string, node: string, patch: { character?: string | null; text?: string }): Project {
+  return updateNode(p, dialogue, node, (n) => {
+    if (n.type !== "choices") throw new CommandError("That isn't a Choices node.");
+    const character = patch.character === undefined ? n.character : (patch.character ?? undefined);
+    return { id: n.id, type: n.type, pos: n.pos, ...(character !== undefined && { character }), text: patch.text ?? n.text, options: n.options };
+  });
+}
 
 function updateOptions(p: Project, dialogue: string, node: string, f: (o: ChoiceOption[]) => ChoiceOption[]): Project {
   return updateNode(p, dialogue, node, (n) => {

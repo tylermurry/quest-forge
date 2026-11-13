@@ -172,16 +172,12 @@ How speech and conversation choices look. They use your frame, position and widt
 - **Separator color**: the color of the thin line along the top of the choices. Its thickness and spacing are
   set by the game.
 
-New projects start with **Brighten** and the line in pale gold. A project made before these settings existed keeps
-its original look (each answer on a gold-edged button, no extra line) until you change the effect or the separator;
-the first change switches it to plain answers with the effect and adds the line.
+Until you change them, the effect is **Brighten** and the line is pale gold.
 
-When a character (or the narrator) speaks just before the choices appear, their line stays in the choice box, above
-the separator line: the speaker's name in the name color, then what they said, as in the preview's **Dialogue
-Choice** sample. The box grows to fit it; a very long line gets smaller text and, if it still doesn't fit, ends with
-"…". If the choices come first in the conversation, or an action runs in between, there's no line above the
-separator. When you playtest with **Play from node** on a Choices node, the box shows the line that leads into that
-node, so you see what players would have just heard. A project with its original choices look keeps its original box.
+Each **Choices** node asks its own question, and the choice box shows it together with the answers: the asker's name
+in the name color (the narrator has no name), then the question, then the separator line and the answers, as in the
+preview's **Dialogue Choice** sample. The box grows to fit the question; a very long question gets smaller text and,
+if it still doesn't fit, ends with "…". See [Choices](./12-dialogue-editor.md#choices).
 
 The choices go where you put the panels in **Frames**, and long lists still have pages.
 

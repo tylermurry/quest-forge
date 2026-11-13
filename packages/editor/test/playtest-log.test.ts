@@ -13,7 +13,7 @@ const narrate = (text: string) => ({ type: "narrate" as const, text });
 /** The m1 garden plus a key and a locked door: Use key works only once path_open is true. */
 async function withDoor(): Promise<Project> {
   const p = await m1Project();
-  const key = ItemFile.parse({ schemaVersion: 2, id: "key", name: "Key", description: "A small brass key.", icon: "rod_icon" });
+  const key = ItemFile.parse({ schemaVersion: 3, id: "key", name: "Key", description: "A small brass key.", icon: "rod_icon" });
   const door = {
     id: "door",
     name: "door",

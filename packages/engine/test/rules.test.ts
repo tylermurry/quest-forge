@@ -6,7 +6,7 @@ import { award, giveItem, initialState, markFired, markVisited, setObjectVisible
 // Spec 02 evaluation: first match, `once`, conditions, default fallbacks.
 
 const game = GameFile.parse({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "t",
   title: "T",
   version: 1,
@@ -18,7 +18,7 @@ const game = GameFile.parse({
   rules: [],
 });
 const yard = SceneFile.parse({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "yard",
   name: "Yard",
   background: "bg",
@@ -33,7 +33,7 @@ const yard = SceneFile.parse({
 });
 
 const ctx = (): RuleContext => ({
-  state: initialState({ schemaVersion: 2, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 2 }] }, "yard", { x: 0, y: 0, facing: "up" }),
+  state: initialState({ schemaVersion: 3, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 2 }] }, "yard", { x: 0, y: 0, facing: "up" }),
   scene: (id) => (id === "yard" ? yard : undefined),
 });
 const say = (text: string) => [{ type: "narrate", text }];

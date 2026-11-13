@@ -44,11 +44,10 @@ export interface ChoiceList {
   node: string;
   options: { id: string; text: string }[];
   /**
-   * The line said right before the list: the speaker's character id (null for narration) and the text. The styled
-   * list box shows it above the separator. Null when the list is the first thing, or an Actions node came between.
-   * It lives and dies with the list, so it is never saved.
+   * The Choices node's own question: who asks (a character id, null for the narrator) and the text. The list box
+   * shows it above the separator, in the same box as the options.
    */
-  prompt: { character: string | null; text: string } | null;
+  question: { character: string | null; text: string };
 }
 
 /** How a dialogue reaches the session. Actions run on the session as a SequenceHost. */
@@ -71,8 +70,6 @@ export class DialogueRun {
   private sub: Sequence | null = null;
   /** Running the `dialogue_end` rule's actions. */
   private ending = false;
-  /** The last Line shown, until an Actions node or a choice; a Branch changes nothing visible, so it carries over. */
-  private lastLine: ChoiceList["prompt"] = null;
   /** Nodes passed since the last Line or Choices. */
   private sinceInput = new Set<string>();
   private readonly byId: Map<string, DialogueNode>;
@@ -97,12 +94,6 @@ export class DialogueRun {
     const start = node ?? this.dialogue.nodes.find((n) => n.type === "start")?.id ?? null;
     this.host.trace?.({ type: "dialogue_start", dialogue: this.id, node: node ?? null });
     if (start === null) return this.finish("dead_end");
-    // Playing from a Choices node skips the line that leads into it; borrow that line (the first one, in file order,
-    // whose `next` is this node) so the list box shows what the player would have just heard.
-    if (node !== undefined && this.byId.get(node)?.type === "choices") {
-      const into = this.dialogue.nodes.find((n): n is LineNode => n.type === "line" && n.next === node);
-      this.lastLine = into ? { character: into.character ?? null, text: into.text } : null;
-    }
     this.goto(start);
     this.advance();
   }
@@ -143,7 +134,6 @@ export class DialogueRun {
     const option = node.options.find((o) => o.id === optionId);
     if (!option || !list.options.some((o) => o.id === optionId)) return;
     this.choices = null;
-    this.lastLine = null;
     if (option.once) {
       const key = choiceKey(this.id, node.id, option.id);
       if (!this.state.dialogueChoices.includes(key)) this.state.dialogueChoices.push(key);
@@ -168,7 +158,6 @@ export class DialogueRun {
           break;
         case "line":
           this.sinceInput.clear();
-          this.lastLine = { character: n.character ?? null, text: n.text };
           this.block = this.host.showLine(n);
           break;
         case "choices":
@@ -176,7 +165,6 @@ export class DialogueRun {
           this.offer(n);
           break;
         case "actions": {
-          this.lastLine = null;
           const seq = new Sequence(this.host, n.do);
           this.sub = seq;
           seq.tick(0);
@@ -218,8 +206,7 @@ export class DialogueRun {
       this.host.note(n.options.length ? `Every option of ${n.id} is hidden, so the dialogue ends.` : `${n.id} has no options, so the dialogue ends.`);
       return this.finish("dead_end");
     }
-    this.choices = { dialogue: this.id, node: n.id, options: shown.map((o) => ({ id: o.id, text: o.text })), prompt: this.lastLine };
-    this.lastLine = null;
+    this.choices = { dialogue: this.id, node: n.id, options: shown.map((o) => ({ id: o.id, text: o.text })), question: { character: n.character ?? null, text: n.text } };
   }
 
   /** Moves along a port. Nothing connected ends the dialogue. */

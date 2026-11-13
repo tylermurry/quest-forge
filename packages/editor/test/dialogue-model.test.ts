@@ -16,6 +16,7 @@ import {
   removeOption,
   setLine,
   setOption,
+  setQuestion,
 } from "../src/model/dialogue/commands.ts";
 import { autoLayout } from "../src/model/dialogue/layout.ts";
 import { invalidKeys, partProblems, problemsByNode } from "../src/model/dialogue/problems.ts";
@@ -60,10 +61,12 @@ describe("dialogue commands", () => {
     parses(b.project);
   });
 
-  it("a new Choices node has one empty option; a Branch starts on a condition", async () => {
+  it("a new Choices node starts with an empty question and one empty option; a Branch starts on a condition", async () => {
     let p = await withShop();
     p = addNode(p, D, "choices", [0, 0]).project;
     p = addNode(p, D, "branch", [0, 0]).project;
+    expect(node(p, "choices_1", "choices")).toMatchObject({ text: "" });
+    expect(node(p, "choices_1", "choices").character).toBeUndefined();
     expect(node(p, "choices_1", "choices").options).toEqual([{ id: "option_1", text: "", if: [], once: false, next: null }]);
     expect(node(p, "branch_1", "branch").if).toEqual([{ type: "has_item", item: "coin" }]);
     parses(p);
@@ -110,6 +113,32 @@ describe("dialogue commands", () => {
     p = setLine(p, D, "line_1", { animation: "idle_down" });
     p = setLine(p, D, "line_1", { character: null });
     expect(node(p, "line_1", "line")).toEqual({ id: "line_1", type: "line", pos: [0, 0], text: "Hi!", next: null });
+    parses(p);
+  });
+
+  it("a new Choices node is asked by the speaker of the line it follows, like a new Line", async () => {
+    let p = await withShop();
+    p = addNode(p, D, "line", [0, 0], { node: "start", port: "next" }).project;
+    p = setLine(p, D, "line_1", { character: "gardener" });
+    p = addNode(p, D, "choices", [0, 0], { node: "line_1", port: "next" }).project;
+    expect(node(p, "choices_1", "choices")).toMatchObject({ character: "gardener", text: "" });
+    parses(p);
+  });
+
+  it("edits a Choices node's question: who asks (or the narrator) and the text, keeping the options", async () => {
+    let p = await withShop();
+    p = addNode(p, D, "choices", [0, 0]).project;
+    const options = node(p, "choices_1", "choices").options;
+    p = setQuestion(p, D, "choices_1", { character: "gardener", text: "What now?" });
+    expect(node(p, "choices_1", "choices")).toEqual({ id: "choices_1", type: "choices", pos: [0, 0], character: "gardener", text: "What now?", options });
+    // Keys stay in the order the file keeps them, however the edits come.
+    expect(Object.keys(node(p, "choices_1", "choices"))).toEqual(["id", "type", "pos", "character", "text", "options"]);
+    p = setQuestion(p, D, "choices_1", { text: "And then?" });
+    expect(node(p, "choices_1", "choices")).toMatchObject({ character: "gardener", text: "And then?" });
+    p = setQuestion(p, D, "choices_1", { character: null });
+    expect(node(p, "choices_1", "choices")).toEqual({ id: "choices_1", type: "choices", pos: [0, 0], text: "And then?", options });
+    expect(() => setQuestion(p, D, "start", { text: "x" })).toThrow(/Choices/);
+    expect(() => setQuestion(p, D, "nope", { text: "x" })).toThrow(CommandError);
     parses(p);
   });
 
@@ -216,6 +245,9 @@ describe("the shopkeeper conversation, a gem standing in for the coin", () => {
     const hello = make("Add Line", (p) => addNode(p, D, "line", [240, 0], { node: "start", port: "next" }))!;
     run("Edit line", (p) => setLine(p, D, hello, { character: "gardener", text: "Welcome to my shop!" }));
     const menu = make("Add Choices", (p) => addNode(p, D, "choices", [480, 0], { node: hello, port: "next" }))!;
+    // The new node is asked by the speaker before it, and needs its question.
+    expect(node(ed.project, menu, "choices")).toMatchObject({ character: "gardener", text: "" });
+    run("Edit question", (p) => setQuestion(p, D, menu, { text: "What can I do for you?" }));
     // 1. A once-only question that loops back.
     run("Edit option", (p) => setOption(p, D, menu, "option_1", { text: "What's new?", once: true }));
     const news = make("Add Line", (p) => addNode(p, D, "line", [720, -100], { node: menu, port: "option:option_1" }))!;
@@ -242,6 +274,7 @@ describe("the shopkeeper conversation, a gem standing in for the coin", () => {
     const d = dialogueOf(p, D);
     expect(validateProject(p).filter((x) => x.location.file.startsWith("dialogues/"))).toEqual([]);
     expect(d.nodes.flatMap((n) => nodePorts(n).map((x) => x.next))).not.toContain(null);
+    expect(node(p, menu, "choices")).toMatchObject({ character: "gardener", text: "What can I do for you?" });
     expect(node(p, menu, "choices").options.map((o) => [o.text, o.once, o.if])).toEqual([
       ["What's new?", true, []],
       ["I'll buy the rod.", false, [{ type: "has_item", item: "gem" }]],

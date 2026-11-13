@@ -31,7 +31,7 @@ export interface UiServices {
   onSettings?(s: PlayerSettings): void;
   /** The shared frame's drawn border thickness (`frameBorders`) when panels are drawn with it: the dialogue list box grows by it. */
   borders?: FrameInsets | null;
-  /** Measures text in the font that is drawn, so the choice box's prompt wraps the way it is drawn. Without one, a rough width per character. */
+  /** Measures text in the font that is drawn, so the choice box's question wraps the way it is drawn. Without one, a rough width per character. */
   measure?: Measure;
 }
 
@@ -112,15 +112,14 @@ export class PlayerUi {
       this.pagedList = list;
       this.choicePage = 0;
     }
-    const { prompt } = list;
+    const { question } = list;
     return layoutChoices({
       unit: this.layout.unit,
       count: list.options.length,
       page: this.choicePage,
-      styled: this.session.game.style?.dialogueChoices !== undefined,
       placement: this.placement,
       borders: this.borders,
-      prompt: prompt ? { name: prompt.character === null ? null : this.session.speakerName(prompt.character), text: prompt.text } : null,
+      question: { name: question.character === null ? null : this.session.speakerName(question.character), text: question.text },
       measure: this.measure,
       size: textStyle(this.session.game.style, "", this.settings.textSize).size,
     });

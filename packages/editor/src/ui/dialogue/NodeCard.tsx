@@ -46,7 +46,7 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
   const errors = problems.filter((x) => x.severity === "error");
   const warnings = problems.filter((x) => x.severity === "warning");
   const unreachable = warnings.some((w) => w.code === "dialogue_node_unreachable");
-  const speaker = n.type === "line" && n.character !== undefined ? p.characters.find((c) => c.data.id === n.character)?.data : undefined;
+  const speaker = (n.type === "line" || n.type === "choices") && n.character !== undefined ? p.characters.find((c) => c.data.id === n.character)?.data : undefined;
   return (
     <div
       key={data.flash}
@@ -86,7 +86,13 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
       )}
 
       {n.type === "choices" && (
-        <div className="grid py-1">
+        <div className="grid pb-1">
+          <div className="grid gap-0.5 border-b px-2 py-1">
+            <span className="font-semibold" style={speaker ? { color: speaker.textColor } : undefined}>
+              {n.character === undefined ? "Narrator" : (speaker?.name ?? `${n.character} (missing)`)}
+            </span>
+            <span className={cn("line-clamp-2", n.text === "" && "text-err italic")}>{n.text === "" ? "Asks nothing yet" : `“${clip(n.text, 90)}”`}</span>
+          </div>
           {n.options.length === 0 && <span className="text-warn px-2">No options</span>}
           {n.options.map((o) => (
             <div key={o.id} className="relative border-b border-dashed px-2 py-0.5 last:border-b-0">

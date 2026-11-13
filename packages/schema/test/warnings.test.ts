@@ -97,7 +97,7 @@ describe("warnings", () => {
       if (menu.type === "choices") menu.options[2]!.next = null;
       const thanks = nodes.find((n) => n.id === "thanks")!;
       if (thanks.type === "line") thanks.next = null;
-      nodes.push({ id: "empty", type: "choices", pos: [0, 500], options: [] });
+      nodes.push({ id: "empty", type: "choices", pos: [0, 500], text: "Anything else?", options: [] });
       if (thanks.type === "line") thanks.next = "empty";
     });
     expect(summary(problems)).toEqual([
@@ -131,16 +131,20 @@ describe("warnings", () => {
     ]);
   });
 
-  it("dialogue: empty line and option text are errors", async () => {
+  it("dialogue: empty line, question and option text are errors", async () => {
     const problems = await problemsAfter((p) => {
       const nodes = p.dialogues[0]!.data.nodes;
       const hello = nodes.find((n) => n.id === "hello")!;
       if (hello.type === "line") hello.text = "";
       const menu = nodes.find((n) => n.id === "menu")!;
-      if (menu.type === "choices") menu.options[0]!.text = "";
+      if (menu.type === "choices") {
+        menu.text = "";
+        menu.options[0]!.text = "";
+      }
     });
     expect(summary(problems)).toEqual([
       { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.1.text", text: 'Dialogue "Shopkeeper" › Node "hello": says nothing. Type the line.' },
+      { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.text", text: 'Dialogue "Shopkeeper" › Node "menu": asks nothing. Type the question.' },
       { severity: "error", code: "empty_text", file: "dialogues/shopkeeper_chat.dialogue.yaml", path: "nodes.2.options.0.text", text: 'Dialogue "Shopkeeper" › Node "menu" › Choice "ask_cave": is an option with no text. Type what the player can say.' },
     ]);
   });

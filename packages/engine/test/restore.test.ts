@@ -11,7 +11,7 @@ const SHOP = {
   id: "shop",
   nodes: [
     { id: "start", type: "start", pos: [0, 0], next: "menu" },
-    { id: "menu", type: "choices", pos: [0, 0], options: [{ id: "ask", text: "Ask", if: [], once: true, next: null }] },
+    { id: "menu", type: "choices", pos: [0, 0], text: "Well?", options: [{ id: "ask", text: "Ask", if: [], once: true, next: null }] },
   ],
 };
 

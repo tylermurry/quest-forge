@@ -50,16 +50,22 @@ Someone says a line, then the dialogue carries on.
 
 ### Choices
 
-Options the player picks from. Each option has its own output port.
+A question and the options the player answers with. The question and the options show together in one box. Each
+option has its own output port.
 
 | Field | What it is |
 |---|---|
+| **Speaker** | Who asks the question: a character, or **Narrator**. A character's name shows above the question; the narrator has no name. |
+| **Question** | What they ask. Required: with nothing typed, the [Problems panel](./13-problems-panel.md) shows an error and the game can't be played or built. |
 | Option text | What the player can say. |
 | **Show if…** | Conditions. The option is hidden unless all are true. |
 | Once | A once-only option goes away after the player picks it. |
 
 **Add option** adds one; the arrows reorder them and **×** removes one. With no options shown, the dialogue
 ends here.
+
+A new **Choices** node starts with an empty question, asked by the speaker of the line it follows (if any). The
+node's card in the graph shows the speaker and the question above the options.
 
 ### Actions
 

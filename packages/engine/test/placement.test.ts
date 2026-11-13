@@ -47,7 +47,7 @@ describe("panel placement", () => {
   });
 
   it("puts the dialogue choices there, rows still full-size", () => {
-    const b = choiceLayout(44, 3, 0, true, AT_80);
+    const b = choiceLayout(44, 3, 0, AT_80);
     expect(b.panel).toMatchObject({ x: 160, y: 80, w: 320 });
     for (const r of b.rows) {
       expect(r.h).toBe(44);
@@ -55,7 +55,7 @@ describe("panel placement", () => {
       expect(r.x + r.w).toBeLessThanOrEqual(b.panel.x + b.panel.w);
     }
     // A long, paged list at the bottom is pushed up to stay on the screen.
-    const paged = choiceLayout(44, 12, 0, true, { top: 300, width: 60 });
+    const paged = choiceLayout(44, 12, 0, { top: 300, width: 60 });
     expect(paged.more).not.toBe(null);
     expect(inside(paged.panel)).toBe(true);
   });
@@ -83,7 +83,7 @@ describe("panel placement", () => {
 
   it("leaves a project without a Frames position on the legacy layout", () => {
     expect(computeLayout(1, null)).toEqual(computeLayout(1));
-    expect(choiceLayout(44, 3, 0, false, null)).toEqual(choiceLayout(44, 3, 0));
+    expect(choiceLayout(44, 3, 0, null)).toEqual(choiceLayout(44, 3, 0));
     const legacyNarrate = layoutTextBox(narrateBox("Hello there."), measure);
     expect(layoutTextBox(narrateBox("Hello there."), measure, undefined, null)).toEqual(legacyNarrate);
     // Speech still sits over its speaker.

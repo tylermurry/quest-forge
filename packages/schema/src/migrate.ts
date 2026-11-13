@@ -18,7 +18,19 @@ const RULE_OWNERS = ["objects", "characters", "hotspots", "regions"];
 export const MIGRATIONS: Record<number, (raw: Raw) => Raw> = {
   /** v2: rules get stable IDs. Files without rules only change version. */
   1: (raw) => withRuleIds(raw),
+  /**
+   * v3: a Choices node asks its own question. Existing ones get an empty question, so the
+   * creator is prompted to write it. Files other than dialogues only change version.
+   */
+  2: (raw) => withChoicesQuestions(raw),
 };
+
+/** Gives every Choices node in a dialogue file's data an empty question (no character). */
+function withChoicesQuestions(raw: Raw): Raw {
+  if (!Array.isArray(raw.nodes)) return raw;
+  const nodes = raw.nodes.map((n) => (typeof n === "object" && n !== null && !Array.isArray(n) && (n as Raw).type === "choices" ? { ...n, text: "" } : n));
+  return { ...raw, nodes };
+}
 
 /**
  * Gives every rule in a scene or game file's data an ID in list order, keeping IDs

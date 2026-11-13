@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 id: coin
 name: coin
 description: A worn copper coin.

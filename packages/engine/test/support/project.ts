@@ -15,7 +15,7 @@ const anim = (frames: number[]) => ({ image: "hero_sheet", frames, fps: 8, loop:
 
 export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogues?: Raw[] } = {}): Project {
   const game = GameFile.parse({
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "t",
     title: "T",
     version: 1,
@@ -27,9 +27,9 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
     rules: [],
     ...over.game,
   });
-  const flags = FlagsFile.parse({ schemaVersion: 2, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 0 }] });
+  const flags = FlagsFile.parse({ schemaVersion: 3, flags: [{ id: "open", type: "bool", initial: false }, { id: "n", type: "counter", initial: 0 }] });
   const hero = CharacterFile.parse({
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "hero",
     name: "Hero",
     textColor: "#ffffff",
@@ -39,7 +39,7 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
   });
   const gardener = CharacterFile.parse({ ...hero, id: "gardener", name: "Gardener", textColor: "#88cc88" });
   const base = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     background: "bg",
     depth: { far: { y: 200, scale: 1 }, near: { y: 400, scale: 1 } },
     walkable: { outer: [[0, 200], [640, 200], [640, 400], [0, 400]], holes: [] },
@@ -63,7 +63,7 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
     ...over.yard,
   });
   const shed = SceneFile.parse({ ...base, id: "shed", name: "Shed", spawns: { door: { x: 50, y: 380, facing: "right" } }, ...over.shed });
-  const item = (id: string, name: string) => ItemFile.parse({ schemaVersion: 2, id, name, description: `A ${name}.`, icon: `${id}_icon` });
+  const item = (id: string, name: string) => ItemFile.parse({ schemaVersion: 3, id, name, description: `A ${name}.`, icon: `${id}_icon` });
 
   const p = emptyProject();
   p.game = { path: "game.yaml", data: game };
@@ -72,7 +72,7 @@ export function testProject(over: { game?: Raw; yard?: Raw; shed?: Raw; dialogue
   p.characters = [hero, gardener].map((c) => ({ path: `characters/${c.id}.character.yaml`, data: c }));
   p.items = [item("key", "key"), item("stick", "stick"), item("string", "string"), item("rod", "fishing rod")].map((i) => ({ path: `items/${i.id}.item.yaml`, data: i }));
   p.dialogues = (over.dialogues ?? []).map((d) => {
-    const data = DialogueFile.parse({ schemaVersion: 2, name: "Chat", ...d });
+    const data = DialogueFile.parse({ schemaVersion: 3, name: "Chat", ...d });
     return { path: `dialogues/${data.id}.dialogue.yaml`, data };
   });
   return p;

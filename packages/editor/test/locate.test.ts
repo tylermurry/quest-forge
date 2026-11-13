@@ -39,7 +39,7 @@ describe("jump-to", () => {
 
     const withDialogue: Project = {
       ...p,
-      dialogues: [{ path: "dialogues/chat.dialogue.yaml", data: { schemaVersion: 2, id: "chat", name: "Chat", nodes: [{ id: "start", type: "start", pos: [0, 0], next: null }] } }],
+      dialogues: [{ path: "dialogues/chat.dialogue.yaml", data: { schemaVersion: 3, id: "chat", name: "Chat", nodes: [{ id: "start", type: "start", pos: [0, 0], next: null }] } }],
     };
     expect(locate(withDialogue, { file: "dialogues/chat.dialogue.yaml", path: ["nodes", 0] })!.target).toEqual({ kind: "dialogueNode", dialogue: "chat", node: "start" });
   });

@@ -79,19 +79,15 @@ describe("preview of the choices", () => {
     for (const t of l.items) if (t.kind === "text") expect(t.y).toBeLessThan(sep.y);
   });
 
-  it("puts the separator 8 pixels above and below, only when Dialogue Choices is configured, and pads each row", () => {
-    const at = (styled: boolean) => {
-      const l = layoutSample("choices", { insets: ZERO, scale: 16 }, { top: 50, width: 60 }, { size: 16 }, measure, styled);
-      return l.items.flatMap((it) => (it.kind === "choices" ? [it.box] : []))[0]!;
-    };
-    const styled = at(true);
-    expect(styled.rows[0]!.y - styled.panel.y).toBe(18);
-    expect(at(false).rows[0]!.y - at(false).panel.y).toBe(8);
-    expect(styled.rows[0]!.h).toBe(19 + 12);
+  it("puts the separator 8 pixels above and below, and pads each row", () => {
+    const l = layoutSample("choices", { insets: ZERO, scale: 16 }, { top: 50, width: 60 }, { size: 16 }, measure);
+    const box = l.items.flatMap((it) => (it.kind === "choices" ? [it.box] : []))[0]!;
+    expect(box.rows[0]!.y - box.panel.y).toBe(18);
+    expect(box.rows[0]!.h).toBe(19 + 12);
   });
 
   it("spaces the name, the words and the separator line evenly", () => {
-    const l = layoutSample("choices", { insets: ZERO, scale: 16 }, { top: 50, width: 60 }, { size: 16 }, measure, true);
+    const l = layoutSample("choices", { insets: ZERO, scale: 16 }, { top: 50, width: 60 }, { size: 16 }, measure);
     const [name, words] = l.items.filter((it) => it.kind === "text");
     const box = l.items.flatMap((it) => (it.kind === "choices" ? [it.box] : []))[0]!;
     const line = 19;

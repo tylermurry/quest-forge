@@ -233,8 +233,8 @@ export interface ChoiceBox {
   panel: Rect;
   /** The area inside the shared frame's borders, where the separator line goes. Absent: the whole panel. */
   inner?: Rect;
-  /** The line said just before the choices, above the separator, inside the panel. Absent: none. */
-  prompt?: ChoicePromptBox;
+  /** What the node asks, above the separator, inside the panel. Absent only in the Styling preview, which lays the question out itself. */
+  question?: ChoiceQuestionBox;
   /** One per option shown on this page, top to bottom. */
   rows: Rect[];
   /** Index of this page's first option. */
@@ -244,11 +244,11 @@ export interface ChoiceBox {
   pages: number;
 }
 
-/** A choice box's prompt, laid out: the speaker's name (absent for narration) and the text lines, at one size. */
-export interface ChoicePromptLayout {
+/** A choice box's question, laid out: the speaker's name (absent for narration) and the text lines, at one size. */
+export interface ChoiceQuestionLayout {
   name: string | null;
   lines: string[];
-  /** The text size the prompt was laid out at, and the distance between its lines. */
+  /** The text size the question was laid out at, and the distance between its lines. */
   size: number;
   line: number;
   /** Room above the first line (the box's padding when it has no frame), included in `height`. */
@@ -257,8 +257,8 @@ export interface ChoicePromptLayout {
   height: number;
 }
 
-/** A laid out prompt placed in a box: `x` is the middle of the text area, `y` the top of the first line (the name's, when there is one). */
-export interface ChoicePromptBox extends ChoicePromptLayout {
+/** A laid out question placed in a box: `x` is the middle of the text area, `y` the top of the first line (the name's, when there is one). */
+export interface ChoiceQuestionBox extends ChoiceQuestionLayout {
   x: number;
   y: number;
 }
@@ -267,57 +267,46 @@ const CHOICE_WIDTH = 560;
 
 /** The separator line's thickness. */
 const SEPARATOR_THICKNESS = 2;
-/** The room above and below the separator line of styled choices. */
+/** The room above and below the separator line. */
 export const SEPARATOR_SPACE = 8;
 /** How far the separator reaches past the rows on each side. */
 const SEPARATOR_REACH = 4;
-/** The gap between a styled choice row's edge and its text. */
+/** The gap between a choice row's edge and its text. */
 export const CHOICE_TEXT_INSET = 12;
 
-/**
- * The space above the first row: the legacy box's padding, or for styled choices (Dialogue Choices configured)
- * the separator line with room above and below it.
- */
-export const choiceTop = (styled: boolean) => (styled ? SEPARATOR_SPACE * 2 + SEPARATOR_THICKNESS : GAP * 2);
+/** The space above the first row: the separator line with room above and below it. */
+export const CHOICE_TOP = SEPARATOR_SPACE * 2 + SEPARATOR_THICKNESS;
 
-/** The separator line at the top of a styled choices region, a little wider than the rows. */
+/** The separator line at the top of the choices region, a little wider than the rows. */
 export function separatorRect(box: ChoiceBox): Rect {
   const inset = GAP * 2 - SEPARATOR_REACH;
   const area = box.inner ?? box.panel;
-  return { x: area.x + inset, y: area.y + (box.prompt?.height ?? 0) + SEPARATOR_SPACE, w: area.w - inset * 2, h: SEPARATOR_THICKNESS };
+  return { x: area.x + inset, y: area.y + (box.question?.height ?? 0) + SEPARATOR_SPACE, w: area.w - inset * 2, h: SEPARATOR_THICKNESS };
 }
 
 /**
- * The gap between choice rows: the legacy buttons are spaced apart; styled rows touch, so the pointer never falls
- * between two answers and the hover moves straight from one to the next.
- */
-export const choiceGap = (styled: boolean) => (styled ? 0 : GAP);
-
-/**
- * `styled`: Dialogue Choices is configured, which leaves room for the separator line above the rows.
+ * Rows touch, so the pointer never falls between two answers and the hover moves straight from one to the next.
  * `placement`: where the creator put the panels (`placementOf`); null keeps the legacy 560-pixel box at the bottom.
  * `borders`: the shared frame's drawn border thickness (`frameBorders`) when the panels are framed; the rows and the
  * separator sit inside the borders and the panel grows by their thickness. Null leaves the legacy box.
- * `prompt`: the line said before the choices (`layoutChoices` makes it); its height goes above the separator, the box
+ * `question`: what the node asks (`layoutChoices` makes it); its height goes above the separator, the box
  * grows by it and the pages hold fewer rows when the screen is short.
  */
-export function choiceLayout(unit: number, count: number, page: number, styled = false, placement: Placement | null = null, borders: FrameInsets | null = null, prompt: ChoicePromptLayout | null = null): ChoiceBox {
+export function choiceLayout(unit: number, count: number, page: number, placement: Placement | null = null, borders: FrameInsets | null = null, question: ChoiceQuestionLayout | null = null): ChoiceBox {
   const pad = GAP * 2;
   const b = borders ?? { left: 0, right: 0, top: 0, bottom: 0 };
-  const above = prompt?.height ?? 0;
-  const top = choiceTop(styled) + above;
-  const gap = choiceGap(styled);
-  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - b.top - b.bottom - top - pad + gap) / (unit + gap)));
+  const top = CHOICE_TOP + (question?.height ?? 0);
+  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - b.top - b.bottom - top - pad) / unit));
   const perPage = count <= fit ? count : fit - 1;
   const pages = Math.max(1, Math.ceil(count / Math.max(1, perPage)));
   const p = ((page % pages) + pages) % pages;
   const first = p * perPage;
   const shown = Math.min(perPage, count - first);
   const lines = shown + (pages > 1 ? 1 : 0);
-  const h = b.top + top + pad + lines * (unit + gap) - gap + b.bottom;
+  const h = b.top + top + pad + lines * unit + b.bottom;
   const panel: Rect = placement ? placeAt(placement, placementWidth(placement), h) : { x: Math.round((SCENE_WIDTH - CHOICE_WIDTH) / 2), y: SCENE_HEIGHT - GAP * 2 - h, w: CHOICE_WIDTH, h };
   const inner: Rect = { x: panel.x + b.left, y: panel.y + b.top, w: panel.w - b.left - b.right, h: panel.h - b.top - b.bottom };
-  const row = (i: number): Rect => ({ x: inner.x + pad, y: inner.y + top + i * (unit + gap), w: inner.w - pad * 2, h: unit });
-  const placed: ChoicePromptBox | null = prompt ? { ...prompt, x: inner.x + inner.w / 2, y: inner.y + prompt.pad } : null;
-  return { panel, ...(borders ? { inner } : {}), ...(placed ? { prompt: placed } : {}), rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
+  const row = (i: number): Rect => ({ x: inner.x + pad, y: inner.y + top + i * unit, w: inner.w - pad * 2, h: unit });
+  const placed: ChoiceQuestionBox | null = question ? { ...question, x: inner.x + inner.w / 2, y: inner.y + question.pad } : null;
+  return { panel, ...(borders ? { inner } : {}), ...(placed ? { question: placed } : {}), rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
 }

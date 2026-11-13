@@ -5,9 +5,9 @@ import { Color, Id, SCENE_HEIGHT } from "./common.ts";
 //
 // Absent vs. explicit. No `style` key (or no section inside it) means the creator never
 // configured that part, and `resolveStyle` returns what the engine drew before styling
-// existed (LEGACY_STYLE), so old projects look the same. A section that is present has its
-// missing fields filled from AUTHOR_DEFAULTS, the values the Styling editor shows. No zod
-// defaults are used, so what is saved is exactly what the creator set.
+// existed (LEGACY_STYLE), so old projects look the same; Dialogue Choices and Speech have no such look and
+// use AUTHOR_DEFAULTS. A section that is present has its missing fields filled from AUTHOR_DEFAULTS, the
+// values the Styling editor shows. No zod defaults are used, so what is saved is exactly what the creator set.
 
 /** Pixel border widths of a nine-slice frame: the corners and edges that are never stretched. */
 export const FrameInsets = z.strictObject({
@@ -148,8 +148,7 @@ export interface EffectiveStyle {
     /** `none` is the legacy look (no hover/press effect beyond today's fill). */
     effect: IconEffect | "none";
   };
-  /** `none` is the legacy look: each row on a framed button, the hovered one filled gold. */
-  dialogueChoices: { effect: IconEffect | "none"; separator: string };
+  dialogueChoices: { effect: IconEffect; separator: string };
   /** `top` in game pixels, or "center"; `width` in percent of the screen. */
   narration: { top: number | "center"; width: number };
   /** `name`: the color every speaker's name is drawn in. */
@@ -164,24 +163,26 @@ export const TEXT_LINE_RATIO = 1.2;
 
 /**
  * What the engine drew before styling existed, for projects with no style:
- * `10px monospace` (TEXT_FONT in engine ui/textbox.ts) with 12 px lines (TEXT_LINE), white
- * text, hovered choice rows filled #c89a3c (ACTIVE in ui/draw.ts) and edged #e8d8a8 (EDGE).
+ * `10px monospace` (TEXT_FONT in engine ui/textbox.ts) with 12 px lines (TEXT_LINE) and white
+ * text. The dialogue choices have no legacy look: they always use `dialogueChoices`' author defaults.
  */
-export const LEGACY_STYLE: EffectiveStyle = {
+export const LEGACY_STYLE: Omit<EffectiveStyle, "dialogueChoices"> = {
   sharedFrame: NO_FRAME,
   typography: { family: "monospace", font: undefined, size: 10, lineHeight: 12, color: "#ffffff" },
   iconBar: { frame: NO_FRAME, icons: {}, effect: "none" },
-  dialogueChoices: { effect: "none", separator: "#e8d8a8" },
   narration: { top: 50, width: 60 },
   // Names have one color whether or not the creator styled speech; it no longer comes from the character.
   speech: { name: "#e8d8a8" },
 };
 
-/** What a section shows for fields the creator left out once they have configured it. */
+/**
+ * What a section shows for fields the creator left out once they have configured it. `dialogueChoices` and
+ * `speech` have no legacy look, so these are also what an absent section shows.
+ */
 export const AUTHOR_DEFAULTS = {
   typography: { family: "monospace", size: 14, color: "#ffffff" },
   iconBar: { effect: "brighten" },
-  dialogueChoices: { effect: "brighten", separator: LEGACY_STYLE.dialogueChoices.separator },
+  dialogueChoices: { effect: "brighten", separator: "#e8d8a8" },
   narration: { top: 50, width: 60 },
   speech: { name: LEGACY_STYLE.speech.name },
 } as const satisfies { typography: Typography; iconBar: IconBar; dialogueChoices: DialogueChoices; narration: Narration; speech: Speech };
@@ -190,7 +191,8 @@ const frameOf = (f: Frame | undefined): EffectiveFrame => (f ? { image: f.image,
 
 /**
  * The style to draw with. An absent style, or an absent section, gives LEGACY_STYLE's values
- * for that section; a present section fills its own gaps from AUTHOR_DEFAULTS.
+ * for that section (AUTHOR_DEFAULTS for dialogue choices and speech); a present section fills its own gaps
+ * from AUTHOR_DEFAULTS.
  */
 export function resolveStyle(style: GameStyle | undefined): EffectiveStyle {
   const t = style?.typography;
@@ -211,9 +213,7 @@ export function resolveStyle(style: GameStyle | undefined): EffectiveStyle {
     iconBar: bar
       ? { frame: frameOf(bar.frame), icons: { ...bar.icons }, effect: bar.effect ?? AUTHOR_DEFAULTS.iconBar.effect }
       : LEGACY_STYLE.iconBar,
-    dialogueChoices: choices
-      ? { effect: choices.effect ?? AUTHOR_DEFAULTS.dialogueChoices.effect, separator: choices.separator ?? AUTHOR_DEFAULTS.dialogueChoices.separator }
-      : LEGACY_STYLE.dialogueChoices,
+    dialogueChoices: { effect: choices?.effect ?? AUTHOR_DEFAULTS.dialogueChoices.effect, separator: choices?.separator ?? AUTHOR_DEFAULTS.dialogueChoices.separator },
     narration: style?.narration
       ? { top: style.narration.center ? "center" : (style.narration.top ?? AUTHOR_DEFAULTS.narration.top), width: style.narration.width ?? AUTHOR_DEFAULTS.narration.width }
       : LEGACY_STYLE.narration,

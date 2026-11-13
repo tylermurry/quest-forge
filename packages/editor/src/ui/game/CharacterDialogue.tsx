@@ -1,6 +1,6 @@
 import { resolveStyle, type IconEffect } from "@questforge/schema";
 import type { Actions } from "../../model/actions.ts";
-import { dialogueChoicesOf, setChoiceEffect, setChoiceSeparator, setSpeechNameColor } from "../../model/style.ts";
+import { setChoiceEffect, setChoiceSeparator, setSpeechNameColor } from "../../model/style.ts";
 import { ColorField } from "../ColorField.tsx";
 import { Button } from "../components/ui/button.tsx";
 import { ResetSection } from "./ResetSection.tsx";
@@ -20,10 +20,8 @@ export function CharacterDialogue({ actions }: { actions: Actions }) {
   const { editor } = actions;
   const p = editor.project;
   const style = p.game?.data.style;
-  const saved = dialogueChoicesOf(p);
-  // What the controls show: what the creator set, and for the rest what customising starts from.
-  const shown = resolveStyle({ ...style, dialogueChoices: saved ?? {} }).dialogueChoices;
-  const { speech } = resolveStyle(style);
+  // What the controls show: what the creator set, and for the rest the author defaults.
+  const { speech, dialogueChoices: shown } = resolveStyle(style);
 
   return (
     <section aria-label="Character Dialogue" className="grid gap-5">

@@ -4,7 +4,7 @@ import { DialogueFile, SceneFile } from "../src/index.ts";
 
 // An example scene, filled in, with asset IDs and placed characters.
 const beachYaml = `
-schemaVersion: 2
+schemaVersion: 3
 id: beach
 name: Sunny Beach
 background: beach_bg
@@ -54,7 +54,7 @@ rules:
 `;
 
 const shopDialogueYaml = `
-schemaVersion: 2
+schemaVersion: 3
 id: shopkeeper_chat
 name: Shopkeeper
 nodes:
@@ -63,6 +63,8 @@ nodes:
   - id: menu
     type: choices
     pos: [0, 200]
+    character: shopkeeper
+    text: "What can I get you?"
     options:
       - { id: ask_cave, text: "What's in the cave?", if: [], once: true, next: cave_answer }
       - { id: buy, text: "I'd like the lantern.", if: [{ type: has_item, item: coin }], once: false, next: sell }
@@ -114,6 +116,8 @@ describe("dialogue schema", () => {
     const menu = d.nodes.find((n) => n.id === "menu");
     expect(menu?.type).toBe("choices");
     if (menu?.type === "choices") {
+      expect(menu.character).toBe("shopkeeper");
+      expect(menu.text).toBe("What can I get you?");
       expect(menu.options.map((o) => o.once)).toEqual([true, false, false]);
       expect(menu.options[1]?.if).toEqual([{ type: "has_item", item: "coin" }]);
     }
@@ -124,6 +128,14 @@ describe("dialogue schema", () => {
     delete d.nodes[1].character;
     d.nodes[1].next = null;
     expect(DialogueFile.safeParse(d).success).toBe(true);
+  });
+
+  it("lets the narrator ask a question, but a Choices node always has question text", () => {
+    const d = parse(shopDialogueYaml);
+    delete d.nodes[2].character;
+    expect(DialogueFile.safeParse(d).success).toBe(true);
+    delete d.nodes[2].text;
+    expect(DialogueFile.safeParse(d).success).toBe(false);
   });
 
   it("rejects unknown node types and missing ports", () => {

@@ -31,14 +31,18 @@ Select a node to edit it in the **Inspector**.
 | Node | What it does |
 |---|---|
 | **Line** | A **Speaker** says a **Line**. Leave the speaker empty for the narrator. Optionally play an **Animation while speaking**. |
-| **Choices** | Shows options for the player to pick. Each option has its own output port. |
+| **Choices** | Asks a **Question** and shows options for the player to pick. Each option has its own output port. |
 | **Actions** | Runs actions in order, such as **Give item** or **Set flag**, then carries on. |
 | **Branch** | Checks conditions. If they're all true it carries on from its **true** port, otherwise from **false**. |
 | **End** | Ends the conversation. |
 
 ## Write choices
 
-Select a **Choices** node and click **Add option** for each thing the player can say.
+Select a **Choices** node. Choose who asks in **Speaker** (a character, or **Narrator**) and type the **Question**,
+such as "What can I do for you?". Players see the question and the options together in one box, with the speaker's
+name above the question. A question is required: until you type one, the **Problems** panel shows an error.
+
+Then click **Add option** for each thing the player can say.
 
 - **Show if…** adds conditions to an option. The option is hidden unless they're all true.
 - Make an option **once-only** and it goes away after the player picks it, like a question they've already

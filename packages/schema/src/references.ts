@@ -159,6 +159,7 @@ function dialogueRefs(d: DialogueFile, push: Push) {
         }
         return next(n.next, [...at, "next"]);
       case "choices":
+        if (n.character !== undefined) push("character", n.character, [...at, "character"]);
         return n.options.forEach((o, j) => {
           conditionsRefs(o.if, [...at, "options", j, "if"], push);
           next(o.next, [...at, "options", j, "next"]);

@@ -26,7 +26,7 @@ const settle = (s: Session) => {
   s.tick(1 / 60);
 };
 const withAudio = (p: Project, ids: string[]) => {
-  p.assets = { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 2, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }) };
+  p.assets = { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 3, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }) };
   return p;
 };
 const button = <Id extends string>(list: { id: Id; rect: Rect }[], id: Id) => center(list.find((b) => b.id === id)!.rect);

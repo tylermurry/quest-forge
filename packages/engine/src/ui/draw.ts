@@ -5,7 +5,7 @@ import { score } from "../state.ts";
 import type { Rect } from "../sprite.ts";
 import type { Vec } from "../vec.ts";
 import type { PlayerUi } from "./controller.ts";
-import { legibleInk, type ChoicesLook } from "./choices.ts";
+import type { ChoicesLook } from "./choices.ts";
 import { drawIcon, shadeColor, shadedImage, type IconId } from "./icons.ts";
 import { CHOICE_TEXT_INSET, PANEL_PAD, SEPARATOR_SPACE, fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
 import { frameBorders, frameScale, outsetFrame, type PanelSkin, type SizedImage } from "./frame.ts";
@@ -185,7 +185,7 @@ export interface ChoicesView {
   hover: Vec | null;
 }
 
-/** What a styled choice row's hover effect lays over it. */
+/** What a choice row's hover effect lays over it. */
 const ROW_EFFECT: Record<IconEffect, string> = { brighten: "rgba(255,255,255,0.18)", darken: "rgba(0,0,0,0.35)" };
 const ROW_RADIUS = 4;
 
@@ -208,34 +208,20 @@ export function choiceRowAt(box: ChoiceBox, p: Vec | null): Rect | null {
 }
 
 /**
- * The rows of the dialogue list box, without the box behind them. Styled (the author configured Dialogue
- * Choices): the line said before the choices (name, then text) when the box has one, the separator line at the top of the choices region, then each option as plain text; the row under
- * the pointer is brightened or darkened, with rounded corners. Legacy: each option on a button, the hovered one
- * filled gold with black text. The game and the editor's Dialogue Choices preview both draw with this.
+ * The rows of the dialogue list box, without the box behind them: the question (the asker's name in bold, then the
+ * text) above the separator line at the top of the choices region, then each option as plain text; the row under
+ * the pointer is brightened or darkened, with rounded corners. The game and the editor's Dialogue Choices preview
+ * both draw with this.
  */
 export function drawChoiceRows(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook) {
   const { box, hover } = v;
   const effect = look.effect;
-  if (effect === "none") {
-    box.rows.forEach((row, i) => {
-      const text = v.options[i];
-      if (text === undefined) return;
-      const over = !!hover && inRect(hover, row);
-      button(ctx, row, over, true, ACTIVE);
-      drawFitted(ctx, t, text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? legibleInk(ACTIVE) : ink(t), baseline: "middle" });
-    });
-    if (box.more) {
-      button(ctx, box.more);
-      buttonText(ctx, t, "More…", box.more);
-    }
-    return;
-  }
-  const prompt = box.prompt;
-  if (prompt) {
-    const at = (text: string, y: number, color: string, bold = false) => drawText(ctx, t, text, prompt.x, y, { size: prompt.size, align: "center", baseline: "top", color, bold });
-    if (prompt.name) at(prompt.name, prompt.y, t.name, true);
-    const first = prompt.y + (prompt.name ? prompt.line + SEPARATOR_SPACE : 0);
-    prompt.lines.forEach((line, i) => at(line, first + i * prompt.line, t.color));
+  const question = box.question;
+  if (question) {
+    const at = (text: string, y: number, color: string, bold = false) => drawText(ctx, t, text, question.x, y, { size: question.size, align: "center", baseline: "top", color, bold });
+    if (question.name) at(question.name, question.y, t.name, true);
+    const first = question.y + (question.name ? question.line + SEPARATOR_SPACE : 0);
+    question.lines.forEach((line, i) => at(line, first + i * question.line, t.color));
   }
   const sep = separatorRect(box);
   ctx.fillStyle = look.separator;

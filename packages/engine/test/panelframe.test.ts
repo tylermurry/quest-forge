@@ -57,7 +57,7 @@ const MENU = {
   id: "menu",
   nodes: [
     { id: "start", type: "start", pos: [0, 0], next: "pick" },
-    { id: "pick", type: "choices", pos: [0, 0], options: OPTIONS.map((text, i) => ({ id: `o${i}`, text, if: [], once: false, next: "done" })) },
+    { id: "pick", type: "choices", pos: [0, 0], text: "Well?", options: OPTIONS.map((text, i) => ({ id: `o${i}`, text, if: [], once: false, next: "done" })) },
     { id: "done", type: "end", pos: [0, 0] },
   ],
 };
@@ -280,16 +280,14 @@ describe("the framed dialogue list box", () => {
   const borders = frameBorders({ insets: FRAME.insets, scale: 16 });
 
   it("is unchanged without borders, and carries no inner area", () => {
-    for (const styled of [false, true]) {
-      const plain = choiceLayout(44, 3, 0, styled, null);
-      expect(choiceLayout(44, 3, 0, styled, null, null)).toEqual(plain);
-      expect(plain).not.toHaveProperty("inner");
-    }
+    const plain = choiceLayout(44, 3, 0, null);
+    expect(choiceLayout(44, 3, 0, null, null)).toEqual(plain);
+    expect(plain).not.toHaveProperty("inner");
   });
 
   it("puts the rows and the separator inside the borders, and the panel grows by them", () => {
-    const plain = choiceLayout(44, 3, 0, true, { top: 80, width: 50 });
-    const framed = choiceLayout(44, 3, 0, true, { top: 80, width: 50 }, borders);
+    const plain = choiceLayout(44, 3, 0, { top: 80, width: 50 });
+    const framed = choiceLayout(44, 3, 0, { top: 80, width: 50 }, borders);
     expect(framed.panel).toMatchObject({ x: 160, y: 80, w: 320, h: plain.panel.h + 2 * BORDER });
     expect(framed.inner).toEqual({ x: 160 + BORDER, y: 80 + BORDER, w: 320 - 2 * BORDER, h: plain.panel.h });
     for (const r of framed.rows) {
@@ -304,7 +302,7 @@ describe("the framed dialogue list box", () => {
   });
 
   it("pages a long list so the framed panel still fits the screen", () => {
-    const paged = choiceLayout(44, 14, 0, true, null, borders);
+    const paged = choiceLayout(44, 14, 0, null, borders);
     expect(paged.more).not.toBe(null);
     expect(paged.panel.y).toBeGreaterThanOrEqual(0);
     expect(paged.panel.y + paged.panel.h).toBeLessThanOrEqual(SCENE_HEIGHT);

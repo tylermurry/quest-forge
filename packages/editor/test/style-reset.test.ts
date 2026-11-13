@@ -83,7 +83,7 @@ describe("Reset to Default: what each section goes back to", () => {
     const before = await customised();
     expect(styleOf(reset(before, "typography"))!.typography).toEqual({ size: 14 });
     const dialogue = styleOf(reset(before, "characterDialogue"))!;
-    expect(dialogue.dialogueChoices).toEqual({ effect: "brighten" });
+    expect(dialogue.dialogueChoices).toBeUndefined();
     expect(dialogue.speech).toBeUndefined();
     expect(styleOf(reset(before, "iconBar"))!.iconBar).toBeUndefined();
   });
@@ -103,7 +103,7 @@ describe("Reset to Default: what each section goes back to", () => {
     const legacy = await m1Project();
     expect(styleOf(legacy)).toBeUndefined();
     expect(styleOf(reset(legacy, "typography"))).toEqual({ typography: { size: 14 } });
-    expect(styleOf(reset(legacy, "characterDialogue"))).toEqual({ dialogueChoices: { effect: "brighten" } });
+    expect(reset(legacy, "characterDialogue")).toEqual(legacy);
     const framed = reset(legacy, "frames");
     expect(Object.keys(styleOf(framed)!)).toEqual(["sharedFrame"]);
     expect(framed.assets!.data.images.map((i) => i.id)).toEqual([...legacy.assets!.data.images.map((i) => i.id), "frame"]);
@@ -126,9 +126,9 @@ describe("Reset to Default: nothing to reset", () => {
     for (const section of RESETTABLE_SECTIONS) expect(isStylingSectionDefault(fresh, section), section).toBe(true);
   });
 
-  it("a project with no style is at default only for the icon bar", async () => {
+  it("a project with no style is at default for Character Dialogue and the icon bar", async () => {
     const legacy = await m1Project();
-    expect(RESETTABLE_SECTIONS.filter((s) => isStylingSectionDefault(legacy, s))).toEqual(["iconBar"]);
+    expect(RESETTABLE_SECTIONS.filter((s) => isStylingSectionDefault(legacy, s))).toEqual(["characterDialogue", "iconBar"]);
   });
 
   it("any change to a section makes that section, and only that one, customised", () => {

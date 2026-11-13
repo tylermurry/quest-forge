@@ -146,7 +146,7 @@ describe("rules", () => {
 
 describe("game.yaml", () => {
   const game = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "the_lantern",
     title: "The Lantern",
     version: 1,

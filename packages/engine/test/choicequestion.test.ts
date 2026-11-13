@@ -5,27 +5,28 @@ import { Session } from "../src/session.ts";
 import { choicesLook } from "../src/ui/choices.ts";
 import { PlayerUi } from "../src/ui/controller.ts";
 import { drawChoiceBox } from "../src/ui/draw.ts";
-import { choiceLayout, separatorRect, type ChoiceBox } from "../src/ui/layout.ts";
+import { separatorRect, type ChoiceBox } from "../src/ui/layout.ts";
 import { textStyle } from "../src/ui/typography.ts";
 import { testImages, testProject } from "./support/project.ts";
 
-// The styled choice box shows the line said just before it (name, text) above the separator, inside the same panel.
-// Legacy boxes, and choices that come first, keep today's box.
+// The choice box shows the Choices node's own question (the asker's name, then the text) above the separator,
+// inside the same panel as the rows. A line said before the node plays as a line and is not part of the box.
 
 type Raw = Record<string, unknown>;
-const WELCOME = "Welcome! Have a look at my wares.";
+const QUESTION = "What can I do for you?";
 const opt = (id: string, text: string, next: string | null = "done") => ({ id, text, if: [], once: false, next });
 const start = (next: string) => ({ id: "start", type: "start", pos: [0, 0], next });
 const say = (id: string, text: string, next: string, character: string | null = "gardener") => ({ id, type: "line", pos: [0, 0], ...(character ? { character } : {}), text, next });
-const choices = (options: Raw[]) => ({ id: "menu", type: "choices", pos: [0, 0], options });
+/** A Choices node that `character` (the narrator when null) asks `text` with. */
+const choices = (options: Raw[], text = QUESTION, character: string | null = "gardener") => ({ id: "menu", type: "choices", pos: [0, 0], ...(character ? { character } : {}), text, options });
 const end = { id: "done", type: "end", pos: [0, 0] };
 const THREE = [opt("a", "Ask about the pond", "news"), opt("b", "Ask about the rod"), opt("c", "Say goodbye")];
 const TWELVE = Array.from({ length: 12 }, (_, i) => opt(`o${i}`, `Option ${i}`));
 
-const SHOP = { id: "shop", nodes: [start("hello"), say("hello", WELCOME, "menu"), choices(THREE), say("news", "Nothing ever happens here.", "menu"), end] };
-const FIRST = { id: "shop", nodes: [start("menu"), choices(THREE), end] };
-const AFTER_ACTIONS = { id: "shop", nodes: [start("hello"), say("hello", WELCOME, "act"), { id: "act", type: "actions", pos: [0, 0], do: [], next: "menu" }, choices(THREE), end] };
-const NARRATED = { id: "shop", nodes: [start("hello"), say("hello", "A bell rings.", "menu", null), choices(THREE), end] };
+const SHOP = { id: "shop", nodes: [start("menu"), choices(THREE), say("news", "Nothing ever happens here.", "menu"), end] };
+const WITH_LINE = { id: "shop", nodes: [start("hello"), say("hello", "Welcome! Have a look at my wares.", "menu"), choices(THREE), end] };
+const NARRATED = { id: "shop", nodes: [start("menu"), choices(THREE, "A bell rings. What now?", null), end] };
+const long = (text: string, options = THREE) => ({ id: "shop", nodes: [start("menu"), choices(options, text), end] });
 
 const STYLED: GameStyle = { dialogueChoices: { separator: "#ff0000" }, speech: { name: "#ff00ff" }, typography: { color: "#00ff00" } };
 const PLACED: GameStyle = { ...STYLED, narration: { top: 30, width: 60 } };
@@ -76,21 +77,22 @@ function drawn(ui: PlayerUi, style: GameStyle | undefined) {
   return events;
 }
 
-describe("the choice box's prompt", () => {
-  it("shows the speaker's name, their line, the separator, then the rows, in one panel", () => {
+describe("the choice box's question", () => {
+  it("shows the asker's name, the question, the separator, then the rows, in one panel", () => {
     const { s, ui } = setup(SHOP);
     untilChoices(s);
+    expect(s.choices!.question).toEqual({ character: "gardener", text: QUESTION });
     const box = ui.choiceBox!;
-    expect(box.prompt).toMatchObject({ name: "Gardener", lines: [WELCOME] });
+    expect(box.question).toMatchObject({ name: "Gardener", lines: [QUESTION] });
     const sep = separatorRect(box);
-    // The prompt is inside the panel and ends one separator-space above the line.
-    expect(box.prompt!.y).toBeGreaterThanOrEqual(box.panel.y);
-    expect(box.prompt!.y + box.prompt!.height - box.prompt!.pad).toBe(sep.y - 8);
+    // The question is inside the panel and ends one separator-space above the line.
+    expect(box.question!.y).toBeGreaterThanOrEqual(box.panel.y);
+    expect(box.question!.y + box.question!.height - box.question!.pad).toBe(sep.y - 8);
     expect(box.rows[0]!.y).toBe(sep.y + sep.h + 8);
 
     const events = drawn(ui, STYLED);
     const order = events.filter((e) => e.kind === "text" || e.color === "#ff0000");
-    expect(order.map((e) => e.text ?? "separator")).toEqual(["Gardener", WELCOME, "separator", "Ask about the pond", "Ask about the rod", "Say goodbye"]);
+    expect(order.map((e) => e.text ?? "separator")).toEqual(["Gardener", QUESTION, "separator", "Ask about the pond", "Ask about the rod", "Say goodbye"]);
     expect(order[0]).toMatchObject({ color: "#ff00ff" });
     expect(order[0]!.font).toContain("bold");
     expect(order[1]).toMatchObject({ color: "#00ff00" });
@@ -99,141 +101,127 @@ describe("the choice box's prompt", () => {
     expect(order[1]!.y).toBeLessThan(order[2]!.y);
   });
 
-  it("keeps the old box when Dialogue Choices isn't styled: no prompt, the same rows", () => {
-    const { s, ui } = setup(SHOP, { typography: { color: "#00ff00" } });
+  it("shows it with no Styling at all, with the default look", () => {
+    const { s, ui } = setup(SHOP, null);
     untilChoices(s);
-    expect(ui.choiceBox!.prompt).toBeUndefined();
-    expect(ui.choiceBox).toEqual(choiceLayout(ui.layout.unit, 3, 0, false, null, null));
-    const none = setup(SHOP, null);
-    untilChoices(none.s);
-    expect(none.ui.choiceBox!.prompt).toBeUndefined();
-    expect(drawn(ui, { typography: { color: "#00ff00" } }).filter((e) => e.kind === "text")).toHaveLength(3);
+    expect(ui.choiceBox!.question).toMatchObject({ name: "Gardener", lines: [QUESTION] });
+    expect(drawn(ui, undefined).filter((e) => e.kind === "text").map((e) => e.text)).toEqual(["Gardener", QUESTION, "Ask about the pond", "Ask about the rod", "Say goodbye"]);
   });
 
-  it("shows none when the choices come first or an Actions node came between", () => {
-    for (const d of [FIRST, AFTER_ACTIONS]) {
-      const { s, ui } = setup(d);
-      untilChoices(s);
-      expect(s.choices!.prompt).toBe(null);
-      expect(ui.choiceBox!.prompt).toBeUndefined();
-      expect(ui.choiceBox).toEqual(choiceLayout(ui.layout.unit, 3, 0, true, null, null));
-    }
-  });
-
-  it("borrows the line that leads into a Choices node when play starts from that node", () => {
-    const s = new Session(testProject({ game: { style: STYLED }, dialogues: [SHOP] }), testImages);
-    s.startDialogue("shop", "menu");
-    untilChoices(s);
-    expect(s.choices?.prompt).toEqual({ character: "gardener", text: WELCOME });
-  });
-
-  it("borrows nothing when play starts from a Choices node no line leads into", () => {
-    const s = new Session(testProject({ game: { style: STYLED }, dialogues: [FIRST] }), testImages);
-    s.startDialogue("shop", "menu");
-    untilChoices(s);
-    expect(s.choices?.prompt).toBeNull();
-  });
-
-  it("shows a narrator's line without a name", () => {
+  it("shows a question the narrator asks without a name", () => {
     const { s, ui } = setup(NARRATED);
     untilChoices(s);
-    expect(ui.choiceBox!.prompt).toMatchObject({ name: null, lines: ["A bell rings."] });
-    expect(drawn(ui, STYLED).filter((e) => e.kind === "text")[0]!.text).toBe("A bell rings.");
+    expect(s.choices!.question).toEqual({ character: null, text: "A bell rings. What now?" });
+    expect(ui.choiceBox!.question).toMatchObject({ name: null, lines: ["A bell rings. What now?"] });
+    expect(drawn(ui, STYLED).filter((e) => e.kind === "text")[0]!.text).toBe("A bell rings. What now?");
+  });
+
+  it("is the node's own: a line said just before it is a line, not the question", () => {
+    const { s, ui } = setup(WITH_LINE);
+    untilChoices(s);
+    expect(ui.choiceBox!.question).toMatchObject({ name: "Gardener", lines: [QUESTION] });
+    expect(drawn(ui, STYLED).some((e) => e.text === "Welcome! Have a look at my wares.")).toBe(false);
+  });
+
+  it("is there when play starts from the Choices node", () => {
+    const s = new Session(testProject({ game: { style: STYLED }, dialogues: [WITH_LINE] }), testImages);
+    s.startDialogue("shop", "menu");
+    untilChoices(s);
+    expect(s.choices?.question).toEqual({ character: "gardener", text: QUESTION });
   });
 
   it("stays through hover and pages, and is gone once an option is picked", () => {
-    const { s, ui } = setup({ id: "shop", nodes: [start("hello"), say("hello", WELCOME, "menu"), choices(TWELVE), end] });
+    const { s, ui } = setup(long(QUESTION, TWELVE));
     untilChoices(s);
     const first = ui.choiceBox!;
     expect(first.pages).toBeGreaterThan(1);
-    expect(first.prompt!.lines).toEqual([WELCOME]);
+    expect(first.question!.lines).toEqual([QUESTION]);
     ui.pointerMove(centre(first.rows[0]!), "mouse");
-    expect(ui.choiceBox!.prompt).toEqual(first.prompt);
+    expect(ui.choiceBox!.question).toEqual(first.question);
     tap(ui, ...centre(first.more!));
     expect(ui.choicePage).toBe(1);
-    expect(ui.choiceBox!.prompt).toMatchObject({ name: "Gardener", lines: [WELCOME] });
-    expect(drawn(ui, STYLED).some((e) => e.text === WELCOME)).toBe(true);
+    expect(ui.choiceBox!.question).toMatchObject({ name: "Gardener", lines: [QUESTION] });
+    expect(drawn(ui, STYLED).some((e) => e.text === QUESTION)).toBe(true);
     const row = ui.choiceBox!.rows[0]!;
     tap(ui, ...centre(row));
     expect(s.choices).toBe(null);
     expect(ui.choiceBox).toBe(null);
   });
 
-  it("is the newest line after a loop back, and not carried past an Actions node", () => {
+  it("is asked again when the dialogue loops back to the node", () => {
     const { s, ui } = setup(SHOP);
     untilChoices(s);
     s.choose("a");
     expect(s.choices).toBe(null);
     untilChoices(s);
-    expect(ui.choiceBox!.prompt).toMatchObject({ name: "Gardener", lines: ["Nothing ever happens here."] });
+    expect(ui.choiceBox!.question).toMatchObject({ name: "Gardener", lines: [QUESTION] });
   });
 
-  it("is not part of the saved state, so a restored game has no list and no prompt", () => {
+  it("is not part of the saved state, so a restored game has no list and no question", () => {
     const { s } = setup(SHOP);
     untilChoices(s);
     const saved = JSON.parse(JSON.stringify(s.state));
-    expect(JSON.stringify(saved)).not.toContain("Welcome");
+    expect(JSON.stringify(saved)).not.toContain("do for you");
     s.load(saved);
     expect(s.choices).toBe(null);
   });
 
-  it("wraps a long prompt to the rows' width and grows the box without leaving the screen", () => {
-    const long = "The garden is quiet and the gardener glares at you from behind a wheelbarrow while the pond ripples. ".repeat(3).trim();
+  it("wraps a long question to the rows' width and grows the box without leaving the screen", () => {
+    const text = "The garden is quiet and the gardener glares at you from behind a wheelbarrow while the pond ripples. ".repeat(3).trim();
     for (const [style, borders] of [[STYLED, null], [PLACED, null], [PLACED, BORDERS], [STYLED, BORDERS]] as const) {
-      const { s, ui } = setup({ id: "shop", nodes: [start("hello"), say("hello", long, "menu"), choices(THREE), end] }, style, borders);
+      const { s, ui } = setup(long(text), style, borders);
       untilChoices(s);
       const box = ui.choiceBox!;
       const short = setup(SHOP, style, borders);
       untilChoices(short.s);
-      expect(box.prompt!.lines.length).toBeGreaterThan(1);
+      expect(box.question!.lines.length).toBeGreaterThan(1);
       expect(box.panel.h).toBeGreaterThan(short.ui.choiceBox!.panel.h);
       expectOnScreen(box);
       const room = (box.inner ?? box.panel).w - 16;
-      for (const l of box.prompt!.lines) expect(measure(l)).toBeLessThanOrEqual(room);
-      expect(box.prompt!.lines.join(" ")).toBe(long);
+      for (const l of box.question!.lines) expect(measure(l)).toBeLessThanOrEqual(room);
+      expect(box.question!.lines.join(" ")).toBe(text);
     }
   });
 
-  it("shrinks very long text, then cuts it, so the box and at least two rows stay on screen", () => {
+  it("shrinks a very long question, then cuts it, so the box and at least two rows stay on screen", () => {
     const huge = "word ".repeat(1500).trim();
     const style: GameStyle = { ...PLACED, typography: { size: 40 } };
     for (const cssScale of [1, 0.5]) {
-      const { s, ui } = setup({ id: "shop", nodes: [start("hello"), say("hello", huge, "menu"), choices(THREE), end] }, style, BORDERS);
+      const { s, ui } = setup(long(huge), style, BORDERS);
       untilChoices(s);
       ui.setScale(cssScale);
       const box = ui.choiceBox!;
       expectOnScreen(box);
-      expect(box.prompt!.size).toBeLessThan(40);
-      expect(box.prompt!.lines.at(-1)!.endsWith("…")).toBe(true);
+      expect(box.question!.size).toBeLessThan(40);
+      expect(box.question!.lines.at(-1)!.endsWith("…")).toBe(true);
       expect(box.rows.length + (box.more ? 1 : 0)).toBeGreaterThanOrEqual(2);
       for (const r of box.rows) expect(r.h).toBeGreaterThanOrEqual(ui.layout.unit);
     }
   });
 
-  it("pages with fewer rows when the prompt takes the room, and every row stays tappable", () => {
-    const text = "word ".repeat(120).trim();
-    const { s, ui } = setup({ id: "shop", nodes: [start("hello"), say("hello", text, "menu"), choices(TWELVE), end] }, PLACED);
+  it("pages with fewer rows when the question takes the room, and every row stays tappable", () => {
+    const { s, ui } = setup(long("word ".repeat(120).trim(), TWELVE), PLACED);
     untilChoices(s);
-    const plain = setup({ id: "shop", nodes: [start("menu"), choices(TWELVE), end] }, PLACED);
-    untilChoices(plain.s);
+    const short = setup(long(QUESTION, TWELVE), PLACED);
+    untilChoices(short.s);
     const box = ui.choiceBox!;
     expectOnScreen(box);
-    expect(box.rows.length).toBeLessThan(plain.ui.choiceBox!.rows.length);
-    expect(box.pages).toBeGreaterThan(plain.ui.choiceBox!.pages);
+    expect(box.rows.length).toBeLessThan(short.ui.choiceBox!.rows.length);
+    expect(box.pages).toBeGreaterThan(short.ui.choiceBox!.pages);
     box.rows.forEach((r) => expect(r.h).toBeGreaterThanOrEqual(ui.layout.unit));
-    expect(box.rows[0]!.y).toBeGreaterThanOrEqual(box.prompt!.y + box.prompt!.height);
+    expect(box.rows[0]!.y).toBeGreaterThanOrEqual(box.question!.y + box.question!.height);
   });
 
-  it("taps the rows where they are drawn and ignores the prompt", () => {
+  it("taps the rows where they are drawn and ignores the question", () => {
     for (const [style, borders] of [[STYLED, null], [PLACED, BORDERS]] as const) {
       const { s, ui } = setup(SHOP, style, borders);
       untilChoices(s);
       const box = ui.choiceBox!;
-      const p = box.prompt!;
-      tap(ui, p.x, p.y + 2);
-      tap(ui, p.x, p.y + p.height - p.pad - 2);
+      const q = box.question!;
+      tap(ui, q.x, q.y + 2);
+      tap(ui, q.x, q.y + q.height - q.pad - 2);
       const sep = separatorRect(box);
-      tap(ui, p.x, sep.y);
+      tap(ui, q.x, sep.y);
       expect(s.choices).not.toBe(null);
       expect(s.state.dialogueChoices).toEqual([]);
       expect(box.rows.every((r) => r.y >= sep.y + sep.h)).toBe(true);
@@ -243,8 +231,8 @@ describe("the choice box's prompt", () => {
     }
   });
 
-  it("never shows the line's speech box beside the list", () => {
-    const { s } = setup(SHOP);
+  it("never shows a speech box beside the list", () => {
+    const { s } = setup(WITH_LINE);
     untilChoices(s);
     expect(s.text).toBe(null);
   });

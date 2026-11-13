@@ -23,6 +23,8 @@ const SHOP = {
       id: "menu",
       type: "choices",
       pos: [0, 0],
+      character: "gardener",
+      text: "What will it be?",
       options: [
         option("ask", "What's new?", "news", { once: true }),
         option("buy", "I'll buy the rod.", "sell", { if: [{ type: "has_item", item: "key" }] }),
@@ -142,7 +144,7 @@ describe("dialogue graph at runtime", () => {
   it("a Choices node with every option hidden ends the dialogue", () => {
     const s = make({
       endRule: null,
-      dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], options: [option("buy", "Buy", null, { if: [{ type: "has_item", item: "key" }] })] }] }],
+      dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], text: "Well?", options: [option("buy", "Buy", null, { if: [{ type: "has_item", item: "key" }] })] }] }],
     });
     talk(s);
     expect(s.choices).toBe(null);
@@ -316,7 +318,7 @@ describe("the list box", () => {
 
   it("pages options that don't fit with More…", () => {
     const many = Array.from({ length: 14 }, (_, i) => option(`o${i}`, `Option ${i}`, "done"));
-    const s = make({ dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], options: many }, { id: "done", type: "end", pos: [0, 0] }] }], endRule: null });
+    const s = make({ dialogues: [{ id: "shop", nodes: [{ id: "start", type: "start", pos: [0, 0], next: "menu" }, { id: "menu", type: "choices", pos: [0, 0], text: "Well?", options: many }, { id: "done", type: "end", pos: [0, 0] }] }], endRule: null });
     const ui = new PlayerUi(s);
     ui.setScale(1);
     talk(s);

@@ -170,7 +170,7 @@ export function StylePreview(props: { actions: Actions; sample: SampleId; onSamp
       return;
     }
     const t = textStyle(style, family, 100);
-    const layout = layoutSample(sample, frame, resolved.narration, t, canvasMeasure(ctx, family), style?.dialogueChoices !== undefined);
+    const layout = layoutSample(sample, frame, resolved.narration, t, canvasMeasure(ctx, family));
     // The store only holds an image once it has decoded; an unattached <img> reports its natural size.
     const ready = loaded && loaded.size.w > 0 ? (loaded.el as HTMLImageElement) : undefined;
     shown.current = layout;

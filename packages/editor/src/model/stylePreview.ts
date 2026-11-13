@@ -1,7 +1,7 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
 import { SCENE_HEIGHT, SCENE_WIDTH, type EffectiveStyle, type FrameInsets } from "@questforge/schema";
-import { SEPARATOR_SPACE, choiceGap, choiceTop, frameScale, lineFor, shrinkToFit, wrap, type ChoiceBox, type FrameLook, type Measure } from "@questforge/engine";
+import { CHOICE_TOP, SEPARATOR_SPACE, frameScale, lineFor, shrinkToFit, wrap, type ChoiceBox, type FrameLook, type Measure } from "@questforge/engine";
 import type { StylingSection } from "./gameSettings.ts";
 
 export const SAMPLES = [
@@ -87,15 +87,14 @@ export type NarrationPlacement = EffectiveStyle["narration"];
  * Lays out one sample panel in the 640×400 game screen, centred across. Every panel (narration, speech, choices
  * and the inventory) uses the Frames position: `placement.width` percent of the screen wide, `placement.top`
  * pixels down (or in the middle). Content starts right inside the drawn borders: the frame's borders are the
- * padding. `text.size` is the size to try; `choicesStyled` (Dialogue Choices configured) leaves room for the
- * separator line above the choices.
+ * padding. `text.size` is the size to try.
  */
-export function layoutSample(sample: PanelSampleId, frame: PreviewFrame, placement: NarrationPlacement, text: { size: number }, measure: Measure, choicesStyled = true): SampleLayout {
+export function layoutSample(sample: PanelSampleId, frame: PreviewFrame, placement: NarrationPlacement, text: { size: number }, measure: Measure): SampleLayout {
   // Like the game's own text boxes, a panel taller than the screen gets smaller text rather than run off it.
-  return shrinkToFit(text.size, (size) => layoutAt(sample, frame, placement, size, measure, choicesStyled), (l) => l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH).result;
+  return shrinkToFit(text.size, (size) => layoutAt(sample, frame, placement, size, measure), (l) => l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH).result;
 }
 
-function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: NarrationPlacement, size: number, measureAt: Measure, choicesStyled: boolean): SampleLayout {
+function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: NarrationPlacement, size: number, measureAt: Measure): SampleLayout {
   const lh = lineFor(size);
   const measure = (s: string, bold = false) => measureAt(s, size, bold);
   const scale = frameScale(look);
@@ -131,15 +130,11 @@ function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: Narratio
       addText(line, "text", "center");
       contentH += lh;
     }
-    // Styled choices already have SEPARATOR_SPACE above their line; the legacy box gets a small gap.
-    if (!choicesStyled) contentH += GAP;
     // Row text is cut to the room it has, as the engine does; the box is as wide as its longest row.
     const options = SAMPLE_TEXT.choices.map((c) => wrap((t) => measure(t), c, textWidth)[0] ?? c);
     const rowH = lh + CHOICE_ROW_PAD * 2;
-    const top = choiceTop(choicesStyled);
-    const gap = choiceGap(choicesStyled);
-    const h = top + CHOICE_PAD + options.length * (rowH + gap) - gap;
-    items.push({ kind: "choices", box: { panel: { x: 0, y: contentH, w: 0, h }, rows: options.map((_, i) => ({ x: 0, y: contentH + top + i * (rowH + gap), w: 0, h: rowH })), first: 0, more: null, pages: 1 }, options });
+    const h = CHOICE_TOP + CHOICE_PAD + options.length * rowH;
+    items.push({ kind: "choices", box: { panel: { x: 0, y: contentH, w: 0, h }, rows: options.map((_, i) => ({ x: 0, y: contentH + CHOICE_TOP + i * rowH, w: 0, h: rowH })), first: 0, more: null, pages: 1 }, options });
     contentH += h;
   } else {
     if (sample === "speech") {

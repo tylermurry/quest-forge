@@ -46,7 +46,7 @@ describe("font assets", () => {
   });
 
   it("need a stable id and a path inside assets/", () => {
-    const ok = { schemaVersion: 2, images: [], audio: [], fonts: [{ id: "ye_olde", path: "assets/fonts/a.woff2" }] };
+    const ok = { schemaVersion: 3, images: [], audio: [], fonts: [{ id: "ye_olde", path: "assets/fonts/a.woff2" }] };
     expect(AssetsFile.safeParse(ok).success).toBe(true);
     expect(AssetsFile.safeParse({ ...ok, fonts: [{ id: "Bad Id", path: "assets/fonts/a.woff2" }] }).success).toBe(false);
     expect(AssetsFile.safeParse({ ...ok, fonts: [{ id: "a", path: "../a.woff2" }] }).success).toBe(false);

@@ -17,7 +17,7 @@ const GARDENER: [number, number] = [560, 300];
 async function withShop(started = true): Promise<Project> {
   const p = await m1Project();
   const shop = DialogueFile.parse({
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "chat",
     name: "Chat",
     nodes: [
@@ -27,6 +27,8 @@ async function withShop(started = true): Promise<Project> {
         id: "menu",
         type: "choices",
         pos: [600, 0],
+        character: "gardener",
+        text: "What will it be?",
         options: [
           { id: "ask", text: "What's new?", if: [], once: true, next: "news" },
           { id: "buy", text: "Buy the rod.", if: [{ type: "has_item", item: "fish" }], once: false, next: "sell" },

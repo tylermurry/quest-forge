@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 images:
   - id: garden_bg
     path: assets/images/garden_bg.png

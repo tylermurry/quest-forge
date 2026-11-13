@@ -265,7 +265,7 @@ function withStyleSections(p: Project, patch: { [K in keyof GameStyle]?: GameSty
  * Puts one Styling section back to what a new project starts with (the same code builds a new project's style, so
  * the two can't drift). Frames: the built-in picture and its borders, no scale, no narration placement (`frameBytes`
  * is the picture, added to the Images library only if it isn't there). Typography: the default size only.
- * Character Dialogue: no speech section, the default choice effect. Icon Bar: no icon bar section. Nothing is
+ * Character Dialogue: no speech and no dialogue choices section, so the author defaults show. Icon Bar: no icon bar section. Nothing is
  * removed from the Images or Fonts libraries, and no other section changes.
  */
 export function resetStylingSection(p: Project, section: ResettableSection, frameBytes: Uint8Array): Project {
@@ -275,7 +275,7 @@ export function resetStylingSection(p: Project, section: ResettableSection, fram
     case "typography":
       return withStyleSections(p, { typography: { size: AUTHOR_DEFAULTS.typography.size } });
     case "characterDialogue":
-      return withStyleSections(p, { speech: undefined, dialogueChoices: { effect: AUTHOR_DEFAULTS.dialogueChoices.effect } });
+      return withStyleSections(p, { speech: undefined, dialogueChoices: undefined });
     case "iconBar":
       return withStyleSections(p, { iconBar: undefined });
   }
@@ -292,10 +292,8 @@ export function isStylingSectionDefault(p: Project, section: ResettableSection):
       const typography = typographyOf(p);
       return typography !== undefined && Object.keys(typography).length === 1 && typography.size === AUTHOR_DEFAULTS.typography.size;
     }
-    case "characterDialogue": {
-      const choices = dialogueChoicesOf(p);
-      return p.game?.data.style?.speech === undefined && choices !== undefined && Object.keys(choices).length === 1 && choices.effect === AUTHOR_DEFAULTS.dialogueChoices.effect;
-    }
+    case "characterDialogue":
+      return p.game?.data.style?.speech === undefined && dialogueChoicesOf(p) === undefined;
     case "iconBar":
       return iconBarOf(p) === undefined;
   }

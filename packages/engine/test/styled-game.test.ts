@@ -137,7 +137,7 @@ describe("a built game with no style", () => {
     expect(bundle.project.assets!.data.fonts).toBeUndefined();
     const play = await startup(bundle.project);
     expect(play).toEqual(await startup(project));
-    expect(play.eff).toEqual(LEGACY_STYLE);
+    expect(play.eff).toEqual({ ...LEGACY_STYLE, dialogueChoices: { effect: "brighten", separator: "#e8d8a8" } });
     expect(play).toMatchObject({ images: [], fonts: [], family: "monospace", placement: null, skin: undefined });
     expect(play.text).toMatchObject({ family: "monospace", size: 10, line: 12, color: "#ffffff", custom: false });
     bundle.dispose();
@@ -167,7 +167,7 @@ const MENU = {
   id: "menu",
   nodes: [
     { id: "start", type: "start", pos: [0, 0], next: "pick" },
-    { id: "pick", type: "choices", pos: [0, 0], options: ["Yes", "No", "Maybe"].map((text, i) => ({ id: `o${i}`, text, if: [], once: false, next: "done" })) },
+    { id: "pick", type: "choices", pos: [0, 0], text: "Well?", options: ["Yes", "No", "Maybe"].map((text, i) => ({ id: `o${i}`, text, if: [], once: false, next: "done" })) },
     { id: "done", type: "end", pos: [0, 0] },
   ],
 };
@@ -262,10 +262,10 @@ describe("the player's Text Size on a framed game", () => {
           expect(row.x + row.w).toBeLessThanOrEqual(box.inner!.x + box.inner!.w);
           expect(row.y + row.h).toBeLessThanOrEqual(box.inner!.y + box.inner!.h);
         }
-        // The text size doesn't change where the rows are.
+        // The text size doesn't change how big the rows are (the question above them may grow, which moves them down).
         const other = new PlayerUi(session, { slots: new SaveSlots(null, session.game), settings: { ...DEFAULT_SETTINGS, textSize: 100 }, borders });
         other.setScale(cssScale);
-        expect(other.choiceBox!.rows).toEqual(box.rows);
+        expect(other.choiceBox!.rows.map((r) => [r.x, r.w, r.h])).toEqual(box.rows.map((r) => [r.x, r.w, r.h]));
         // A touch on the last visible row's lower edge picks that answer.
         const at = box.rows.length - 1;
         const last = box.rows[at]!;

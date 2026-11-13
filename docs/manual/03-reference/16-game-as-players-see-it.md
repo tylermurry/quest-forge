@@ -52,7 +52,7 @@ an item does:
 
 ## Dialogue choices
 
-When a conversation offers choices, they appear in a list. Click one to say it. Long lists have pages.
+When a conversation offers choices, they appear in one box with the question above them. Click an answer to say it. Long lists have pages.
 
 ## Settings
 

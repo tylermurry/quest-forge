@@ -31,7 +31,7 @@ describe("styleImageIds", () => {
   });
 
   it("is empty for a game with no style", () => {
-    expect(styleImageIds(LEGACY_STYLE)).toEqual([]);
+    expect(styleImageIds(resolveStyle(undefined))).toEqual([]);
   });
 });
 
@@ -62,7 +62,7 @@ describe("loadStyleAssets", () => {
 
   it("loads nothing for a game with no style", async () => {
     const { calls, loaders } = fakes();
-    const assets = await loadStyleAssets(LEGACY_STYLE, loaders, () => {});
+    const assets = await loadStyleAssets(resolveStyle(undefined), loaders, () => {});
     expect(calls).toEqual({ images: [], fonts: [], released: 0 });
     expect(assets.fontFamily).toBe("monospace");
     assets.release();

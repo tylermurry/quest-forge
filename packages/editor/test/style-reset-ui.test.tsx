@@ -62,7 +62,7 @@ const resetButton = (section: string) => screen.getByRole("button", { name: `Res
 const AFTER = {
   Frames: { sharedFrame: { image: "frame", insets: { left: 12, right: 12, top: 12, bottom: 12 } }, narration: undefined },
   Typography: { typography: { size: 14 } },
-  "Character Dialogue": { speech: undefined, dialogueChoices: { effect: "brighten" } },
+  "Character Dialogue": { speech: undefined, dialogueChoices: undefined },
   "Icon Bar": { iconBar: undefined },
 } as const;
 

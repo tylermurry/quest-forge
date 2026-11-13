@@ -9,7 +9,7 @@ const characters = new Map(base.characters.map((c) => [c.data.id, c.data]));
 const ids = sceneImageIds(yard, characters, "hero");
 const project: Project = {
   ...base,
-  assets: { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 2, images: ids.map((id) => ({ id, path: `assets/images/${id}.png` })), audio: [] }) },
+  assets: { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 3, images: ids.map((id) => ({ id, path: `assets/images/${id}.png` })), audio: [] }) },
 };
 
 /** A decoder that fails the first `failures[url]` times it is asked for a URL. */

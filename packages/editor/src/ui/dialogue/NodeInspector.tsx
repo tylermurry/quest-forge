@@ -13,6 +13,7 @@ import {
   removeOption,
   setLine,
   setOption,
+  setQuestion,
   type ConditionsRef,
 } from "../../model/dialogue/commands.ts";
 import { invalidKeys, partProblems, problemsByNode } from "../../model/dialogue/problems.ts";
@@ -33,7 +34,7 @@ const NARRATOR = "";
 const HELP: Record<DialogueNode["type"], string> = {
   start: "Every dialogue begins here. A rule starts it with Start dialogue.",
   line: "A line in a text box, in the speaker's color (or the narrator's box).",
-  choices: "Options the player picks from. Options whose conditions fail are hidden; a once-only option goes away after it is picked.",
+  choices: "A question and the options the player answers with, shown together in one box. Options whose conditions fail are hidden; a once-only option goes away after it is picked.",
   actions: "Runs these actions in order, then carries on.",
   branch: "If every condition is true, carries on from the true port, else from the false port.",
   end: "Ends the dialogue and runs the Game's “Dialogue ends” rule for it.",
@@ -94,6 +95,7 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
 
         {node.type === "choices" && (
           <div className="grid gap-2">
+            <QuestionFields actions={actions} dialogue={dialogue} node={node} problems={problems} index={index} run={run} blur={blur} />
             {node.options.length === 0 && <p className="text-muted-foreground text-[12px]">No options yet. The dialogue ends here until you add one.</p>}
             {node.options.map((o, j) => {
               const sub = ["options", j];
@@ -190,6 +192,48 @@ export function NodeInspector({ actions, dialogue, nodeId }: { actions: Actions;
   );
 }
 
+/** Who speaks a Line, or asks a Choices node's question: a character, or the narrator (`null`). */
+function SpeakerPicker(props: { project: Project; value: string | undefined; invalid: boolean; onPick(id: string | null): void; onCreate(name: string): void }) {
+  const { project, value, invalid, onPick, onCreate } = props;
+  const speakers = [{ id: NARRATOR, label: "Narrator" }, ...pickerOptions(project, "character")];
+  return (
+    <div className="grid gap-1" data-path={JSON.stringify(["character"])}>
+      <span className="text-muted-foreground text-[12px]">Speaker</span>
+      <Picker label="Speaker" value={value ?? NARRATOR} options={speakers} invalid={invalid} onPick={(id) => onPick(id === NARRATOR ? null : id)} createNoun="character" onCreate={onCreate} />
+    </div>
+  );
+}
+
+function QuestionFields(props: {
+  actions: Actions;
+  dialogue: string;
+  node: Extract<DialogueNode, { type: "choices" }>;
+  problems: Problem[];
+  index: number;
+  run(label: string, f: (q: Project) => Project, field?: string): void;
+  blur(): void;
+}) {
+  const { actions, dialogue, node, problems, index, run, blur } = props;
+  const bad = invalidKeys(problems, index, []);
+  const fieldProblems = problems.filter((x) => ["character", "text"].includes(String(x.location.path[2])));
+  const set = (patch: Parameters<typeof setQuestion>[3]) => (q: Project) => setQuestion(q, dialogue, node.id, patch);
+  return (
+    <div className="grid gap-2">
+      <SpeakerPicker
+        project={actions.editor.project}
+        value={node.character}
+        invalid={bad.has("character")}
+        onPick={(id) => run("Change speaker", set({ character: id }))}
+        onCreate={(name) => run("Create character and use it", (q) => createAndUse(q, "character", name, (r, id) => set({ character: id })(r)))}
+      />
+      <div data-path={JSON.stringify(["text"])}>
+        <TextField label="Question" multiline value={node.text} valid={() => true} invalid={bad.has("text")} onChange={(v) => run("Edit question", set({ text: v }), "text")} onBlur={blur} />
+      </div>
+      <PartProblems problems={fieldProblems} />
+    </div>
+  );
+}
+
 function LineFields(props: {
   actions: Actions;
   dialogue: string;
@@ -203,22 +247,10 @@ function LineFields(props: {
   const p = actions.editor.project;
   const bad = invalidKeys(problems, index, []);
   const fieldProblems = problems.filter((x) => ["character", "text", "animation"].includes(String(x.location.path[2])));
-  const speakers = [{ id: NARRATOR, label: "Narrator" }, ...pickerOptions(p, "character")];
   const set = (patch: Parameters<typeof setLine>[3]) => (q: Project) => setLine(q, dialogue, node.id, patch);
   return (
     <div className="grid gap-2">
-      <div className="grid gap-1" data-path={JSON.stringify(["character"])}>
-        <span className="text-muted-foreground text-[12px]">Speaker</span>
-        <Picker
-          label="Speaker"
-          value={node.character ?? NARRATOR}
-          options={speakers}
-          invalid={bad.has("character")}
-          onPick={(id) => run("Change speaker", set({ character: id === NARRATOR ? null : id }))}
-          createNoun="character"
-          onCreate={(name) => run("Create character and use it", (q) => createAndUse(q, "character", name, (r, id) => set({ character: id })(r)))}
-        />
-      </div>
+      <SpeakerPicker project={p} value={node.character} invalid={bad.has("character")} onPick={(id) => run("Change speaker", set({ character: id }))} onCreate={(name) => run("Create character and use it", (q) => createAndUse(q, "character", name, (r, id) => set({ character: id })(r)))} />
       <div data-path={JSON.stringify(["text"])}>
         <TextField label="Line" multiline value={node.text} valid={() => true} invalid={bad.has("text")} onChange={(v) => run("Edit line", set({ text: v }), "text")} onBlur={blur} />
       </div>

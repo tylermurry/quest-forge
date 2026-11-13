@@ -121,8 +121,9 @@ export function blankProject(title: string): Project {
     },
   ];
   // A new project starts with every Styling section at its default (the built-in frame picture in the Images
-  // library's Styling folder, the Typography size and the Brighten choice effect): not the legacy 10 px text and
-  // gold buttons that projects with no style sections draw. Reset to Default puts a section back to this.
+  // library's Styling folder and the Typography size; no Character Dialogue or Icon Bar section, so their author
+  // defaults show): not the legacy 10 px text that projects with no style sections draw. Reset to Default puts a
+  // section back to this.
   const bytes = builtInFrameBytes();
   return RESETTABLE_SECTIONS.reduce((q, section) => resetStylingSection(q, section, bytes), p);
 }
