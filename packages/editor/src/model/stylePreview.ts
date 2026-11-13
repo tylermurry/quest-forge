@@ -1,7 +1,7 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
 import { SCENE_HEIGHT, SCENE_WIDTH, type EffectiveStyle, type FrameInsets } from "@questforge/schema";
-import { boxWidth, lineFor, shrinkToFit, wrap, type ChoiceBox, type Measure } from "@questforge/engine";
+import { SEPARATOR_SPACE, choiceGap, choiceTop, lineFor, shrinkToFit, wrap, type ChoiceBox, type Measure } from "@questforge/engine";
 import type { StylingSection } from "./gameSettings.ts";
 
 export const SAMPLES = [
@@ -53,11 +53,15 @@ const SPEAKER = "Gardener";
 const INVENTORY_CELLS = 8;
 const CELL = 32;
 const GAP = 4;
-/** The gap inside the choices box around its rows, and between rows: GAP × 2 and GAP in the engine's `choiceLayout`. */
+/** The gap inside the choices box at its sides and bottom: GAP × 2 in the engine's `choiceLayout`. */
 const CHOICE_PAD = 8;
-const CHOICE_GAP = 4;
-/** Widest text for panels that fit their content (narration has a fixed panel width instead). */
-const MAX_TEXT_WIDTH: Record<Exclude<PanelSampleId, "narrationShort" | "narrationLong">, number> = { speech: 240, inventory: 260, choices: 300 };
+/**
+ * The space under a speaker's name, the same as above and below the choices' separator line, so the name, the
+ * words and the line are evenly spaced.
+ */
+const NAME_GAP = SEPARATOR_SPACE;
+/** The room above and below a choice's text inside its row. */
+const CHOICE_ROW_PAD = 6;
 
 export interface PreviewRect {
   x: number;
@@ -66,7 +70,7 @@ export interface PreviewRect {
   h: number;
 }
 export type PreviewItem =
-  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; /** `speaker`: a name, in the name colour; `text`: everything else, in the text colour. */ tone: "text" | "speaker" }
+  | { kind: "text"; text: string; x: number; y: number; align: "center" | "left"; bold: boolean; /** `speaker`: a name, in the name color; `text`: everything else, in the text color. */ tone: "text" | "speaker" }
   | { kind: "cell"; rect: PreviewRect }
   /** The dialogue list box, drawn by the engine's own choices drawing. `box` has the engine's shape: its rows are the hit areas. */
   | { kind: "choices"; box: ChoiceBox; options: readonly string[] };
@@ -86,17 +90,18 @@ export interface SampleLayout {
 export type NarrationPlacement = EffectiveStyle["narration"];
 
 /**
- * Lays out one sample panel in the 640×400 game screen, centred across. Narration is `narration.width` percent of
- * the screen wide and sits `narration.top` pixels down (or in the middle); the other panels fit their content and
- * sit in the upper third. Content starts right inside the drawn borders: the frame's borders are the padding.
- * `text.size` is the size to try.
+ * Lays out one sample panel in the 640×400 game screen, centred across. Every panel (narration, speech, choices
+ * and the inventory) uses the Frames position: `placement.width` percent of the screen wide, `placement.top`
+ * pixels down (or in the middle). Content starts right inside the drawn borders: the frame's borders are the
+ * padding. `text.size` is the size to try; `choicesStyled` (Dialogue Choices configured) leaves room for the
+ * separator line above the choices.
  */
-export function layoutSample(sample: PanelSampleId, frame: PreviewFrame, narration: NarrationPlacement, text: { size: number }, measure: Measure): SampleLayout {
+export function layoutSample(sample: PanelSampleId, frame: PreviewFrame, placement: NarrationPlacement, text: { size: number }, measure: Measure, choicesStyled = true): SampleLayout {
   // Like the game's own text boxes, a panel taller than the screen gets smaller text rather than run off it.
-  return shrinkToFit(text.size, (size) => layoutAt(sample, frame, narration, size, measure), (l) => l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH).result;
+  return shrinkToFit(text.size, (size) => layoutAt(sample, frame, placement, size, measure, choicesStyled), (l) => l.frame.h <= SCENE_HEIGHT && l.frame.w <= SCENE_WIDTH).result;
 }
 
-function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: NarrationPlacement, size: number, measureAt: Measure): SampleLayout {
+function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: NarrationPlacement, size: number, measureAt: Measure, choicesStyled: boolean): SampleLayout {
   const lh = lineFor(size);
   const measure = (s: string, bold = false) => measureAt(s, size, bold);
   const scale = frameScale(look);
@@ -105,47 +110,47 @@ function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: Narratio
   const padR = pad("right");
   const padT = pad("top");
   const padB = pad("bottom");
-  const narration = sample === "narrationShort" || sample === "narrationLong";
-  const narrationW = Math.round((SCENE_WIDTH * placement.width) / 100);
-  const textWidth = narration ? Math.max(8, narrationW - padL - padR) : boxWidth(MAX_TEXT_WIDTH[sample], size);
+  const w = Math.round((SCENE_WIDTH * placement.width) / 100);
+  const textWidth = Math.max(8, w - padL - padR);
 
   // Content in panel-relative coordinates (origin: top-left of the inner area).
   const items: PreviewItem[] = [];
-  let contentW = 0;
   let contentH = 0;
   const addText = (s: string, tone: "text" | "speaker", align: "center" | "left", bold = false, y = contentH) => {
     items.push({ kind: "text", text: s, x: 0, y, align, bold, tone });
-    contentW = Math.max(contentW, measure(s, bold));
   };
   if (sample === "inventory") {
     addText("Inventory", "text", "center", true);
     contentH += lh + GAP;
+    // The grid is centred across the panel.
     const cols = 4;
+    const left = Math.round((textWidth - (cols * (CELL + GAP) - GAP)) / 2);
     for (let i = 0; i < INVENTORY_CELLS; i++) {
-      const rect = { x: (i % cols) * (CELL + GAP), y: contentH + Math.floor(i / cols) * (CELL + GAP), w: CELL, h: CELL };
+      const rect = { x: left + (i % cols) * (CELL + GAP), y: contentH + Math.floor(i / cols) * (CELL + GAP), w: CELL, h: CELL };
       items.push({ kind: "cell", rect });
-      contentW = Math.max(contentW, rect.x + CELL);
     }
     contentH += Math.ceil(INVENTORY_CELLS / cols) * (CELL + GAP) - GAP;
   } else if (sample === "choices") {
     addText(SPEAKER, "speaker", "center", true);
-    contentH += lh;
+    contentH += lh + NAME_GAP;
     for (const line of wrap((t) => measure(t), CHOICES_PROMPT, textWidth)) {
       addText(line, "text", "center");
       contentH += lh;
     }
-    contentH += CHOICE_GAP;
+    // Styled choices already have SEPARATOR_SPACE above their line; the legacy box gets a small gap.
+    if (!choicesStyled) contentH += GAP;
     // Row text is cut to the room it has, as the engine does; the box is as wide as its longest row.
     const options = SAMPLE_TEXT.choices.map((c) => wrap((t) => measure(t), c, textWidth)[0] ?? c);
-    const rowH = lh + 4;
-    const h = CHOICE_PAD * 2 + options.length * (rowH + CHOICE_GAP) - CHOICE_GAP;
-    items.push({ kind: "choices", box: { panel: { x: 0, y: contentH, w: 0, h }, rows: options.map((_, i) => ({ x: 0, y: contentH + CHOICE_PAD + i * (rowH + CHOICE_GAP), w: 0, h: rowH })), first: 0, more: null, pages: 1 }, options });
-    contentW = Math.max(contentW, ...options.map((o) => measure(o) + 16 + CHOICE_PAD * 2));
+    const rowH = lh + CHOICE_ROW_PAD * 2;
+    const top = choiceTop(choicesStyled);
+    const gap = choiceGap(choicesStyled);
+    const h = top + CHOICE_PAD + options.length * (rowH + gap) - gap;
+    items.push({ kind: "choices", box: { panel: { x: 0, y: contentH, w: 0, h }, rows: options.map((_, i) => ({ x: 0, y: contentH + top + i * (rowH + gap), w: 0, h: rowH })), first: 0, more: null, pages: 1 }, options });
     contentH += h;
   } else {
     if (sample === "speech") {
       addText(SPEAKER, "speaker", "center", true);
-      contentH += lh;
+      contentH += lh + NAME_GAP;
     }
     for (const paragraph of SAMPLE_TEXT[sample === "speech" ? "speech" : sample]) {
       for (const line of wrap((t) => measure(t), paragraph, textWidth)) {
@@ -157,10 +162,9 @@ function layoutAt(sample: PanelSampleId, look: PreviewFrame, placement: Narratio
     if (sample === "narrationLong") contentH -= Math.round(lh / 2);
   }
 
-  const w = narration ? narrationW : Math.round(contentW) + padL + padR;
   const h = contentH + padT + padB;
-  // Down: narration where the creator put it; the others centred on the line a third of the way from the top. Kept on the screen.
-  const wanted = !narration ? SCENE_HEIGHT / 3 - h / 2 : placement.top === "center" ? (SCENE_HEIGHT - h) / 2 : placement.top;
+  // Down: where the creator put the frames, kept on the screen.
+  const wanted = placement.top === "center" ? (SCENE_HEIGHT - h) / 2 : placement.top;
   const y = Math.max(0, Math.min(SCENE_HEIGHT - h, Math.round(wanted)));
   const frame = { x: Math.round((SCENE_WIDTH - w) / 2), y, w, h };
   const inner = { x: frame.x + padL, y: frame.y + padT, w: Math.max(0, w - padL - padR), h: Math.max(0, h - padT - padB) };

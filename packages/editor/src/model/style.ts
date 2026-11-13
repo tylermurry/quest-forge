@@ -164,10 +164,10 @@ export function setTypographySize(p: Project, size: number): Project {
   return withTypography(p, { ...typographyOf(p), size });
 }
 
-/** The text colour, as #rrggbb. */
+/** The text color, as #rrggbb. */
 export function setTypographyColor(p: Project, color: string): Project {
   const hex = color.toLowerCase();
-  if (!Color.safeParse(hex).success) throw new CommandError("The text colour is a colour like #ffcc00.");
+  if (!Color.safeParse(hex).success) throw new CommandError("The text color is a color like #ffcc00.");
   return withTypography(p, { ...typographyOf(p), color: hex });
 }
 
@@ -188,25 +188,28 @@ function withDialogueChoices(p: Project, choices: DialogueChoices): Project {
   return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, dialogueChoices: choices } } } };
 }
 
-function choiceColor(p: Project, key: keyof DialogueChoices, color: string, what: string): Project {
+function choiceColor(p: Project, key: "separator", color: string, what: string): Project {
   const hex = color.toLowerCase();
-  if (!Color.safeParse(hex).success) throw new CommandError(`The ${what} is a colour like #ffcc00.`);
+  if (!Color.safeParse(hex).success) throw new CommandError(`The ${what} is a color like #ffcc00.`);
   return withDialogueChoices(p, { ...dialogueChoicesOf(p), [key]: hex });
 }
 
-/** The background colour of the hovered or selected choice row, as #rrggbb. */
-export const setChoiceHighlight = (p: Project, color: string): Project => choiceColor(p, "highlight", color, "highlight colour");
+/** How the hovered or selected choice row is marked: brightened or darkened. */
+export function setChoiceEffect(p: Project, effect: IconEffect): Project {
+  if (!IconEffect.safeParse(effect).success) throw new CommandError("The choice hover effect is Brighten or Darken.");
+  return withDialogueChoices(p, { ...dialogueChoicesOf(p), effect });
+}
 
-/** The colour of the line above the choices, as #rrggbb. */
-export const setChoiceSeparator = (p: Project, color: string): Project => choiceColor(p, "separator", color, "separator colour");
+/** The color of the line above the choices, as #rrggbb. */
+export const setChoiceSeparator = (p: Project, color: string): Project => choiceColor(p, "separator", color, "separator color");
 
 // ── Speech ───────────────────────────────────────────────────────────────────────────────────────────────
 
-/** The colour of every speaker's name, as #rrggbb. Creates the speech section; the others are left as they are. */
+/** The color of every speaker's name, as #rrggbb. Creates the speech section; the others are left as they are. */
 export function setSpeechNameColor(p: Project, color: string): Project {
   if (!p.game) throw new CommandError("This project has no game settings.");
   const hex = color.toLowerCase();
-  if (!Color.safeParse(hex).success) throw new CommandError("The name colour is a colour like #ffcc00.");
+  if (!Color.safeParse(hex).success) throw new CommandError("The name color is a color like #ffcc00.");
   const { style: _old, ...game } = p.game.data;
   return { ...p, game: { ...p.game, data: { ...game, style: { ...p.game.data.style, speech: { ...p.game.data.style?.speech, name: hex } } } } };
 }

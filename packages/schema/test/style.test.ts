@@ -43,7 +43,7 @@ const FULL: Style = {
     icons: { walk: "coin_icon", settings: "lantern_icon" },
     effect: "darken",
   },
-  dialogueChoices: { highlight: "#112233", separator: "#445566" },
+  dialogueChoices: { effect: "darken", separator: "#445566" },
   narration: { top: 120, center: true, width: 75 },
   speech: { name: "#aabbcc" },
 };
@@ -56,8 +56,9 @@ describe("GameStyle schema", () => {
   });
 
   it.each([
-    ["a colour without the hash", { typography: { color: "ffffff" } }],
-    ["a colour in short form", { dialogueChoices: { highlight: "#fff" } }],
+    ["a color without the hash", { typography: { color: "ffffff" } }],
+    ["a color in short form", { dialogueChoices: { separator: "#fff" } }],
+    ["an unknown choice effect", { dialogueChoices: { effect: "glow" } }],
     ["a negative inset", { sharedFrame: { insets: { left: -1, right: 0, top: 0, bottom: 0 } } }],
     ["a fractional inset", { sharedFrame: { insets: { left: 1.5, right: 0, top: 0, bottom: 0 } } }],
     ["a missing inset side", { sharedFrame: { insets: { left: 1, right: 0, top: 0 } } }],
@@ -78,7 +79,7 @@ describe("resolveStyle", () => {
     const s = resolveStyle(undefined);
     expect(s).toEqual(LEGACY_STYLE);
     expect(s.typography).toMatchObject({ family: "monospace", size: 10, lineHeight: 12, color: "#ffffff" });
-    expect(s.dialogueChoices).toEqual({ highlight: "#c89a3c", separator: "#e8d8a8" });
+    expect(s.dialogueChoices).toEqual({ effect: "none", separator: "#e8d8a8" });
     expect(s.iconBar.effect).toBe("none");
     expect(s.sharedFrame.image).toBeUndefined();
   });
@@ -89,7 +90,7 @@ describe("resolveStyle", () => {
 
   it("fills a configured typography section with the author defaults", () => {
     const t = resolveStyle({ typography: {} }).typography;
-    expect(t).toEqual({ family: "monospace", font: undefined, size: 16, lineHeight: 19, color: "#ffffff" });
+    expect(t).toEqual({ family: "monospace", font: undefined, size: 14, lineHeight: 17, color: "#ffffff" });
     expect(t.size).toBe(AUTHOR_DEFAULTS.typography.size);
   });
 
@@ -112,7 +113,7 @@ describe("resolveStyle", () => {
     expect(GameStyle.safeParse({ sharedFrame: { scale: 65 } }).success).toBe(false);
   });
 
-  it("draws every speaker's name in one colour: pale gold, or the one picked", () => {
+  it("draws every speaker's name in one color: pale gold, or the one picked", () => {
     expect(resolveStyle(undefined).speech).toEqual({ name: "#e8d8a8" });
     expect(resolveStyle(FULL).speech).toEqual({ name: "#aabbcc" });
   });
@@ -124,9 +125,9 @@ describe("resolveStyle", () => {
     expect(bar.frame.image).toBe("boulder_img");
   });
 
-  it("resolves dialogue choice colours per field", () => {
-    expect(resolveStyle({ dialogueChoices: { highlight: "#000000" } }).dialogueChoices).toEqual({ highlight: "#000000", separator: "#e8d8a8" });
-    expect(resolveStyle(FULL).dialogueChoices).toEqual({ highlight: "#112233", separator: "#445566" });
+  it("resolves dialogue choices per field: Brighten and the legacy separator color unless set", () => {
+    expect(resolveStyle({ dialogueChoices: { separator: "#000000" } }).dialogueChoices).toEqual({ effect: "brighten", separator: "#000000" });
+    expect(resolveStyle(FULL).dialogueChoices).toEqual({ effect: "darken", separator: "#445566" });
   });
 });
 
@@ -222,7 +223,7 @@ describe("style validation", () => {
     expect(problems[0]!.message).toContain(`image ${sound}`);
   });
 
-  it("reports a bad colour or inset when the file loads, naming game.yaml and the spot", async () => {
+  it("reports a bad color or inset when the file loads, naming game.yaml and the spot", async () => {
     const yaml = (await readFile(join(FIXTURE, "game.yaml"), "utf8")) + "style:\n  typography:\n    color: red\n  sharedFrame:\n    insets:\n      left: -2\n      right: 0\n      top: 0\n      bottom: 0\n";
     const files: Record<string, string> = {};
     const { readdir } = await import("node:fs/promises");

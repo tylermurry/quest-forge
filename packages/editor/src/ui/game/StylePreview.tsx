@@ -20,7 +20,7 @@ import { useStyleFont } from "./useStyleFont.ts";
 // shows a plain stand-in for the engine's drawn panel. The canvas fills its pane's height (keeping the game's shape);
 // Actual game size resizes the pane so the canvas is exactly 640×400.
 
-/** Stand-in colours: the engine's panel fill and edge (`PANEL` and `EDGE` in its ui/draw.ts). */
+/** Stand-in colors: the engine's panel fill and edge (`PANEL` and `EDGE` in its ui/draw.ts). */
 const BUILT_IN = { fill: "#2a2018", edge: "#e8d8a8" };
 
 export interface PreviewDraw {
@@ -35,7 +35,7 @@ export interface PreviewDraw {
   hover?: Vec | null;
 }
 
-/** Names in the one name colour (`style.speech.name`); everything else in the text colour. */
+/** Names in the one name color (`style.speech.name`); everything else in the text color. */
 const textColor = (tone: Extract<SampleLayout["items"][number], { kind: "text" }>["tone"], t: TextStyle) => (tone === "speaker" ? t.name : t.color);
 
 /** The sample's choice rows, top to bottom, as the pointer hits them. */
@@ -142,7 +142,7 @@ export function StylePreview(props: { actions: Actions; sample: SampleId; onSamp
   const [room, setRoom] = useState<{ w: number; h: number } | null>(null);
   // The choice row or bar button under the pointer, and the row a click or the arrow keys picked.
   const [over, setOver] = useState<Vec | null>(null);
-  const [picked, setPicked] = useState<number | null>(0);
+  const [picked, setPicked] = useState<number | null>(null);
   const [selected, setSelected] = useState("walk");
   const shown = useRef<SampleLayout | null>(null);
   const loaded = frame.image ? images.lookup(frame.image) : undefined;
@@ -171,11 +171,12 @@ export function StylePreview(props: { actions: Actions; sample: SampleId; onSamp
       return;
     }
     const t = textStyle(style, family, 100);
-    const layout = layoutSample(sample, frame, resolved.narration, t, canvasMeasure(ctx, family));
+    const layout = layoutSample(sample, frame, resolved.narration, t, canvasMeasure(ctx, family), style?.dialogueChoices !== undefined);
     // The store only holds an image once it has decoded; an unattached <img> reports its natural size.
     const ready = loaded && loaded.size.w > 0 ? (loaded.el as HTMLImageElement) : undefined;
     shown.current = layout;
-    const hover = over && rowAt(layout, over) !== null ? over : picked === null ? null : rowPoint(layout, picked);
+    // While the pointer is on the canvas it alone decides; the picked row shows once it leaves.
+    const hover = over ? over : picked === null ? null : rowPoint(layout, picked);
     drawPreview(ctx, { layout, frame, image: ready, style, family, hover });
   });
 
@@ -235,7 +236,8 @@ export function StylePreview(props: { actions: Actions; sample: SampleId; onSamp
           }}
           onKeyDown={onKey}
           className="block shrink-0 rounded-md border"
-          style={{ width: size.w, height: size.h, imageRendering: "pixelated" }}
+          // A hand over a choice, as in the game.
+          style={{ width: size.w, height: size.h, imageRendering: "pixelated", cursor: sample === "choices" && over && shown.current && rowAt(shown.current, over) !== null ? "pointer" : undefined }}
         />
       </div>
     </div>

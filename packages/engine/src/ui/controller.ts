@@ -3,7 +3,7 @@ import type { Session, Verb } from "../session.ts";
 import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
-import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type InventoryButtonId, type Layout } from "./layout.ts";
+import { choiceLayout, computeLayout, hitButton, inRect, placementOf, type ChoiceBox, type InventoryButtonId, type Layout, type Placement } from "./layout.ts";
 
 // Player UI input: the icon bar, inventory, settings,
 // hover labels and tap-and-hold. Pointer events arrive in scene coordinates with
@@ -65,12 +65,15 @@ export class PlayerUi {
   private pagedList: ChoiceList | null = null;
   private press: Press | null = null;
   private cssScale = 1;
+  /** Where the creator put the panels (Frames > Position); null is the legacy layout. */
+  readonly placement: Placement | null;
 
   constructor(
     readonly session: Session,
     services?: UiServices,
   ) {
-    this.layout = computeLayout(1);
+    this.placement = placementOf(session.game.style);
+    this.layout = computeLayout(1, this.placement);
     this.slots = services?.slots ?? new SaveSlots(null, session.game);
     this.settings = { ...(services?.settings ?? DEFAULT_SETTINGS) };
     this.onSettings = services?.onSettings;
@@ -79,7 +82,7 @@ export class PlayerUi {
   /** CSS px per scene px changed (resize, zoom). */
   setScale(cssScale: number) {
     this.cssScale = cssScale;
-    this.layout = computeLayout(cssScale);
+    this.layout = computeLayout(cssScale, this.placement);
   }
 
   get tabVisible(): boolean {
@@ -95,7 +98,7 @@ export class PlayerUi {
       this.pagedList = list;
       this.choicePage = 0;
     }
-    return choiceLayout(this.layout.unit, list.options.length, this.choicePage);
+    return choiceLayout(this.layout.unit, list.options.length, this.choicePage, this.session.game.style?.dialogueChoices !== undefined, this.placement);
   }
 
   /** Inventory items shown in the grid, in cell order. */

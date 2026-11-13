@@ -36,7 +36,7 @@ describe("typography commands", () => {
     expect(resolveStyle(p1.game!.data.style).typography).toMatchObject({ size: 20, color: "#ffffff", family: "monospace" });
   });
 
-  it("a built-in family and a custom font replace each other, and the size and colour stay", async () => {
+  it("a built-in family and a custom font replace each other, and the size and color stay", async () => {
     const p = setTypographyColor(setTypographySize(await withFont(), 18), "#FFCC00");
     const serif = setTypographyFamily(p, "serif");
     expect(typographyOf(serif)).toEqual({ size: 18, color: "#ffcc00", family: "serif" });
@@ -50,7 +50,7 @@ describe("typography commands", () => {
     expect(p.game!.data.style).toEqual({ sharedFrame: { image: "garden_bg" }, typography: { size: 14 } });
   });
 
-  it("refuses a font that isn't in the library, a size out of range or fractional, and a bad colour", async () => {
+  it("refuses a font that isn't in the library, a size out of range or fractional, and a bad color", async () => {
     const p = await withFont();
     expect(() => setTypographyFont(p, "nope")).toThrow(CommandError);
     for (const size of [5, 73, 12.5, Number.NaN]) expect(() => setTypographySize(p, size)).toThrow(CommandError);
@@ -69,7 +69,7 @@ describe("typography through the editor", () => {
   it("each change is one undo step, typing the size merges, and it saves to game.yaml", async () => {
     const { fs, editor } = await open();
     const typo = () => editor.project.game!.data.style?.typography;
-    editor.apply("Change text colour", (q) => setTypographyColor(q, "#ff0000"));
+    editor.apply("Change text color", (q) => setTypographyColor(q, "#ff0000"));
     editor.apply("Change text size", (q) => setTypographySize(q, 20), "style:typography:size");
     editor.apply("Change text size", (q) => setTypographySize(q, 24), "style:typography:size");
     expect(typo()).toEqual({ color: "#ff0000", size: 24 });

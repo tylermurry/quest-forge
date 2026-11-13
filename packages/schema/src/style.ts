@@ -85,7 +85,8 @@ export const IconBar = z.strictObject({
 export type IconBar = z.infer<typeof IconBar>;
 
 export const DialogueChoices = z.strictObject({
-  highlight: Color.optional(),
+  /** How the row under the pointer (or picked with the keys) is marked: brightened or darkened. */
+  effect: IconEffect.optional(),
   separator: Color.optional(),
 });
 export type DialogueChoices = z.infer<typeof DialogueChoices>;
@@ -106,7 +107,7 @@ export type Narration = z.infer<typeof Narration>;
 
 /** Character speech. */
 export const Speech = z.strictObject({
-  /** The colour of every speaker's name. Absent: AUTHOR_DEFAULTS.speech.name. */
+  /** The color of every speaker's name. Absent: AUTHOR_DEFAULTS.speech.name. */
   name: Color.optional(),
 });
 export type Speech = z.infer<typeof Speech>;
@@ -147,10 +148,11 @@ export interface EffectiveStyle {
     /** `none` is the legacy look (no hover/press effect beyond today's fill). */
     effect: IconEffect | "none";
   };
-  dialogueChoices: { highlight: string; separator: string };
+  /** `none` is the legacy look: each row on a framed button, the hovered one filled gold. */
+  dialogueChoices: { effect: IconEffect | "none"; separator: string };
   /** `top` in game pixels, or "center"; `width` in percent of the screen. */
   narration: { top: number | "center"; width: number };
-  /** `name`: the colour every speaker's name is drawn in. */
+  /** `name`: the color every speaker's name is drawn in. */
   speech: { name: string };
 }
 
@@ -169,17 +171,17 @@ export const LEGACY_STYLE: EffectiveStyle = {
   sharedFrame: NO_FRAME,
   typography: { family: "monospace", font: undefined, size: 10, lineHeight: 12, color: "#ffffff" },
   iconBar: { frame: NO_FRAME, icons: {}, effect: "none" },
-  dialogueChoices: { highlight: "#c89a3c", separator: "#e8d8a8" },
+  dialogueChoices: { effect: "none", separator: "#e8d8a8" },
   narration: { top: 50, width: 60 },
-  // Names have one colour whether or not the creator styled speech; it no longer comes from the character.
+  // Names have one color whether or not the creator styled speech; it no longer comes from the character.
   speech: { name: "#e8d8a8" },
 };
 
 /** What a section shows for fields the creator left out once they have configured it. */
 export const AUTHOR_DEFAULTS = {
-  typography: { family: "monospace", size: 16, color: "#ffffff" },
+  typography: { family: "monospace", size: 14, color: "#ffffff" },
   iconBar: { effect: "brighten" },
-  dialogueChoices: { highlight: LEGACY_STYLE.dialogueChoices.highlight, separator: LEGACY_STYLE.dialogueChoices.separator },
+  dialogueChoices: { effect: "brighten", separator: LEGACY_STYLE.dialogueChoices.separator },
   narration: { top: 50, width: 60 },
   speech: { name: LEGACY_STYLE.speech.name },
 } as const satisfies { typography: Typography; iconBar: IconBar; dialogueChoices: DialogueChoices; narration: Narration; speech: Speech };
@@ -210,7 +212,7 @@ export function resolveStyle(style: GameStyle | undefined): EffectiveStyle {
       ? { frame: frameOf(bar.frame), icons: { ...bar.icons }, effect: bar.effect ?? AUTHOR_DEFAULTS.iconBar.effect }
       : LEGACY_STYLE.iconBar,
     dialogueChoices: choices
-      ? { highlight: choices.highlight ?? AUTHOR_DEFAULTS.dialogueChoices.highlight, separator: choices.separator ?? AUTHOR_DEFAULTS.dialogueChoices.separator }
+      ? { effect: choices.effect ?? AUTHOR_DEFAULTS.dialogueChoices.effect, separator: choices.separator ?? AUTHOR_DEFAULTS.dialogueChoices.separator }
       : LEGACY_STYLE.dialogueChoices,
     narration: style?.narration
       ? { top: style.narration.center ? "center" : (style.narration.top ?? AUTHOR_DEFAULTS.narration.top), width: style.narration.width ?? AUTHOR_DEFAULTS.narration.width }

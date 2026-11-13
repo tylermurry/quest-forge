@@ -32,7 +32,7 @@ describe("effective text style", () => {
     expect(t).toMatchObject({ size: 10, line: 12, color: "#ffffff", custom: false });
   });
 
-  it("every speaker's name has one colour: pale gold, or the style's speech name colour", () => {
+  it("every speaker's name has one color: pale gold, or the style's speech name color", () => {
     expect(textStyle(undefined, "monospace", 100).name).toBe("#e8d8a8");
     expect(textStyle({ speech: { name: "#123456" } }, "monospace", 100).name).toBe("#123456");
   });
@@ -51,10 +51,10 @@ describe("effective text style", () => {
     expect(say.x + say.w / 2).toBeCloseTo(316, 0);
   });
 
-  it("the author's size, colour and font family come through", () => {
+  it("the author's size, color and font family come through", () => {
     const t = textStyle(typed({ family: "serif", size: 16, color: "#ff8800" }), "serif", 100);
     expect(t).toMatchObject({ family: "serif", size: 16, line: lineFor(16), color: "#ff8800", custom: true });
-    expect(textStyle(typed({}), "monospace", 100)).toMatchObject({ size: 16, color: "#ffffff", custom: true });
+    expect(textStyle(typed({}), "monospace", 100)).toMatchObject({ size: 14, color: "#ffffff", custom: true });
   });
 
   it("the player's Text Size scales the author's size: 75%, 100% and 200%", () => {
@@ -191,7 +191,7 @@ describe("drawing text", () => {
     return c;
   }
 
-  it("draws in the style's font, size and colour, or the options given", () => {
+  it("draws in the style's font, size and color, or the options given", () => {
     const ctx = fakeCtx();
     const t = textStyle(typed({ family: "serif", size: 20, color: "#123456" }), "serif", 100);
     drawText(ctx as never, t, "Hi", 0, 0);

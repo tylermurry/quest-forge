@@ -63,7 +63,7 @@ section's settings below it.
   and shrinks to fill it, keeping its shape.
 - While the game screen isn't exactly the game's own size (640 by 400 pixels), **Actual game size** appears.
   Click it to size the preview so the game screen is exactly that size.
-- With **Dialogue Choice**, point at an answer, click it, or press the up and down arrow keys to see its highlight.
+- With **Dialogue Choice**, point at an answer, click it, or press the up and down arrow keys to see its hover effect.
   With **Icon Bar**, move the pointer over the bar to see the hover look, and click a button, or press the left
   and right arrow keys, to see the selected look.
 
@@ -104,33 +104,41 @@ drawn bigger or smaller so that its borders are that thick, whatever size you ma
 with it. There is no extra padding: the words start right inside the borders, so the borders you cut decide how
 much room there is around them.
 
-In **Position**, where narration goes:
+In **Position**, where the panels go. Narration, speech, the dialogue choices and the inventory all go here, in the
+game and in the Styling preview, so they all line up. Every panel is centred across the screen, and speech no longer
+sits above the character who is talking: the speaker's name at the top of the box says who it is.
 
-- **Top**: how far down the screen the narration panel starts, in pixels (50 to start with).
+- **Top**: how far down the screen the panel starts, in pixels (50 to start with).
 - **Center**: puts the panel in the middle of the screen, top to bottom. The **Top** slider is turned off while it
   is ticked, and keeps its value for when you untick it.
 - **Width**: how wide the panel is, as a percentage of the screen (60% to start with), so it stays in proportion
   to the game. The panel grows taller to fit its words.
 
-For now these narration settings only change the preview, like the frame itself.
+A panel that would run off the bottom of the screen is moved up until it fits. The inventory is never narrower
+than its row of buttons, so they stay big enough to tap.
+
+Until you change something here, your game keeps its original placement: narration a little above the middle,
+speech above the speaker, the choices along the bottom and the inventory in the middle. The first change you make
+moves them all to your position.
 
 ### Typography
 
-The font, size and colour of the words in your game: narration, speech, the dialogue choices, the buttons and the
+The font, size and color of the words in your game: narration, speech, the dialogue choices, the buttons and the
 panel titles.
 
-Until you change something here, your game keeps its original look: small, white, typewriter-style text. The first
-change you make switches to your own typography, starting from **16 pixel** white text.
+New projects start with **14 pixel** white text. A project made before typography existed keeps its original look
+(small, white, typewriter-style text) until you change something here; the first change switches it to your own
+typography, starting from 14 pixel white text.
 
 - **Font**: pick one of the built-in fonts (**Monospace**, **Serif** or **Sans-serif**), or a font you imported.
-  Click **Import font…** to add a WOFF2 or WOFF font file from your computer. The font is packed into your game
+  Click **Import font…** to add a WOFF2 or WOFF font file (point at the info icon beside it for a reminder) from your computer. The font is packed into your game
   when you build it, so it works offline. If a font can't be loaded, the game uses a built-in font instead and the
   words stay readable. The editor tells you when that happens.
 - **Text size**: the size in pixels, from 6 to 72.
-- **Text colour**: click the colour square to pick one.
+- **Text color**: click the color square to pick one.
 
-Your text colour is used for the words themselves, speech included. Speakers' names use the name colour from
-[Character Dialogue](#character-dialogue), and a character's own colour stays on the outline of their speech box. Once you pick your own typography, narration is shown on the same dark panel as speech, so
+Your text color is used for the words themselves, speech included. Speakers' names use the name color from
+[Character Dialogue](#character-dialogue), and a character's own color stays on the outline of their speech box. Once you pick your own typography, narration is shown on the same dark panel as speech, so
 white text can be read.
 
 Players can make all the text larger or smaller in the game's **Settings**. Their choice is a percentage of the
@@ -139,19 +147,22 @@ would not fit on the screen, so it is never cut off.
 
 ### Character Dialogue
 
-How speech and conversation choices look. They use your frame from **Frames** and your text from **Typography**.
+How speech and conversation choices look. They use your frame, position and width from **Frames** and your text from
+**Typography**.
 
-- **Name colour**: the colour of every speaker's name, pale gold to start with. One colour is used for every
-  character, so names always match. What they say uses your text colour from **Typography**.
-- **Highlight colour**: fills the whole answer the player points at or selects. Its text turns black or white on
-  its own, whichever is easier to read on your colour.
-- **Separator colour**: the colour of the thin line along the top of the choices. Its thickness and spacing are
+- **Name color**: the color of every speaker's name, pale gold to start with. One color is used for every
+  character, so names always match. What they say uses your text color from **Typography**.
+- **Hover effect**: how the answer under the pointer is marked: **Brighten** (to start with) or **Darken**. The
+  answers have no box around them and sit right next to each other, so the pointer is always on one; the effect
+  lights up or shades the whole answer, with rounded corners, and the pointer turns into a hand.
+- **Separator color**: the color of the thin line along the top of the choices. Its thickness and spacing are
   set by the game.
 
-Until you change the highlight or separator, the choices keep their original look: a gold highlight and no extra
-line. The first change you make to either adds the line, using the game's pale gold unless you pick another colour.
+New projects start with **Brighten** and the line in pale gold. A project made before these settings existed keeps
+its original look (each answer on a gold-edged button, no extra line) until you change the effect or the separator;
+the first change switches it to plain answers with the effect and adds the line.
 
-The choices stay where they are in the game, and long lists still have pages.
+The choices go where you put the panels in **Frames**, and long lists still have pages.
 
 ### Inventory
 

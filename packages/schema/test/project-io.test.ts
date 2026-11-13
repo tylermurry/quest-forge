@@ -158,12 +158,12 @@ describe("load problems", () => {
   it("reports unknown keys and missing fields in plain English", async () => {
     const fs = new MemoryFs({
       ...(await base()),
-      "items/coin.item.yaml": "schemaVersion: 2\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolour: gold\n",
+      "items/coin.item.yaml": "schemaVersion: 2\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolor: gold\n",
       "items/key.item.yaml": "schemaVersion: 2\nid: key\nname: key\nicon: key_icon\n",
     });
     const { problems } = await loadProject(fs);
     expect(problems.map((p) => [p.location.file, p.code, p.breadcrumb, p.message])).toEqual([
-      ["items/coin.item.yaml", "invalid_data", 'Item "gold coin"', 'has unknown setting "colour".'],
+      ["items/coin.item.yaml", "invalid_data", 'Item "gold coin"', 'has unknown setting "color".'],
       ["items/key.item.yaml", "invalid_data", 'Item "key"', 'is missing "description".'],
     ]);
   });

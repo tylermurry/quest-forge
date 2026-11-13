@@ -1,9 +1,10 @@
 import { LEGACY_STYLE, SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
+import { placeAt, placementWidth, type Placement } from "./layout.ts";
 import { lineFor, shrinkToFit, type Measure } from "./typography.ts";
 
 // Text boxes: `narrate` is a centered Sierra box; `say` sits over the
-// speaker in their color with their name. Boxes advance on a click/tap or after a
+// speaker in their color with their name. With a Frames position (`Placement`) both go there instead. Boxes advance on a click/tap or after a
 // time based on length. Layout is pure: the renderer passes a text measurer and the text size.
 
 const PAD = 10;
@@ -69,17 +70,23 @@ export interface BoxLayout extends Rect {
 /**
  * Where a text box goes and how its text breaks, in scene space. `text.size` is the size to try; a box
  * that would be taller than the screen is laid out again one pixel smaller until it fits.
+ * `placement` (the Frames position, `placementOf`) puts narration and speech alike at its top and width;
+ * null keeps the legacy layout: narration a little above the middle, speech over the speaker.
  */
-export function layoutTextBox(box: TextBox, measure: Measure, text: { size: number } = LEGACY_STYLE.typography): BoxLayout {
+export function layoutTextBox(box: TextBox, measure: Measure, text: { size: number } = LEGACY_STYLE.typography, placement: Placement | null = null): BoxLayout {
   const build = (size: number): BoxLayout => {
     const line = lineFor(size);
-    const maxW = boxWidth(box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH, size);
+    const maxW = placement ? Math.max(1, placementWidth(placement) - PAD * 2) : boxWidth(box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH, size);
     const lines = wrap((t) => measure(t, size), box.text, maxW);
     const name = box.kind === "say" && box.speaker ? box.speaker.name : null;
-    const widest = Math.max(...lines.map((l) => measure(l, size)), name ? measure(name, size, true) : 0);
-    const w = Math.round(Math.min(maxW, widest) + PAD * 2);
     const rows = lines.length + (name ? 1 : 0);
     const h = rows * line + PAD * 2;
+    if (placement) {
+      const r = placeAt(placement, placementWidth(placement), h);
+      return { ...r, name, lines, textY: r.y + PAD + (name ? line : 0), size, line };
+    }
+    const widest = Math.max(...lines.map((l) => measure(l, size)), name ? measure(name, size, true) : 0);
+    const w = Math.round(Math.min(maxW, widest) + PAD * 2);
     const clampX = (x: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_WIDTH - MARGIN - w, x)));
     const clampY = (y: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_HEIGHT - MARGIN - h, y)));
 

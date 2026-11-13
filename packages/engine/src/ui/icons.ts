@@ -11,7 +11,7 @@ type Ctx = CanvasRenderingContext2D;
 /** How far the effect moves each icon pixel toward white (Brighten) or black (Darken). */
 export const EFFECT_AMOUNT = 0.35;
 
-/** `#rrggbb` with the effect applied: the colour the built-in vector icons are drawn in. */
+/** `#rrggbb` with the effect applied: the color the built-in vector icons are drawn in. */
 export function shadeColor(hex: string, effect: IconEffect): string {
   const to = effect === "brighten" ? 255 : 0;
   const channel = (i: number) => {

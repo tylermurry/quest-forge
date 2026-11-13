@@ -23,7 +23,7 @@ The narrator says something.
 
 ### Say
 
-A character says a line, playing their talk animation. The speech box is outlined in their text colour.
+A character says a line, playing their talk animation. The speech box is outlined in their text color.
 
 | Field | What it is |
 |---|---|

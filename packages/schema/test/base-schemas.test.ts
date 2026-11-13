@@ -83,7 +83,7 @@ describe("file schemas", () => {
   });
 
   it("rejects unknown keys", () => {
-    const r = ItemFile.safeParse({ ...item, colour: "red" });
+    const r = ItemFile.safeParse({ ...item, color: "red" });
     expect(r.success).toBe(false);
     expect(r.error?.issues[0]?.code).toBe("unrecognized_keys");
   });

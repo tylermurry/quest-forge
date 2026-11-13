@@ -212,8 +212,8 @@ describe("the Brighten / Darken effect", () => {
     drawIconBar(bright.ctx, bar(), t, styled({ icons: all, effect: "brighten" }), lookup);
     const dark = fake();
     drawIconBar(dark.ctx, bar(), t, styled({ icons: all, effect: "darken" }), lookup);
-    const colours = made.map((m) => m.calls.find((c) => c[0] === "set" && c[1] === "fillStyle")![2]);
-    expect(colours).toEqual(["#fff", "#000"]);
+    const colors = made.map((m) => m.calls.find((c) => c[0] === "set" && c[1] === "fillStyle")![2]);
+    expect(colors).toEqual(["#fff", "#000"]);
     for (const m of made) {
       expect(m.calls).toContainEqual(["set", "globalCompositeOperation", "source-atop"]);
       expect(m.calls).toContainEqual(["set", "globalAlpha", EFFECT_AMOUNT]);
@@ -245,8 +245,8 @@ describe("the Brighten / Darken effect", () => {
   it("tints the built-in icons the same way when there is no picture", () => {
     const f = fake();
     drawIconBar(f.ctx, bar({ selected: "walk" }), t, styled({ effect: "brighten" }), () => undefined);
-    const colours = f.calls.filter((c) => c[0] === "set" && c[1] === "fillStyle").map((c) => c[2]);
-    expect(colours).toContain(shadeColor("#e8d8a8", "brighten"));
+    const colors = f.calls.filter((c) => c[0] === "set" && c[1] === "fillStyle").map((c) => c[2]);
+    expect(colors).toContain(shadeColor("#e8d8a8", "brighten"));
     expect(shadeColor("#e8d8a8", "brighten")).not.toBe("#e8d8a8");
   });
 

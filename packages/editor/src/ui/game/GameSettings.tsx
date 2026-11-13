@@ -105,7 +105,7 @@ export function GameSettings({ actions }: { actions: Actions }) {
                   type="button"
                   aria-current={selected ? "page" : undefined}
                   onClick={() => ws.setGameSection(s.section)}
-                  className={cn("hover:bg-muted flex h-7 items-center gap-1.5 rounded-sm px-2 text-left text-[13px]", selected && "bg-muted text-foreground font-semibold")}
+                  className={cn("hover:bg-accent/50 flex h-7 items-center gap-1.5 rounded-sm px-2 text-left text-[13px]", selected && "bg-selection hover:bg-selection text-foreground font-semibold")}
                 >
                   {s.title}
                   {s.section === "rules" && (

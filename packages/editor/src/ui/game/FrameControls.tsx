@@ -98,7 +98,12 @@ export function FrameControls(props: {
         />
       </div>
       {frame.image !== undefined && !asset && <p role="alert" className="text-err text-[12px]">The image {frame.image} is no longer in the Images library, so the default look is used. Pick another image.</p>}
-      {asset && !image && <p className="text-muted-foreground text-[12px]">Loading the image…</p>}
+      {asset && !image && !images.failed(asset.id) && <p className="text-muted-foreground text-[12px]">Loading the image…</p>}
+      {asset && !image && images.failed(asset.id) && (
+        <p role="alert" className="text-err text-[12px]">
+          The image {asset.id} couldn&apos;t be loaded from {asset.path}. Check the file, or pick another image.
+        </p>
+      )}
       <NineSliceEditor
         image={image}
         insets={draft.insets}

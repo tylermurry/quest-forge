@@ -7,7 +7,7 @@ import type { Vec } from "../vec.ts";
 import type { PlayerUi } from "./controller.ts";
 import { legibleInk, type ChoicesLook } from "./choices.ts";
 import { drawIcon, shadeColor, shadedImage, type IconId } from "./icons.ts";
-import { fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
+import { CHOICE_TEXT_INSET, fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
 import { nineSliceTiles } from "./nineslice.ts";
 import { wrap } from "./textbox.ts";
 import { fontOf, lineFor, shrinkToFit, type Measure, type TextStyle } from "./typography.ts";
@@ -46,7 +46,7 @@ export interface TextOptions {
   align?: CanvasTextAlign;
   baseline?: CanvasTextBaseline;
   bold?: boolean;
-  /** Default: the style's body colour. */
+  /** Default: the style's body color. */
   color?: string;
   /** Default: the style's size. */
   size?: number;
@@ -75,7 +75,7 @@ function drawFitted(ctx: Ctx, t: TextStyle, text: string, x: number, y: number, 
   drawText(ctx, t, fit(ctx, text, maxW), x, y, { ...o, size });
 }
 
-/** Text on the game's panels and buttons: the author's colour, or the legacy gold when there is no typography. */
+/** Text on the game's panels and buttons: the author's color, or the legacy gold when there is no typography. */
 const ink = (t: TextStyle) => (t.custom ? t.color : EDGE);
 
 function button(ctx: Ctx, r: Rect, active = false, enabled = true, activeFill = ACTIVE) {
@@ -162,28 +162,67 @@ export interface ChoicesView {
   hover: Vec | null;
 }
 
+/** What a styled choice row's hover effect lays over it. */
+const ROW_EFFECT: Record<IconEffect, string> = { brighten: "rgba(255,255,255,0.18)", darken: "rgba(0,0,0,0.35)" };
+const ROW_RADIUS = 4;
+
+/** Fills `r` with rounded corners. */
+function fillRounded(ctx: Ctx, r: Rect, radius: number) {
+  ctx.beginPath();
+  ctx.moveTo(r.x + radius, r.y);
+  ctx.arcTo(r.x + r.w, r.y, r.x + r.w, r.y + r.h, radius);
+  ctx.arcTo(r.x + r.w, r.y + r.h, r.x, r.y + r.h, radius);
+  ctx.arcTo(r.x, r.y + r.h, r.x, r.y, radius);
+  ctx.arcTo(r.x, r.y, r.x + r.w, r.y, radius);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** The choice row (or More…) under `p`, if any. */
+export function choiceRowAt(box: ChoiceBox, p: Vec | null): Rect | null {
+  if (!p) return null;
+  return [...box.rows, ...(box.more ? [box.more] : [])].find((r) => inRect(p, r)) ?? null;
+}
+
 /**
- * The rows of the dialogue list box, without the box behind them: the separator line at the top of the choices
- * region (once the author has styled Dialogue Choices; the legacy box edge already marks it), then each option
- * on a button. The row under the pointer is filled with the highlight colour and its text turns black or white,
- * whichever reads better on that colour. The game and the editor's Dialogue Choices preview both draw with this.
+ * The rows of the dialogue list box, without the box behind them. Styled (the author configured Dialogue
+ * Choices): the separator line at the top of the choices region, then each option as plain text; the row under
+ * the pointer is brightened or darkened, with rounded corners. Legacy: each option on a button, the hovered one
+ * filled gold with black text. The game and the editor's Dialogue Choices preview both draw with this.
  */
 export function drawChoiceRows(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook) {
   const { box, hover } = v;
-  if (look.styled) {
-    const sep = separatorRect(box);
-    ctx.fillStyle = look.separator;
-    ctx.fillRect(sep.x, sep.y, sep.w, sep.h);
+  const effect = look.effect;
+  if (effect === "none") {
+    box.rows.forEach((row, i) => {
+      const text = v.options[i];
+      if (text === undefined) return;
+      const over = !!hover && inRect(hover, row);
+      button(ctx, row, over, true, ACTIVE);
+      drawFitted(ctx, t, text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? legibleInk(ACTIVE) : ink(t), baseline: "middle" });
+    });
+    if (box.more) {
+      button(ctx, box.more);
+      buttonText(ctx, t, "More…", box.more);
+    }
+    return;
   }
+  const sep = separatorRect(box);
+  ctx.fillStyle = look.separator;
+  ctx.fillRect(sep.x, sep.y, sep.w, sep.h);
+  const mark = (row: Rect) => {
+    if (!hover || !inRect(hover, row)) return;
+    ctx.fillStyle = ROW_EFFECT[effect];
+    fillRounded(ctx, row, ROW_RADIUS);
+  };
   box.rows.forEach((row, i) => {
     const text = v.options[i];
     if (text === undefined) return;
-    const over = !!hover && hover[0] >= row.x && hover[0] < row.x + row.w && hover[1] >= row.y && hover[1] < row.y + row.h;
-    button(ctx, row, over, true, look.highlight);
-    drawFitted(ctx, t, text, row.x + 8, row.y + row.h / 2, row.w - 16, row.h, { color: over ? legibleInk(look.highlight) : ink(t), baseline: "middle" });
+    mark(row);
+    drawFitted(ctx, t, text, row.x + CHOICE_TEXT_INSET, row.y + row.h / 2, row.w - CHOICE_TEXT_INSET * 2, row.h, { color: ink(t), baseline: "middle" });
   });
   if (box.more) {
-    button(ctx, box.more);
+    mark(box.more);
     buttonText(ctx, t, "More…", box.more);
   }
 }
@@ -458,6 +497,13 @@ function drawCursor(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefin
   const [x, y] = ui.cursor!;
   const r: Rect = { x: Math.round(x) - 8, y: Math.round(y) - 8, w: 16, h: 16 };
   const s = ui.session;
+  // Over a dialogue choice it's a hand, so the row reads as clickable.
+  const box = ui.choiceBox;
+  if (box && choiceRowAt(box, ui.cursor)) {
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) drawIcon(ctx, "hand", { ...r, x: r.x + dx, y: r.y + dy }, "#000");
+    drawIcon(ctx, "hand", r, "#fff");
+    return;
+  }
   // Over UI (or while locked) it's a plain pointer.
   const plain = s.busy || s.text || ui.panel || ui.barOpen;
   if (plain) {

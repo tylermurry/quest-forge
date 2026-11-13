@@ -80,7 +80,7 @@ describe("built-in frame", () => {
   });
 });
 
-describe("scale, narration and name colour commands", () => {
+describe("scale, narration and name color commands", () => {
   it("sets the frame scale within 8 to 64 px, keeping the picture and borders", async () => {
     const p = setFrameScale(setFrameInsets(setFrameImage(await m1Project(), "sharedFrame", "garden_bg"), "sharedFrame", insets(6, 6, 6, 6)), 32);
     expect(p.game!.data.style!.sharedFrame).toEqual({ image: "garden_bg", insets: insets(6, 6, 6, 6), scale: 32 });
@@ -103,7 +103,7 @@ describe("scale, narration and name colour commands", () => {
     expect(() => setNarrationWidth(p0, 101)).toThrow(CommandError);
   });
 
-  it("sets one name colour for every speaker, without touching the other sections", async () => {
+  it("sets one name color for every speaker, without touching the other sections", async () => {
     const p = setSpeechNameColor(await m1Project(), "#AABBCC");
     expect(p.game!.data.style).toEqual({ speech: { name: "#aabbcc" } });
     expect(() => setSpeechNameColor(p, "gold")).toThrow(CommandError);
@@ -229,9 +229,11 @@ describe("preview layout", () => {
     expect(centred.y).toBe(Math.round((400 - centred.h) / 2));
     const low = layoutSample("narrationShort", look(ZERO), { top: 400, width: 60 }, text, measure).frame;
     expect(low.y + low.h).toBe(400);
-    // The other panels keep to the upper third.
-    const speech = layoutSample("speech", look(ZERO), { top: 0, width: 60 }, text, measure).frame;
-    expect(speech.y).toBe(Math.round(400 / 3 - speech.h / 2));
+    // Speech, the choices and the inventory use the same position and width.
+    for (const sample of ["speech", "choices", "inventory"] as const) {
+      const f = layoutSample(sample, look(ZERO), { top: 70, width: 50 }, text, measure).frame;
+      expect([f.y, f.w, f.x]).toEqual([70, 320, 160]);
+    }
   });
 
   it("the drawn borders are the only padding: content starts right inside them", () => {

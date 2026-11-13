@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { LEGACY_STYLE, type GameStyle } from "@questforge/schema";
 import { choicesLook, contrast, legibleInk } from "../src/ui/choices.ts";
-import { drawChoiceBox, drawChoiceRows, type ChoicesView } from "../src/ui/draw.ts";
-import { choiceLayout, separatorRect } from "../src/ui/layout.ts";
+import { choiceRowAt, drawChoiceBox, drawChoiceRows, type ChoicesView } from "../src/ui/draw.ts";
+import { CHOICE_TEXT_INSET, choiceLayout, separatorRect } from "../src/ui/layout.ts";
 import { textStyle } from "../src/ui/typography.ts";
 
-// Dialogue Choices: the highlight on the hovered row, the text colour derived from it, the separator at the
-// top of the choices region, and the legacy look unchanged. Drawn into a fake context that records its calls.
+// Dialogue Choices: the hover effect on the hovered row, the separator at the top of the choices region, and
+// the legacy look unchanged. Drawn into a fake context that records its calls.
 
 type Call = [string, ...unknown[]];
 function fake() {
@@ -29,24 +29,25 @@ function fake() {
 
 const t = textStyle(undefined, "monospace", 100);
 const box = choiceLayout(32, 3, 0);
+const styledBox = choiceLayout(32, 3, 0, true);
 const texts = ["Ask about the pond", "Ask about the rod", "Say goodbye"];
-const view = (hover: ChoicesView["hover"], b = box, options: ChoicesView["options"] = texts): ChoicesView => ({ box: b, options, hover });
-const centre = (i: number, b = box): [number, number] => [b.rows[i]!.x + 5, b.rows[i]!.y + 5];
+const view = (hover: ChoicesView["hover"], b = styledBox, options: ChoicesView["options"] = texts): ChoicesView => ({ box: b, options, hover });
+const centre = (i: number, b = styledBox): [number, number] => [b.rows[i]!.x + 5, b.rows[i]!.y + 5];
 const styled = (c: NonNullable<GameStyle["dialogueChoices"]>) => choicesLook({ dialogueChoices: c });
 
-/** The fill colour of each row background, and the colour each option's text is drawn in. */
+/** The color of each rounded hover fill, the plain rectangles drawn, and the color each option's text is drawn in. */
 function rowsDrawn(look: ReturnType<typeof choicesLook>, hover: ChoicesView["hover"]) {
   const { ctx, calls } = fake();
   drawChoiceRows(ctx, view(hover), t, look);
-  const fills: string[] = [];
+  const effects: string[] = [];
   const inks: string[] = [];
   let fill = "";
   for (const [k, ...a] of calls) {
     if (k === "set" && a[0] === "fillStyle") fill = a[1] as string;
-    if (k === "fillRect") fills.push(fill);
+    if (k === "fill") effects.push(fill);
     if (k === "fillText") inks.push(fill);
   }
-  return { calls, fills, inks };
+  return { calls, effects, inks, rects: calls.filter(([k]) => k === "fillRect" || k === "strokeRect") };
 }
 
 describe("legibleInk", () => {
@@ -59,8 +60,8 @@ describe("legibleInk", () => {
     expect(legibleInk("#7f7f7f")).toBe("#000");
   });
 
-  it("gives the legacy highlight today's black text, and whichever has more contrast always wins", () => {
-    expect(legibleInk(LEGACY_STYLE.dialogueChoices.highlight)).toBe("#000");
+  it("gives the legacy gold highlight today's black text, and whichever has more contrast always wins", () => {
+    expect(legibleInk("#c89a3c")).toBe("#000");
     for (const c of ["#336699", "#996633", "#669933", "#cc3366", "#3366cc", "#aaaaaa", "#555555"]) {
       const picked = legibleInk(c) === "#000" ? "#000000" : "#ffffff";
       const other = picked === "#000000" ? "#ffffff" : "#000000";
@@ -70,41 +71,52 @@ describe("legibleInk", () => {
   });
 });
 
-describe("choice colours", () => {
-  it("normal rows use the button colour; the hovered row uses the highlight and the derived ink", () => {
-    const look = styled({ highlight: "#2040a0", separator: "#ff0000" });
+describe("styled choices", () => {
+  it("draw no frame around the rows; only the hovered row gets the effect, with rounded corners", () => {
+    const look = styled({ separator: "#ff0000" });
+    expect(look.effect).toBe("brighten");
     const normal = rowsDrawn(look, null);
-    expect(normal.fills).not.toContain("#2040a0");
+    expect(normal.effects).toEqual([]);
+    expect(normal.calls.some(([k]) => k === "strokeRect")).toBe(false);
     const hover = rowsDrawn(look, centre(1));
-    expect(hover.fills.filter((c) => c === "#2040a0")).toHaveLength(1);
-    expect(hover.inks.filter((c) => c === "#fff")).toHaveLength(1);
-    expect(hover.inks).toHaveLength(3);
+    expect(hover.effects).toEqual(["rgba(255,255,255,0.18)"]);
+    expect(hover.calls.filter(([k]) => k === "arcTo")).toHaveLength(4);
+    // Only the separator is a plain rectangle.
+    expect(hover.rects).toHaveLength(1);
   });
 
-  it("fills the whole row, and a light highlight gets black text", () => {
-    const { ctx, calls } = fake();
-    drawChoiceRows(ctx, view(centre(0)), t, styled({ highlight: "#ffffcc", separator: "#ff0000" }));
-    const row = box.rows[0]!;
-    expect(calls).toContainEqual(["fillRect", row.x, row.y, row.w, row.h]);
-    expect(calls).toContainEqual(["set", "fillStyle", "#000"]);
+  it("darken lays black over the hovered row instead", () => {
+    expect(rowsDrawn(styled({ effect: "darken" }), centre(0)).effects).toEqual(["rgba(0,0,0,0.35)"]);
   });
 
-  it("the author's typography colour stays on normal rows", () => {
+  it("keep the author's text color on every row, hovered or not, inset from the row's edge", () => {
     const custom = textStyle({ typography: { color: "#00ff00" } }, "monospace", 100);
     const { ctx, calls } = fake();
-    drawChoiceRows(ctx, view(centre(0)), custom, styled({ highlight: "#2040a0" }));
-    expect(calls).toContainEqual(["set", "fillStyle", "#00ff00"]);
+    drawChoiceRows(ctx, view(centre(0)), custom, styled({}));
+    const texts = calls.filter(([k]) => k === "fillText");
+    expect(texts).toHaveLength(3);
+    expect(texts[0]![2]).toBe(styledBox.rows[0]!.x + CHOICE_TEXT_INSET);
+    expect(calls.filter(([k, key, v]) => k === "set" && key === "fillStyle" && v === "#00ff00")).toHaveLength(3);
+  });
+
+  it("find the row under the pointer, More… included, for the hand cursor", () => {
+    const paged = choiceLayout(32, 12, 0, true);
+    expect(choiceRowAt(paged, centre(0, paged))).toEqual(paged.rows[0]);
+    expect(choiceRowAt(paged, [paged.more!.x + 1, paged.more!.y + 1])).toEqual(paged.more);
+    expect(choiceRowAt(paged, [0, 0])).toBeNull();
+    expect(choiceRowAt(paged, null)).toBeNull();
   });
 });
 
 describe("separator", () => {
-  it("is a thin line in the separator colour at the top of the choices region, inside the box", () => {
-    const sep = separatorRect(box);
-    expect(sep.h).toBeLessThanOrEqual(2);
-    expect(sep.y).toBeGreaterThanOrEqual(box.panel.y);
-    expect(sep.y + sep.h).toBeLessThanOrEqual(box.rows[0]!.y);
-    expect(sep.x).toBeGreaterThanOrEqual(box.panel.x);
-    expect(sep.x + sep.w).toBeLessThanOrEqual(box.panel.x + box.panel.w);
+  it("is a thin line with room above and below it, a little wider than the rows", () => {
+    const sep = separatorRect(styledBox);
+    const row = styledBox.rows[0]!;
+    expect(sep.h).toBe(2);
+    expect(sep.y - styledBox.panel.y).toBe(8);
+    expect(row.y - (sep.y + sep.h)).toBe(8);
+    expect(sep.x).toBe(row.x - 4);
+    expect(sep.w).toBe(row.w + 8);
     const { ctx, calls } = fake();
     drawChoiceRows(ctx, view(null), t, styled({ separator: "#ff0000" }));
     const at = calls.findIndex(([k, ...a]) => k === "fillRect" && a[1] === sep.y);
@@ -112,10 +124,17 @@ describe("separator", () => {
     expect(calls[at]).toEqual(["fillRect", sep.x, sep.y, sep.w, sep.h]);
   });
 
-  it("follows the top of the box when it is taller", () => {
-    const tall = choiceLayout(32, 6, 0);
-    expect(separatorRect(tall).y).toBe(tall.panel.y + 3);
-    expect(separatorRect(tall).y).toBeLessThan(separatorRect(box).y);
+  it("styled rows touch, so the pointer is always on an answer; legacy buttons keep their gap", () => {
+    for (let i = 1; i < styledBox.rows.length; i++) expect(styledBox.rows[i]!.y).toBe(styledBox.rows[i - 1]!.y + styledBox.rows[i - 1]!.h);
+    expect(box.rows[1]!.y - (box.rows[0]!.y + box.rows[0]!.h)).toBe(4);
+    const paged = choiceLayout(32, 12, 0, true);
+    expect(paged.more!.y).toBe(paged.rows.at(-1)!.y + 32);
+  });
+
+  it("only styled boxes make room for it; the legacy box keeps its padding", () => {
+    expect(box.rows[0]!.y - box.panel.y).toBe(8);
+    expect(styledBox.rows[0]!.y - styledBox.panel.y).toBe(18);
+    expect(styledBox.panel.y + styledBox.panel.h).toBe(box.panel.y + box.panel.h);
   });
 });
 
@@ -125,7 +144,7 @@ describe("legacy look", () => {
     const look = choicesLook(undefined);
     expect(look).toEqual({ ...LEGACY_STYLE.dialogueChoices, styled: false });
     const { ctx, calls } = fake();
-    drawChoiceBox(ctx, view(centre(0)), t, look);
+    drawChoiceBox(ctx, view(centre(0, box), box), t, look);
     const r = box.panel;
     const button = (row: (typeof box.rows)[number], fill: string): Call[] => [
       ["set", "fillStyle", fill],
@@ -158,8 +177,8 @@ describe("legacy look", () => {
     ]);
   });
 
-  it("a styled section with only a separator keeps the legacy highlight", () => {
-    expect(styled({ separator: "#123456" })).toEqual({ highlight: "#c89a3c", separator: "#123456", styled: true });
+  it("a styled section with only a separator gets the Brighten effect", () => {
+    expect(styled({ separator: "#123456" })).toEqual({ effect: "brighten", separator: "#123456", styled: true });
   });
 });
 
@@ -170,7 +189,7 @@ describe("paging and hit boxes are unchanged", () => {
     expect(paged.rows.length).toBeLessThan(12);
     const { ctx, calls } = fake();
     const options = paged.rows.map((_, i) => `option ${i}`);
-    drawChoiceRows(ctx, view(null, paged, options), t, styled({ highlight: "#2040a0" }));
+    drawChoiceRows(ctx, view(null, paged, options), t, styled({}));
     expect(calls.filter(([k]) => k === "fillText").map(([, s]) => s)).toEqual([...options, "More…"]);
     expect(box.rows.every((r) => r.h === 32)).toBe(true);
     expect(box.panel.y + box.panel.h).toBe(400 - 8);

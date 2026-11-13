@@ -1,4 +1,4 @@
-import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { SCENE_HEIGHT, SCENE_WIDTH, resolveStyle, type EffectiveStyle, type GameStyle } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 
 // Player UI layout: every control is at least 44 CSS px after
@@ -51,6 +51,24 @@ export interface Layout {
   notice: { x: number; y: number };
 }
 
+/**
+ * Where the creator put the panels in Game Settings > Styling > Frames > Position: `top` game pixels down (or
+ * `center`), `width` percent of the screen wide. Narration, speech, the dialogue choices and the inventory use it.
+ */
+export type Placement = EffectiveStyle["narration"];
+
+/** The game's panel placement, or null when `game.yaml` has no `narration` section: the legacy layout. */
+export const placementOf = (style: GameStyle | undefined): Placement | null => (style?.narration ? resolveStyle(style).narration : null);
+
+/** A placement's panel width in game pixels. */
+export const placementWidth = (p: Placement) => Math.round((SCENE_WIDTH * p.width) / 100);
+
+/** A `w` × `h` panel at a placement: centred across, `top` down or in the middle, and kept on the screen. */
+export function placeAt(p: Placement, w: number, h: number): Rect {
+  const wanted = p.top === "center" ? (SCENE_HEIGHT - h) / 2 : p.top;
+  return { x: Math.round((SCENE_WIDTH - w) / 2), y: Math.max(0, Math.min(SCENE_HEIGHT - h, Math.round(wanted))), w, h };
+}
+
 const centered = (w: number, h: number): Rect => ({ x: Math.round((SCENE_WIDTH - w) / 2), y: Math.round((SCENE_HEIGHT - h) / 2), w, h });
 
 /** A row of buttons of width `w` each, centered in `panel` at `y`. */
@@ -60,7 +78,11 @@ function row<Id extends string>(ids: readonly Id[], panel: Rect, y: number, w: n
   return ids.map((id, i) => ({ id, rect: { x: x0 + i * (w + GAP), y, w, h } }));
 }
 
-export function computeLayout(cssScale: number): Layout {
+/**
+ * `placement`: where the creator put the panels (`placementOf`); the inventory goes there, as wide as it says but
+ * never narrower than its buttons need. Null keeps the legacy centred 600-pixel inventory.
+ */
+export function computeLayout(cssScale: number, placement: Placement | null = null): Layout {
   const u = unitFor(cssScale);
 
   // Icon bar across the top.
@@ -76,21 +98,25 @@ export function computeLayout(cssScale: number): Layout {
   };
 
   // Inventory: a grid of cells, then Look / Select / item / OK.
-  const panelW = Math.min(SCENE_WIDTH - GAP * 4, 600);
   const pad = GAP * 2;
+  const invBtnW = Math.max(u, 64);
+  const invIds = ["look", "select", "item", "ok"] as const;
+  const panelW = placement
+    ? Math.min(SCENE_WIDTH, Math.max(placementWidth(placement), invIds.length * (invBtnW + GAP) - GAP + pad * 2))
+    : Math.min(SCENE_WIDTH - GAP * 4, 600);
   const title = 16;
   const cols = Math.max(1, Math.floor((panelW - pad * 2 + GAP) / (u + GAP)));
   const maxRows = Math.max(1, Math.floor((SCENE_HEIGHT - GAP * 4 - title - pad * 3 - u + GAP) / (u + GAP)));
   const rows = Math.min(maxRows, 3);
   const gridW = cols * (u + GAP) - GAP;
   const panelH = title + pad * 3 + rows * (u + GAP) - GAP + u;
-  const panel = centered(panelW, panelH);
+  const panel = placement ? placeAt(placement, panelW, panelH) : centered(panelW, panelH);
   const gx = panel.x + Math.round((panel.w - gridW) / 2);
   const gy = panel.y + pad + title;
   const cells: Rect[] = [];
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ x: gx + c * (u + GAP), y: gy + r * (u + GAP), w: u, h: u });
   const btnY = gy + rows * (u + GAP) - GAP + pad;
-  const invButtons = row(["look", "select", "item", "ok"] as const, panel, btnY, Math.max(u, 64), u);
+  const invButtons = row(invIds, panel, btnY, invBtnW, u);
 
   // Settings: one column of wide buttons.
   const sIds = ["restart", "save", "load", "volume", "textsize", "close"] as const;
@@ -216,24 +242,48 @@ const CHOICE_WIDTH = 560;
 
 /** The separator line's thickness. */
 const SEPARATOR_THICKNESS = 2;
+/** The room above and below the separator line of styled choices. */
+export const SEPARATOR_SPACE = 8;
+/** How far the separator reaches past the rows on each side. */
+const SEPARATOR_REACH = 4;
+/** The gap between a styled choice row's edge and its text. */
+export const CHOICE_TEXT_INSET = 12;
 
-/** The separator line at the top of the choices region: inside the box's top padding, inset like the rows. */
+/**
+ * The space above the first row: the legacy box's padding, or for styled choices (Dialogue Choices configured)
+ * the separator line with room above and below it.
+ */
+export const choiceTop = (styled: boolean) => (styled ? SEPARATOR_SPACE * 2 + SEPARATOR_THICKNESS : GAP * 2);
+
+/** The separator line at the top of a styled choices region, a little wider than the rows. */
 export function separatorRect(box: ChoiceBox): Rect {
-  const pad = GAP * 2;
-  return { x: box.panel.x + pad, y: box.panel.y + (pad - SEPARATOR_THICKNESS) / 2, w: box.panel.w - pad * 2, h: SEPARATOR_THICKNESS };
+  const inset = GAP * 2 - SEPARATOR_REACH;
+  return { x: box.panel.x + inset, y: box.panel.y + SEPARATOR_SPACE, w: box.panel.w - inset * 2, h: SEPARATOR_THICKNESS };
 }
 
-export function choiceLayout(unit: number, count: number, page: number): ChoiceBox {
+/**
+ * The gap between choice rows: the legacy buttons are spaced apart; styled rows touch, so the pointer never falls
+ * between two answers and the hover moves straight from one to the next.
+ */
+export const choiceGap = (styled: boolean) => (styled ? 0 : GAP);
+
+/**
+ * `styled`: Dialogue Choices is configured, which leaves room for the separator line above the rows.
+ * `placement`: where the creator put the panels (`placementOf`); null keeps the legacy 560-pixel box at the bottom.
+ */
+export function choiceLayout(unit: number, count: number, page: number, styled = false, placement: Placement | null = null): ChoiceBox {
   const pad = GAP * 2;
-  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - pad * 2 + GAP) / (unit + GAP)));
+  const top = choiceTop(styled);
+  const gap = choiceGap(styled);
+  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - top - pad + gap) / (unit + gap)));
   const perPage = count <= fit ? count : fit - 1;
   const pages = Math.max(1, Math.ceil(count / Math.max(1, perPage)));
   const p = ((page % pages) + pages) % pages;
   const first = p * perPage;
   const shown = Math.min(perPage, count - first);
   const lines = shown + (pages > 1 ? 1 : 0);
-  const h = pad * 2 + lines * (unit + GAP) - GAP;
-  const panel: Rect = { x: Math.round((SCENE_WIDTH - CHOICE_WIDTH) / 2), y: SCENE_HEIGHT - GAP * 2 - h, w: CHOICE_WIDTH, h };
-  const row = (i: number): Rect => ({ x: panel.x + pad, y: panel.y + pad + i * (unit + GAP), w: panel.w - pad * 2, h: unit });
+  const h = top + pad + lines * (unit + gap) - gap;
+  const panel: Rect = placement ? placeAt(placement, placementWidth(placement), h) : { x: Math.round((SCENE_WIDTH - CHOICE_WIDTH) / 2), y: SCENE_HEIGHT - GAP * 2 - h, w: CHOICE_WIDTH, h };
+  const row = (i: number): Rect => ({ x: panel.x + pad, y: panel.y + top + i * (unit + gap), w: panel.w - pad * 2, h: unit });
   return { panel, rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
 }

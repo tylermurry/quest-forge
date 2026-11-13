@@ -3,7 +3,7 @@ import { clampTextScale } from "../saves.ts";
 
 // The text the game draws with: the author's typography (or the legacy look when there is none),
 // the font that actually loaded, and the player's Text Size. One place decides font, size, line
-// height and colour; the drawing code and the layouts read them from here. Pure; tested in Node.
+// height and color; the drawing code and the layouts read them from here. Pure; tested in Node.
 
 export interface TextStyle {
   /** CSS font-family: the custom font once loaded, else the built-in family. */
@@ -12,11 +12,11 @@ export interface TextStyle {
   size: number;
   /** Distance between lines at `size`. */
   line: number;
-  /** Body text colour. */
+  /** Body text color. */
   color: string;
-  /** The colour of every speaker's name (`style.speech.name`). */
+  /** The color of every speaker's name (`style.speech.name`). */
   name: string;
-  /** The author configured typography. False is the legacy look, which keeps its own per-box colours. */
+  /** The author configured typography. False is the legacy look, which keeps its own per-box colors. */
   custom: boolean;
 }
 

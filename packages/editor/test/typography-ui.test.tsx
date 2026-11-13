@@ -9,7 +9,7 @@ import { CommandsContext, PlatformContext } from "../src/ui/hooks.ts";
 import { Workspace } from "../src/ui/Workspace.tsx";
 import { m1Project } from "./support/fixtures.ts";
 
-// Styling > Typography through the real Workspace: the font picker, the size box and the colour.
+// Styling > Typography through the real Workspace: the font picker, the size box and the color.
 
 class FakeImage {
   naturalWidth = 96;
@@ -55,19 +55,17 @@ const typo = (e: Editor) => e.project.game!.data.style?.typography;
 const field = (name: string) => screen.getByLabelText(name) as HTMLInputElement;
 
 describe("Typography", () => {
-  it("starts uncustomised, then the size box and colour make the section, each undoable", async () => {
+  it("starts uncustomised, then the size box and color make the section, each undoable", async () => {
     const editor = await openTypography();
     expect(screen.getByRole("heading", { name: "Typography" })).toBeTruthy();
-    expect(screen.getByText(/Not customised yet/)).toBeTruthy();
-    expect(field("Text size (pixels)").value).toBe("16");
+    expect(field("Text size (pixels)").value).toBe("14");
     expect(typo(editor)).toBeUndefined();
     fireEvent.change(field("Text size (pixels)"), { target: { value: "24" } });
     expect(typo(editor)).toEqual({ size: 24 });
-    expect(screen.queryByText(/Not customised yet/)).toBeNull();
     fireEvent.change(field("Text size (pixels)"), { target: { value: "3" } });
     expect(field("Text size (pixels)").getAttribute("aria-invalid")).toBe("true");
     expect(typo(editor)).toEqual({ size: 24 });
-    fireEvent.change(field("Text colour"), { target: { value: "#ff8800" } });
+    fireEvent.change(field("Text color"), { target: { value: "#ff8800" } });
     expect(typo(editor)).toEqual({ size: 24, color: "#ff8800" });
     editor.undo();
     expect(typo(editor)).toEqual({ size: 24 });

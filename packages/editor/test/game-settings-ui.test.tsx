@@ -73,7 +73,7 @@ describe("the Game Settings tab", () => {
     expect(screen.getByRole("heading", { name: "Icon Bar" })).toBeTruthy();
     selectTab("Character Dialogue");
     expect(screen.getByRole("heading", { name: "Character Dialogue" })).toBeTruthy();
-    expect(screen.getByLabelText("Highlight colour")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Hover effect" })).toBeTruthy();
     selectTab("Inventory");
     expect(screen.getByRole("heading", { name: "Inventory" })).toBeTruthy();
     selectTab("Score");

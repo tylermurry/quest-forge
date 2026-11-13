@@ -3,6 +3,7 @@ import type { PlayerUi } from "./ui/controller.ts";
 import { canvasMeasure, drawText, drawUi, type IconBarLook, type IconImage } from "./ui/draw.ts";
 import { layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { ChoicesLook } from "./ui/choices.ts";
+import type { Placement } from "./ui/layout.ts";
 import type { TextStyle } from "./ui/typography.ts";
 import type { Viewport } from "./viewport.ts";
 import type { Drawable } from "./drawables.ts";
@@ -28,7 +29,7 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
 
   const shapes = debugShapes(world, debug);
   if (shapes.length) drawDebug(ctx, shapes);
-  drawUi(ctx, ui, icons, text, bar, choices, () => session.text && drawTextBox(ctx, session.text, text));
+  drawUi(ctx, ui, icons, text, bar, choices, () => session.text && drawTextBox(ctx, session.text, text, ui.placement));
 }
 
 /** Blits sprites in the order given (back to front), mirroring flipped ones. Shared with the editor. */
@@ -68,13 +69,13 @@ export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
 }
 
 /**
- * A `narrate` or `say` box. Speech keeps the speaker's colour on the outline; the name is drawn in the one
- * name colour (`style.speech.name`) and the body text in the text colour, for every speaker.
+ * A `narrate` or `say` box. Speech keeps the speaker's color on the outline; the name is drawn in the one
+ * name color (`style.speech.name`) and the body text in the text color, for every speaker.
  * With typography configured, narration is drawn on the dark panel speech uses, so the author's text
- * colour (white by default) can be read; without it narration keeps its white box and black text.
+ * color (white by default) can be read; without it narration keeps its white box and black text.
  */
-function drawTextBox(ctx: Ctx, box: TextBox, t: TextStyle) {
-  const l = layoutTextBox(box, canvasMeasure(ctx, t.family), t);
+function drawTextBox(ctx: Ctx, box: TextBox, t: TextStyle, placement: Placement | null) {
+  const l = layoutTextBox(box, canvasMeasure(ctx, t.family), t, placement);
   const at = (line: string, y: number, color: string, bold = false) => drawText(ctx, t, line, l.x + l.w / 2, y, { size: l.size, align: "center", baseline: "top", color, bold });
   ctx.lineWidth = 1;
   if (box.kind === "narrate") {

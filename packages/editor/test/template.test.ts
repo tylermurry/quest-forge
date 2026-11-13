@@ -47,6 +47,10 @@ describe("new blank project", () => {
     expect(project.game?.data.title).toBe("The Lighthouse");
     // Panels start on the built-in frame picture, a real JPEG in the Styling folder.
     expect(project.game?.data.style?.sharedFrame).toEqual({ image: "frame", insets: { left: 12, right: 12, top: 12, bottom: 12 } });
+    // Text starts at the size the Typography settings show, not the legacy 10 px.
+    expect(project.game?.data.style?.typography).toEqual({ size: 14 });
+    // Dialogue choices start with the Brighten hover effect, not the legacy gold buttons.
+    expect(project.game?.data.style?.dialogueChoices).toEqual({ effect: "brighten" });
     expect([...(fs.bytes.get("assets/images/Styling/frame.jpg")!).subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
   });
 });

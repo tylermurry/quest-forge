@@ -7,7 +7,7 @@ function ToggleGroup({ className, ...props }: React.ComponentProps<typeof Toggle
   return (
     <ToggleGroupPrimitive.Root
       data-slot="toggle-group"
-      className={cn("bg-muted inline-flex w-fit flex-wrap items-center gap-0.5 rounded-md p-0.5", className)}
+      className={cn("border-input inline-flex w-fit flex-wrap items-center gap-0 overflow-hidden rounded-md border bg-transparent", className)}
       {...props}
     />
   )
@@ -18,7 +18,7 @@ function ToggleGroupItem({ className, ...props }: React.ComponentProps<typeof To
     <ToggleGroupPrimitive.Item
       data-slot="toggle-group-item"
       className={cn(
-        "text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-6 items-center justify-center gap-1 rounded-[5px] px-2.5 text-[12px] whitespace-nowrap outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:font-semibold data-[state=on]:shadow-sm",
+        "text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring inline-flex h-6 items-center justify-center gap-1 rounded-none px-2.5 text-[12px] whitespace-nowrap outline-none focus-visible:ring-1 focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-selection data-[state=on]:text-foreground data-[state=on]:font-semibold",
         className
       )}
       {...props}

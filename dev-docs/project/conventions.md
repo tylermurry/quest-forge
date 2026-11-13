@@ -57,7 +57,11 @@ change.
   behind a `SequenceHost`), `dialogue.ts` (`DialogueRun`: walks a dialogue graph; once/first-time keys by
   stable IDs; endings), `session.ts` (a game being played: state, verbs, scene changes, regions,
   text, the dialogue playing and its `choices`), `ui/` (`textbox.ts` layout and timing, `layout.ts` 44 CSS px controls
-  and `choiceLayout` for the dialogue list box, `controller.ts` pointer input → bar/inventory/list box/session,
+  and `choiceLayout` for the dialogue list box, and the Frames position: `placementOf(game.style)` gives the
+  `Placement` (top and width from `style.narration`) that `layoutTextBox`, `choiceLayout` and `computeLayout` put
+  narration, speech, the choices and the inventory at, centred across via `placeAt`; null, when `game.yaml` has no
+  `narration` section, keeps the legacy layout (narration above the middle, speech over the speaker, choices at the
+  bottom, a centred 600 px inventory), `controller.ts` pointer input → bar/inventory/list box/session,
   `nineslice.ts` nine-slice tile geometry (`nineSliceTiles`), `typography.ts` (the one place the text look is decided:
   `textStyle(game.style, family, playerPercent)` gives the font family, size, line height and colour; the legacy
   10 px look when `game.yaml` has no typography; `shrinkToFit`, the 1-px-at-a-time shrink that keeps text on screen
@@ -112,7 +116,8 @@ change.
 - Editor UI stack: Tailwind v4 (tokens in `ui/styles.css`, dark only), shadcn/ui components copied
   into `ui/components/ui` (add more with `corepack pnpm dlx shadcn@latest add <name>` from
   `packages/editor`, with a `pnpm` shim on PATH; then fix any `from "cn"` import to `@/ui/lib/utils`),
-  lucide icons, react-resizable-panels, dnd-kit for in-app drags. Prefer shadcn/Radix over hand-rolled
+  lucide icons, react-resizable-panels, dnd-kit for in-app drags, react-colorful (only through `ui/ColorField.tsx`, the one
+  color control; not the native `<input type="color">`). Prefer shadcn/Radix over hand-rolled
   menus or dialogs. Radix menus are portaled but React still bubbles their events to the trigger's
   ancestors: stop propagation on menu content. Use `cn()` for class merging and `@/` imports only in
   shadcn files.
