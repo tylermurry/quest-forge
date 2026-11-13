@@ -7,7 +7,7 @@ import { Actions } from "../model/actions.ts";
 import type { Editor } from "../model/editor.ts";
 import { projectTitle } from "../model/editor.ts";
 import { GameBuilder } from "../model/build.ts";
-import { togglePanels, type PanelName } from "../model/panels.ts";
+import { inspectorOnLeavingGame, togglePanels, type PanelName } from "../model/panels.ts";
 import { Playtest } from "../model/playtest/playtest.ts";
 import { WorkspaceState } from "../model/workspace.ts";
 import { Button } from "./components/ui/button.tsx";
@@ -110,9 +110,11 @@ export function Workspace({ root, editor, onClose }: Props) {
   const inspector = useRef<PanelImperativeHandle | null>(null);
   const dock = useRef<PanelImperativeHandle | null>(null);
   const [, setTick] = useState(0);
+  const gameActive = ws.gameActive;
   const toggle = (p: React.RefObject<PanelImperativeHandle | null>) => {
     const panel = p.current;
-    if (!panel) return;
+    // The Game Settings tab owns the Inspector's space: it stays hidden while that tab is up.
+    if (!panel || (p === inspector && gameActive)) return;
     if (panel.isCollapsed()) panel.expand();
     else panel.collapse();
     setTick((t) => t + 1);
@@ -120,13 +122,17 @@ export function Workspace({ root, editor, onClose }: Props) {
   const shown = (p: React.RefObject<PanelImperativeHandle | null>) => !(p.current?.isCollapsed() ?? false);
   // Ctrl+\ hides every panel, then brings back the ones that were up.
   const hiddenPanels = useRef<PanelName[] | null>(null);
+  const hiddenAllInGame = useRef(false);
   const toggleAll = () => {
     const refs = { browser, inspector, dock };
     const next = togglePanels({ browser: shown(browser), inspector: shown(inspector), dock: shown(dock) }, hiddenPanels.current);
     hiddenPanels.current = next.saved;
+    // A hide-all during Game Settings means leaving it shouldn't bring the Inspector back.
+    if (gameActive) hiddenAllInGame.current = !next.shown.browser && !next.shown.dock;
     for (const name of ["browser", "inspector", "dock"] as const) {
       const panel = refs[name].current;
       if (!panel) continue;
+      if (name === "inspector" && gameActive) continue;
       if (next.shown[name] && panel.isCollapsed()) panel.expand();
       if (!next.shown[name] && !panel.isCollapsed()) panel.collapse();
     }
@@ -150,6 +156,28 @@ export function Workspace({ root, editor, onClose }: Props) {
     setTick((t) => t + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- collapse/expand only when `playing` flips; the panel refs and `shown` are read fresh at that moment
   }, [playing]);
+
+  // The Game Settings tab takes the Inspector's space; leaving it brings the Inspector back as it was.
+  const hiddenForGame = useRef(false);
+  useEffect(() => {
+    const panel = inspector.current;
+    if (gameActive) {
+      hiddenAllInGame.current = false;
+      if (panel && !panel.isCollapsed()) {
+        panel.collapse();
+        hiddenForGame.current = true;
+      }
+    } else {
+      const what = inspectorOnLeavingGame(hiddenForGame.current, hiddenAllInGame.current, playing);
+      hiddenForGame.current = false;
+      hiddenAllInGame.current = false;
+      if (what === "expand") panel?.expand();
+      else if (what === "expand after play") hiddenForPlay.current = [...(hiddenForPlay.current ?? []), "inspector"];
+      else if (what === "stay hidden" && !hiddenPanels.current?.includes("inspector")) hiddenPanels.current = [...(hiddenPanels.current ?? []), "inspector"];
+    }
+    setTick((t) => t + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- collapse/expand only when the tab flips; the panel ref is read fresh
+  }, [gameActive]);
 
   // Notices (outside reloads, refused imports, command errors) show as toasts.
   useEffect(() => {
@@ -232,7 +260,7 @@ export function Workspace({ root, editor, onClose }: Props) {
   // A jump-to (a problem, a log line) shows the Inspector so the highlighted rule is visible.
   const inspectorRequest = ws.inspectorRequest;
   useEffect(() => {
-    if (inspectorRequest > 0 && inspector.current?.isCollapsed()) {
+    if (inspectorRequest > 0 && !ws.gameActive && inspector.current?.isCollapsed()) {
       inspector.current.expand();
       setTick((t) => t + 1);
     }
@@ -284,7 +312,7 @@ export function Workspace({ root, editor, onClose }: Props) {
           <IconButton label="Show problems" active={shown(dock)} onClick={() => toggle(dock)}>
             <PanelBottom />
           </IconButton>
-          <IconButton label="Show inspector" active={shown(inspector)} onClick={() => toggle(inspector)}>
+          <IconButton label="Show inspector" active={shown(inspector)} disabled={gameActive} onClick={() => toggle(inspector)}>
             <PanelRight />
           </IconButton>
         </div>
@@ -317,9 +345,11 @@ export function Workspace({ root, editor, onClose }: Props) {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="inspector" panelRef={inspector} defaultSize="280px" minSize="200px" maxSize="45%" collapsible className="bg-panel" onResize={() => setTick((t) => t + 1)}>
-          <aside aria-label="Inspector" className="h-full overflow-auto px-3 pb-3">
-            <Inspector actions={actions} />
-          </aside>
+          {!gameActive && (
+            <aside aria-label="Inspector" className="h-full overflow-auto px-3 pb-3">
+              <Inspector actions={actions} />
+            </aside>
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

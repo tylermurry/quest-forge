@@ -52,10 +52,11 @@ async function dragRow(from: Element, to: Element) {
 }
 
 describe("project browser UI", () => {
-  it("shows the seven sections with counts", async () => {
+  it("shows the sections by name alone, with no counts", async () => {
     await mount();
     const tree = screen.getByRole("tree", { name: "Project" });
-    expect(within(tree).getByRole("treeitem", { name: "Scenes" }).textContent).toContain("3");
+    expect(within(tree).getByRole("button", { name: "Actions for Scenes" }).closest("[aria-label='Scenes']")).toBeTruthy();
+    expect(within(tree).getByRole("treeitem", { name: "Scenes" }).firstElementChild!.textContent).toBe("Scenes");
     expect(within(tree).getByRole("treeitem", { name: "scene Garden" })).toBeTruthy();
   });
 
@@ -136,6 +137,13 @@ describe("dragging across sections", () => {
     const a = await mount();
     await dragRow(screen.getByRole("treeitem", { name: "item stick" }).firstElementChild!, screen.getByRole("treeitem", { name: "Scenes" }).firstElementChild!);
     expect(a.editor.history.canUndo).toBe(false);
+  });
+
+  it("lists an imported font under Fonts", async () => {
+    const a = await mount();
+    expect(screen.queryByRole("treeitem", { name: "font hand" })).toBeNull();
+    await act(async () => void a.importFiles("font", "", [{ name: "hand.woff2", bytes: new Uint8Array([0x77, 0x4f, 0x46, 0x32, 1]) }]));
+    expect(screen.getByRole("treeitem", { name: "font hand" })).toBeTruthy();
   });
 
   it("each top-level section header shows a decorative icon", async () => {

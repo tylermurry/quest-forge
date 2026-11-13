@@ -2,6 +2,7 @@
 // Not game data and never undone. DOM-free; React subscribes to it.
 import type { Location, Project } from "@questforge/schema";
 import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
+import { GENERAL_SECTIONS, INITIAL_GAME_NAV, generalSectionFor, stylingSectionFor, type GameSection, type GameSettingsNav, type GeneralSection, type StylingSection } from "./gameSettings.ts";
 import type { Jump } from "./locate.ts";
 import type { PointPick } from "./rules/pointPick.ts";
 import { SceneUiStore } from "./scene/sceneUi.ts";
@@ -32,12 +33,19 @@ export interface Highlight {
 
 export type FlashTone = "problem" | "log";
 
+/** The `active` key of the Game Settings tab. Entry tabs are `section:id`, so it can't collide. */
+export const GAME_TAB = "game";
+
 export const refKey = (r: EntryRef) => `${r.section}:${r.id}`;
 const folderKey = (section: Section, path: string) => `${section}/${path}`;
 
 export class WorkspaceState {
   tabs: EntryRef[] = [];
   active: string | null = null;
+  /** Whether the singleton Game Settings tab is open. It sits before the entry tabs. */
+  gameTab = false;
+  /** The Game Settings tab's area and subsection per area; kept while the tab is closed. */
+  gameNav: GameSettingsNav = { ...INITIAL_GAME_NAV };
   selection: Selection = null;
   /** Expanded folders by `folderKey`; sections are expanded by default (key with path ""). */
   expanded = new Set<string>();
@@ -72,7 +80,7 @@ export class WorkspaceState {
     for (const l of this.listeners) l();
   }
 
-  /** Opens (or focuses) an entry's tab (double-click opens it in a tab). */
+  /** Opens (or focuses) an entry's tab and selects it (a click in the project browser). */
   open(ref: EntryRef) {
     if (!this.tabs.some((t) => refKey(t) === refKey(ref))) this.tabs = [...this.tabs, ref];
     this.active = refKey(ref);
@@ -86,7 +94,7 @@ export class WorkspaceState {
     this.tabs = this.tabs.filter((_, j) => j !== i);
     if (this.active === refKey(ref)) {
       const next = this.tabs[Math.min(i, this.tabs.length - 1)];
-      this.active = next ? refKey(next) : null;
+      this.active = next ? refKey(next) : this.gameTab ? GAME_TAB : null;
     }
     this.changed();
   }
@@ -94,6 +102,37 @@ export class WorkspaceState {
   activate(ref: EntryRef) {
     this.active = refKey(ref);
     this.selection = { kind: "entry", ...ref };
+    this.changed();
+  }
+
+  /** Opens (or focuses) the one Game Settings tab and selects the Game. */
+  openGame() {
+    this.gameTab = true;
+    this.active = GAME_TAB;
+    this.selection = { kind: "game" };
+    this.changed();
+  }
+
+  closeGame() {
+    if (!this.gameTab) return;
+    this.gameTab = false;
+    if (this.active === GAME_TAB) {
+      const next = this.tabs[0];
+      this.active = next ? refKey(next) : null;
+      this.selection = next ? { kind: "entry", ...next } : null;
+    }
+    this.changed();
+  }
+
+  get gameActive(): boolean {
+    return this.active === GAME_TAB;
+  }
+
+  /** Shows a subsection of the Game Settings tab (and its area). */
+  setGameSection(section: GameSection) {
+    this.gameNav = GENERAL_SECTIONS.some((g) => g.section === section)
+      ? { ...this.gameNav, area: "general", general: section as GeneralSection }
+      : { ...this.gameNav, area: "styling", styling: section as StylingSection };
     this.changed();
   }
 
@@ -150,7 +189,14 @@ export class WorkspaceState {
         this.open({ section: "scene", id: target.scene });
         break;
       case "game":
+        // Opens Game Settings on the subsection the field lives in (a `style` path opens Styling); General's editor flashes the field.
+        this.gameTab = true;
+        this.active = GAME_TAB;
         this.selection = { kind: "game" };
+        {
+          const styling = stylingSectionFor(location.path);
+          this.gameNav = styling ? { ...this.gameNav, area: "styling", styling } : { ...this.gameNav, area: "general", general: generalSectionFor(location.path) };
+        }
         break;
       case "dialogueNode":
         // The graph selects the node, and the Inspector edits it.
@@ -248,8 +294,8 @@ export class WorkspaceState {
     const tabs = this.tabs.filter(has);
     let changed = tabs.length !== this.tabs.length;
     this.tabs = tabs;
-    if (this.active && !tabs.some((t) => refKey(t) === this.active)) {
-      this.active = tabs[0] ? refKey(tabs[0]) : null;
+    if (this.active && this.active !== GAME_TAB && !tabs.some((t) => refKey(t) === this.active)) {
+      this.active = tabs[0] ? refKey(tabs[0]) : this.gameTab ? GAME_TAB : null;
       changed = true;
     }
     const s = this.selection;

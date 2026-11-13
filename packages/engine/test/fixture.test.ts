@@ -308,6 +308,9 @@ describe("the shop, touch only at phone size", () => {
     settle();
     expect(said.at(-1)).toBe("Welcome! Have a look at my wares.");
     expect(shown()).toEqual(["Where are you headed?", "I'll buy the lantern.", "Goodbye."]);
+    // The visitor asks the menu's question in the same box.
+    expect(s.choices!.question).toEqual({ character: "visitor", text: "What can I do for you?" });
+    expect(ui.choiceBox!.question).toMatchObject({ name: s.speakerName("visitor"), lines: ["What can I do for you?"] });
 
     // The once-only question loops back to the menu without itself.
     pick("Where are you headed?");

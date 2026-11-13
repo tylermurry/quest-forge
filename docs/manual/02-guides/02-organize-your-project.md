@@ -15,7 +15,7 @@ The Project Browser has one section for each kind of building block: **Scenes**,
 **Dialogues**, **Flags**, **Audio** and **Images**. Each shows how many it holds. Click a section's heading to
 fold it away.
 
-The **Game** row at the top opens your game's settings and game-wide rules.
+Click the **Game** row at the top to open your game's settings and game-wide rules.
 
 ## Add something new
 
@@ -25,7 +25,7 @@ The **Game** row at the top opens your game's settings and game-wide rules.
 Quest Forge creates it with a starter name. Scenes, items, characters and dialogues open in a tab; a new
 flag is selected so you can see it in the **Inspector**.
 
-Images and audio are imported instead of created. See [Import pictures and sounds](#import-pictures-and-sounds).
+Images, audio and fonts are imported instead of created. See [Import pictures, sounds and fonts](#import-pictures-sounds-and-fonts).
 
 ## Find something
 
@@ -53,13 +53,15 @@ Folders keep big games tidy, for example one folder of scenes per chapter.
 
 Folders only organize the Project Browser. They don't change how the game plays.
 
-## Import pictures and sounds
+## Import pictures, sounds and fonts
 
 - Drag files from your computer onto the Project Browser, or
-- Click **Import files…** in the **Images** or **Audio** section.
+- Click **Import files…** in the **Images**, **Audio** or **Fonts** section.
 
-Quest Forge imports PNG, JPG and WebP pictures, and MP3, OGG and WAV sounds. Files dropped on a folder go into
-that folder. Anything else is refused.
+Quest Forge imports PNG, JPG and WebP pictures, MP3, OGG and WAV sounds, and WOFF2 or WOFF fonts. Files dropped on
+a folder go into that folder. Anything else is refused.
+
+A font is stored in your project and built into the game, so it works for every player without them installing it.
 
 ## See what uses something
 

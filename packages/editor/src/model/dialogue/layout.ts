@@ -15,7 +15,7 @@ function nodeHeight(n: DialogueNode): number {
     case "line":
       return 96;
     case "choices":
-      return 56 + 30 * Math.max(1, n.options.length);
+      return 96 + 30 * Math.max(1, n.options.length);
     case "actions":
       return 64 + 22 * Math.max(1, n.do.length);
     case "branch":

@@ -81,8 +81,8 @@ enters the scene** and **Player leaves the scene**. Use them for things like a w
 
 ## Default responses
 
-When the player tries something that no rule answers, the narrator gives a **default response**. Select
-**Game** in the **Project Browser** to change them under **Default responses**, one for each of Look, Hand,
+When the player tries something that no rule answers, the narrator gives a **default response**. Click
+**Game** in the **Project Browser** to change them under **General** then **Default Responses**, one for each of Look, Hand,
 Talk, Use and Combine.
 
 ## More

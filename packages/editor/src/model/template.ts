@@ -11,8 +11,10 @@ import {
   type Project,
   type ProjectFs,
 } from "@questforge/schema";
+import { builtInFrameBytes } from "./builtInFrame.ts";
 import { slugify } from "./commands.ts";
 import { Bitmap, type RGBA } from "./png.ts";
+import { RESETTABLE_SECTIONS, resetStylingSection } from "./style.ts";
 
 /** A folder name made from a title: no path separators or reserved characters, not hidden. */
 export function folderNameFor(title: string): string {
@@ -118,7 +120,12 @@ export function blankProject(title: string): Project {
       }),
     },
   ];
-  return p;
+  // A new project starts with every Styling section at its default (the built-in frame picture in the Images
+  // library's Styling folder and the Typography size; no Character Dialogue or Icon Bar section, so their author
+  // defaults show): not the legacy 10 px text that projects with no style sections draw. Reset to Default puts a
+  // section back to this.
+  const bytes = builtInFrameBytes();
+  return RESETTABLE_SECTIONS.reduce((q, section) => resetStylingSection(q, section, bytes), p);
 }
 
 /** Writes a blank project into an empty folder. */

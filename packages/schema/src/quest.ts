@@ -1,6 +1,6 @@
 // The built game: a `.quest` file. It is a zip holding `game.json` (every
-// project file merged into one, editor-only data left out) and the image and audio
-// files the game uses, at their project paths. Build Game writes one; the engine
+// project file merged into one, editor-only data left out) and the image, audio
+// and font files the game uses, at their project paths. Build Game writes one; the engine
 // plays one. Both sides read it through here, so they can't disagree.
 import { z } from "zod";
 import { AssetsFile } from "./assets.ts";
@@ -43,15 +43,17 @@ export class BuildError extends Error {}
 /** A `.quest` file that can't be played: not one, damaged, or made by a newer Questforge. */
 export class QuestError extends Error {}
 
-/** IDs of the images and audio the game uses. Anything else in `assets.yaml` is left out of a build. */
-export function usedAssetIds(project: Project): { images: Set<string>; audio: Set<string> } {
+/** IDs of the images, audio and fonts the game uses. Anything else in `assets.yaml` is left out of a build. */
+export function usedAssetIds(project: Project): { images: Set<string>; audio: Set<string>; fonts: Set<string> } {
   const images = new Set<string>();
   const audio = new Set<string>();
+  const fonts = new Set<string>();
   for (const r of collectReferences(project)) {
     if (r.kind === "image") images.add(r.id);
     else if (r.kind === "audio") audio.add(r.id);
+    else if (r.kind === "font") fonts.add(r.id);
   }
-  return { images, audio };
+  return { images, audio, fonts };
 }
 
 /**
@@ -62,10 +64,14 @@ export function usedAssetIds(project: Project): { images: Set<string>; audio: Se
 export function compileGame(project: Project): { game: QuestGame; files: string[] } {
   if (!project.game || !project.flags || !project.assets) throw new BuildError("The project is missing game.yaml, flags.yaml or assets.yaml.");
   const used = usedAssetIds(project);
+  // No used font means no `fonts` key, so a game without custom fonts builds exactly as before.
+  const { fonts = [], ...rest } = project.assets.data;
+  const usedFonts = fonts.filter((a) => used.fonts.has(a.id));
   const assets: AssetsFile = {
-    ...project.assets.data,
-    images: project.assets.data.images.filter((a) => used.images.has(a.id)),
-    audio: project.assets.data.audio.filter((a) => used.audio.has(a.id)),
+    ...rest,
+    images: rest.images.filter((a) => used.images.has(a.id)),
+    audio: rest.audio.filter((a) => used.audio.has(a.id)),
+    ...(usedFonts.length ? { fonts: usedFonts } : {}),
   };
   const { folders: _folders, ...flags } = project.flags.data;
   const game: QuestGame = {
@@ -79,7 +85,7 @@ export function compileGame(project: Project): { game: QuestGame; files: string[
     characters: project.characters.map((d) => d.data),
     dialogues: project.dialogues.map((d) => d.data),
   };
-  return { game, files: [...new Set([...assets.images, ...assets.audio].map((a) => a.path))] };
+  return { game, files: [...new Set([...assets.images, ...assets.audio, ...(assets.fonts ?? [])].map((a) => a.path))] };
 }
 
 /** A friendly file name for the built game, e.g. `the-lantern.quest`. */

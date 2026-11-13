@@ -26,11 +26,12 @@ const COLORS = {
 
 const BACKDROP = "#151517";
 
-function checkerboard(ctx: Ctx) {
+/** The checkerboard a scene with no background shows; the Styling previews draw on it too. */
+export function checkerboard(ctx: Ctx, w = SCENE_WIDTH, h = SCENE_HEIGHT) {
   ctx.fillStyle = "#2a2a2e";
-  ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
+  ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "#323237";
-  for (let y = 0; y < SCENE_HEIGHT; y += 16) for (let x = (y / 16) % 2 ? 16 : 0; x < SCENE_WIDTH; x += 32) ctx.fillRect(x, y, 16, 16);
+  for (let y = 0; y < h; y += 16) for (let x = (y / 16) % 2 ? 16 : 0; x < w; x += 32) ctx.fillRect(x, y, 16, 16);
 }
 
 /** Draws one frame of the scene editor. `dpr` is device px per CSS px. */

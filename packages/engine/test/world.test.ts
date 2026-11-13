@@ -7,7 +7,7 @@ import type { Vec } from "../src/vec.ts";
 
 const anim = (frames: number[]) => ({ image: "hero_sheet", frames, fps: 8, loop: true });
 const hero = CharacterFile.parse({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "hero",
   name: "Hero",
   textColor: "#ffffff",
@@ -24,7 +24,7 @@ const gardener = CharacterFile.parse({
 
 const look = (text: string) => ({ when: { type: "look" }, if: [], do: [{ type: "narrate", text }], once: false });
 const scene = SceneFile.parse(withRuleIds({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "yard",
   name: "Yard",
   background: "bg",

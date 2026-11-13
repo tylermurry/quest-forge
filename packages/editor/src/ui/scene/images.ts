@@ -9,6 +9,8 @@ import { createContext, useContext, useEffect, useSyncExternalStore } from "reac
 interface Entry {
   source: string;
   image: LoadedImage | null;
+  /** The file couldn't be read or decoded; it stays unloaded until its source changes. */
+  failed: boolean;
 }
 
 export class CanvasImages {
@@ -43,12 +45,17 @@ export class CanvasImages {
         if (known.image && known.image.asset !== asset) known.image = { ...known.image, asset };
         continue;
       }
-      const entry: Entry = { source, image: null };
+      const entry: Entry = { source, image: null, failed: false };
       this.entries.set(asset.id, entry);
       const el = new Image();
       el.onload = () => {
         if (this.entries.get(asset.id) !== entry) return;
         entry.image = { asset, size: { w: el.naturalWidth, h: el.naturalHeight }, el };
+        this.changed();
+      };
+      el.onerror = () => {
+        if (this.entries.get(asset.id) !== entry) return;
+        entry.failed = true;
         this.changed();
       };
       el.src = source;
@@ -80,6 +87,9 @@ export class CanvasImages {
   }
 
   lookup = (id: string): LoadedImage | undefined => this.entries.get(id)?.image ?? undefined;
+
+  /** Whether the image's file couldn't be loaded, so callers stop saying it is loading. */
+  failed = (id: string): boolean => this.entries.get(id)?.failed ?? false;
 
   dispose() {
     for (const url of this.blobs.values()) URL.revokeObjectURL(url);

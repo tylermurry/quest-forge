@@ -137,7 +137,7 @@ const NODE_NOUN: Record<string, string> = { start: "Start", line: "Line", choice
 /**
  * Dialogue graph warnings: nodes Start can't reach, Choices with no
  * options, ports that lead nowhere (the dialogue just ends there) and loops with no
- * Line or Choices. Empty line and option text is an error.
+ * Line or Choices. Empty line, question and option text is an error.
  */
 function checkDialogueNodes(project: Project, out: Report) {
   for (const { path, data } of project.dialogues) {
@@ -150,6 +150,7 @@ function checkDialogueNodes(project: Project, out: Report) {
       if (hasStart && !reached.has(n.id)) out.warning("dialogue_node_unreachable", "dialogue", path, at, "can't be reached from the Start node.", at);
       if (n.type === "line" && n.text === "") out.error("empty_text", "dialogue", path, [...at, "text"], "says nothing. Type the line.", at);
       if (n.type === "choices") {
+        if (n.text === "") out.error("empty_text", "dialogue", path, [...at, "text"], "asks nothing. Type the question.", at);
         if (n.options.length === 0) out.warning("dialogue_no_options", "dialogue", path, [...at, "options"], "has no options, so the dialogue ends when it gets here.", at);
         n.options.forEach((o, j) => {
           if (o.text === "") out.error("empty_text", "dialogue", path, [...at, "options", j, "text"], "is an option with no text. Type what the player can say.", [...at, "options", j]);

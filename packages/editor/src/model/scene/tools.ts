@@ -86,34 +86,6 @@ export class SceneTools extends SceneController {
     }
   }
 
-  /** One line of help for the toolbar. */
-  get hint(): string {
-    const ui = this.ui;
-    if (this.host.ws.pointPick?.scene === this.sceneId) return "Click the scene to place the action's point · Esc cancels";
-    if (ui.tool === "polygon" || ui.tool === "rect") {
-      const target = this.drawTarget();
-      if (typeof target === "string") return target;
-      const what = { outline: "the walkable outline", hole: "a hole", hotspot: "a new hotspot", region: "a new region", obstacle: "the obstacle" }[target.kind];
-      if (ui.tool === "rect") return `Drag to draw ${what}`;
-      if (this.drawing) return `Click to add points · double-click, Enter or click the first point to close · Backspace undoes a point · Esc cancels`;
-      return `Click to start ${what}`;
-    }
-    if (ui.tool === "spawn") return "Click to add a spawn point · drag from it to set which way the player faces";
-    if (ui.tool === "walkto") {
-      if (this.selection?.list === "hotspots") return "Click where the player stands to use this hotspot · drag to set the facing";
-      return "Click a hotspot to choose it, then click where the player should stand";
-    }
-    if (ui.tool === "select") {
-      if (this.selection && this.hasVertices(this.selection)) return "Drag a point to move it · Alt-click a point to delete it · double-click an edge to add one";
-      return "Click to select · drag to move";
-    }
-    return "";
-  }
-
-  private hasVertices(ref: ThingRef) {
-    return ref.list === "walkable" || ref.list === "hotspots" || ref.list === "regions" || (ref.list === "objects" && !!this.scene?.objects.find((o) => o.id === ref.key)?.obstacle);
-  }
-
   override get cursor(): string {
     if (this.ui.tool !== "select" || this.host.ws.pointPick?.scene === this.sceneId) return "crosshair";
     if (this.move) return "grabbing";
@@ -234,7 +206,7 @@ export class SceneTools extends SceneController {
     const asBackground = screen === null || this.ui.layer === "background" || scene.background === undefined;
     const at = screen ? snapPixel(toScene(this.transform, screen)) : null;
     let refused: string[] = [];
-    let outcome: { kind: "background" | "object" | "imported"; id?: string; sounds: number } = { kind: "imported", sounds: 0 };
+    let outcome: { kind: "background" | "object" | "imported"; id?: string; sounds: number; fonts: number } = { kind: "imported", sounds: 0, fonts: 0 };
     const first = files.find((f) => IMAGE_EXTENSIONS.includes(f.name.split(".").pop()?.toLowerCase() ?? ""));
     const label = !first ? "Import files" : asBackground ? "Import background" : "Import and place object";
     if (!asBackground && this.ui.locked.includes("objects") && first) {
@@ -245,7 +217,7 @@ export class SceneTools extends SceneController {
       const r = importFiles(p, files, "image", "");
       refused = r.refused;
       const img = r.imported.find((i) => i.section === "image");
-      outcome = { kind: "imported", sounds: r.imported.filter((i) => i.section === "audio").length };
+      outcome = { kind: "imported", sounds: r.imported.filter((i) => i.section === "audio").length, fonts: r.imported.filter((i) => i.section === "font").length };
       if (!img) return r.project;
       if (asBackground) {
         outcome = { ...outcome, kind: "background" };
@@ -256,12 +228,13 @@ export class SceneTools extends SceneController {
       outcome = { ...outcome, kind: "object", id: placed.id };
       return placed.project;
     });
-    const o = outcome as { kind: "background" | "object" | "imported"; id?: string; sounds: number };
+    const o = outcome as { kind: "background" | "object" | "imported"; id?: string; sounds: number; fonts: number };
     if (o.kind === "background") this.selectThing({ list: "background", key: "background" });
     if (o.kind === "object" && o.id) this.selectThing({ list: "objects", key: o.id });
     const notes: string[] = [];
     if (o.sounds) notes.push(`Imported ${o.sounds === 1 ? "a sound" : `${o.sounds} sounds`}; find ${o.sounds === 1 ? "it" : "them"} under Audio.`);
-    if (refused.length) notes.push(`Only PNG, JPG and WebP images and MP3, OGG and WAV sounds can be imported, so ${refused.join(", ")} ${refused.length === 1 ? "was" : "were"} skipped.`);
+    if (o.fonts) notes.push(`Imported ${o.fonts === 1 ? "a font" : `${o.fonts} fonts`}; find ${o.fonts === 1 ? "it" : "them"} under Fonts.`);
+    if (refused.length) notes.push(`Only PNG, JPG and WebP images, MP3, OGG and WAV sounds and WOFF2 or WOFF fonts can be imported, so ${refused.join(", ")} ${refused.length === 1 ? "was" : "were"} skipped.`);
     if (notes.length) this.editor.showNotice({ kind: refused.length ? "error" : "info", text: notes.join(" ") });
     return ok;
   }

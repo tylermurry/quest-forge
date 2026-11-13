@@ -103,7 +103,7 @@ describe("browser folders on disk", () => {
 
 describe("flag folders", () => {
   const flagsYaml = [
-    "schemaVersion: 2",
+    "schemaVersion: 3",
     "folders:",
     "  - puzzles",
     "  - puzzles/cave",
@@ -140,7 +140,7 @@ describe("flag folders", () => {
 
   it("rejects folder paths that escape or hide", async () => {
     for (const bad of ["../x", ".git", "a//b", "a/"]) {
-      const { problems } = await loadProject(new MemoryFs({ "flags.yaml": `schemaVersion: 2\nfolders:\n  - "${bad}"\nflags: []\n` }));
+      const { problems } = await loadProject(new MemoryFs({ "flags.yaml": `schemaVersion: 3\nfolders:\n  - "${bad}"\nflags: []\n` }));
       expect(problems.some((p) => p.code === "invalid_data"), bad).toBe(true);
     }
   });

@@ -34,10 +34,18 @@ export const ImageAsset = z.strictObject({
 export type ImageAsset = z.infer<typeof ImageAsset>;
 export const AudioAsset = z.strictObject({ id: Id, path: AssetPath });
 
+/** Font file extensions the editor imports and the `.quest` MIME table knows. */
+export const FONT_EXTENSIONS = ["woff2", "woff"] as const;
+/** An imported web font (WOFF2 or WOFF). Picked as the game's text font in Styling. */
+export const FontAsset = z.strictObject({ id: Id, path: AssetPath });
+export type FontAsset = z.infer<typeof FontAsset>;
+
 /** `assets.yaml`: imported files are referenced by ID, never by path. */
 export const AssetsFile = z.strictObject({
   schemaVersion,
   images: z.array(ImageAsset),
   audio: z.array(AudioAsset),
+  /** Absent in projects with no custom font, so their `assets.yaml` is unchanged. */
+  fonts: z.array(FontAsset).optional(),
 });
 export type AssetsFile = z.infer<typeof AssetsFile>;

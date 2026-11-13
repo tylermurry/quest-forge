@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** Version written to every project file. */
-export const SCHEMA_VERSION = 2 as const;
+export const SCHEMA_VERSION = 3 as const;
 
 /** Scene space: geometry is integer pixels in 640×400. */
 export const SCENE_WIDTH = 640;

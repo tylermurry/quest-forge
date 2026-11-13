@@ -43,5 +43,6 @@ Build again and share the new file. Players' saved games keep working with the n
 
 ## See also
 
+- [Style your game](./11-style-your-game.md)
 - [Build Game and .quest files](../03-reference/15-build-game.md)
 - [The game as players see it](../03-reference/16-game-as-players-see-it.md)

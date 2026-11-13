@@ -13,8 +13,11 @@ export const SECTIONS: { section: Section; title: string }[] = [
   { section: "flag", title: "Flags" },
   { section: "audio", title: "Audio" },
   { section: "image", title: "Images" },
+  { section: "font", title: "Fonts" },
 ];
 
+/** Sections of imported files (images, sounds, fonts): added by importing, never created or duplicated. */
+export const isFileSection = (s: Section): s is "image" | "audio" | "font" => s === "image" || s === "audio" || s === "font";
 export const isAssetKind = (s: Section): s is AssetKind => s in ASSET_LAYOUT;
 /** Sections whose entries open in a tab: assets, and images for slicing. */
 export const opensTab = (s: Section) => isAssetKind(s) || s === "image";
@@ -23,7 +26,7 @@ export const opensTab = (s: Section) => isAssetKind(s) || s === "image";
 export interface Entry {
   section: Section;
   id: string;
-  /** Display name; the ID for kinds that have no name (flags, images, audio). */
+  /** Display name; the ID for kinds that have no name (flags, images, audio, fonts). */
   name: string;
   folder: string;
   /** Detail shown after the name, e.g. a flag's type. */
@@ -42,8 +45,8 @@ export interface FolderNode {
 const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
 const byName = (a: { name: string }, b: { name: string }) => collator.compare(a.name, b.name) || (a.name < b.name ? -1 : 1);
 
-/** The folder an image or audio file sits in, relative to its section root. */
-export function assetFileFolder(section: "image" | "audio", path: string): string {
+/** The folder an image, audio or font file sits in, relative to its section root. */
+export function assetFileFolder(section: "image" | "audio" | "font", path: string): string {
   const root = `${SECTION_ROOTS[section]}/`;
   return path.startsWith(root) ? path.slice(root.length).split("/").slice(0, -1).join("/") : "";
 }
@@ -67,7 +70,8 @@ export function sectionEntries(project: Project, section: Section): Entry[] {
       detail: f.type === "bool" ? `flag, starts ${f.initial}` : `counter, starts at ${f.initial}`,
     }));
   }
-  const list = section === "image" ? project.assets?.data.images : project.assets?.data.audio;
+  const data = project.assets?.data;
+  const list = section === "image" ? data?.images : section === "audio" ? data?.audio : data?.fonts;
   return (list ?? []).map((a) => ({ section, id: a.id, name: a.id, folder: assetFileFolder(section, a.path) }));
 }
 
@@ -127,5 +131,3 @@ export function filterTree(tree: FolderNode, query: string): FolderNode | null {
   return out && (out.entries.length || out.folders.length) ? out : null;
 }
 
-/** Number of entries in a tree. */
-export const countEntries = (n: FolderNode): number => n.entries.length + n.folders.reduce((s, f) => s + countEntries(f), 0);

@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # Scene editor
 
-The tab that opens when you double-click a scene. It has a top bar (a hint and the zoom controls), the **Layers** panel, the canvas, and a floating tool bar at the bottom of the canvas.
+The tab that opens when you click a scene. It has the **Layers** panel and the canvas, with two floating bars at the bottom of the canvas: the tools on the left and the zoom controls to their right.
 
 ## Tools
 
@@ -20,7 +20,6 @@ The tools are in the floating tool bar at the bottom of the canvas.
 | **Spawn Point Tool** | S | Click to add a spawn point. Drag from it to set which way the player faces. |
 | **Walk-to Point Tool** | W | Click a hotspot, then click where the player should stand to use it. Drag to set the facing. |
 
-The top bar shows a hint for the tool you're using.
 
 ### What a shape becomes
 
@@ -59,7 +58,8 @@ Switches in the tool bar that only show in the editor:
 | **Zoom to Fit** | ⌘0 | Ctrl+0 |
 | **Actual Size (1×)** | — | — |
 
-The top bar shows the zoom level. Pinch, or scroll with ⌘ / Ctrl held, to zoom where the pointer is. Scroll
+The zoom bar, to the right of the tool bar at the bottom of the canvas, shows the zoom level: click it for 1×. Its
+buttons zoom out, zoom in and fit the scene to the window. Pinch, or scroll with ⌘ / Ctrl held, to zoom where the pointer is. Scroll
 with two fingers, or hold Space and drag, to pan.
 
 ## Layers panel
@@ -75,7 +75,10 @@ Lists everything in the scene, by layer, from front to back:
 | **Objects** | Objects and placed characters, in draw order. |
 | **Background** | The background image. |
 
-- Click a layer's name to make it the active layer.
+Each layer's heading looks like a Project Browser section heading: an icon and the name. The active layer has an
+outline and a light shading.
+
+- Click anywhere on a layer, outside its rows, to make it the active layer.
 - The eye icon, on the right of the layer's name, shows or hides the layer on the canvas.
 - The lock icon, next to the eye, stops its things being clicked on the canvas. Click **Unlock** to undo.
 - Click a row to select it. The bin icon deletes it.

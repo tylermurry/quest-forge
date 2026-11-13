@@ -20,6 +20,7 @@ const KIND_NOUN: Record<RefKind, string> = {
   counter: "counter",
   image: "image",
   audio: "sound",
+  font: "font",
   spawn: "spawn point",
   object: "object",
   node: "node",
@@ -95,6 +96,7 @@ function checkReferences(project: Project, out: Collector) {
     counter: new Set(flags.filter((f) => f.type === "counter").map((f) => f.id)),
     image: new Set(project.assets?.data.images.map((a) => a.id)),
     audio: new Set(project.assets?.data.audio.map((a) => a.id)),
+    font: new Set(project.assets?.data.fonts?.map((a) => a.id)),
   };
   const sceneById = new Map(project.scenes.map((s) => [s.data.id, s.data]));
   const dialogueById = new Map(project.dialogues.map((d) => [d.data.id, d.data]));
@@ -191,6 +193,7 @@ function checkDuplicates(project: Project, out: Collector) {
   if (project.assets) {
     inList("assets", project.assets.path, ["images"], project.assets.data.images, "image");
     inList("assets", project.assets.path, ["audio"], project.assets.data.audio, "sound");
+    inList("assets", project.assets.path, ["fonts"], project.assets.data.fonts ?? [], "font");
   }
   for (const { path, data } of project.scenes) {
     inList("scene", path, ["objects"], data.objects, "object in this scene");

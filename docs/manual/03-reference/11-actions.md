@@ -23,7 +23,7 @@ The narrator says something.
 
 ### Say
 
-A character says a line, in their text colour, playing their talk animation.
+A character says a line, playing their talk animation. The speech box is outlined in their text color, or drawn on your game's [frame](./04-game-settings.md#frames) if it has one.
 
 | Field | What it is |
 |---|---|

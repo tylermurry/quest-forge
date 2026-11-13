@@ -24,7 +24,11 @@ export const DialogueNode = z.discriminatedUnion("type", [
    * plays while the line shows. Text may be `""` while authoring.
    */
   node("line", { character: Id.optional(), text: RuleText, animation: Id.optional(), next: Next }),
-  node("choices", { options: z.array(ChoiceOption) }),
+  /**
+   * The question the options answer, posed with them in one box. No `character` means the
+   * narrator asks. Text may be `""` while authoring.
+   */
+  node("choices", { character: Id.optional(), text: RuleText, options: z.array(ChoiceOption) }),
   node("actions", { do: z.array(Action), next: Next }),
   node("branch", { if: z.array(Condition), then: Next, else: Next }),
   node("end", {}),

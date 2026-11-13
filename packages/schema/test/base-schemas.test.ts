@@ -10,7 +10,7 @@ import {
 } from "../src/index.ts";
 
 const item = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "gold_key",
   name: "golden key",
   description: "A small golden key.",
@@ -18,7 +18,7 @@ const item = {
 };
 
 const character = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: "shopkeeper",
   name: "Shopkeeper",
   textColor: "#ffcc00",
@@ -66,7 +66,7 @@ describe("file schemas", () => {
     expect(CharacterFile.parse(character)).toEqual(character);
     expect(
       FlagsFile.parse({
-        schemaVersion: 2,
+        schemaVersion: 3,
         flags: [
           { id: "talked_to_villager", type: "bool", initial: false },
           { id: "coins", type: "counter", initial: 0 },
@@ -75,7 +75,7 @@ describe("file schemas", () => {
     ).toHaveLength(2);
     expect(
       AssetsFile.safeParse({
-        schemaVersion: 2,
+        schemaVersion: 3,
         images: [{ id: "beach_bg", path: "assets/images/beach.png" }],
         audio: [{ id: "beach_theme", path: "assets/audio/rooms/beach.mp3" }],
       }).success,
@@ -83,20 +83,20 @@ describe("file schemas", () => {
   });
 
   it("rejects unknown keys", () => {
-    const r = ItemFile.safeParse({ ...item, colour: "red" });
+    const r = ItemFile.safeParse({ ...item, color: "red" });
     expect(r.success).toBe(false);
     expect(r.error?.issues[0]?.code).toBe("unrecognized_keys");
   });
 
   it("rejects a wrong or missing schemaVersion", () => {
     expect(ItemFile.safeParse({ ...item, schemaVersion: 1 }).success).toBe(false);
-    expect(ItemFile.safeParse({ ...item, schemaVersion: 3 }).success).toBe(false);
+    expect(ItemFile.safeParse({ ...item, schemaVersion: 4 }).success).toBe(false);
     const { schemaVersion: _omit, ...noVersion } = item;
     expect(ItemFile.safeParse(noVersion).success).toBe(false);
   });
 
   it("rejects counters with non-integer or bool-typed initial values", () => {
-    const bad = (flag: unknown) => FlagsFile.safeParse({ schemaVersion: 2, flags: [flag] }).success;
+    const bad = (flag: unknown) => FlagsFile.safeParse({ schemaVersion: 3, flags: [flag] }).success;
     expect(bad({ id: "coins", type: "counter", initial: 1.5 })).toBe(false);
     expect(bad({ id: "coins", type: "counter", initial: true })).toBe(false);
     expect(bad({ id: "lit", type: "bool", initial: 0 })).toBe(false);
@@ -114,7 +114,7 @@ describe("file schemas", () => {
 
   it("rejects asset paths outside assets/", () => {
     const bad = (path: string) =>
-      AssetsFile.safeParse({ schemaVersion: 2, images: [{ id: "x", path }], audio: [] }).success;
+      AssetsFile.safeParse({ schemaVersion: 3, images: [{ id: "x", path }], audio: [] }).success;
     expect(bad("images/beach.png")).toBe(false);
     expect(bad("assets/../game.yaml")).toBe(false);
     expect(bad("assets\\images\\beach.png")).toBe(false);

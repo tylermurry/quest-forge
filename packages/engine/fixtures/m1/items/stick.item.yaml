@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 id: stick
 name: stick
 description: A straight, springy stick.

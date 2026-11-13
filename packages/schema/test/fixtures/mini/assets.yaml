@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 images:
   - id: beach_bg
     path: assets/images/beach_bg.png

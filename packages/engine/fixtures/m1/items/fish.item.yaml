@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 id: fish
 name: fish
 description: A small, wriggling fish.

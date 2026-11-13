@@ -169,11 +169,12 @@ describe("references inside dialogue nodes", () => {
   };
   const dialogue = (p: Awaited<ReturnType<typeof withGraph>>) => p.dialogues[0]!.data;
 
-  it("indexes the speaker, the speaker's animation slot, options, actions and branches", async () => {
+  it("indexes the speaker, the speaker's animation slot, the asker of a question, options, actions and branches", async () => {
     const refs = collectReferences(await withGraph()).filter((r) => r.fileKind === "dialogue" && r.kind !== "node");
     expect(refs.map((r) => [r.kind, r.id, r.location.path.join("."), r.scope ?? ""])).toEqual([
       ["character", "shopkeeper", "nodes.1.character", ""],
       ["slot", "idle_down", "nodes.1.animation", "shopkeeper"],
+      ["character", "shopkeeper", "nodes.2.character", ""],
       ["item", "coin", "nodes.2.options.1.if.0.item", ""],
       ["character", "shopkeeper", "nodes.3.character", ""],
       ["item", "coin", "nodes.4.do.0.item", ""],
@@ -196,7 +197,7 @@ describe("references inside dialogue nodes", () => {
     expect(p.dialogues[0]!.path).toBe("dialogues/merchant_chat.dialogue.yaml");
     const at = (id: string) => d.nodes.find((n) => n.id === id)!;
     expect(at("hello")).toMatchObject({ character: "merchant", animation: "idle_down" });
-    expect(at("menu")).toMatchObject({ options: [{}, { if: [{ item: "gold" }] }, {}] });
+    expect(at("menu")).toMatchObject({ character: "merchant", options: [{}, { if: [{ item: "gold" }] }, {}] });
     expect(at("sell")).toMatchObject({ do: [{ item: "gold" }, { item: "lantern" }] });
     expect(at("check")).toMatchObject({ if: [{ flag: "met" }, { counter: "visits" }] });
     // start_dialogue / dialogue_end elsewhere follow the dialogue's new ID.
@@ -211,7 +212,7 @@ describe("references inside dialogue nodes", () => {
     p.flags!.data.flags = p.flags!.data.flags.filter((f) => f.id !== "talked_to_villager");
     p.items = p.items.filter((i) => i.data.id !== "lantern");
     const errors = validateProject(p).filter((x) => x.code === "missing_reference" && x.location.file.startsWith("dialogues/"));
-    expect(errors.map((e) => e.location.path.join("."))).toEqual(["nodes.1.character", "nodes.3.character", "nodes.4.do.1.item", "nodes.7.if.0.flag"]);
+    expect(errors.map((e) => e.location.path.join("."))).toEqual(["nodes.1.character", "nodes.2.character", "nodes.3.character", "nodes.4.do.1.item", "nodes.7.if.0.flag"]);
   });
 
   it("a slot the speaker doesn't have is a missing reference", async () => {

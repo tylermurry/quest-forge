@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { withFolder } from "@questforge/schema";
-import { SECTIONS, buildSection, countEntries, filterTree, sectionFolders, type FolderNode } from "../src/model/browser.ts";
+import { SECTIONS, buildSection, filterTree, sectionFolders, type FolderNode } from "../src/model/browser.ts";
 import { m1Project } from "./support/fixtures.ts";
 
 /** Compact outline: folders as "name/" with children, entries by name. */
 const outline = (n: FolderNode): unknown[] => [...n.folders.map((f) => ({ [`${f.name}/`]: outline(f) })), ...n.entries.map((e) => e.name)];
 
 describe("project browser model", () => {
-  it("has the seven sections in order", () => {
-    expect(SECTIONS.map((s) => s.title)).toEqual(["Scenes", "Items", "Characters", "Dialogues", "Flags", "Audio", "Images"]);
+  it("has the eight sections in order", () => {
+    expect(SECTIONS.map((s) => s.title)).toEqual(["Scenes", "Items", "Characters", "Dialogues", "Flags", "Audio", "Images", "Fonts"]);
   });
 
   it("builds the m1 fixture's trees, sorted by display name", async () => {
@@ -37,7 +37,7 @@ describe("project browser model", () => {
     const images = buildSection(p, "image");
     const hit = filterTree(images, "HERO")!;
     expect(outline(hit)).toEqual([{ "characters/": ["hero_sheet"] }]);
-    expect(countEntries(filterTree(buildSection(p, "item"), "rod")!)).toBe(1);
+    expect(outline(filterTree(buildSection(p, "item"), "rod")!)).toHaveLength(1);
     expect(filterTree(buildSection(p, "item"), "zzz")).toBeNull();
     expect(filterTree(images, "  ")).toBe(images);
   });

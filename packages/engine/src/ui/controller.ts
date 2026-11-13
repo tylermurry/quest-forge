@@ -1,9 +1,12 @@
-import { SLOT_COUNT, VOLUME_STEPS, DEFAULT_SETTINGS, SaveSlots, type PlayerSettings } from "../saves.ts";
+import { SLOT_COUNT, TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP, VOLUME_STEPS, DEFAULT_SETTINGS, SaveSlots, type PlayerSettings } from "../saves.ts";
 import type { Session, Verb } from "../session.ts";
 import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
-import { choiceLayout, computeLayout, hitButton, inRect, type ChoiceBox, type InventoryButtonId, type Layout } from "./layout.ts";
+import type { FrameInsets } from "@questforge/schema";
+import { layoutChoices } from "./choicebox.ts";
+import { textStyle, type Measure } from "./typography.ts";
+import { computeLayout, hitButton, inRect, placementOf, type ChoiceBox, type InventoryButtonId, type Layout, type Placement } from "./layout.ts";
 
 // Player UI input: the icon bar, inventory, settings,
 // hover labels and tap-and-hold. Pointer events arrive in scene coordinates with
@@ -17,16 +20,23 @@ const REVEAL_CSS = 8;
 const HOLD_SECONDS = 0.4;
 const HOLD_SLOP_CSS = 10;
 
-/** `save` / `load` are the slot list; `volume` the volume panel. */
-export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | null;
+/** `save` / `load` are the slot list; `volume` the volume panel; `textsize` the player's text size. */
+export type Panel = "inventory" | "settings" | "save" | "load" | "volume" | "textsize" | null;
 
-/** What the player UI keeps outside the game state: save slots and volumes. */
+/** What the player UI keeps outside the game state: save slots, volumes and text size. */
 export interface UiServices {
   slots: SaveSlots;
   settings: PlayerSettings;
-  /** Volumes changed: apply and store them. */
+  /** Volumes or text size changed: apply and store them. */
   onSettings?(s: PlayerSettings): void;
+  /** The shared frame's drawn border thickness (`frameBorders`) when panels are drawn with it: the dialogue list box grows by it. */
+  borders?: FrameInsets | null;
+  /** Measures text in the font that is drawn, so the choice box's question wraps the way it is drawn. Without one, a rough width per character. */
+  measure?: Measure;
 }
+
+/** Stands in for the canvas's text measurer when the host gives none (tests): every character is 0.6 em wide. */
+const ROUGH_MEASURE: Measure = (text, size) => text.length * size * 0.6;
 
 /** How long a notice ("Game saved.") stays up, in seconds. */
 export const NOTICE_SECONDS = 2.5;
@@ -65,21 +75,28 @@ export class PlayerUi {
   private pagedList: ChoiceList | null = null;
   private press: Press | null = null;
   private cssScale = 1;
+  /** Where the creator put the panels (Frames > Position); null is the legacy layout. */
+  readonly placement: Placement | null;
+  private readonly borders: FrameInsets | null;
+  private readonly measure: Measure;
 
   constructor(
     readonly session: Session,
     services?: UiServices,
   ) {
-    this.layout = computeLayout(1);
+    this.placement = placementOf(session.game.style);
+    this.layout = computeLayout(1, this.placement);
     this.slots = services?.slots ?? new SaveSlots(null, session.game);
     this.settings = { ...(services?.settings ?? DEFAULT_SETTINGS) };
     this.onSettings = services?.onSettings;
+    this.borders = services?.borders ?? null;
+    this.measure = services?.measure ?? ROUGH_MEASURE;
   }
 
   /** CSS px per scene px changed (resize, zoom). */
   setScale(cssScale: number) {
     this.cssScale = cssScale;
-    this.layout = computeLayout(cssScale);
+    this.layout = computeLayout(cssScale, this.placement);
   }
 
   get tabVisible(): boolean {
@@ -95,7 +112,17 @@ export class PlayerUi {
       this.pagedList = list;
       this.choicePage = 0;
     }
-    return choiceLayout(this.layout.unit, list.options.length, this.choicePage);
+    const { question } = list;
+    return layoutChoices({
+      unit: this.layout.unit,
+      count: list.options.length,
+      page: this.choicePage,
+      placement: this.placement,
+      borders: this.borders,
+      question: { name: question.character === null ? null : this.session.speakerName(question.character), text: question.text },
+      measure: this.measure,
+      size: textStyle(this.session.game.style, "", this.settings.textSize).size,
+    });
   }
 
   /** Inventory items shown in the grid, in cell order. */
@@ -186,6 +213,7 @@ export class PlayerUi {
     // The slot list and volume panel sit over everything, the death box included.
     if (this.panel === "save" || this.panel === "load") return this.slotsClick(p);
     if (this.panel === "volume") return this.volumeClick(p);
+    if (this.panel === "textsize") return this.textSizeClick(p);
     if (s.ending) return this.endingClick(p);
     // Text first: any click skips it, over the scene or the inventory.
     if (s.text) {
@@ -295,6 +323,9 @@ export class PlayerUi {
         return;
       case "volume":
         this.panel = "volume";
+        return;
+      case "textsize":
+        this.panel = "textsize";
         return;
       case "close":
         this.panel = null;
@@ -408,6 +439,20 @@ export class PlayerUi {
     const next = Math.max(0, Math.min(VOLUME_STEPS, this.settings[key] + step));
     if (next === this.settings[key]) return;
     this.settings = { ...this.settings, [key]: next };
+    this.onSettings?.(this.settings);
+  }
+
+  private textSizeClick(p: Vec) {
+    const id = hitButton(this.layout.textSize.buttons, p);
+    if (!id) return;
+    if (id === "ok") {
+      this.panel = "settings";
+      return;
+    }
+    const step = id === "size_up" ? TEXT_SCALE_STEP : -TEXT_SCALE_STEP;
+    const next = Math.max(TEXT_SCALE_MIN, Math.min(TEXT_SCALE_MAX, this.settings.textSize + step));
+    if (next === this.settings.textSize) return;
+    this.settings = { ...this.settings, textSize: next };
     this.onSettings?.(this.settings);
   }
 

@@ -39,7 +39,7 @@ describe("jump-to", () => {
 
     const withDialogue: Project = {
       ...p,
-      dialogues: [{ path: "dialogues/chat.dialogue.yaml", data: { schemaVersion: 2, id: "chat", name: "Chat", nodes: [{ id: "start", type: "start", pos: [0, 0], next: null }] } }],
+      dialogues: [{ path: "dialogues/chat.dialogue.yaml", data: { schemaVersion: 3, id: "chat", name: "Chat", nodes: [{ id: "start", type: "start", pos: [0, 0], next: null }] } }],
     };
     expect(locate(withDialogue, { file: "dialogues/chat.dialogue.yaml", path: ["nodes", 0] })!.target).toEqual({ kind: "dialogueNode", dialogue: "chat", node: "start" });
   });
@@ -85,5 +85,27 @@ describe("jump-to picks the Inspector tab", () => {
     ws.setInspectorTab("rules");
     ws.requestFocus("name");
     expect(ws.inspectorTab).toBe("details");
+  });
+});
+
+describe("jump-to for game fields", () => {
+  it("opens the Game Settings tab on the General subsection that holds the field", async () => {
+    const p = await m1Project();
+    const ws = new WorkspaceState();
+    const sections = [
+      [["startScene"], "start"],
+      [["startSpawn"], "start"],
+      [["maxScore"], "score"],
+      [["defaultResponses", "look"], "defaultResponses"],
+      [["rules", 0], "rules"],
+    ] as const;
+    for (const [path, section] of sections) {
+      ws.setGameSection("typography");
+      ws.jumpTo(locate(p, { file: "game.yaml", path: [...path] })!);
+      expect(ws.gameActive).toBe(true);
+      expect(ws.gameNav.area).toBe("general");
+      expect(ws.gameNav.general).toBe(section);
+      expect(ws.highlight?.location.path).toEqual(path);
+    }
   });
 });

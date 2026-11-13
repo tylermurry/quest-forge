@@ -40,7 +40,7 @@ export class AudioSync {
     if (source.sounds.length) for (const id of source.sounds.splice(0)) this.backend.sound(id);
   }
 
-  setVolumes(s: PlayerSettings) {
+  setVolumes(s: Pick<PlayerSettings, "music" | "sfx">) {
     this.backend.volumes(gainFor(s.music), gainFor(s.sfx));
   }
 }

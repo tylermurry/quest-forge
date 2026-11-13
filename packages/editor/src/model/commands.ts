@@ -21,6 +21,7 @@ import {
   withFolder,
   type AssetKind,
   type AssetsFile,
+  assetEntries,
   type DataPath,
   type Doc,
   type FlagsFile,
@@ -91,10 +92,16 @@ function setFlags(p: Project, f: (data: FlagsFile) => FlagsFile): Project {
 
 function setAssets(p: Project, f: (data: AssetsFile) => AssetsFile): Project {
   const assets = p.assets ?? { path: "assets.yaml", data: { schemaVersion: SCHEMA_VERSION, images: [], audio: [] } };
-  return { ...p, assets: { ...assets, data: f(assets.data) } };
+  const { fonts, ...data } = f(assets.data);
+  // An empty font list is dropped, so deleting the last font returns assets.yaml to how it was before any.
+  return { ...p, assets: { ...assets, data: fonts?.length ? { ...data, fonts } : data } };
 }
 
-const assetList = (section: "image" | "audio") => (section === "image" ? "images" : "audio");
+type FileSection = "image" | "audio" | "font";
+const assetList = (section: FileSection) => (section === "image" ? "images" : section === "audio" ? "audio" : "fonts");
+const ASSET_NOUN: Record<FileSection, string> = { image: "image", audio: "sound", font: "font" };
+/** An assets list by section; `fonts` is absent until the first font is imported. */
+const entriesOf = (d: AssetsFile, section: FileSection): { id: string; path: string }[] => d[assetList(section)] ?? [];
 
 // ── Creating ─────────────────────────────────────────────────────────────────
 
@@ -149,7 +156,7 @@ const NEW_NAME: Record<AssetKind | "flag", string> = {
 
 /** Creates a new asset or flag in a folder. Returns the project and the new ID. */
 export function createEntry(p: Project, section: Section, folder: string): { project: Project; id: string } {
-  if (section === "image" || section === "audio") throw new CommandError("Images and sounds are added by importing files.");
+  if (section === "image" || section === "audio" || section === "font") throw new CommandError("Images, sounds and fonts are added by importing files.");
   if (section === "flag") return createFlag(p, NEW_NAME.flag, "bool", folder);
   return createNamedEntry(p, section, NEW_NAME[section], folder);
 }
@@ -232,7 +239,7 @@ export function relocateFolder(p: Project, section: Section, from: string, to: s
   const list = assetList(section);
   return setAssets(next, (d) => ({
     ...d,
-    [list]: d[list].map((a) => {
+    [list]: entriesOf(d, section).map((a) => {
       const f = assetFileFolder(section, a.path);
       return a.path.startsWith(`${root}/`) && inFolder(f, from) ? { ...a, path: join(root, remap(f), a.path.split("/").pop()!) } : a;
     }),
@@ -278,16 +285,16 @@ export function moveEntry(p: Project, section: Section, id: string, folder: stri
   }
   const list = assetList(section);
   const root = SECTION_ROOTS[section];
-  const entry = p.assets?.data[list].find((a) => a.id === id);
-  if (!entry) throw new CommandError(`There's no ${section === "image" ? "image" : "sound"} with ID ${id}.`);
+  const entry = p.assets && entriesOf(p.assets.data, section).find((a) => a.id === id);
+  if (!entry) throw new CommandError(`There's no ${ASSET_NOUN[section]} with ID ${id}.`);
   const path = join(root, folder, entry.path.split("/").pop()!);
   if (path === entry.path) return p;
   if (assetPaths(p).has(path) || p.files.includes(path)) throw new CommandError(`A file called ${path.split("/").pop()} is already in that folder.`);
   const next = folder ? withFolder(p, `${root}/${folder}`) : p;
-  return setAssets(next, (d) => ({ ...d, [list]: d[list].map((a) => (a.id === id ? { ...a, path } : a)) }));
+  return setAssets(next, (d) => ({ ...d, [list]: entriesOf(d, section).map((a) => (a.id === id ? { ...a, path } : a)) }));
 }
 
-const assetPaths = (p: Project) => new Set([...(p.assets?.data.images ?? []), ...(p.assets?.data.audio ?? [])].map((a) => a.path));
+const assetPaths = (p: Project) => new Set(assetEntries(p.assets?.data).map((a) => a.path));
 
 /**
  * Renames what the user sees: the display name for scenes, items, characters
@@ -319,6 +326,7 @@ const REF_KINDS: Record<Section, RefKind[]> = {
   flag: ["flag", "counter"],
   image: ["image"],
   audio: ["audio"],
+  font: ["font"],
 };
 
 /** Every reference to an entry, e.g. for the delete warning or "Change ID…". */
@@ -328,7 +336,7 @@ export function entryReferences(p: Project, section: Section, id: string): Refer
 
 /** A copy of an asset or flag next to the original. Returns the project and the copy's ID. */
 export function duplicateEntry(p: Project, section: Section, id: string): { project: Project; id: string } {
-  if (section === "image" || section === "audio") throw new CommandError("Images and sounds can't be duplicated. Import the file again instead.");
+  if (section === "image" || section === "audio" || section === "font") throw new CommandError("Images, sounds and fonts can't be duplicated. Import the file again instead.");
   const copyId = uniqueId(`${id}_copy`, definedIds(p, section));
   if (section === "flag") {
     const flag = p.flags?.data.flags.find((f) => f.id === id);
@@ -373,8 +381,8 @@ export function deleteEntry(p: Project, section: Section, id: string): Project {
   if (section === "flag") return setFlags(p, (d) => ({ ...d, flags: d.flags.filter((f) => f.id !== id) }));
   const list = assetList(section);
   const pending = { ...p.pendingFiles };
-  for (const a of p.assets?.data[list] ?? []) if (a.id === id) delete pending[a.path];
-  return { ...setAssets(p, (d) => ({ ...d, [list]: d[list].filter((a) => a.id !== id) })), pendingFiles: pending };
+  for (const a of p.assets ? entriesOf(p.assets.data, section) : []) if (a.id === id) delete pending[a.path];
+  return { ...setAssets(p, (d) => ({ ...d, [list]: entriesOf(d, section).filter((a) => a.id !== id) })), pendingFiles: pending };
 }
 
 // ── The delete warning ─────────────────────────────────────────────

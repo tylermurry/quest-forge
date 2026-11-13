@@ -24,7 +24,7 @@ async function mount() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+  fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
   return editor;
 }
 
@@ -127,7 +127,8 @@ describe("rule inspector", () => {
     act(() => void editor.apply("Delete item", (p) => ({ ...p, items: p.items.filter((i) => i.data.id !== "rod") })));
     act(() => editor.validateNow());
     expect(within(header).getByLabelText("Some rules have problems")).toBeTruthy();
-    fireEvent.click(within(screen.getByRole("list", { name: "Problems" })).getAllByText(/item rod/)[0]!);
+    // The first matching problem is the game's own rule, which opens Game Settings; this test is about the hotspot's.
+    fireEvent.click(within(screen.getByRole("list", { name: "Problems" })).getAllByText(/item rod/).find((e) => e.closest("li")?.textContent?.includes("pond"))!);
     expect(within(inspector()).getByRole("tab", { name: /^Rules/ }).getAttribute("aria-selected")).toBe("true");
     expect(within(inspector()).getByRole("region", { name: "Rules" })).toBeTruthy();
   });

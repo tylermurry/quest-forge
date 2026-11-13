@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { togglePanels } from "../src/model/panels.ts";
+import { inspectorOnLeavingGame, togglePanels } from "../src/model/panels.ts";
 
 // Ctrl+\ hides every side panel, then brings back the ones that were showing.
 
@@ -25,5 +25,20 @@ describe("hide all panels", () => {
 
   it("with nothing remembered and nothing showing, shows them all", () => {
     expect(togglePanels(none, null).shown).toEqual(all);
+  });
+});
+
+describe("the Inspector when leaving the Game Settings tab", () => {
+  it("comes back only if the tab hid it", () => {
+    expect(inspectorOnLeavingGame(true, false, false)).toBe("expand");
+    expect(inspectorOnLeavingGame(false, false, false)).toBe("leave");
+  });
+
+  it("stays hidden after a hide-all during the tab", () => {
+    expect(inspectorOnLeavingGame(true, true, false)).toBe("stay hidden");
+  });
+
+  it("waits for the play to stop when leaving during play", () => {
+    expect(inspectorOnLeavingGame(true, false, true)).toBe("expand after play");
   });
 });

@@ -1,51 +1,37 @@
-# Questforge
+# Quest Forge
 
-Questforge is a no-code desktop editor for classic point-and-click adventures. A storyteller or artist who has never programmed can import art, layer it into scenes, draw clickable areas, give them rules, playtest in the editor, and build a game that runs on desktop and mobile.
+Quest Forge is a visual game creation tool that makes building beautiful, immersive point-and-click adventure games remarkably simple.
 
-## What is in this repository
+Inspired by the classic adventure games that made us fall in love with storytelling, Quest Forge gives creators the tools to build rich, interactive worlds filled with memorable characters, clever puzzles, and compelling stories—without the complexity of a traditional game engine.
 
-| Folder | What it is |
-|---|---|
-| `packages/schema` | The project file format: schemas, loading and saving, validation, and the `.quest` built-game file. |
-| `packages/engine` | The web runtime that plays a game (Canvas 2D). |
-| `packages/editor` | The desktop editor (Tauri and React). |
-| `packages/site` | The public web site: the home page and the `.quest` player. |
-| `docs` | The user manual (Docusaurus), served at `/docs/`. |
-| `dev-docs` | The developer documentation site (Docusaurus), which renders `dev-docs/standards` and `dev-docs/project`, served at `/dev-docs/`. |
+From designing scenes and animating characters to building conversations, defining interactions, and creating puzzles, Quest Forge brings everything together in one intuitive creative environment.
 
-## Getting started
+Whether you're bringing your first adventure to life or building something ambitious, Quest Forge handles the technical complexity so you can focus on what matters: **creating an unforgettable adventure.**
 
-You need Node 22 or newer. Run pnpm through corepack, which picks the pinned version:
+## Our Mission
 
-```sh
-corepack pnpm install
-```
+**Make creating point-and-click adventures as magical as playing them.**
 
-Run the typecheck and all tests:
+Quest Forge empowers storytellers to bring ambitious worlds to life with powerful, intuitive tools that make the complex feel effortless—so creativity, not configuration, drives the experience.
 
-```sh
-corepack pnpm check
-```
+## Our Values
 
-Start a dev page (each one reloads as you edit):
+### 1. Creativity Over Configuration
 
-```sh
-corepack pnpm --filter @questforge/engine dev   # the game runtime, http://localhost:5174
-corepack pnpm --filter @questforge/editor dev   # the editor in a browser, http://localhost:5175
-corepack pnpm --filter @questforge/site dev     # the public site, http://localhost:5178
-corepack pnpm --filter @questforge/docs dev     # the user manual, http://localhost:5179
-corepack pnpm --filter @questforge/dev-docs dev # the developer docs, http://localhost:5180
-```
+Creators should spend their time telling stories, building worlds, and crafting puzzles—not wrestling with technical details. Complexity is ours to solve, not theirs.
 
-The desktop app needs [Rust](https://rustup.rs). Start it with:
+### 2. Powerful, Yet Effortless
 
-```sh
-corepack pnpm --filter @questforge/editor tauri dev
-```
+Sophisticated capabilities should feel remarkably simple. Never sacrifice creative possibilities for simplicity; make the complexity invisible until it's needed.
 
-## Documentation
+### 3. Intuitive by Design
 
-- [`docs/manual/`](docs/manual/index.md): the user manual for people making games with Questforge.
-- [`dev-docs/standards/`](dev-docs/standards/index.mdx): the engineering standards every change is held to.
-- [`dev-docs/project/`](dev-docs/project/conventions.md): how the code is organised and the conventions for working in it.
-- [Milestones and issues](https://github.com/tylermurry/quest-forge/milestones): what is planned next.
+Everything should work the way creators naturally expect. Favor thoughtful conventions, intelligent defaults, and workflows that require little explanation.
+
+### 4. Delight Is the Standard
+
+Functional isn't enough. Every feature should feel polished, cohesive, and surprisingly capable. Good enough isn't good enough.
+
+### 5. Storytellers First
+
+Quest Forge is a storytelling tool, not a traditional game engine. Technical knowledge should never be a prerequisite for creativity, but advanced capabilities should remain accessible to those who need them.

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { DialogueFile, MemoryFs, saveProject } from "@questforge/schema";
@@ -18,13 +18,13 @@ afterEach(cleanup);
 async function mount() {
   const p = await m1Project();
   const chat = DialogueFile.parse({
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "chat",
     name: "Chat",
     nodes: [
       { id: "start", type: "start", pos: [0, 0], next: "hello" },
       { id: "hello", type: "line", pos: [300, 0], character: "gardener", text: "Hello there.", next: "menu" },
-      { id: "menu", type: "choices", pos: [600, 0], options: [{ id: "bye", text: "Bye.", if: [], once: false, next: "end" }] },
+      { id: "menu", type: "choices", pos: [600, 0], character: "gardener", text: "What now?", options: [{ id: "bye", text: "Bye.", if: [], once: false, next: "end" }] },
       { id: "end", type: "end", pos: [900, 0] },
     ],
   });
@@ -40,7 +40,7 @@ async function mount() {
       </CommandsContext.Provider>
     </PlatformContext.Provider>,
   );
-  fireEvent.doubleClick(screen.getByRole("treeitem", { name: "dialogue Chat" }).firstElementChild!);
+  fireEvent.click(screen.getByRole("treeitem", { name: "dialogue Chat" }).firstElementChild!);
   return { editor, registry };
 }
 
@@ -53,6 +53,8 @@ describe("dialogue graph tab", () => {
     const graph = document.querySelector("[data-dialogue-graph=chat]") as HTMLElement;
     expect(within(graph).getByLabelText("Line node hello").textContent).toContain("Hello there.");
     expect(within(graph).getByLabelText("Choices node menu").textContent).toContain("Bye.");
+    // A Choices node's card shows who asks and the question above its options.
+    expect(within(graph).getByLabelText("Choices node menu").textContent).toMatch(/Gardener.*What now\?/);
     expect(within(graph).getByLabelText("Option Bye. port")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Auto-layout/ })).toBeTruthy();
   });
@@ -74,6 +76,44 @@ describe("dialogue graph tab", () => {
     editor.undo();
     editor.undo();
     expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ options: [{ text: "See you.", once: false }] });
+  });
+
+  it("a Choices node asks its question: the Inspector picks who asks and edits the text, each one undo step, above the options", async () => {
+    const { editor } = await mount();
+    const user = userEvent.setup();
+    fireEvent.click(screen.getByLabelText("Choices node menu"));
+    const panel = inspector();
+    const speaker = within(panel).getByRole("combobox", { name: "Speaker" });
+    expect(speaker.textContent).toContain("Gardener");
+    const question = within(panel).getByLabelText("Question");
+    expect(question.compareDocumentPosition(within(panel).getByLabelText("Option 1 text")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.focus(question);
+    fireEvent.change(question, { target: { value: "Anything else?" } });
+    fireEvent.blur(question);
+    expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ character: "gardener", text: "Anything else?" });
+    expect(editor.history.undoLabel).toBe("Edit question");
+    await user.click(speaker);
+    await user.click(await screen.findByRole("option", { name: "Narrator" }));
+    const menu = nodes(editor).find((n) => n.id === "menu")!;
+    expect(menu).toMatchObject({ text: "Anything else?" });
+    expect("character" in menu).toBe(false);
+    expect(editor.history.undoLabel).toBe("Change speaker");
+    expect(screen.getByLabelText("Choices node menu").textContent).toMatch(/Narrator.*Anything else\?/);
+    editor.undo();
+    expect(nodes(editor).find((n) => n.id === "menu")).toMatchObject({ character: "gardener" });
+  });
+
+  it("an empty question is an error on the card and in the Inspector, with a message that says what to type", async () => {
+    const { editor } = await mount();
+    fireEvent.click(screen.getByLabelText("Choices node menu"));
+    const question = within(inspector()).getByLabelText("Question");
+    fireEvent.focus(question);
+    fireEvent.change(question, { target: { value: "" } });
+    fireEvent.blur(question);
+    editor.validateNow();
+    await within(inspector()).findByText(/asks nothing\. Type the question\./);
+    expect(screen.getByLabelText("Choices node menu").textContent).toContain("Asks nothing yet");
+    await waitFor(() => expect(screen.getByLabelText("Choices node menu").querySelector("[aria-label$='errors']")).toBeTruthy());
   });
 
   it("a Line picks its speaker; the narrator has no animation field", async () => {

@@ -46,7 +46,7 @@ async function openHero() {
     </PlatformContext.Provider>,
   );
   fireEvent.change(screen.getByLabelText("Search"), { target: { value: "hero" } });
-  fireEvent.doubleClick((await screen.findByRole("treeitem", { name: "character Hero" })).firstElementChild!);
+  fireEvent.click((await screen.findByRole("treeitem", { name: "character Hero" })).firstElementChild!);
   await screen.findByLabelText("Animation slots");
   return editor;
 }

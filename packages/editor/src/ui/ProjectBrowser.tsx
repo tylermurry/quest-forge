@@ -1,18 +1,19 @@
-import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2, Image as ImageIcon, type LucideIcon, Map as MapIcon, MessagesSquare, Music, Package, Search, User } from "lucide-react";
+import { ChevronDown, ChevronRight, Ellipsis, Flag, Folder, FolderOpen, Gamepad2, Image as ImageIcon, type LucideIcon, Map as MapIcon, MessagesSquare, Music, Package, Search, Type, User } from "lucide-react";
 import { DragOverlay, useDndMonitor, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useMemo, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { NOUN, type Actions, type DeleteWarning, type DragItem } from "../model/actions.ts";
-import { SECTIONS, buildSection, countEntries, filterTree, isAssetKind, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
+import { SECTIONS, buildSection, filterTree, isAssetKind, isFileSection, opensTab, sectionEntries, type Entry, type FolderNode, type Section } from "../model/browser.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "./components/ui/context-menu.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./components/ui/dropdown-menu.tsx";
 import { Input } from "./components/ui/input.tsx";
 import { ConfirmDelete, MenuItems, Prompt, type MenuItem, type MenuParts } from "./Dialogs.tsx";
 import { cn } from "./lib/utils.ts";
+import { SECTION_HEADING, SectionHeading } from "./SectionHeading.tsx";
 
 const CONTEXT: MenuParts = { Item: ContextMenuItem, Separator: ContextMenuSeparator };
 const DROPDOWN: MenuParts = { Item: DropdownMenuItem, Separator: DropdownMenuSeparator };
 
-const SECTION_ICON: Record<Section, LucideIcon> = { scene: MapIcon, item: Package, character: User, dialogue: MessagesSquare, flag: Flag, audio: Music, image: ImageIcon };
+const SECTION_ICON: Record<Section, LucideIcon> = { scene: MapIcon, item: Package, character: User, dialogue: MessagesSquare, flag: Flag, audio: Music, image: ImageIcon, font: Type };
 
 type Popup = { kind: "delete"; warning: DeleteWarning; run(): void } | { kind: "changeId"; section: Section; id: string } | null;
 
@@ -152,14 +153,14 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
     ...(opensTab(e.section) ? [{ label: "Open", onSelect: () => ws.open({ section: e.section, id: e.id }) }] : []),
     { label: "Rename", onSelect: () => setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name }) },
     ...(isAssetKind(e.section) ? [{ label: "Change ID…", onSelect: () => setPopup({ kind: "changeId", section: e.section, id: e.id }) }] : []),
-    ...(e.section !== "image" && e.section !== "audio" ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
+    ...(!isFileSection(e.section) ? [{ label: "Duplicate", onSelect: () => actions.duplicate(e.section, e.id) }] : []),
     { label: "Delete", separated: true, destructive: true, onSelect: () => askDelete(actions.deleteWarning(e.section, e.id), () => actions.delete(e.section, e.id)) },
   ];
 
   const folderMenu = (section: Section, path: string): MenuItem[] => [
     { label: "New folder", onSelect: () => startNewFolder(section, path) },
-    ...(section !== "image" && section !== "audio" ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
-    ...(section === "image" || section === "audio"
+    ...(!isFileSection(section) ? [{ label: `New ${NOUN[section]}`, onSelect: () => actions.newEntry(section, path) }] : []),
+    ...(isFileSection(section)
       ? [
           {
             label: "Import files…",
@@ -284,8 +285,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
                   aria-selected={selected}
                   tabIndex={0}
                   drag={isEditing ? undefined : { section: e.section, kind: "entry", id: e.id }}
-                  onClick={() => ws.select({ kind: "entry", section: e.section, id: e.id })}
-                  onDoubleClick={() => opensTab(e.section) && ws.open({ section: e.section, id: e.id })}
+                  onClick={() => (opensTab(e.section) ? ws.open({ section: e.section, id: e.id }) : ws.select({ kind: "entry", section: e.section, id: e.id }))}
                   onKeyDown={(ev) => {
                     if (ev.key === "F2") setEditing({ section: e.section, kind: "entry", id: e.id, value: e.name });
                     if (ev.key === "Enter" && opensTab(e.section)) ws.open({ section: e.section, id: e.id });
@@ -317,7 +317,7 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         multiple
         hidden
         aria-label="Import files"
-        accept=".png,.jpg,.jpeg,.webp,.mp3,.ogg,.wav"
+        accept=".png,.jpg,.jpeg,.webp,.mp3,.ogg,.wav,.woff2,.woff"
         onChange={(e) => {
           const files = [...(e.target.files ?? [])];
           e.target.value = "";
@@ -329,14 +329,14 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
         <Input className="h-7 pl-7 text-[13px]" type="search" placeholder="Search names and IDs" aria-label="Search" value={ws.search} onChange={(e) => ws.setSearch(e.target.value)} />
       </div>
       <ul role="tree" aria-label="Project" className="min-h-0 flex-1 overflow-auto px-1 pb-4">
-        {/* Game-level rules, default responses and score. */}
+        {/* Game settings: a click or Enter selects it and opens the Game Settings tab. */}
         {!searching && (
           <li role="treeitem" aria-selected={sel?.kind === "game"} aria-label="Game">
             <div
               tabIndex={0}
               className={cn("flex h-6 items-center gap-1.5 rounded-sm px-1 outline-none", rowClass(sel?.kind === "game"))}
-              onClick={() => ws.select({ kind: "game" })}
-              onKeyDown={(e) => e.key === "Enter" && ws.select({ kind: "game" })}
+              onClick={() => ws.openGame()}
+              onKeyDown={(e) => e.key === "Enter" && ws.openGame()}
             >
               <Gamepad2 className="text-muted-foreground size-3.5" />
               <span className="flex-1">Game</span>
@@ -348,23 +348,17 @@ export function ProjectBrowser({ actions }: { actions: Actions }) {
           const shown = filterTree(tree, ws.search);
           if (searching && !shown) return null;
           const open = searching || ws.isExpanded(section, "");
-          const Icon = SECTION_ICON[section];
           return (
             <li key={section} role="treeitem" aria-expanded={open} aria-label={title} className="mt-3">
               <DndRow
                 items={folderMenu(section, "")}
                 label={`Actions for ${title}`}
-                className={cn("text-muted-foreground text-[11px] font-semibold tracking-wider uppercase", rowClass(false))}
+                className={cn(SECTION_HEADING, rowClass(false))}
                 drop={{ kind: "browserFolder", section, folder: "" }}
                 onFiles={filesInto(section, "")}
                 onClick={() => ws.toggleFolder(section, "")}
               >
-                <button className="flex size-4 shrink-0 items-center justify-center" aria-label={open ? `Collapse ${title}` : `Expand ${title}`} onClick={(e) => (e.stopPropagation(), ws.toggleFolder(section, ""))}>
-                  {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-                </button>
-                <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-                <span className="flex-1">{title}</span>
-                <span className="font-normal tabular-nums">{countEntries(shown ?? tree)}</span>
+                <SectionHeading toggle={{ open, onToggle: () => ws.toggleFolder(section, "") }} name={title} icon={SECTION_ICON[section]} title={title} />
               </DndRow>
               {open && shown && <ul role="group">{renderFolder(shown, 1, searching)}</ul>}
             </li>

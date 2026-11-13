@@ -578,6 +578,8 @@ const shop = DialogueFile.parse({
       id: "menu",
       type: "choices",
       pos: [640, -60],
+      character: "visitor",
+      text: "What can I do for you?",
       options: [
         option("ask", "Where are you headed?", "travels", { once: true }),
         option("buy", "I'll buy the lantern.", "sell", { if: [{ type: "has_item", item: "coin" }] }),

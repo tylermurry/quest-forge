@@ -19,7 +19,7 @@ Build Game uses what's in the editor, including changes you haven't saved.
 ## What's in a .quest file
 
 Everything needed to play: game settings, every scene, item, character, dialogue, flag and rule, and every
-picture and sound the game uses. Images and sounds nothing uses are left out.
+picture, sound and font the game uses. Images, sounds and fonts nothing uses are left out.
 
 ## Playing a .quest file
 

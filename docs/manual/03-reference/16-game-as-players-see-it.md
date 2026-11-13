@@ -25,6 +25,8 @@ at the top.
 
 The bar also shows the score: "Score: 5 of 25".
 
+The game's maker can give the bar a frame and their own pictures for the buttons; they work the same way.
+
 ## Pointing and clicking
 
 | Mouse | Touch | What it does |
@@ -50,7 +52,7 @@ an item does:
 
 ## Dialogue choices
 
-When a conversation offers choices, they appear in a list. Click one to say it. Long lists have pages.
+When a conversation offers choices, they appear in one box with the question above them. Click an answer to say it. Long lists have pages.
 
 ## Settings
 
@@ -60,8 +62,10 @@ When a conversation offers choices, they appear in a list. Click one to say it. 
 | **Save** | Saves to one of ten slots. Each slot shows where and the score, such as "Garden shed · Score 5 of 25". |
 | **Load** | Loads a saved game. |
 | **Volume** | Turns **Music** and **Sound effects** up or down separately. |
+| **Text size** | Makes the game's text smaller or larger, from 75% to 200% of the size you chose, in steps of 25%. It starts at 100%. Narration, speech and choices grow fully; text on buttons and menus grows only as far as its button allows. |
 
-Saves and volume are kept in the player's web browser.
+Saves, volume and text size are kept in the player's web browser. Text size is the player's own choice; it never
+changes your game. To change the size your game starts with, see [Game settings](./04-game-settings.md).
 
 ## Endings
 

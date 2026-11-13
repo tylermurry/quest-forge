@@ -13,6 +13,7 @@ import {
   planSave,
   saveProject,
   serialize,
+  validateProject,
   type Project,
 } from "../src/index.ts";
 import { NodeFs } from "../src/node.ts";
@@ -70,7 +71,7 @@ describe("round-trip", () => {
 
   it("normalizes a non-canonical file once, then is stable", async () => {
     const original = await readFile(join(FIXTURE, "items/coin.item.yaml"), "utf8");
-    const messy = `# hand-edited\nicon: coin_icon\nid:   coin\nschemaVersion: 2\nname: "gold coin"\ndescription: 'A shiny gold coin.'\n`;
+    const messy = `# hand-edited\nicon: coin_icon\nid:   coin\nschemaVersion: 3\nname: "gold coin"\ndescription: 'A shiny gold coin.'\n`;
     const fs = new MemoryFs({ "items/coin.item.yaml": messy });
     const first = await saveProject(fs, (await loadProject(fs)).project);
     expect(first.plan.writes.map((w) => w.path)).toEqual(["items/coin.item.yaml"]);
@@ -98,7 +99,7 @@ describe("round-trip", () => {
     const fs = new MemoryFs();
     const project: Project = {
       ...(await loadProject(fs)).project,
-      items: [{ path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 2 } }],
+      items: [{ path: "items/coin.item.yaml", data: { icon: "coin_icon", description: "A shiny gold coin.", name: "gold coin", id: "coin", schemaVersion: 3 } }],
     };
     await saveProject(fs, project);
     expect(fs.files.get("items/coin.item.yaml")).toBe(await readFile(join(FIXTURE, "items/coin.item.yaml"), "utf8"));
@@ -146,7 +147,7 @@ describe("load problems", () => {
   };
 
   it("reports YAML syntax errors with a line number and keeps the file out of the save", async () => {
-    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 2\nid: [coin\n" });
+    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 3\nid: [coin\n" });
     const { project, problems } = await loadProject(fs);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toMatchObject({ code: "yaml_syntax", location: { file: "items/coin.item.yaml" } });
@@ -158,12 +159,12 @@ describe("load problems", () => {
   it("reports unknown keys and missing fields in plain English", async () => {
     const fs = new MemoryFs({
       ...(await base()),
-      "items/coin.item.yaml": "schemaVersion: 2\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolour: gold\n",
-      "items/key.item.yaml": "schemaVersion: 2\nid: key\nname: key\nicon: key_icon\n",
+      "items/coin.item.yaml": "schemaVersion: 3\nid: coin\nname: gold coin\ndescription: Shiny.\nicon: coin_icon\ncolor: gold\n",
+      "items/key.item.yaml": "schemaVersion: 3\nid: key\nname: key\nicon: key_icon\n",
     });
     const { problems } = await loadProject(fs);
     expect(problems.map((p) => [p.location.file, p.code, p.breadcrumb, p.message])).toEqual([
-      ["items/coin.item.yaml", "invalid_data", 'Item "gold coin"', 'has unknown setting "colour".'],
+      ["items/coin.item.yaml", "invalid_data", 'Item "gold coin"', 'has unknown setting "color".'],
       ["items/key.item.yaml", "invalid_data", 'Item "key"', 'is missing "description".'],
     ]);
   });
@@ -184,20 +185,36 @@ describe("load problems", () => {
     ]);
   });
 
-  it("opens a v1 project: rules get IDs, and the next save writes v2", async () => {
+  it("opens a v1 project: rules get IDs, and the next save writes the current version", async () => {
     const files = await base();
-    const v1 = files["game.yaml"]!.replace("schemaVersion: 2", "schemaVersion: 1").replace(/^  - id: rule_\d+\n    when:/gm, "  - when:");
+    const v1 = files["game.yaml"]!.replace("schemaVersion: 3", "schemaVersion: 1").replace(/^  - id: rule_\d+\n    when:/gm, "  - when:");
     expect(v1).not.toContain("id: rule_");
     const fs = new MemoryFs({ ...files, "game.yaml": v1 });
     const { project, problems } = await loadProject(fs);
     expect(problems).toEqual([]);
-    expect(project.game!.data.schemaVersion).toBe(2);
+    expect(project.game!.data.schemaVersion).toBe(3);
     expect(project.game!.data.rules.map((r) => r.id)).toEqual(["rule_1"]);
     expect(planSave(project).writes.map((w) => [w.path, w.content])).toEqual([["game.yaml", files["game.yaml"]]]);
   });
 
+  it("opens a v2 dialogue: its Choices node asks nothing yet, which is an error, and the next save writes the question", async () => {
+    const { fs } = await fixtureCopy();
+    const path = "dialogues/shopkeeper_chat.dialogue.yaml";
+    const chat = await fs.readText(path);
+    const v2 = chat.replace("schemaVersion: 3", "schemaVersion: 2").replace(/^    character: shopkeeper\n    text: .*\n(?=    options:)/m, "");
+    expect(v2).not.toContain("What can I get you?");
+    await fs.writeText(path, v2);
+    const { project, problems } = await loadProject(fs);
+    expect(problems).toEqual([]);
+    expect(validateProject(project).map((p) => [p.code, p.severity, p.location.path])).toEqual([["empty_text", "error", ["nodes", 2, "text"]]]);
+    const [write] = planSave(project).writes;
+    expect(planSave(project).writes.map((w) => w.path)).toEqual([path]);
+    expect(write!.content).toContain("schemaVersion: 3\n");
+    expect(write!.content).toContain('    text: ""\n    options:');
+  });
+
   it("refuses files from a newer schemaVersion", async () => {
-    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 3\nid: coin\n" });
+    const fs = new MemoryFs({ ...(await base()), "items/coin.item.yaml": "schemaVersion: 4\nid: coin\n" });
     const { problems } = await loadProject(fs);
     expect(problems[0]?.code).toBe("unsupported_version");
   });
@@ -205,7 +222,7 @@ describe("load problems", () => {
 
 describe("migrations", () => {
   it("is a no-op for current files", () => {
-    expect(migrate({ schemaVersion: 2, id: "x" })).toEqual({ ok: true, value: { schemaVersion: 2, id: "x" } });
+    expect(migrate({ schemaVersion: 3, id: "x" })).toEqual({ ok: true, value: { schemaVersion: 3, id: "x" } });
   });
 
   it("v2 gives every rule an ID in list order and keeps existing ones", () => {
@@ -223,7 +240,7 @@ describe("migrations", () => {
     expect(out).toEqual({
       ok: true,
       value: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         id: "yard",
         objects: [{ id: "rock", rules: [r("a", "rule_1"), r("b", "rule_2")] }],
         characters: [{ character: "cat", rules: [r("c", "kept")] }],
@@ -232,8 +249,38 @@ describe("migrations", () => {
         rules: [r("e", "rule_1"), r("f", "rule_2")],
       },
     });
-    expect(migrate({ schemaVersion: 1, id: "coin", name: "coin" })).toEqual({ ok: true, value: { schemaVersion: 2, id: "coin", name: "coin" } });
-    expect(Object.keys(MIGRATIONS)).toEqual(["1"]);
+    expect(migrate({ schemaVersion: 1, id: "coin", name: "coin" })).toEqual({ ok: true, value: { schemaVersion: 3, id: "coin", name: "coin" } });
+    expect(Object.keys(MIGRATIONS)).toEqual(["1", "2"]);
+  });
+
+  it("v3 gives every Choices node an empty question and no character, and only changes the version of other files", () => {
+    const options = [{ id: "a", text: "Yes", if: [], once: false, next: null }];
+    const v2 = {
+      schemaVersion: 2,
+      id: "chat",
+      name: "Chat",
+      nodes: [
+        { id: "start", type: "start", pos: [0, 0], next: "hello" },
+        { id: "hello", type: "line", pos: [0, 0], character: "cat", text: "Hi.", next: "menu" },
+        { id: "menu", type: "choices", pos: [0, 0], options },
+        { id: "again", type: "choices", pos: [0, 0], options: [] },
+      ],
+    };
+    expect(migrate(v2)).toEqual({
+      ok: true,
+      value: {
+        schemaVersion: 3,
+        id: "chat",
+        name: "Chat",
+        nodes: [
+          { id: "start", type: "start", pos: [0, 0], next: "hello" },
+          { id: "hello", type: "line", pos: [0, 0], character: "cat", text: "Hi.", next: "menu" },
+          { id: "menu", type: "choices", pos: [0, 0], text: "", options },
+          { id: "again", type: "choices", pos: [0, 0], text: "", options: [] },
+        ],
+      },
+    });
+    expect(migrate({ schemaVersion: 2, id: "coin", name: "coin" })).toEqual({ ok: true, value: { schemaVersion: 3, id: "coin", name: "coin" } });
   });
 
   it("chains steps from old versions up to current", () => {

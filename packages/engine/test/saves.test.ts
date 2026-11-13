@@ -26,7 +26,7 @@ const settle = (s: Session) => {
   s.tick(1 / 60);
 };
 const withAudio = (p: Project, ids: string[]) => {
-  p.assets = { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 2, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }) };
+  p.assets = { path: "assets.yaml", data: AssetsFile.parse({ schemaVersion: 3, images: [], audio: ids.map((id) => ({ id, path: `assets/audio/${id}.wav` })) }) };
   return p;
 };
 const button = <Id extends string>(list: { id: Id; rect: Rect }[], id: Id) => center(list.find((b) => b.id === id)!.rect);
@@ -259,11 +259,11 @@ describe("volume", () => {
     expect(ui.settings.music).toBe(10);
     expect(seen).toEqual([8, 9, 10]);
     tap(ui, button(ui.layout.volume.buttons, "sfx_down"));
-    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 7 });
+    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 7, textSize: 100 });
     tap(ui, button(ui.layout.volume.buttons, "ok"));
     expect(ui.panel).toBe("settings");
     store.setItem(settingsKey("t"), JSON.stringify({ music: 99, sfx: "loud" }));
-    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 8 });
+    expect(readSettings(store, "t")).toEqual({ music: 10, sfx: 8, textSize: 100 });
     expect(gainFor(0)).toBe(0);
     expect(gainFor(10)).toBe(1);
   });

@@ -1,4 +1,4 @@
-schemaVersion: 2
+schemaVersion: 3
 id: shop
 name: Visitor's shop
 nodes:
@@ -15,6 +15,8 @@ nodes:
   - id: menu
     type: choices
     pos: [640, -60]
+    character: visitor
+    text: What can I do for you?
     options:
       - id: ask
         text: Where are you headed?

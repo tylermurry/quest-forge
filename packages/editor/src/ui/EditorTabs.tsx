@@ -6,6 +6,7 @@ import { refKey, type EntryRef } from "../model/workspace.ts";
 import { X } from "lucide-react";
 import { Label } from "./components/ui/label.tsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select.tsx";
+import { GameSettings } from "./game/GameSettings.tsx";
 import { DialogueEditor } from "./dialogue/DialogueEditor.tsx";
 import { SceneEditor } from "./scene/SceneEditor.tsx";
 import { CharacterAnimations } from "./sprites/CharacterAnimations.tsx";
@@ -26,6 +27,21 @@ export function EditorTabs({ actions }: { actions: Actions }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="bg-panel flex h-8 shrink-0 items-end gap-px overflow-x-auto border-b px-1" role="tablist">
+        {ws.gameTab && (
+          <div
+            className={cn(
+              "group flex h-7 items-center rounded-t-md border border-b-0 pl-3 pr-1 text-[12px]",
+              ws.gameActive ? "bg-background text-foreground" : "bg-muted/50 text-muted-foreground border-transparent",
+            )}
+          >
+            <button role="tab" aria-selected={ws.gameActive} onClick={() => ws.openGame()} onMouseDown={(e) => e.button === 1 && ws.closeGame()} className="whitespace-nowrap">
+              Game Settings
+            </button>
+            <button className="hover:bg-muted ml-1 flex size-5 items-center justify-center rounded-sm opacity-60 hover:opacity-100" aria-label="Close Game Settings" onClick={() => ws.closeGame()}>
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
         {ws.tabs.map((t) => {
           const name = sectionEntries(p, t.section).find((e) => e.id === t.id)?.name ?? t.id;
           const selected = refKey(t) === ws.active;
@@ -47,7 +63,11 @@ export function EditorTabs({ actions }: { actions: Actions }) {
           );
         })}
       </div>
-      {active?.section === "scene" ? (
+      {ws.gameActive ? (
+        <div className="min-h-0 flex-1 overflow-hidden" role="tabpanel" aria-label="Game Settings">
+          <GameSettings actions={actions} />
+        </div>
+      ) : active?.section === "scene" ? (
         <div className="min-h-0 flex-1" role="tabpanel">
           <SceneEditor key={refKey(active)} actions={actions} sceneId={active.id} />
         </div>
@@ -57,7 +77,7 @@ export function EditorTabs({ actions }: { actions: Actions }) {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto px-6 py-5" role="tabpanel">
-          {!active && <p className="text-muted-foreground mt-16 text-center">Double-click a scene, item, character, dialogue or image to open it here.</p>}
+          {!active && <p className="text-muted-foreground mt-16 text-center">Click a scene, item, character, dialogue, image or Game to open it here.</p>}
           {active?.section === "image" && <ImageEditor key={refKey(active)} actions={actions} imageId={active.id} />}
           {active && active.section !== "image" && <TabContent key={refKey(active)} actions={actions} entry={active} />}
         </div>

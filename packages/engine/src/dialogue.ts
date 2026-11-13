@@ -43,6 +43,11 @@ export interface ChoiceList {
   dialogue: string;
   node: string;
   options: { id: string; text: string }[];
+  /**
+   * The Choices node's own question: who asks (a character id, null for the narrator) and the text. The list box
+   * shows it above the separator, in the same box as the options.
+   */
+  question: { character: string | null; text: string };
 }
 
 /** How a dialogue reaches the session. Actions run on the session as a SequenceHost. */
@@ -201,7 +206,7 @@ export class DialogueRun {
       this.host.note(n.options.length ? `Every option of ${n.id} is hidden, so the dialogue ends.` : `${n.id} has no options, so the dialogue ends.`);
       return this.finish("dead_end");
     }
-    this.choices = { dialogue: this.id, node: n.id, options: shown.map((o) => ({ id: o.id, text: o.text })) };
+    this.choices = { dialogue: this.id, node: n.id, options: shown.map((o) => ({ id: o.id, text: o.text })), question: { character: n.character ?? null, text: n.text } };
   }
 
   /** Moves along a port. Nothing connected ends the dialogue. */

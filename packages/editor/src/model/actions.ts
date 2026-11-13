@@ -35,6 +35,7 @@ export const NOUN: Record<Section, string> = {
   flag: "flag",
   image: "image",
   audio: "sound",
+  font: "font",
 };
 
 /** What a delete would break, for the confirm dialog. Null: nothing uses it. */
@@ -204,7 +205,7 @@ export class Actions {
     if (refused.length) {
       this.editor.showNotice({
         kind: "error",
-        text: `Not imported: ${refused.join(", ")}. Questforge imports images (PNG, JPG, WebP) and sounds (MP3, OGG, WAV).`,
+        text: `Not imported: ${refused.join(", ")}. Questforge imports images (PNG, JPG, WebP), sounds (MP3, OGG, WAV) and fonts (WOFF2, WOFF).`,
       });
     }
     return count;

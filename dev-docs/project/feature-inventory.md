@@ -98,7 +98,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 |---|---|---|---|
 | Panels | Project Browser (left), Inspector (right), Problems (bottom), editor tabs (middle) | The four areas every task uses. | Shipped |
 | Show and hide panels | View ▸ Project Browser (Mod+1), Inspector (Mod+2), Problems (Mod+3), Hide All Panels (Ctrl+\\); title bar buttons | Toggles each panel, or all of them for a bigger canvas. | Shipped |
-| Editor tabs | Middle area | Double-click a scene, item, character, dialogue or image to open it in a tab. | Shipped |
+| Editor tabs | Middle area | Click a scene, item, character, dialogue or image to open it in a tab. | Shipped |
 | Save | File ▸ Save (Mod+S); title bar Save; save status | Saving is manual. The title bar shows Unsaved changes / Saving…. | Shipped |
 | Unsaved-changes guard | Back to project selector | Asks "Go back without saving?" before losing changes. | Shipped |
 | Undo / Redo | Edit ▸ Undo (Mod+Z), Redo (Mod+Shift+Z; Ctrl+Y on Windows/Linux); title bar arrows | Undoes any edit, one labelled step at a time (e.g. "Undo Delete hotspot"), up to 500 steps. | Shipped |
@@ -111,14 +111,14 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images | One tree per kind of thing, with a count. | Shipped |
-| Game | Top row, "rules & settings" | Opens the game-wide settings and rules in the Inspector. | Shipped |
+| Sections | Scenes, Items, Characters, Dialogues, Flags, Audio, Images, Fonts | One tree per kind of thing, with a count. | Shipped |
+| Game | Top row, "rules & settings" | A click or Enter opens the Game Settings tab in the center (the Inspector is hidden while it is up): a fixed left menu with General and Styling headings over their sections. | Shipped |
 | Search | "Search names and IDs" | Filters every section by name or ID. | Shipped |
 | Folders | Section menu ▸ New folder; Rename folder; Delete folder | Organizes any section into folders. | Shipped |
-| Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images and audio are imported instead. | Shipped |
+| Create things | Section/folder menu ▸ New scene / item / character / dialogue / flag | Creates one and opens or selects it. Images, audio and fonts are imported instead. | Shipped |
 | Rename / Change ID… / Duplicate / Delete | Row menu (…) or right-click | Names are what players see; IDs are what rules use. Change ID updates every reference. Delete lists what will break. | Shipped |
 | Move between folders | Drag rows; also from the keyboard | Moves things into folders within the same section. | Shipped |
-| Import files… | Images and Audio sections; or drop files from the computer | Imports PNG, JPG, WebP images and MP3, OGG, WAV audio. Other files are refused. | Shipped |
+| Import files… | Images, Audio and Fonts sections; or drop files from the computer | Imports PNG, JPG, WebP images, MP3, OGG, WAV audio and WOFF2/WOFF fonts (checked by their file signature). Other files are refused. A used font is built into the game. | Shipped |
 | Details | Inspector when a browser row is selected | Name, ID, type, folder, file path, and **Used by** (every place it is referenced, each a link). | Shipped |
 | Listen | Inspector for an audio file | Plays the sound. | Shipped |
 
@@ -126,11 +126,18 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Start | Game ▸ Details: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
-| Score | Game ▸ Details: Max score | The total the score counts towards ("0 of 25"). | Shipped |
-| Default responses | Game ▸ Details | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
+| Start | Game Settings ▸ General ▸ Start: Play starts in [scene] at [spawn] | Where a new game begins. | Shipped |
+| Score | Game Settings ▸ General ▸ Score: Max score | The total the score counts towards ("0 of 25"). | Shipped |
+| Default responses | Game Settings ▸ General ▸ Default Responses | What the narrator says when no rule answers Look, Hand, Talk, Use or Combine. | Shipped |
+| Styling tab | Game Settings ▸ Styling: Frames, Typography, Character Dialogue, Inventory, Icon Bar | Five sections under one preview in a resizable pane that stays put: all six samples (Short Narration, Long Narration, Character Speech, Dialogue Choice, Inventory, Icon Bar), switched to the section's own sample on opening (Typography keeps the current one); the game screen fills the pane's height in the game's shape, and Actual game size (shown only when it isn't 640×400) sizes the pane to fit it exactly. | Shipped |
+| Icon Bar styling | Game Settings ▸ Styling ▸ Icon Bar: Bar frame (picker, Import image…, the nine-slice editor), seven button pictures, Hover / Active effect (Brighten, Darken) | The bar's own frame and borders, a picture per button (Walk, Look, Hand, Talk, Item, Inventory, Settings) fitted without stretching, built-in icons as the fallback, one effect on the hovered and selected icon only. The Item picture shows while no item is selected. No icon bar section keeps the original look. The preview's Icon Bar sample is the engine's real bar. | Shipped |
+| Character Dialogue styling | Game Settings ▸ Styling ▸ Character Dialogue: Name color, Hover effect (Brighten / Darken), Separator color | One name color (pale gold until set) for every speaker in the game; speech text uses the Typography color, and the box outline keeps the character's color unless the shared frame replaces it. Choices have no button frame: the hovered or selected row is brightened or darkened with rounded corners, the pointer is a hand, and the separator is a thin line with 8 px above and below, a little wider than the rows. With no choices section the Brighten effect and the pale-gold separator show. The Styling preview places speech, choices and the inventory at the Frames position and width. | Shipped |
+| Inventory styling | Game Settings ▸ Styling ▸ Inventory | No settings yet; opening it shows the Inventory sample in the preview. | Partial: settings arrive later |
+| Typography | Game Settings ▸ Styling ▸ Typography: Font picker (built-in or imported), Import font…, Text size, Text color, preview | One font, size (6–72 px, 14 px once customised) and color for all game text; no typography keeps the original 10 px look. A character's color stays on their box outline unless the shared frame replaces it. The preview uses the shared frame and the engine's text drawing. | Shipped |
+| Text size (player) | Settings ▸ Text size | Players scale all text 75%–200% of the author's size, kept per game in the browser. | Shipped |
+| Frames | Game Settings ▸ Styling ▸ Frames: Image picker, Import image…, Use default look, Border size slider, four draggable guides, Scale (8–64 px), Position: Top / Center / Width (%) | One image frames every panel, cut into a nine-slice whose four borders move in lock step (the slider, or any guide for fine tuning). Scale is how thick the borders are drawn; the borders are the only padding. New projects start on the default `Styling/frame.jpg`; Use default look restores it. Position (50 px down, or centred, and a percentage of the screen wide) places narration, speech, the dialogue choices and the inventory, in the game and the preview; until it is changed the game keeps the original placement. The game draws the frame at its Scale on narration, speech, the choices, inventory, Settings, Save/Load, Volume, Text size and the ending box; the fixed-size panels get it drawn around them, so a frame thicker than 24 px can reach over the sides of Inventory and Save/Load. A frame that can't be loaded leaves the built-in look. | Shipped |
 | Game title and player character | — | Set when the project is created; the editor can't change either afterwards. | Partial |
-| Game rules | Game ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
+| Game rules | Game Settings ▸ General ▸ Rules | Rules that work anywhere: **Combine** two items, **Dialogue ends**. | Shipped |
 
 ## 5. Scene editor
 
@@ -145,7 +152,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Walk-to Point Tool | W | Click a hotspot, then where the player stands to use it; drag to set the facing. | Shipped |
 | What a shape becomes | Depends on the active layer | Walkable: outline, then holes. Hotspots: a new hotspot. Regions: a new region. Objects: the selected object's obstacle. | Shipped |
 | Snap to Vertices and Edges | Scene menu; toolbar | Snaps points to nearby shapes. | Shipped |
-| Zoom | Zoom In (Mod+=), Zoom Out (Mod+-), Zoom to Fit (Mod+0), Actual Size (1×); toolbar | Zooms the canvas. Space-drag and the mouse wheel pan and zoom. | Shipped |
+| Zoom | Zoom In (Mod+=), Zoom Out (Mod+-), Zoom to Fit (Mod+0), Actual Size (1×); floating Zoom bar beside the tool bar | Zooms the canvas. Space-drag and the mouse wheel pan and zoom. | Shipped |
 | Aids | Toolbar toggles | Depth preview (ghost of the player), Path preview from the default spawn, Shade the walkable area. | Shipped |
 
 ### Layers panel
@@ -213,7 +220,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
 | Graph | Dialogue tab | Nodes joined by ports. Minimap, Auto-Layout, Fit Graph in View. | Shipped |
-| Node types | Start · Line · Choices · Actions · Branch · End | Start: where it begins. Line: a speaker says a line, with an animation while speaking. Choices: options the player picks; each can have Show if… conditions and be once-only. Actions: runs actions. Branch: true/false on conditions. End: ends the dialogue. | Shipped |
+| Node types | Start · Line · Choices · Actions · Branch · End | Start: where it begins. Line: a speaker says a line, with an animation while speaking. Choices: asks a question (a speaker, or the narrator, and required text) and the options the player picks, shown together in one box; each option can have Show if… conditions and be once-only. Actions: runs actions. Branch: true/false on conditions. End: ends the dialogue. | Shipped |
 | Making nodes | Drag from a port to empty space ▸ Create node | Adds and connects a node. Connect / disconnect from the keyboard too. | Shipped |
 | Starting and ending | Start dialogue action; Game rule Dialogue ends | A rule starts a dialogue; when it ends, the Game's Dialogue ends rule for it runs. | Shipped |
 | Play from This Node | Play menu (Shift+F6) | Playtests starting at the selected node. | Shipped |
@@ -250,18 +257,18 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
-| Icon bar | Move the mouse to the top, or tap the tab on touch | Walk, Look, Hand, Talk, the current item, Inventory, Settings, and the score. | Shipped |
+| Icon bar | Move the mouse to the top, or tap the tab on touch | Walk, Look, Hand, Talk, the current item, Inventory, Settings, and the score. The maker can set its frame, button pictures and hover / active effect. | Shipped |
 | Verbs | Icon bar; right-click cycles verbs | Click the scene with the current verb. For everything but Look the player walks over first. | Shipped |
 | Labels | Hover, or tap and hold on touch | Shows the name of what's under the pointer. | Shipped |
 | Text | Narration and speech boxes | Click anywhere to skip. | Shipped |
 | Inventory | Icon bar ▸ Inventory | Look at an item, pick one to use, combine two. | Shipped |
-| Dialogue choices | List box | The player picks what to say. | Shipped |
-| Settings | Icon bar ▸ Settings | Restart, Save, Load, Volume (Music and Sound effects). | Shipped |
+| Dialogue choices | List box | The Choices node's question (with the asker's name) above a separator line and the answers, in one box; the player picks what to say. | Shipped |
+| Settings | Icon bar ▸ Settings | Restart, Save, Load, Volume (Music and Sound effects), Text size. | Shipped |
 | Saves | Settings ▸ Save / Load | Ten save slots, kept in the browser. Old saves still load after the game is updated. | Shipped |
 | Death | Die action | "You have died" with Try again (back to the scene's start), Restore, Restart. | Shipped |
 | Winning | Win the game action | "You won!" | Shipped |
 | Touch | Phones and tablets | Every control is at least 44 px; no hover needed. | Shipped |
-| Game skins | — | Restyle the game's chrome with your own images. | Planned (#20) |
+| Game styling | Game Settings ▸ Styling | Restyle the game's panels, text and icon bar with your own images, font and colors, as one game-wide set that players see in the website player and in Playtest. See Frames, Typography, Character Dialogue and Icon Bar above. Not styled: cursors, and a different picture for each kind of panel. | Partial (rest of #20) |
 
 ## 13. Sharing and playing
 
@@ -275,7 +282,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Issue | Feature |
 |---|---|
 | #21 | Close-up overlay scenes |
-| #20 | Full image skins for the game's chrome |
+| #20 | The rest of the image skins: cursors, and a different picture for each kind of panel (one game-wide frame, the icon bar's pictures, fonts and colors have shipped) |
 | #19 | MCP server in the running editor (AI tools driving the editor) |
 | #36 | Sprite Studio, AI-generated sprite animation (proof of concept) |
 | #17, #18 | This user guide: getting started, and the complete reference |
