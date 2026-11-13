@@ -1,4 +1,4 @@
-import { SCENE_HEIGHT, SCENE_WIDTH, resolveStyle, type EffectiveStyle, type GameStyle } from "@questforge/schema";
+import { SCENE_HEIGHT, SCENE_WIDTH, resolveStyle, type EffectiveStyle, type FrameInsets, type GameStyle } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 
 // Player UI layout: every control is at least 44 CSS px after
@@ -10,6 +10,8 @@ export const MIN_HIT_CSS = 44;
 /** Design size of a control in scene px when the screen is big enough. */
 const DESIGN_UNIT = 32;
 const GAP = 4;
+/** The room the fixed panels (inventory, settings, slots, volume, text size, ending) leave between their edge and their content. */
+export const PANEL_PAD = GAP * 2;
 
 /** Side of a square control in scene px at `cssScale` CSS px per scene px. */
 export const unitFor = (cssScale: number) => Math.max(DESIGN_UNIT, Math.ceil(MIN_HIT_CSS / cssScale));
@@ -98,7 +100,7 @@ export function computeLayout(cssScale: number, placement: Placement | null = nu
   };
 
   // Inventory: a grid of cells, then Look / Select / item / OK.
-  const pad = GAP * 2;
+  const pad = PANEL_PAD;
   const invBtnW = Math.max(u, 64);
   const invIds = ["look", "select", "item", "ok"] as const;
   const panelW = placement
@@ -229,6 +231,8 @@ export function hitButton<Id extends string>(buttons: readonly Button<Id>[], p: 
 /** The dialogue list box: one full-width row per option, at least 44 CSS px tall. */
 export interface ChoiceBox {
   panel: Rect;
+  /** The area inside the shared frame's borders, where the separator line goes. Absent: the whole panel. */
+  inner?: Rect;
   /** One per option shown on this page, top to bottom. */
   rows: Rect[];
   /** Index of this page's first option. */
@@ -258,7 +262,8 @@ export const choiceTop = (styled: boolean) => (styled ? SEPARATOR_SPACE * 2 + SE
 /** The separator line at the top of a styled choices region, a little wider than the rows. */
 export function separatorRect(box: ChoiceBox): Rect {
   const inset = GAP * 2 - SEPARATOR_REACH;
-  return { x: box.panel.x + inset, y: box.panel.y + SEPARATOR_SPACE, w: box.panel.w - inset * 2, h: SEPARATOR_THICKNESS };
+  const area = box.inner ?? box.panel;
+  return { x: area.x + inset, y: area.y + SEPARATOR_SPACE, w: area.w - inset * 2, h: SEPARATOR_THICKNESS };
 }
 
 /**
@@ -270,20 +275,24 @@ export const choiceGap = (styled: boolean) => (styled ? 0 : GAP);
 /**
  * `styled`: Dialogue Choices is configured, which leaves room for the separator line above the rows.
  * `placement`: where the creator put the panels (`placementOf`); null keeps the legacy 560-pixel box at the bottom.
+ * `borders`: the shared frame's drawn border thickness (`frameBorders`) when the panels are framed; the rows and the
+ * separator sit inside the borders and the panel grows by their thickness. Null leaves the legacy box.
  */
-export function choiceLayout(unit: number, count: number, page: number, styled = false, placement: Placement | null = null): ChoiceBox {
+export function choiceLayout(unit: number, count: number, page: number, styled = false, placement: Placement | null = null, borders: FrameInsets | null = null): ChoiceBox {
   const pad = GAP * 2;
+  const b = borders ?? { left: 0, right: 0, top: 0, bottom: 0 };
   const top = choiceTop(styled);
   const gap = choiceGap(styled);
-  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - top - pad + gap) / (unit + gap)));
+  const fit = Math.max(2, Math.floor((SCENE_HEIGHT - GAP * 4 - b.top - b.bottom - top - pad + gap) / (unit + gap)));
   const perPage = count <= fit ? count : fit - 1;
   const pages = Math.max(1, Math.ceil(count / Math.max(1, perPage)));
   const p = ((page % pages) + pages) % pages;
   const first = p * perPage;
   const shown = Math.min(perPage, count - first);
   const lines = shown + (pages > 1 ? 1 : 0);
-  const h = top + pad + lines * (unit + gap) - gap;
+  const h = b.top + top + pad + lines * (unit + gap) - gap + b.bottom;
   const panel: Rect = placement ? placeAt(placement, placementWidth(placement), h) : { x: Math.round((SCENE_WIDTH - CHOICE_WIDTH) / 2), y: SCENE_HEIGHT - GAP * 2 - h, w: CHOICE_WIDTH, h };
-  const row = (i: number): Rect => ({ x: panel.x + pad, y: panel.y + top + i * (unit + gap), w: panel.w - pad * 2, h: unit });
-  return { panel, rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
+  const inner: Rect = { x: panel.x + b.left, y: panel.y + b.top, w: panel.w - b.left - b.right, h: panel.h - b.top - b.bottom };
+  const row = (i: number): Rect => ({ x: inner.x + pad, y: inner.y + top + i * (unit + gap), w: inner.w - pad * 2, h: unit });
+  return { panel, ...(borders ? { inner } : {}), rows: Array.from({ length: shown }, (_, i) => row(i)), first, more: pages > 1 ? row(shown) : null, pages };
 }

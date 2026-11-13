@@ -59,7 +59,7 @@ These actions work in any rule or dialogue:
 
 | Action | What it does |
 |---|---|
-| **Say** | A character says a line, in a box outlined in their own text color, with their talk animation. |
+| **Say** | A character says a line, in a box outlined in their own text color (or on your game's frame), with their talk animation. |
 | **Walk player to** | The player walks to a point. Use **Pick on canvas** to choose it. |
 | **Walk character to** | Another character walks to a point. |
 | **Face** | The player turns to face a direction. |

@@ -65,8 +65,7 @@ export function drawPreview(ctx: CanvasRenderingContext2D, d: PreviewDraw) {
     ctx.save();
     ctx.translate(frame.x, frame.y);
     ctx.scale(scale, scale);
-    ctx.imageSmoothingEnabled = scale < 1;
-    drawNineSlice(ctx, d.image, d.frame.insets, { x: 0, y: 0, w: frame.w / scale, h: frame.h / scale });
+    drawNineSlice(ctx, d.image, d.frame.insets, { x: 0, y: 0, w: frame.w / scale, h: frame.h / scale }, scale < 1);
     ctx.restore();
   } else {
     ctx.fillStyle = BUILT_IN.fill;

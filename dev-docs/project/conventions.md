@@ -27,7 +27,7 @@ change.
 - Schema package map: `common/assets/flags/item/character/rules/game/scene/dialogue.ts` (schemas; `dialogue.ts` also has the
   graph helpers `nodePorts` (ports `next` / `then` / `else` / `option:<id>`), `reachableNodes` and `silentLoops`),
   `style.ts` (the optional game-wide `style` in `game.yaml`: schemas, `LEGACY_STYLE` and `AUTHOR_DEFAULTS`, the one
-  `resolveStyle` the engine and editor read, `frameInsetProblems`; an absent style or section resolves to today's look, except `speech.name`, one pale-gold name colour for every speaker either way; `sharedFrame.scale`, `narration` (top / center / width %) and the frame are editor-preview only until the engine draws frames),
+  `resolveStyle` the engine and editor read, `frameInsetProblems`; an absent style or section resolves to today's look, except `speech.name`, one pale-gold name colour for every speaker either way; the engine draws `sharedFrame` (image, insets, `scale`) on every gameplay panel, and `narration` (top / center / width %) places narration, speech, the choices and the inventory),
   `project.ts` (load, `planSave`/`saveProject`, `moveAsset`), `references.ts` (reference index,
   `renameId`, `renameSceneId` for objects/spawns/hotspots/regions), `validate.ts` + `geometry.ts` (blocking errors), `warnings.ts` (non-blocking
   warnings and empty rule text; `logicBlocks` walks every rule and dialogue node, `awardTotal`), `migrate.ts`
@@ -62,11 +62,11 @@ change.
   narration, speech, the choices and the inventory at, centred across via `placeAt`; null, when `game.yaml` has no
   `narration` section, keeps the legacy layout (narration above the middle, speech over the speaker, choices at the
   bottom, a centred 600 px inventory), `controller.ts` pointer input → bar/inventory/list box/session,
-  `nineslice.ts` nine-slice tile geometry (`nineSliceTiles`), `typography.ts` (the one place the text look is decided:
+  `nineslice.ts` nine-slice tile geometry (`nineSliceTiles`), `frame.ts` (pure: `frameScale`, the one rule for how thick the shared frame is drawn, which the editor's Styling preview imports too; `frameBorders`, the drawn border per side, which text boxes and the dialogue list box use as their padding so they grow instead of clipping; `outsetFrame`, where a fixed-size panel's frame goes: the panel grown by however much each border exceeds `PANEL_PAD` (`layout.ts`), kept on screen, so layouts and hit areas never move; `panelSkin`, the frame once its picture has loaded, else undefined and every panel keeps its built-in look), `typography.ts` (the one place the text look is decided:
   `textStyle(game.style, family, playerPercent)` gives the font family, size, line height and colour; the legacy
   10 px look when `game.yaml` has no typography; `shrinkToFit`, the 1-px-at-a-time shrink that keeps text on screen
   and inside its control, never below the legacy size; `Measure`, the injected text measurer), `icons.ts` + `draw.ts` drawing, including
-  `drawNineSlice`, `drawIconBar` (the icon bar: its own frame, each button's picture aspect-fit via `fitInside`, built-in icons as the fallback;
+  `drawNineSlice`, `drawFrame` (the shared frame scaled to its border thickness, smoothed only when scaled down) and `drawChrome` (a panel's fill and edge: the frame when there is a skin, else the built-in drawing; used by `panel()` for the inventory, settings, save/load, volume, text size and ending, by the dialogue list box and by the text boxes), `drawIconBar` (the icon bar: its own frame, each button's picture aspect-fit via `fitInside`, built-in icons as the fallback;
   `BarState` is the session part, so the editor's Icon Bar preview draws the same bar; with the `none` legacy effect it is the original look
   and with Brighten / Darken the effect marks the hovered and selected icon only, using `shadedImage`, a copy made once per image and effect), `drawText` (every line of text, the editor's Styling preview too), `drawChoiceBox` / `drawChoiceRows` (the dialogue list box; the rows draw the optional separator at the top of the choices region, `separatorRect` in `layout.ts`, and fill the hovered row with the highlight; `ChoicesView` is the session part, so the editor's Dialogue Choices preview draws the same rows) and `canvasMeasure`), `choices.ts` (pure: `choicesLook(game.style)` gives the highlight, separator and whether the author styled Dialogue Choices, the legacy look having no separator line of its own; `legibleInk` picks black or white by WCAG contrast for the highlighted row's text), `render.ts` (Canvas 2D),
   `game.ts` (`createGame`, image cache, DOM glue), `trace.ts` (playtest trace events), `debug.ts` (debug layer
@@ -75,7 +75,7 @@ change.
   `webaudio.ts` (the Web Audio backend, unlocked from pointer events), `quest.ts` (`loadQuest`: a `.quest` file →
   a `ProjectBundle` with blob asset URLs, `font/woff2` and `font/woff` types), `styleassets.ts` (DOM-free: which
   style images to preload, `loadStyleAssets` with injected loaders, the font-family fallback). `createGame` preloads the
-  skin's images and registers the custom font with `FontFace` on the canvas's own document before the session starts;
+  skin's images, builds the panel skin once they have loaded (its borders also go to the controller as `UiServices.borders`, so the choice rows' hit areas follow the drawn rows), and registers the custom font with `FontFace` on the canvas's own document before the session starts;
   a failure logs a warning and falls back. `Game.fontFamily` is the CSS family text should use. `Session.load(state)` restores a save
   exactly (no `scene_enter`); `Session.tryAgain()` returns to the scene-entry snapshot.
   Keep logic in `session.ts`, `world.ts` and `ui/controller.ts`/`layout.ts` so it stays testable in Node.

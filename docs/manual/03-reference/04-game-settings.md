@@ -84,8 +84,13 @@ One picture frames every panel in your game: narration, speech, the dialogue cho
 the picture in any art program and import it like any other image (PNG or WebP). A frame with see-through parts
 shows the game behind it.
 
-For now this section sets up and previews the frame. Your game does not draw it on its panels yet; that arrives in a
-later update.
+Your game draws this frame on its narration, character speech, dialogue choices, inventory, Settings, Save and Load
+screens, Volume and Text size panels, and the win and death boxes. The icon bar has its own frame (see
+[Icon Bar](#icon-bar)). The frame's borders are the padding of narration, speech and the dialogue choices, which grow
+to fit their text. The other panels keep their size and the frame is drawn around them, so their buttons and text
+aren't covered. A very thick frame (**Scale** above 24) can still reach over the sides of the Inventory and Save and
+Load screens, which are nearly as wide as the game. If the frame picture can't be loaded, the panels keep their
+built-in look.
 
 Beside the Frames heading, a bar switches between its two parts, **Panel Frame** and **Position**. The frame is set
 up in **Panel Frame**. A new project starts with a default frame: a simple gold-edged panel, the picture `frame.jpg` in the **Styling**
@@ -146,8 +151,9 @@ typography, starting from 14 pixel white text.
 - **Text color**: click the color square to pick one.
 
 Your text color is used for the words themselves, speech included. Speakers' names use the name color from
-[Character Dialogue](#character-dialogue), and a character's own color stays on the outline of their speech box. Once you pick your own typography, narration is shown on the same dark panel as speech, so
-white text can be read.
+[Character Dialogue](#character-dialogue), and while your game has no frame picture a character's own color stays on the outline of their speech box. Without a
+frame, once you pick your own typography, narration is shown on the same dark panel as speech, so white text can be
+read. With a frame, narration and speech are both drawn on it.
 
 Players can make all the text larger or smaller in the game's **Settings**. Their choice is a percentage of the
 size you set here, so what you pick is always the starting point. Very long text is shown a little smaller when it

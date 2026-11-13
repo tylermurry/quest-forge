@@ -1,7 +1,7 @@
 // Where the Styling preview puts its sample panels and text, in game pixels. DOM-free: the caller passes a text
 // measurer, so this runs in Node. The canvas code that draws the result is `ui/game/FramePreview.tsx`.
 import { SCENE_HEIGHT, SCENE_WIDTH, type EffectiveStyle, type FrameInsets } from "@questforge/schema";
-import { SEPARATOR_SPACE, choiceGap, choiceTop, lineFor, shrinkToFit, wrap, type ChoiceBox, type Measure } from "@questforge/engine";
+import { SEPARATOR_SPACE, choiceGap, choiceTop, frameScale, lineFor, shrinkToFit, wrap, type ChoiceBox, type FrameLook, type Measure } from "@questforge/engine";
 import type { StylingSection } from "./gameSettings.ts";
 
 export const SAMPLES = [
@@ -26,16 +26,10 @@ export const SECTION_SAMPLE: Record<StylingSection, SampleId | null> = {
 };
 
 /** The frame as the preview draws it: its borders, and how thick they are drawn (`EffectiveFrame.scale`). */
-export interface PreviewFrame {
-  insets: FrameInsets;
-  scale: number;
-}
+export type PreviewFrame = FrameLook;
 
-/** How much the frame picture is scaled when drawn, so its thickest border is `scale` game pixels. 1 with no borders. */
-export function frameScale(f: PreviewFrame): number {
-  const thickest = Math.max(f.insets.left, f.insets.right, f.insets.top, f.insets.bottom);
-  return thickest > 0 ? f.scale / thickest : 1;
-}
+/** How much the frame picture is scaled when drawn: the engine's own, so the preview and the game agree. */
+export { frameScale };
 
 const SAMPLE_TEXT = {
   narrationShort: ["You see a small garden with a pond."],

@@ -21,6 +21,7 @@ import { Session, linkedScenes, type SessionStart } from "./session.ts";
 import type { GameState } from "./state.ts";
 import type { Trace } from "./trace.ts";
 import { PlayerUi, type PointerKind } from "./ui/controller.ts";
+import { frameBorders, panelSkin, type PanelSkin } from "./ui/frame.ts";
 import { textStyle } from "./ui/typography.ts";
 import { sheetProblem } from "./sprite.ts";
 import { FixedStep, fitViewport, toScene } from "./viewport.ts";
@@ -139,6 +140,8 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
   const choices = choicesLook(game.style);
   let fontFamily = resolveFontFamily(style.typography, null);
   let releaseFont = () => {};
+  /** The shared frame once its picture has loaded; panels keep their built-in look until then, and if it never loads. */
+  let skin: PanelSkin | undefined;
   /** Registers a font asset with the canvas's own document, ready before any text is laid out. */
   const loadFont = async (id: string): Promise<LoadedFont> => {
     const asset = project.assets!.data.fonts?.find((f) => f.id === id);
@@ -226,7 +229,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     const loading = session ? session.loading : scene;
     // The game's typography, the font that loaded, and the player's Text Size.
     const text = textStyle(game.style, fontFamily, ui?.settings.textSize ?? settings.textSize);
-    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug, text, style.iconBar, choices);
+    if (session && ui && !loading) drawSession(backCtx, ui, (id) => images.loaded.get(id)?.el, (session.scene.background === undefined ? undefined : images.loaded.get(session.scene.background)?.el), debug, text, style.iconBar, choices, skin);
     else drawLoading(backCtx, loading ? images.progress(loading) : 0, text);
     present(screen, back, viewport);
     raf = view.requestAnimationFrame(frame);
@@ -251,6 +254,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     fontFamily = styleAssets.fontFamily;
     releaseFont = styleAssets.release;
     if (destroyed) return releaseFont();
+    skin = panelSkin(style.sharedFrame, (id) => images.loaded.get(id)?.el);
     const start: SessionStart = {
       ...(options.scene ? { scene: options.scene } : {}),
       ...(options.spawn ? { spawn: options.spawn } : {}),
@@ -262,6 +266,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
     ui = new PlayerUi(session, {
       slots: new SaveSlots(storage, game),
       settings,
+      borders: skin ? frameBorders(skin) : null,
       onSettings: (next) => {
         audioSync?.setVolumes(next);
         writeSettings(storage, game.id, next);

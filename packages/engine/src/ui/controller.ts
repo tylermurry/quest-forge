@@ -3,6 +3,7 @@ import type { Session, Verb } from "../session.ts";
 import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
+import type { FrameInsets } from "@questforge/schema";
 import { choiceLayout, computeLayout, hitButton, inRect, placementOf, type ChoiceBox, type InventoryButtonId, type Layout, type Placement } from "./layout.ts";
 
 // Player UI input: the icon bar, inventory, settings,
@@ -26,6 +27,8 @@ export interface UiServices {
   settings: PlayerSettings;
   /** Volumes or text size changed: apply and store them. */
   onSettings?(s: PlayerSettings): void;
+  /** The shared frame's drawn border thickness (`frameBorders`) when panels are drawn with it: the dialogue list box grows by it. */
+  borders?: FrameInsets | null;
 }
 
 /** How long a notice ("Game saved.") stays up, in seconds. */
@@ -67,6 +70,7 @@ export class PlayerUi {
   private cssScale = 1;
   /** Where the creator put the panels (Frames > Position); null is the legacy layout. */
   readonly placement: Placement | null;
+  private readonly borders: FrameInsets | null;
 
   constructor(
     readonly session: Session,
@@ -77,6 +81,7 @@ export class PlayerUi {
     this.slots = services?.slots ?? new SaveSlots(null, session.game);
     this.settings = { ...(services?.settings ?? DEFAULT_SETTINGS) };
     this.onSettings = services?.onSettings;
+    this.borders = services?.borders ?? null;
   }
 
   /** CSS px per scene px changed (resize, zoom). */
@@ -98,7 +103,7 @@ export class PlayerUi {
       this.pagedList = list;
       this.choicePage = 0;
     }
-    return choiceLayout(this.layout.unit, list.options.length, this.choicePage, this.session.game.style?.dialogueChoices !== undefined, this.placement);
+    return choiceLayout(this.layout.unit, list.options.length, this.choicePage, this.session.game.style?.dialogueChoices !== undefined, this.placement, this.borders);
   }
 
   /** Inventory items shown in the grid, in cell order. */

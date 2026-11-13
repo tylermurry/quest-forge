@@ -1,6 +1,7 @@
 import { SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
 import type { PlayerUi } from "./ui/controller.ts";
-import { canvasMeasure, drawText, drawUi, type IconBarLook, type IconImage } from "./ui/draw.ts";
+import { canvasMeasure, drawChrome, drawText, drawUi, type IconBarLook, type IconImage } from "./ui/draw.ts";
+import { frameBorders, type PanelSkin } from "./ui/frame.ts";
 import { layoutTextBox, type TextBox } from "./ui/textbox.ts";
 import type { ChoicesLook } from "./ui/choices.ts";
 import type { Placement } from "./ui/layout.ts";
@@ -18,7 +19,7 @@ export type Ctx = CanvasRenderingContext2D;
 const DEBUG_FONT = "10px monospace";
 
 /** Draws one frame of play into the back buffer in layer order. */
-export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags, text: TextStyle, bar: IconBarLook, choices: ChoicesLook) {
+export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background: CanvasImageSource | undefined, debug: DebugFlags, text: TextStyle, bar: IconBarLook, choices: ChoicesLook, skin?: PanelSkin) {
   const session = ui.session;
   const world = session.world;
   ctx.imageSmoothingEnabled = false;
@@ -29,7 +30,7 @@ export function drawSession(ctx: Ctx, ui: PlayerUi, icons: IconImage, background
 
   const shapes = debugShapes(world, debug);
   if (shapes.length) drawDebug(ctx, shapes);
-  drawUi(ctx, ui, icons, text, bar, choices, () => session.text && drawTextBox(ctx, session.text, text, ui.placement));
+  drawUi(ctx, ui, icons, text, bar, choices, () => session.text && drawTextBox(ctx, session.text, text, ui.placement, skin), skin);
 }
 
 /** Blits sprites in the order given (back to front), mirroring flipped ones. Shared with the editor. */
@@ -73,27 +74,32 @@ export function present(screen: Ctx, back: CanvasImageSource, v: Viewport) {
  * name color (`style.speech.name`) and the body text in the text color, for every speaker.
  * With typography configured, narration is drawn on the dark panel speech uses, so the author's text
  * color (white by default) can be read; without it narration keeps its white box and black text.
+ * With the shared frame (`skin`) the frame replaces the box's fill and edge, narration and speech alike (the speaker's
+ * color is then only in the name's place, not an outline), the text keeps inside the frame's borders, and the
+ * author's text color is used.
  */
-function drawTextBox(ctx: Ctx, box: TextBox, t: TextStyle, placement: Placement | null) {
-  const l = layoutTextBox(box, canvasMeasure(ctx, t.family), t, placement);
-  const at = (line: string, y: number, color: string, bold = false) => drawText(ctx, t, line, l.x + l.w / 2, y, { size: l.size, align: "center", baseline: "top", color, bold });
-  ctx.lineWidth = 1;
-  if (box.kind === "narrate") {
-    ctx.fillStyle = t.custom ? "rgba(0,0,0,0.82)" : "#fff";
-    ctx.fillRect(l.x, l.y, l.w, l.h);
-    ctx.strokeStyle = "#a00";
-    ctx.strokeRect(l.x + 2.5, l.y + 2.5, l.w - 5, l.h - 5);
-    ctx.strokeRect(l.x + 4.5, l.y + 4.5, l.w - 9, l.h - 9);
-    l.lines.forEach((line, i) => at(line, l.textY + i * l.line, t.custom ? t.color : "#000"));
-    return;
-  }
-  const color = box.speaker?.color ?? "#fff";
-  ctx.fillStyle = "rgba(0,0,0,0.82)";
-  ctx.fillRect(l.x, l.y, l.w, l.h);
-  ctx.strokeStyle = color;
-  ctx.strokeRect(l.x + 1.5, l.y + 1.5, l.w - 3, l.h - 3);
+function drawTextBox(ctx: Ctx, box: TextBox, t: TextStyle, placement: Placement | null, skin: PanelSkin | undefined) {
+  const l = layoutTextBox(box, canvasMeasure(ctx, t.family), t, placement, skin ? frameBorders(skin) : null);
+  const at = (line: string, y: number, color: string, bold = false) => drawText(ctx, t, line, l.textX, y, { size: l.size, align: "center", baseline: "top", color, bold });
+  const narrate = box.kind === "narrate";
+  drawChrome(ctx, skin, l, () => {
+    ctx.lineWidth = 1;
+    if (narrate) {
+      ctx.fillStyle = t.custom ? "rgba(0,0,0,0.82)" : "#fff";
+      ctx.fillRect(l.x, l.y, l.w, l.h);
+      ctx.strokeStyle = "#a00";
+      ctx.strokeRect(l.x + 2.5, l.y + 2.5, l.w - 5, l.h - 5);
+      ctx.strokeRect(l.x + 4.5, l.y + 4.5, l.w - 9, l.h - 9);
+    } else {
+      ctx.fillStyle = "rgba(0,0,0,0.82)";
+      ctx.fillRect(l.x, l.y, l.w, l.h);
+      ctx.strokeStyle = box.speaker?.color ?? "#fff";
+      ctx.strokeRect(l.x + 1.5, l.y + 1.5, l.w - 3, l.h - 3);
+    }
+  });
   if (l.name) at(l.name, l.textY - l.line, t.name, true);
-  l.lines.forEach((line, i) => at(line, l.textY + i * l.line, t.color));
+  const body = narrate && !t.custom && !skin ? "#000" : t.color;
+  l.lines.forEach((line, i) => at(line, l.textY + i * l.line, body));
 }
 
 function drawDebug(ctx: Ctx, shapes: readonly DebugShape[]) {

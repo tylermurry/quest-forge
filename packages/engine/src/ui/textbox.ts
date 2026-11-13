@@ -1,4 +1,4 @@
-import { LEGACY_STYLE, SCENE_HEIGHT, SCENE_WIDTH } from "@questforge/schema";
+import { LEGACY_STYLE, SCENE_HEIGHT, SCENE_WIDTH, type FrameInsets } from "@questforge/schema";
 import type { Rect } from "../sprite.ts";
 import { placeAt, placementWidth, type Placement } from "./layout.ts";
 import { lineFor, shrinkToFit, type Measure } from "./typography.ts";
@@ -61,6 +61,8 @@ export interface BoxLayout extends Rect {
   lines: string[];
   /** Top of the first text line. */
   textY: number;
+  /** The middle of the text area, inside the padding or the frame's borders. */
+  textX: number;
   /** The text size the box was laid out at: the one asked for, or smaller when the text wouldn't fit the screen. */
   size: number;
   /** Distance between lines at `size`. */
@@ -72,21 +74,26 @@ export interface BoxLayout extends Rect {
  * that would be taller than the screen is laid out again one pixel smaller until it fits.
  * `placement` (the Frames position, `placementOf`) puts narration and speech alike at its top and width;
  * null keeps the legacy layout: narration a little above the middle, speech over the speaker.
+ * `borders`: the shared frame's drawn border thickness (`frameBorders`); the text keeps inside it, so the box grows
+ * with the borders instead of clipping text. Null is the legacy padding.
  */
-export function layoutTextBox(box: TextBox, measure: Measure, text: { size: number } = LEGACY_STYLE.typography, placement: Placement | null = null): BoxLayout {
+export function layoutTextBox(box: TextBox, measure: Measure, text: { size: number } = LEGACY_STYLE.typography, placement: Placement | null = null, borders: FrameInsets | null = null): BoxLayout {
+  const pad = borders ?? { left: PAD, right: PAD, top: PAD, bottom: PAD };
+  const padX = pad.left + pad.right;
   const build = (size: number): BoxLayout => {
     const line = lineFor(size);
-    const maxW = placement ? Math.max(1, placementWidth(placement) - PAD * 2) : boxWidth(box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH, size);
+    const maxW = Math.max(1, placement ? placementWidth(placement) - padX : Math.min(boxWidth(box.kind === "narrate" ? NARRATE_WIDTH : SAY_WIDTH, size), SCENE_WIDTH - MARGIN * 2 - padX));
     const lines = wrap((t) => measure(t, size), box.text, maxW);
     const name = box.kind === "say" && box.speaker ? box.speaker.name : null;
     const rows = lines.length + (name ? 1 : 0);
-    const h = rows * line + PAD * 2;
+    const h = rows * line + pad.top + pad.bottom;
+    const textX = (x: number, w: number) => x + pad.left + (w - padX) / 2;
     if (placement) {
       const r = placeAt(placement, placementWidth(placement), h);
-      return { ...r, name, lines, textY: r.y + PAD + (name ? line : 0), size, line };
+      return { ...r, name, lines, textY: r.y + pad.top + (name ? line : 0), textX: textX(r.x, r.w), size, line };
     }
     const widest = Math.max(...lines.map((l) => measure(l, size)), name ? measure(name, size, true) : 0);
-    const w = Math.round(Math.min(maxW, widest) + PAD * 2);
+    const w = Math.round(Math.min(maxW, widest) + padX);
     const clampX = (x: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_WIDTH - MARGIN - w, x)));
     const clampY = (y: number) => Math.round(Math.max(MARGIN, Math.min(SCENE_HEIGHT - MARGIN - h, y)));
 
@@ -102,7 +109,7 @@ export function layoutTextBox(box: TextBox, measure: Measure, text: { size: numb
       x = clampX((SCENE_WIDTH - w) / 2);
       y = clampY((SCENE_HEIGHT - h) / 2 - 40);
     }
-    return { x, y, w, h, name, lines, textY: y + PAD + (name ? line : 0), size, line };
+    return { x, y, w, h, name, lines, textY: y + pad.top + (name ? line : 0), textX: textX(x, w), size, line };
   };
   return shrinkToFit(text.size, build, (l) => l.h <= SCENE_HEIGHT - MARGIN * 2).result;
 }

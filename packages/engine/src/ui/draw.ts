@@ -7,7 +7,8 @@ import type { Vec } from "../vec.ts";
 import type { PlayerUi } from "./controller.ts";
 import { legibleInk, type ChoicesLook } from "./choices.ts";
 import { drawIcon, shadeColor, shadedImage, type IconId } from "./icons.ts";
-import { CHOICE_TEXT_INSET, fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
+import { CHOICE_TEXT_INSET, PANEL_PAD, fitInside, inRect, separatorRect, type ChoiceBox, type Layout } from "./layout.ts";
+import { frameBorders, frameScale, outsetFrame, type PanelSkin, type SizedImage } from "./frame.ts";
 import { nineSliceTiles } from "./nineslice.ts";
 import { wrap } from "./textbox.ts";
 import { fontOf, lineFor, shrinkToFit, type Measure, type TextStyle } from "./typography.ts";
@@ -27,11 +28,32 @@ const DIM = "rgba(255,255,255,0.35)";
 
 /**
  * Draws a nine-slice frame: native-scale corners, tiled edges and centre (see `nineSliceTiles`). Smoothing is
- * off so pixel art stays crisp, and nothing is filled behind it, so the image's transparency shows through.
+ * off so pixel art stays crisp (`smooth` is for a picture drawn scaled down), and nothing is filled behind it,
+ * so the image's transparency shows through.
  */
-export function drawNineSlice(ctx: Ctx, image: CanvasImageSource & { width: number; height: number }, insets: FrameInsets, dest: Rect) {
-  ctx.imageSmoothingEnabled = false;
+export function drawNineSlice(ctx: Ctx, image: SizedImage, insets: FrameInsets, dest: Rect, smooth = false) {
+  ctx.imageSmoothingEnabled = smooth;
   for (const t of nineSliceTiles(image, insets, dest)) ctx.drawImage(image, t.sx, t.sy, t.sw, t.sh, t.dx, t.dy, t.dw, t.dh);
+}
+
+/**
+ * The shared frame around `r`, with its picture scaled so the thickest border is `skin.scale` game pixels
+ * (`frameScale`), as the editor's Styling preview shows it. Scaled down the picture is smoothed so thin lines
+ * don't break up; otherwise it stays crisp.
+ */
+export function drawFrame(ctx: Ctx, skin: PanelSkin, r: Rect) {
+  const k = frameScale(skin);
+  ctx.save();
+  ctx.translate(r.x, r.y);
+  ctx.scale(k, k);
+  drawNineSlice(ctx, skin.image, skin.insets, { x: 0, y: 0, w: r.w / k, h: r.h / k }, k < 1);
+  ctx.restore();
+}
+
+/** A panel's fill and edge: the shared frame when the game has one that loaded, else `builtIn`, today's look. */
+export function drawChrome(ctx: Ctx, skin: PanelSkin | undefined, r: Rect, builtIn: () => void) {
+  if (skin) drawFrame(ctx, skin, r);
+  else builtIn();
 }
 
 /** A text measurer that asks Canvas, for the family the game draws with. */
@@ -86,20 +108,21 @@ function button(ctx: Ctx, r: Rect, active = false, enabled = true, activeFill = 
   ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
 }
 
-function panel(ctx: Ctx, t: TextStyle, r: Rect, title: string) {
+function panel(ctx: Ctx, t: TextStyle, skin: PanelSkin | undefined, r: Rect, title: string) {
   ctx.fillStyle = "rgba(0,0,0,0.45)";
   ctx.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT);
-  ctx.fillStyle = PANEL;
-  ctx.fillRect(r.x, r.y, r.w, r.h);
-  ctx.strokeStyle = EDGE;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  // The frame goes around the panel, not over its content: the layout is fixed, so the frame is drawn outside it.
+  drawChrome(ctx, skin, skin ? outsetFrame(r, frameBorders(skin), PANEL_PAD) : r, () => {
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeStyle = EDGE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  });
   drawFitted(ctx, t, title, r.x + r.w / 2, r.y + 8, r.w - 16, 16, { bold: true, color: ink(t), align: "center", baseline: "top" });
 }
 
 const inset = (r: Rect, k: number): Rect => ({ x: r.x + r.w * k, y: r.y + r.h * k, w: r.w * (1 - 2 * k), h: r.h * (1 - 2 * k) });
-
-type SizedImage = CanvasImageSource & { width: number; height: number };
 
 /** A picture drawn aspect-fit and centred in `box`, never deformed; with an effect, only its own pixels change. */
 function drawPicture(ctx: Ctx, img: CanvasImageSource, box: Rect, effect?: IconEffect) {
@@ -122,8 +145,8 @@ function buttonText(ctx: Ctx, t: TextStyle, text: string, r: Rect, o: TextOption
   drawFitted(ctx, t, text, r.x + r.w / 2, r.y + r.h / 2, r.w - 8, r.h, { color: ink(t), align: "center", baseline: "middle", ...o });
 }
 
-/** The whole UI layer over the scene. `drawText` draws the text box above panels. */
-export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, bar: IconBarLook, choices: ChoicesLook, drawBoxes: () => void) {
+/** The whole UI layer over the scene. `drawBoxes` draws the text box above panels. `skin`: the shared frame the panels are drawn with, if any. */
+export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, bar: IconBarLook, choices: ChoicesLook, drawBoxes: () => void, skin?: PanelSkin) {
   const s = ui.session;
   const L = ui.layout;
   const itemImg = s.item ? icons(s.itemFile(s.item)?.icon ?? "") : undefined;
@@ -133,14 +156,14 @@ export function drawUi(ctx: Ctx, ui: PlayerUi, icons: IconImage, t: TextStyle, b
     const scoreText = `Score: ${score(s.state)} of ${s.game.maxScore}`;
     drawIconBar(ctx, { layout: L, selected: s.verb, itemHeld: !!s.item, itemImage: itemImg, hover: ui.cursor, scoreText }, t, bar, icons);
   }
-  if (ui.panel === "inventory") drawInventory(ctx, ui, t, icons, itemImg);
-  if (ui.panel === "settings") drawSettings(ctx, ui, t);
-  drawChoices(ctx, ui, t, choices);
+  if (ui.panel === "inventory") drawInventory(ctx, ui, t, skin, icons, itemImg);
+  if (ui.panel === "settings") drawSettings(ctx, ui, t, skin);
+  drawChoices(ctx, ui, t, choices, skin);
   drawBoxes();
-  if (s.ending) drawEnding(ctx, ui, t, s, L.ending);
-  if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui, t);
-  if (ui.panel === "volume") drawVolume(ctx, ui, t);
-  if (ui.panel === "textsize") drawTextSize(ctx, ui, t);
+  if (s.ending) drawEnding(ctx, ui, t, skin, s, L.ending);
+  if (ui.panel === "save" || ui.panel === "load") drawSlots(ctx, ui, t, skin);
+  if (ui.panel === "volume") drawVolume(ctx, ui, t, skin);
+  if (ui.panel === "textsize") drawTextSize(ctx, ui, t, skin);
   if (ui.notice) drawNotice(ctx, t, ui.notice.text, L.notice);
   if (ui.label) drawLabel(ctx, t, ui.label.text, ui.label.at);
   if (ui.cursor) drawCursor(ctx, ui, itemImg);
@@ -227,22 +250,24 @@ export function drawChoiceRows(ctx: Ctx, v: ChoicesView, t: TextStyle, look: Cho
   }
 }
 
-/** The dialogue list box: its dark panel and edge, then the rows. */
-export function drawChoiceBox(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook) {
+/** The dialogue list box: its panel (the shared frame, or the dark panel and edge), then the rows. */
+export function drawChoiceBox(ctx: Ctx, v: ChoicesView, t: TextStyle, look: ChoicesLook, skin?: PanelSkin) {
   const { panel: r } = v.box;
-  ctx.fillStyle = "rgba(20,14,10,0.92)";
-  ctx.fillRect(r.x, r.y, r.w, r.h);
-  ctx.strokeStyle = EDGE;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  drawChrome(ctx, skin, r, () => {
+    ctx.fillStyle = "rgba(20,14,10,0.92)";
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeStyle = EDGE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+  });
   drawChoiceRows(ctx, v, t, look);
 }
 
-function drawChoices(ctx: Ctx, ui: PlayerUi, t: TextStyle, look: ChoicesLook) {
+function drawChoices(ctx: Ctx, ui: PlayerUi, t: TextStyle, look: ChoicesLook, skin: PanelSkin | undefined) {
   const box = ui.choiceBox;
   const list = ui.session.choices;
   if (!box || !list) return;
-  drawChoiceBox(ctx, { box, options: box.rows.map((_, i) => list.options[box.first + i]?.text), hover: ui.cursor }, t, look);
+  drawChoiceBox(ctx, { box, options: box.rows.map((_, i) => list.options[box.first + i]?.text), hover: ui.cursor }, t, look, skin);
 }
 
 function drawTab(ctx: Ctx, ui: PlayerUi, itemImg: CanvasImageSource | undefined) {
@@ -320,10 +345,10 @@ export function drawIconBar(ctx: Ctx, bar: BarState, t: TextStyle, look: IconBar
   if (fittedSize(ctx, t, bar.scoreText, room, L.bar.h).fits) label(ctx, t, bar.scoreText, L.score.x, L.score.y, "right", room);
 }
 
-function drawInventory(ctx: Ctx, ui: PlayerUi, t: TextStyle, icons: IconImage, itemImg: CanvasImageSource | undefined) {
+function drawInventory(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined, icons: IconImage, itemImg: CanvasImageSource | undefined) {
   const s = ui.session;
   const L = ui.layout.inventory;
-  panel(ctx, t, L.panel, "Inventory");
+  panel(ctx, t, skin, L.panel, "Inventory");
   const items = ui.items;
   L.cells.forEach((c, i) => {
     const id = items[i];
@@ -357,9 +382,9 @@ const SETTINGS_TEXT: Record<string, string> = {
   close: "Close",
 };
 
-function drawSettings(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
+function drawSettings(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined) {
   const L = ui.layout.settings;
-  panel(ctx, t, L.panel, "Settings");
+  panel(ctx, t, skin, L.panel, "Settings");
   for (const b of L.buttons) {
     const enabled = b.id !== "load" || ui.slots.any;
     button(ctx, b.rect, false, enabled);
@@ -370,9 +395,9 @@ function drawSettings(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
 const ENDING_TEXT: Record<string, string> = { restore: "Restore", restart: "Restart", try_again: "Try again" };
 
 /** The Sierra death box: message, then Restore · Restart · Try again. A win offers Restore · Restart. */
-function drawEnding(ctx: Ctx, ui: PlayerUi, t: TextStyle, s: Session, L: PlayerUi["layout"]["ending"]) {
+function drawEnding(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined, s: Session, L: PlayerUi["layout"]["ending"]) {
   const e = s.ending!;
-  panel(ctx, t, L.panel, e.kind === "die" ? "You have died" : "You won!");
+  panel(ctx, t, skin, L.panel, e.kind === "die" ? "You have died" : "You won!");
   const text = e.kind === "die" ? `${e.message}\n\nScore: ${score(s.state)} of ${s.game.maxScore}` : `Score: ${score(s.state)} of ${s.game.maxScore}`;
   const measure = canvasMeasure(ctx, t.family);
   // The message shrinks until it fits its area; at the smallest size a very long one still loses its last lines.
@@ -398,10 +423,10 @@ const savedAt = (ms: number) => {
 };
 
 /** The save / load list: numbered slots, the picked one highlighted. */
-function drawSlots(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
+function drawSlots(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined) {
   const L = ui.layout.slots;
   const saving = ui.panel === "save";
-  panel(ctx, t, L.panel, saving ? "Save game" : "Load game");
+  panel(ctx, t, skin, L.panel, saving ? "Save game" : "Load game");
   L.rows.forEach((r, row) => {
     const i = ui.slotAt(row);
     if (i === null) return;
@@ -433,9 +458,9 @@ function drawSlots(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
 }
 
 /** Music and sound-effect volume. */
-function drawVolume(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
+function drawVolume(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined) {
   const L = ui.layout.volume;
-  panel(ctx, t, L.panel, "Volume");
+  panel(ctx, t, skin, L.panel, "Volume");
   const bars: [string, Rect, number][] = [
     ["Music", L.music, ui.settings.music],
     ["Sound effects", L.sfx, ui.settings.sfx],
@@ -455,9 +480,9 @@ function drawVolume(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
 }
 
 /** The player's Text Size: "Text size  [−] 100% [+]" and OK. */
-function drawTextSize(ctx: Ctx, ui: PlayerUi, t: TextStyle) {
+function drawTextSize(ctx: Ctx, ui: PlayerUi, t: TextStyle, skin: PanelSkin | undefined) {
   const L = ui.layout.textSize;
-  panel(ctx, t, L.panel, "Text size");
+  panel(ctx, t, skin, L.panel, "Text size");
   label(ctx, t, "Text size", L.labelX, L.value.y + L.value.h / 2, "left", L.buttons[0]!.rect.x - L.labelX - 6);
   label(ctx, t, `${ui.settings.textSize}%`, L.value.x + L.value.w / 2, L.value.y + L.value.h / 2, "center", L.value.w);
   for (const b of L.buttons) {

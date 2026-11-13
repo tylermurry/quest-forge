@@ -15,11 +15,12 @@ export { DialogueRun, choiceKey, dialogueFiredKey, type ChoiceList, type Dialogu
 export type { RuleReport, RuleVerdict, Trace, TraceEvent } from "./trace.ts";
 export { boxWidth, layoutTextBox, textDuration, wrap, type TextBox } from "./ui/textbox.ts";
 export { fontOf, lineFor, scaledSize, shrinkToFit, textStyle, type Measure, type TextStyle } from "./ui/typography.ts";
+export { frameBorders, frameScale, outsetFrame, panelSkin, type FrameLook, type PanelSkin } from "./ui/frame.ts";
 export { nineSliceTiles, type NineSliceTile } from "./ui/nineslice.ts";
-export { canvasMeasure, choiceRowAt, drawChoiceRows, drawIconBar, drawNineSlice, drawText, type BarState, type ChoicesView, type IconBarLook, type IconImage, type TextOptions } from "./ui/draw.ts";
+export { canvasMeasure, choiceRowAt, drawChoiceRows, drawFrame, drawIconBar, drawNineSlice, drawText, type BarState, type ChoicesView, type IconBarLook, type IconImage, type TextOptions } from "./ui/draw.ts";
 export { choicesLook, contrast, legibleInk, luminance, type ChoicesLook } from "./ui/choices.ts";
 export { PlayerUi, NOTICE_SECONDS, type Panel, type PointerKind, type UiServices } from "./ui/controller.ts";
-export { CHOICE_TEXT_INSET, SEPARATOR_SPACE, choiceGap, choiceLayout, choiceTop, computeLayout, hitButton, separatorRect, unitFor, MIN_HIT_CSS, type ChoiceBox, type Layout } from "./ui/layout.ts";
+export { CHOICE_TEXT_INSET, PANEL_PAD, SEPARATOR_SPACE, choiceGap, choiceLayout, choiceTop, computeLayout, hitButton, separatorRect, unitFor, MIN_HIT_CSS, type ChoiceBox, type Layout } from "./ui/layout.ts";
 export { sceneDrawables, objectDrawable, objectFrameSize, actorDrawable, type ActorPose, type ImageLookup, type ObjectPose } from "./drawables.ts";
 export { drawSprites } from "./render.ts";
 export { debugShapes, DEBUG_ALL, DEBUG_OFF, type DebugFlags, type DebugShape } from "./debug.ts";
