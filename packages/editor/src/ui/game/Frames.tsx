@@ -6,6 +6,7 @@ import { applyBuiltInFrame, isBuiltInFrame, narrationOf, setFrameScale, setNarra
 import { useCanvasImages } from "../scene/images.ts";
 import { FrameControls, useFrameDraft } from "./FrameControls.tsx";
 import { ToggleBar } from "../components/ui/toggle-group.tsx";
+import { ResetSection } from "./ResetSection.tsx";
 import { SliderField } from "./SliderField.tsx";
 
 /**
@@ -54,6 +55,7 @@ export function Frames({ actions }: { actions: Actions }) {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <h3 className="text-xl font-semibold">Frames</h3>
           <ToggleBar<Part> label="Frames sections" value={part} options={PARTS} onChange={setPart} />
+          <ResetSection actions={actions} section="frames" />
         </div>
         {part === "panelFrame" ? (
           <div className="grid gap-3">

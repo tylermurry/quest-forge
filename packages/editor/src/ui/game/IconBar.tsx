@@ -6,6 +6,7 @@ import { cn } from "../lib/utils.ts";
 import { Picker } from "../rules/Picker.tsx";
 import { useCanvasImages } from "../scene/images.ts";
 import { FrameControls, useFrameDraft } from "./FrameControls.tsx";
+import { ResetSection } from "./ResetSection.tsx";
 
 const ICON_LABEL: Record<StyleIconId, string> = { walk: "Walk", look: "Look", hand: "Hand", talk: "Talk", item: "Item", inventory: "Inventory", settings: "Settings" };
 const EFFECTS: { id: IconEffect; label: string }[] = [
@@ -31,8 +32,11 @@ export function IconBar({ actions }: { actions: Actions }) {
 
   return (
     <section aria-label="Icon Bar" className="grid gap-5">
-      <header className="grid gap-1">
-        <h3 className="text-xl font-semibold">Icon Bar</h3>
+      <header className="grid max-w-3xl gap-1">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <h3 className="text-xl font-semibold">Icon Bar</h3>
+          <ResetSection actions={actions} section="iconBar" />
+        </div>
         <p className="text-muted-foreground text-[12px]">The bar of buttons across the top of the game. Give it its own frame and a picture for each button; anything you leave out keeps the built-in look.</p>
       </header>
       <div className="grid max-w-3xl gap-8">

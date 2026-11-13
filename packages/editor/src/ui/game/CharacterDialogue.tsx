@@ -3,6 +3,7 @@ import type { Actions } from "../../model/actions.ts";
 import { dialogueChoicesOf, setChoiceEffect, setChoiceSeparator, setSpeechNameColor } from "../../model/style.ts";
 import { ColorField } from "../ColorField.tsx";
 import { Button } from "../components/ui/button.tsx";
+import { ResetSection } from "./ResetSection.tsx";
 import { cn } from "../lib/utils.ts";
 
 const EFFECTS: { id: IconEffect; label: string }[] = [
@@ -26,7 +27,10 @@ export function CharacterDialogue({ actions }: { actions: Actions }) {
 
   return (
     <section aria-label="Character Dialogue" className="grid gap-5">
-      <h3 className="text-xl font-semibold">Character Dialogue</h3>
+      <div className="flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2">
+        <h3 className="text-xl font-semibold">Character Dialogue</h3>
+        <ResetSection actions={actions} section="characterDialogue" />
+      </div>
       <div className="grid max-w-3xl gap-8">
         <div role="group" aria-label="Speech" className="grid gap-1.5">
           <h4 className="text-[13px] font-semibold">Speech</h4>

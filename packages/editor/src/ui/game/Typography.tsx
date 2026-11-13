@@ -9,6 +9,7 @@ import { ColorField } from "../ColorField.tsx";
 import { NumberField } from "../NumberField.tsx";
 import { Picker } from "../rules/Picker.tsx";
 import { useCanvasImages } from "../scene/images.ts";
+import { ResetSection } from "./ResetSection.tsx";
 import { useStyleFont } from "./useStyleFont.ts";
 
 const FAMILY_LABEL: Record<FontFamily, string> = { monospace: "Monospace (built in)", serif: "Serif (built in)", "sans-serif": "Sans-serif (built in)" };
@@ -48,7 +49,10 @@ export function Typography({ actions }: { actions: Actions }) {
 
   return (
     <section aria-label="Typography" className="grid gap-5">
-      <h3 className="text-xl font-semibold">Typography</h3>
+      <div className="flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2">
+        <h3 className="text-xl font-semibold">Typography</h3>
+        <ResetSection actions={actions} section="typography" />
+      </div>
       <div className="grid gap-3 max-w-3xl">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-muted-foreground text-[12px]">Font</span>

@@ -1,6 +1,5 @@
 // New projects. "Blank" is the smallest project that validates and plays.
 import {
-  AUTHOR_DEFAULTS,
   AssetsFile,
   CharacterFile,
   FlagsFile,
@@ -15,7 +14,7 @@ import {
 import { builtInFrameBytes } from "./builtInFrame.ts";
 import { slugify } from "./commands.ts";
 import { Bitmap, type RGBA } from "./png.ts";
-import { applyBuiltInFrame, setChoiceEffect, setTypographySize } from "./style.ts";
+import { RESETTABLE_SECTIONS, resetStylingSection } from "./style.ts";
 
 /** A folder name made from a title: no path separators or reserved characters, not hidden. */
 export function folderNameFor(title: string): string {
@@ -121,11 +120,11 @@ export function blankProject(title: string): Project {
       }),
     },
   ];
-  // Panels start on the built-in frame picture, in the Images library's Styling folder, text starts at the size
-  // the Typography settings show, and choices start with the Brighten effect: not the legacy 10 px text and gold
-  // buttons that projects with no style sections draw.
-  const framed = applyBuiltInFrame(p, builtInFrameBytes());
-  return setChoiceEffect(setTypographySize(framed, AUTHOR_DEFAULTS.typography.size), AUTHOR_DEFAULTS.dialogueChoices.effect);
+  // A new project starts with every Styling section at its default (the built-in frame picture in the Images
+  // library's Styling folder, the Typography size and the Brighten choice effect): not the legacy 10 px text and
+  // gold buttons that projects with no style sections draw. Reset to Default puts a section back to this.
+  const bytes = builtInFrameBytes();
+  return RESETTABLE_SECTIONS.reduce((q, section) => resetStylingSection(q, section, bytes), p);
 }
 
 /** Writes a blank project into an empty folder. */

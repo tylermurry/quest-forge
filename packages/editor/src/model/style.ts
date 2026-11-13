@@ -1,8 +1,9 @@
 // The game-wide skin, as the Styling editor edits it: pure Project → Project commands for the frames and the
 // typography and the icon bar, the guide-drag math of the nine-slice editor, and the warnings for insets that
 // don't fit the image. DOM-free. `which` names the frame, so the Icon Bar editor reuses the frame commands unchanged.
-import { Color, DialogueChoices, FRAME_SCALE_MAX, FRAME_SCALE_MIN, NARRATION_WIDTH_MAX, NARRATION_WIDTH_MIN, Narration, SCENE_HEIGHT, SCHEMA_VERSION, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, definedIds, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
+import { AUTHOR_DEFAULTS, Color, DialogueChoices, FRAME_SCALE_MAX, FRAME_SCALE_MIN, NARRATION_WIDTH_MAX, NARRATION_WIDTH_MIN, Narration, SCENE_HEIGHT, SCHEMA_VERSION, IconEffect, TEXT_SIZE_MAX, TEXT_SIZE_MIN, Typography, definedIds, frameInsetProblems, type Frame, type FrameInsets, type FontFamily, type GameStyle, type IconBar, type Project, type StyleIconId } from "@questforge/schema";
 import { CommandError, uniqueId } from "./commands.ts";
+import type { StylingSection } from "./gameSettings.ts";
 import type { PickOption } from "./rules/pickers.ts";
 
 export type FrameKey = "sharedFrame" | "iconBar";
@@ -243,6 +244,61 @@ export function setNarrationCenter(p: Project, center: boolean): Project {
 export function setNarrationWidth(p: Project, width: number): Project {
   if (!Number.isInteger(width) || width < NARRATION_WIDTH_MIN || width > NARRATION_WIDTH_MAX) throw new CommandError(`The width is a whole percentage from ${NARRATION_WIDTH_MIN} to ${NARRATION_WIDTH_MAX}.`);
   return withNarration(p, { ...narrationOf(p), width });
+}
+
+// ── Reset to Default ─────────────────────────────────────────────────────────────────────────────────────
+
+/** The Styling sections that have settings, so a Reset to Default. Inventory has none yet. */
+export type ResettableSection = Exclude<StylingSection, "inventory">;
+export const RESETTABLE_SECTIONS: readonly ResettableSection[] = ["frames", "typography", "characterDialogue", "iconBar"];
+
+/** Sets the style sections in `patch` (undefined removes one) and drops a `style` left empty, so a reset saves no needless defaults. */
+function withStyleSections(p: Project, patch: { [K in keyof GameStyle]?: GameStyle[K] | undefined }): Project {
+  if (!p.game) throw new CommandError("This project has no game settings.");
+  const merged = { ...p.game.data.style, ...patch };
+  const next = Object.fromEntries(Object.entries(merged).filter(([, v]) => v !== undefined)) as GameStyle;
+  const { style: _old, ...game } = p.game.data;
+  return { ...p, game: { ...p.game, data: isEmpty(next) ? game : { ...game, style: next } } };
+}
+
+/**
+ * Puts one Styling section back to what a new project starts with (the same code builds a new project's style, so
+ * the two can't drift). Frames: the built-in picture and its borders, no scale, no narration placement (`frameBytes`
+ * is the picture, added to the Images library only if it isn't there). Typography: the default size only.
+ * Character Dialogue: no speech section, the default choice effect. Icon Bar: no icon bar section. Nothing is
+ * removed from the Images or Fonts libraries, and no other section changes.
+ */
+export function resetStylingSection(p: Project, section: ResettableSection, frameBytes: Uint8Array): Project {
+  switch (section) {
+    case "frames":
+      return applyBuiltInFrame(withStyleSections(p, { sharedFrame: undefined, narration: undefined }), frameBytes);
+    case "typography":
+      return withStyleSections(p, { typography: { size: AUTHOR_DEFAULTS.typography.size } });
+    case "characterDialogue":
+      return withStyleSections(p, { speech: undefined, dialogueChoices: { effect: AUTHOR_DEFAULTS.dialogueChoices.effect } });
+    case "iconBar":
+      return withStyleSections(p, { iconBar: undefined });
+  }
+}
+
+/** Whether the section's saved data is exactly what `resetStylingSection` would leave, so there is nothing to reset. */
+export function isStylingSectionDefault(p: Project, section: ResettableSection): boolean {
+  switch (section) {
+    case "frames": {
+      const frame = frameOf(p, "sharedFrame");
+      return isBuiltInFrame(p) && frame !== undefined && Object.keys(frame).length === 2 && GUIDE_SIDES.every((side) => frame.insets?.[side] === BUILT_IN_FRAME.insets[side]) && narrationOf(p) === undefined;
+    }
+    case "typography": {
+      const typography = typographyOf(p);
+      return typography !== undefined && Object.keys(typography).length === 1 && typography.size === AUTHOR_DEFAULTS.typography.size;
+    }
+    case "characterDialogue": {
+      const choices = dialogueChoicesOf(p);
+      return p.game?.data.style?.speech === undefined && choices !== undefined && Object.keys(choices).length === 1 && choices.effect === AUTHOR_DEFAULTS.dialogueChoices.effect;
+    }
+    case "iconBar":
+      return iconBarOf(p) === undefined;
+  }
 }
 
 // ── Guides ───────────────────────────────────────────────────────────────────────────────────────────────

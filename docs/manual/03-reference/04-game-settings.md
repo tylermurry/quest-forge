@@ -67,6 +67,14 @@ section's settings below it.
   With **Icon Bar**, move the pointer over the bar to see the hover look, and click a button, or press the left
   and right arrow keys, to see the selected look.
 
+**Reset to Default**, at the top right of Frames, Typography, Character Dialogue and Icon Bar, puts just that section
+back to how a new project starts: the built-in frame picture with narration in its usual place, the default font
+size and color, the default name color and choice look, and the built-in icon bar. It asks you first, and **Undo**
+brings your settings back. Your imported images and fonts stay in your libraries, the other sections don't change,
+and players keep their own **Text size** setting. The button is greyed out while the section already looks as it
+did in a new project. In a project made before Styling existed, resetting a section switches it to the new-project
+look.
+
 The preview draws everything the way the game does, on the same checkerboard a scene with no background shows, so
 you can see any see-through parts. It doesn't change your game.
 
