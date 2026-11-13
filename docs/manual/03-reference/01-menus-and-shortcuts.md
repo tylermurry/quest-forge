@@ -50,6 +50,10 @@ Work when a scene is open.
 | **Walk-to Point Tool** | W | W | Set where the player stands to use a hotspot. |
 | **Finish Shape** | Return | Enter | Closes the shape you're drawing. |
 | **Cancel Shape** | Esc | Esc | Throws away the shape you're drawing. |
+| **Bring Forward** | ] | ] | Moves the selected object one place toward the front. |
+| **Send Backward** | [ | [ | Moves the selected object one place toward the back. |
+| **Bring to Front** | ⌘] | Ctrl+] | Moves the selected object in front of everything. |
+| **Send to Back** | ⌘[ | Ctrl+[ | Moves the selected object behind everything. |
 | **Snap to Vertices and Edges** | — | — | Turns snapping on or off. |
 | **Zoom In** | ⌘= | Ctrl+= | Zooms in. |
 | **Zoom Out** | ⌘- | Ctrl+- | Zooms out. |

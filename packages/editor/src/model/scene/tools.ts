@@ -193,6 +193,28 @@ export class SceneTools extends SceneController {
     return this.editor.apply("Reorder object", (p) => reorderObject(p, id, objectId, order, backIndex));
   }
 
+  /** The selected object, when the selection is one; characters and other things are not restacked. */
+  get selectedObject(): string | null {
+    const sel = this.selection;
+    return sel?.list === "objects" ? sel.key : null;
+  }
+
+  /**
+   * Moves the selected object one place toward the front (`up`) or back (`down`) of the draw order, or all the
+   * way (`top`, `bottom`), as the Objects list shows it. False when nothing is selected or it is already there.
+   */
+  restack(to: "up" | "down" | "top" | "bottom"): boolean {
+    const objectId = this.selectedObject;
+    const scene = this.savedScene;
+    if (!objectId || !scene) return false;
+    const front = drawOrderWithBaselines(scene, this.host.images).reverse();
+    const at = front.findIndex((x) => x.ref.list === "objects" && x.ref.key === objectId);
+    const last = front.length - 1;
+    const target = to === "top" ? 0 : to === "bottom" ? last : to === "up" ? at - 1 : at + 1;
+    if (at < 0 || target < 0 || target > last || target === at) return false;
+    return this.reorder(objectId, target);
+  }
+
   /**
    * Files dropped from the OS onto the canvas, or picked with "Import
    * background…" (`screen` null). They're imported; the first image becomes

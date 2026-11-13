@@ -161,7 +161,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 |---|---|---|---|
 | Layers | Guides, Regions, Hotspots, Walkable, Objects, Background | Every thing in the scene, by layer. Clicking a layer makes it active, which picks what the tools draw. | Shipped |
 | Show / lock layers | Eye and lock icons per layer | Hides a layer or stops it being clicked on the canvas. | Shipped |
-| Draw order | Drag objects in the Objects layer; also from the keyboard | Changes which object draws in front. | Shipped |
+| Draw order | Drag objects in the Objects layer; also from the keyboard; with an object selected, ] / [ moves it one place forward / back and Mod+] / Mod+[ to the front / back | Changes which object draws in front. | Shipped |
 | Delete from the list | Bin icon per row | Deletes that thing. | Shipped |
 
 ### Things in a scene (Inspector ▸ Details)

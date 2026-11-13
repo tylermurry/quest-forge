@@ -156,7 +156,8 @@ change.
   `hit.ts` (click order), `commands.ts` (pure scene commands), `problems.ts` (validation problems
   by thing), `frame.ts` (what one canvas frame shows), `controller.ts` (`SceneController`: zoom/pan,
   drafts, delete, frame) and `tools.ts` (`SceneTools`: Select/Move, Polygon, Rectangle, Spawn, Walk-to,
-  drops, reorder, ghost/path aids). Drags call `preview(label, run)` and `commit()` on release, so a drag is
+  drops, reorder, `restack` for the selected object (one place or all the way, the `scene.raise` / `scene.lower` /
+  `scene.raiseToTop` / `scene.lowerToBottom` commands on ] [ Mod+] Mod+[), ghost/path aids). Drags call `preview(label, run)` and `commit()` on release, so a drag is
   one undo step and an unclosed polygon never enters history.
   UI in `ui/scene/`: `SceneEditor.tsx` (two floating bars at the bottom of the canvas, Scene tools then Zoom, and no top bar; Layers panel whose headers are `ui/SectionHeading.tsx`, the Project Browser's section header without its chevron, the active layer outlined and the whole layer clickable, registry handlers), `SceneCanvas.tsx`
   (forwards pointer/wheel/space input, counts clicks itself), `draw.ts` (the only canvas drawing: engine

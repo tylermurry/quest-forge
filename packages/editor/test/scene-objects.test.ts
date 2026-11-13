@@ -62,6 +62,36 @@ describe("Objects layer", () => {
     dispose();
   });
 
+  it("moves the selected object one place forward or back, or all the way to the front or back", async () => {
+    const { c, editor, scene, dispose } = await sceneEditor(undefined, "garden", SIZES);
+    const images = sizedImages(editor.project, SIZES);
+    const frontFirst = () => drawOrder(scene(), images).reverse().map((r) => r.key);
+    // An object somewhere in the middle of the list.
+    const order = frontFirst();
+    const id = scene().objects.map((o) => o.id).find((o) => order.indexOf(o) > 0 && order.indexOf(o) < order.length - 1)!;
+    expect(c.restack("up")).toBe(false); // nothing selected
+    c.selectThing({ list: "objects", key: id });
+    const at = order.indexOf(id);
+
+    expect(c.restack("up")).toBe(true);
+    expect(frontFirst().indexOf(id)).toBe(at - 1);
+    expect(c.restack("down")).toBe(true);
+    expect(frontFirst().indexOf(id)).toBe(at);
+    expect(c.restack("top")).toBe(true);
+    expect(frontFirst()[0]).toBe(id);
+    expect(c.restack("up")).toBe(false); // already in front
+    expect(c.restack("bottom")).toBe(true);
+    expect(frontFirst().at(-1)).toBe(id);
+    expect(c.restack("down")).toBe(false); // already at the back
+    expect(editor.history.undoLabel).toBe("Reorder object");
+
+    // A placed character isn't restacked.
+    const character = scene().characters[0]!.character;
+    c.selectThing({ list: "characters", key: character });
+    expect(c.restack("top")).toBe(false);
+    dispose();
+  });
+
   it("refuses to place things on a locked Objects layer", async () => {
     const { c, ws, scene, at, dispose } = await sceneEditor(undefined, "garden", SIZES);
     ws.sceneUi.toggleLocked("garden", "objects");

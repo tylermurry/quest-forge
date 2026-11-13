@@ -40,6 +40,10 @@ export const COMMANDS = [
   { id: "scene.tool.walkto", label: "Walk-to Point Tool", menu: "scene", shortcut: "W" },
   { id: "scene.finish", label: "Finish Shape", menu: "scene", shortcut: "Enter", separated: true },
   { id: "scene.cancel", label: "Cancel Shape", menu: "scene", shortcut: "Escape" },
+  { id: "scene.raise", label: "Bring Forward", menu: "scene", shortcut: "]", separated: true },
+  { id: "scene.lower", label: "Send Backward", menu: "scene", shortcut: "[" },
+  { id: "scene.raiseToTop", label: "Bring to Front", menu: "scene", shortcut: "Mod+]" },
+  { id: "scene.lowerToBottom", label: "Send to Back", menu: "scene", shortcut: "Mod+[" },
   { id: "scene.snap", label: "Snap to Vertices and Edges", menu: "scene", separated: true },
   { id: "scene.zoomIn", label: "Zoom In", menu: "scene", shortcut: "Mod+=", separated: true },
   { id: "scene.zoomOut", label: "Zoom Out", menu: "scene", shortcut: "Mod+-" },
@@ -169,4 +173,4 @@ export function commandForKey(e: KeyPress, mac: boolean, inTextField: boolean, o
 
 /** Tauri accelerator form of a shortcut: `Mod+Shift+Z` → `CmdOrCtrl+Shift+Z`. */
 export const accelerator = (shortcut: string) =>
-  shortcut.replace("Mod", "CmdOrCtrl").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash");
+  shortcut.replace("Mod", "CmdOrCtrl").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash").replace(/\+\[$/, "+BracketLeft").replace(/\+\]$/, "+BracketRight");

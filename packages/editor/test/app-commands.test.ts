@@ -64,6 +64,17 @@ describe("app commands", () => {
     expect(isPlainShortcut("Mod+0")).toBe(false);
   });
 
+  it("[ and ] move the selected object back and forward; with Mod, all the way", () => {
+    expect(commandForKey(key("]"), true, false)).toBe("scene.raise");
+    expect(commandForKey(key("["), false, false)).toBe("scene.lower");
+    expect(commandForKey(key("]", { meta: true }), true, false)).toBe("scene.raiseToTop");
+    expect(commandForKey(key("[", { ctrl: true }), false, false)).toBe("scene.lowerToBottom");
+    // Plain [ and ] are typed in text fields.
+    expect(commandForKey(key("["), true, true)).toBeNull();
+    expect(accelerator("Mod+]")).toBe("CmdOrCtrl+BracketRight");
+    expect(accelerator("Mod+[")).toBe("CmdOrCtrl+BracketLeft");
+  });
+
   it("Cmd+\\ on macOS and Ctrl+\\ elsewhere hides all panels", () => {
     expect(commandForKey(key("\\", { meta: true }), true, false)).toBe("view.panels");
     expect(commandForKey(key("\\", { ctrl: true }), false, false)).toBe("view.panels");

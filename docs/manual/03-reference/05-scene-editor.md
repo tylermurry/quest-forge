@@ -82,7 +82,9 @@ outline and a light shading.
 - The eye icon, on the right of the layer's name, shows or hides the layer on the canvas.
 - The lock icon, next to the eye, stops its things being clicked on the canvas. Click **Unlock** to undo.
 - Click a row to select it. The bin icon deletes it.
-- Drag rows in **Objects** to change which draws in front. You can also do this from the keyboard.
+- Drag rows in **Objects** to change which draws in front. You can also do this from the keyboard: with an object
+  selected, **]** brings it forward one place and **[** sends it back one, and ⌘] / Ctrl+] and ⌘[ / Ctrl+[ move it
+  all the way to the front or the back. Placed characters keep their place; only objects move.
 
 ## Dropping onto the canvas
 
