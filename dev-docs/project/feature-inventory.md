@@ -268,7 +268,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Death | Die action | "You have died" with Try again (back to the scene's start), Restore, Restart. | Shipped |
 | Winning | Win the game action | "You won!" | Shipped |
 | Touch | Phones and tablets | Every control is at least 44 px; no hover needed. | Shipped |
-| Game skins | — | Restyle the game's chrome with your own images. | Planned (#20) |
+| Game styling | Game Settings ▸ Styling | Restyle the game's panels, text and icon bar with your own images, font and colors, as one game-wide set that players see in the website player and in Playtest. See Frames, Typography, Character Dialogue and Icon Bar above. Not styled: cursors, and a different picture for each kind of panel. | Partial (rest of #20) |
 
 ## 13. Sharing and playing
 
@@ -282,7 +282,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Issue | Feature |
 |---|---|
 | #21 | Close-up overlay scenes |
-| #20 | Full image skins for the game's chrome |
+| #20 | The rest of the image skins: cursors, and a different picture for each kind of panel (one game-wide frame, the icon bar's pictures, fonts and colors have shipped) |
 | #19 | MCP server in the running editor (AI tools driving the editor) |
 | #36 | Sprite Studio, AI-generated sprite animation (proof of concept) |
 | #17, #18 | This user guide: getting started, and the complete reference |

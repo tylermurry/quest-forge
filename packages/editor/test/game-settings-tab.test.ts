@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { DataPath } from "@questforge/schema";
+import { locate } from "../src/model/locate.ts";
 import { GAME_TAB, WorkspaceState } from "../src/model/workspace.ts";
 import { m1Project } from "./support/fixtures.ts";
 
@@ -65,5 +67,32 @@ describe("the Game Settings tab", () => {
     ws.openGame();
     ws.reconcile(p);
     expect(ws.active).toBe(GAME_TAB);
+  });
+});
+
+describe("jump-to from a Styling problem", () => {
+  const jump = async (path: DataPath) => {
+    const p = await m1Project();
+    const ws = new WorkspaceState();
+    const j = locate(p, { file: p.game!.path, path });
+    ws.jumpTo(j!);
+    return ws;
+  };
+
+  it.each([
+    [["style", "sharedFrame", "image"], "frames"],
+    [["style", "narration", "top"], "frames"],
+    [["style", "typography", "font"], "typography"],
+    [["style", "speech", "name"], "characterDialogue"],
+    [["style", "dialogueChoices", "separator"], "characterDialogue"],
+    [["style", "iconBar", "icons", "walk"], "iconBar"],
+  ] as [DataPath, string][])("%j opens Styling on %s", async (path, section) => {
+    const ws = await jump(path);
+    expect(ws.gameActive).toBe(true);
+    expect(ws.gameNav).toMatchObject({ area: "styling", styling: section });
+  });
+
+  it("leaves a General problem on its General section", async () => {
+    expect((await jump(["maxScore"])).gameNav).toMatchObject({ area: "general", general: "score" });
   });
 });

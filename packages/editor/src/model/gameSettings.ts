@@ -49,3 +49,19 @@ export function generalSectionFor(path: DataPath): GeneralSection {
       return "start";
   }
 }
+
+/** The Styling section a game.yaml `style` data path belongs to, or null when the path is not under `style`. */
+export function stylingSectionFor(path: DataPath): StylingSection | null {
+  if (path[0] !== "style") return null;
+  switch (path[1]) {
+    case "typography":
+      return "typography";
+    case "speech":
+    case "dialogueChoices":
+      return "characterDialogue";
+    case "iconBar":
+      return "iconBar";
+    default:
+      return "frames"; // sharedFrame, narration
+  }
+}

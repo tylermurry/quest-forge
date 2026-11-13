@@ -210,4 +210,5 @@ using. The first change you make switches to your own look, with the **Brighten*
 The preview's **Icon Bar** sample is the real bar, drawn the way the game draws it, across the top of the screen.
 
 When you click a problem about the game's start, score, default responses or rules in the **Problems** panel, the
-Game Settings tab opens on the right section and highlights the setting.
+Game Settings tab opens on the right section and highlights the setting. A problem with your styling, such as a
+frame, icon or font picture that is no longer in your libraries, opens the **Styling** section it belongs to.

@@ -62,6 +62,8 @@ export function GameSettings({ actions }: { actions: Actions }) {
   const highlight = ws.highlight;
   useEffect(() => {
     if (!highlight || !game || highlight.location.file !== game.path || highlight.location.path[0] === "rules") return;
+    // Styling sections have no flashing field: the jump has done its job once the section is open.
+    if (highlight.location.path[0] === "style") return ws.clearHighlight();
     const key = GAME_FIELD[generalSectionFor(highlight.location.path)];
     let frames = 0;
     let timer = 0;

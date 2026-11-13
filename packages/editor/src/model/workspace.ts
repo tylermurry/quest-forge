@@ -2,7 +2,7 @@
 // Not game data and never undone. DOM-free; React subscribes to it.
 import type { Location, Project } from "@questforge/schema";
 import { opensTab, sectionEntries, sectionFolders, type Section } from "./browser.ts";
-import { GENERAL_SECTIONS, INITIAL_GAME_NAV, generalSectionFor, type GameSection, type GameSettingsNav, type GeneralSection, type StylingSection } from "./gameSettings.ts";
+import { GENERAL_SECTIONS, INITIAL_GAME_NAV, generalSectionFor, stylingSectionFor, type GameSection, type GameSettingsNav, type GeneralSection, type StylingSection } from "./gameSettings.ts";
 import type { Jump } from "./locate.ts";
 import type { PointPick } from "./rules/pointPick.ts";
 import { SceneUiStore } from "./scene/sceneUi.ts";
@@ -189,11 +189,14 @@ export class WorkspaceState {
         this.open({ section: "scene", id: target.scene });
         break;
       case "game":
-        // Opens Game Settings on the General subsection the field lives in; its editor flashes the field.
+        // Opens Game Settings on the subsection the field lives in (a `style` path opens Styling); General's editor flashes the field.
         this.gameTab = true;
         this.active = GAME_TAB;
         this.selection = { kind: "game" };
-        this.gameNav = { ...this.gameNav, area: "general", general: generalSectionFor(location.path) };
+        {
+          const styling = stylingSectionFor(location.path);
+          this.gameNav = styling ? { ...this.gameNav, area: "styling", styling } : { ...this.gameNav, area: "general", general: generalSectionFor(location.path) };
+        }
         break;
       case "dialogueNode":
         // The graph selects the node, and the Inspector edits it.
