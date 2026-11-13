@@ -176,6 +176,12 @@ New projects start with **Brighten** and the line in pale gold. A project made b
 its original look (each answer on a gold-edged button, no extra line) until you change the effect or the separator;
 the first change switches it to plain answers with the effect and adds the line.
 
+When a character (or the narrator) speaks just before the choices appear, their line stays in the choice box, above
+the separator line: the speaker's name in the name color, then what they said, as in the preview's **Dialogue
+Choice** sample. The box grows to fit it; a very long line gets smaller text and, if it still doesn't fit, ends with
+"…". If the choices come first in the conversation, or an action runs in between, there's no line above the
+separator. A project with its original choices look keeps its original box.
+
 The choices go where you put the panels in **Frames**, and long lists still have pages.
 
 ### Inventory

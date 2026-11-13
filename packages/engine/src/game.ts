@@ -14,6 +14,7 @@ import {
 import { AudioSync, sceneAudioIds } from "./audio.ts";
 import { DEBUG_OFF, type DebugFlags } from "./debug.ts";
 import { choicesLook } from "./ui/choices.ts";
+import { canvasMeasure } from "./ui/draw.ts";
 import { drawLoading, drawSession, present } from "./render.ts";
 import { SaveSlots, readSettings, writeSettings, type KeyValueStore } from "./saves.ts";
 import { loadStyleAssets, resolveFontFamily, type LoadedFont } from "./styleassets.ts";
@@ -267,6 +268,7 @@ export function createGame(bundle: ProjectBundle, canvas: HTMLCanvasElement, opt
       slots: new SaveSlots(storage, game),
       settings,
       borders: skin ? frameBorders(skin) : null,
+      measure: (text, size, bold) => canvasMeasure(backCtx, fontFamily)(text, size, bold),
       onSettings: (next) => {
         audioSync?.setVolumes(next);
         writeSettings(storage, game.id, next);

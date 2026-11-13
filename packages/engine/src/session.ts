@@ -152,6 +152,11 @@ export class Session implements DialogueHost {
     return this._dialogue?.choices ?? null;
   }
 
+  /** A character's name as speech boxes show it (the id when the character doesn't exist). */
+  speakerName(id: string): string {
+    return this.characters.get(id)?.name ?? id;
+  }
+
   /** The dialogue playing and its current node, for the playtest state panel. */
   get dialogue(): { id: string; node: string | null } | null {
     const d = this._dialogue;

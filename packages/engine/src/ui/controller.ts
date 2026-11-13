@@ -4,7 +4,9 @@ import { score } from "../state.ts";
 import type { Vec } from "../vec.ts";
 import type { ChoiceList } from "../dialogue.ts";
 import type { FrameInsets } from "@questforge/schema";
-import { choiceLayout, computeLayout, hitButton, inRect, placementOf, type ChoiceBox, type InventoryButtonId, type Layout, type Placement } from "./layout.ts";
+import { layoutChoices } from "./choicebox.ts";
+import { textStyle, type Measure } from "./typography.ts";
+import { computeLayout, hitButton, inRect, placementOf, type ChoiceBox, type InventoryButtonId, type Layout, type Placement } from "./layout.ts";
 
 // Player UI input: the icon bar, inventory, settings,
 // hover labels and tap-and-hold. Pointer events arrive in scene coordinates with
@@ -29,7 +31,12 @@ export interface UiServices {
   onSettings?(s: PlayerSettings): void;
   /** The shared frame's drawn border thickness (`frameBorders`) when panels are drawn with it: the dialogue list box grows by it. */
   borders?: FrameInsets | null;
+  /** Measures text in the font that is drawn, so the choice box's prompt wraps the way it is drawn. Without one, a rough width per character. */
+  measure?: Measure;
 }
+
+/** Stands in for the canvas's text measurer when the host gives none (tests): every character is 0.6 em wide. */
+const ROUGH_MEASURE: Measure = (text, size) => text.length * size * 0.6;
 
 /** How long a notice ("Game saved.") stays up, in seconds. */
 export const NOTICE_SECONDS = 2.5;
@@ -71,6 +78,7 @@ export class PlayerUi {
   /** Where the creator put the panels (Frames > Position); null is the legacy layout. */
   readonly placement: Placement | null;
   private readonly borders: FrameInsets | null;
+  private readonly measure: Measure;
 
   constructor(
     readonly session: Session,
@@ -82,6 +90,7 @@ export class PlayerUi {
     this.settings = { ...(services?.settings ?? DEFAULT_SETTINGS) };
     this.onSettings = services?.onSettings;
     this.borders = services?.borders ?? null;
+    this.measure = services?.measure ?? ROUGH_MEASURE;
   }
 
   /** CSS px per scene px changed (resize, zoom). */
@@ -103,7 +112,18 @@ export class PlayerUi {
       this.pagedList = list;
       this.choicePage = 0;
     }
-    return choiceLayout(this.layout.unit, list.options.length, this.choicePage, this.session.game.style?.dialogueChoices !== undefined, this.placement, this.borders);
+    const { prompt } = list;
+    return layoutChoices({
+      unit: this.layout.unit,
+      count: list.options.length,
+      page: this.choicePage,
+      styled: this.session.game.style?.dialogueChoices !== undefined,
+      placement: this.placement,
+      borders: this.borders,
+      prompt: prompt ? { name: prompt.character === null ? null : this.session.speakerName(prompt.character), text: prompt.text } : null,
+      measure: this.measure,
+      size: textStyle(this.session.game.style, "", this.settings.textSize).size,
+    });
   }
 
   /** Inventory items shown in the grid, in cell order. */
