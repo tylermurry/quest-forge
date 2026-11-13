@@ -16,12 +16,17 @@ class FakeImage {
   naturalWidth = 96;
   naturalHeight = 64;
   onload: (() => void) | null = null;
-  set src(_: string) {
-    queueMicrotask(() => this.onload?.());
+  onerror: (() => void) | null = null;
+  set src(src: string) {
+    queueMicrotask(() => (unreadable.has(src) ? this.onerror : this.onload)?.());
   }
 }
 
+/** File paths whose "decoding" fails, as a damaged or renamed picture would. */
+const unreadable = new Set<string>();
+
 beforeEach(() => {
+  unreadable.clear();
   vi.stubGlobal("Image", FakeImage);
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
 });
@@ -31,11 +36,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function openIconBar() {
+/** `unreadableImages` are image IDs whose files fail to load once the workspace opens. */
+async function openIconBar(unreadableImages: string[] = []) {
   const fs = new MemoryFs();
   const project = await m1Project();
   await saveProject(fs, { ...project, saved: {}, files: [], savedFolders: [] });
   for (const i of project.assets!.data.images) await fs.writeBytes(i.path, new Uint8Array([0]));
+  for (const i of project.assets!.data.images) if (unreadableImages.includes(i.id)) unreadable.add(i.path);
   const editor = await Editor.open({ fs }, { autosave: false });
   const platform = { assetUrl: (_r: string, path: string) => path } as unknown as Platform;
   render(
@@ -89,6 +96,18 @@ describe("Icon Bar", () => {
     expect(bar(editor)?.icons).toEqual({ walk: "garden_bg", item: "palm_img" });
     editor.undo();
     expect(bar(editor)?.icons).toEqual({ walk: "garden_bg" });
+  });
+
+  it("tells the creator when a button's picture is in the library but its file can't be loaded", async () => {
+    const editor = await openIconBar(["garden_bg"]);
+    const path = editor.project.assets!.data.images.find((i) => i.id === "garden_bg")!.path;
+    await pick("Walk icon image", /garden_bg/);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toBe(`The image garden_bg couldn't be loaded from ${path}, so the built-in icon is used. Check the file, or pick another image.`);
+    expect(screen.getByRole("combobox", { name: "Walk icon image" }).getAttribute("aria-invalid")).toBe("true");
+    // A picture that loads shows no notice.
+    await pick("Look icon image", /palm_img/);
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 
   it("switches the one effect between Brighten and Darken", async () => {

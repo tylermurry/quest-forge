@@ -46,17 +46,24 @@ export function IconBar({ actions }: { actions: Actions }) {
           <p className="text-muted-foreground text-[12px]">Each picture is fitted inside its button, keeping its proportions. Import pictures in the Images library first. The Item picture shows while no inventory item is selected; once you pick up and select an item, the button shows that item.</p>
           {ICON_IDS.map((id) => {
             const imageId = bar.icons[id];
-            const missing = imageId !== undefined && !p.assets?.data.images.some((i) => i.id === imageId);
+            const asset = imageId === undefined ? undefined : p.assets?.data.images.find((i) => i.id === imageId);
+            const missing = imageId !== undefined && !asset;
+            const unreadable = asset !== undefined && images.failed(asset.id);
             return (
               <div key={id} className="flex flex-wrap items-center gap-1.5">
                 <span className="text-muted-foreground w-16 text-[12px]">{ICON_LABEL[id]}</span>
-                <Picker label={`${ICON_LABEL[id]} icon image`} value={imageId ?? ""} options={imageOptions(p)} placeholder="Built-in icon" invalid={missing} onPick={(v) => pickIcon(id, v)} />
+                <Picker label={`${ICON_LABEL[id]} icon image`} value={imageId ?? ""} options={imageOptions(p)} placeholder="Built-in icon" invalid={missing || unreadable} onPick={(v) => pickIcon(id, v)} />
                 {imageId !== undefined && (
                   <Button type="button" variant="ghost" size="sm" aria-label={`Use built-in ${ICON_LABEL[id]} icon`} className="h-7 px-2 text-[13px] font-normal" onClick={() => pickIcon(id, undefined)}>
                     Use built-in
                   </Button>
                 )}
                 {missing && <span role="alert" className="text-err text-[12px]">That image is no longer in the Images library, so the built-in icon is used.</span>}
+                {asset && unreadable && (
+                  <span role="alert" className="text-err text-[12px]">
+                    The image {asset.id} couldn&apos;t be loaded from {asset.path}, so the built-in icon is used. Check the file, or pick another image.
+                  </span>
+                )}
               </div>
             );
           })}

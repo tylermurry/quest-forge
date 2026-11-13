@@ -187,7 +187,8 @@ using. The first change you make switches to your own look, with the **Brighten*
   proportions kept, so it is never stretched. A button with no picture keeps its built-in icon, and **Use built-in**
   puts it back. Make the pictures in any art program; you don't need a sprite sheet. The **Item** picture shows
   while the player has no inventory item selected. Once they select an item, the button shows that item's own
-  picture, as it always has.
+  picture, as it always has. If a button's picture is no longer in your Images, or its file can't be loaded, a
+  message beside it says so and the button keeps its built-in icon.
 - **Hover / Active effect**: choose **Brighten** or **Darken**. The button under the mouse and the button for the
   current verb get the same effect, on the picture only: see-through parts stay see-through and the button behind
   it does not change.
