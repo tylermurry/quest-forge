@@ -97,7 +97,7 @@ music playing. Saves store exactly this. Playtest's state panel shows and edits 
 | Feature | Where | What it does | Status |
 |---|---|---|---|
 | Panels | Project Browser (left), Inspector (right), Problems (bottom), editor tabs (middle) | The four areas every task uses. | Shipped |
-| Show and hide panels | View ▸ Project Browser (Mod+1), Inspector (Mod+2), Problems (Mod+3), Hide All Panels (Ctrl+\\); title bar buttons | Toggles each panel, or all of them for a bigger canvas. | Shipped |
+| Show and hide panels | View ▸ Project Browser (Mod+1), Inspector (Mod+2), Problems (Mod+3), Hide All Panels (Mod+\\, zooming an open scene to fit); title bar buttons | Toggles each panel, or all of them for a bigger canvas. | Shipped |
 | Editor tabs | Middle area | Click a scene, item, character, dialogue or image to open it in a tab. | Shipped |
 | Save | File ▸ Save (Mod+S); title bar Save; save status | Saving is manual. The title bar shows Unsaved changes / Saving…. | Shipped |
 | Unsaved-changes guard | Back to project selector | Asks "Go back without saving?" before losing changes. | Shipped |

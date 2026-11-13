@@ -35,7 +35,7 @@ Shortcuts that are a single key, such as **P** for the Polygon Tool, don't work 
 | **Project Browser** | ⌘1 | Ctrl+1 | Shows or hides the Project Browser. |
 | **Inspector** | ⌘2 | Ctrl+2 | Shows or hides the Inspector. |
 | **Problems** | ⌘3 | Ctrl+3 | Shows or hides the Problems panel. |
-| **Hide All Panels** | ⌃\\ | Ctrl+\\ | Hides every panel but the editor tabs, or brings them back. |
+| **Hide All Panels** | ⌘\\ | Ctrl+\\ | Hides every panel but the editor tabs, or brings them back. Hiding them while a scene is open zooms the scene to fit. |
 
 ## Scene
 

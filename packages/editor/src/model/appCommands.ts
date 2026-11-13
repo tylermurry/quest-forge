@@ -32,7 +32,7 @@ export const COMMANDS = [
   { id: "view.browser", label: "Project Browser", menu: "view", shortcut: "Mod+1" },
   { id: "view.inspector", label: "Inspector", menu: "view", shortcut: "Mod+2" },
   { id: "view.dock", label: "Problems", menu: "view", shortcut: "Mod+3" },
-  { id: "view.panels", label: "Hide All Panels", menu: "view", shortcut: "Ctrl+\\", separated: true },
+  { id: "view.panels", label: "Hide All Panels", menu: "view", shortcut: "Mod+\\", separated: true },
   { id: "scene.tool.select", label: "Select / Move Tool", menu: "scene", shortcut: "V" },
   { id: "scene.tool.polygon", label: "Polygon Tool", menu: "scene", shortcut: "P" },
   { id: "scene.tool.rect", label: "Rectangle Tool", menu: "scene", shortcut: "R" },
@@ -124,8 +124,7 @@ export interface KeyPress {
 export function matchesShortcut(shortcut: string, e: KeyPress, mac: boolean): boolean {
   const parts = shortcut.split("+");
   const key = parts.pop()!.toLowerCase();
-  const want = { mod: parts.includes("Mod"), ctrl: parts.includes("Ctrl"), shift: parts.includes("Shift"), alt: parts.includes("Alt") };
-  if (want.ctrl) return e.key.toLowerCase() === key && e.ctrlKey && !e.metaKey && e.shiftKey === want.shift && e.altKey === want.alt;
+  const want = { mod: parts.includes("Mod"), shift: parts.includes("Shift"), alt: parts.includes("Alt") };
   const mod = mac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
   return e.key.toLowerCase() === key && mod === want.mod && e.shiftKey === want.shift && e.altKey === want.alt;
 }
@@ -140,7 +139,7 @@ const isFunctionKey = (shortcut: string) => /^F\d{1,2}$/.test(shortcut.split("+"
  */
 export const isPlainShortcut = (shortcut: string) => {
   const parts = shortcut.split("+");
-  return !parts.includes("Mod") && !parts.includes("Ctrl") && !isFunctionKey(shortcut);
+  return !parts.includes("Mod") && !isFunctionKey(shortcut);
 };
 
 export interface KeyOptions {
@@ -170,4 +169,4 @@ export function commandForKey(e: KeyPress, mac: boolean, inTextField: boolean, o
 
 /** Tauri accelerator form of a shortcut: `Mod+Shift+Z` → `CmdOrCtrl+Shift+Z`. */
 export const accelerator = (shortcut: string) =>
-  shortcut.replace("Mod", "CmdOrCtrl").replace(/^Ctrl\+/, "Control+").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash");
+  shortcut.replace("Mod", "CmdOrCtrl").replace(/\+=$/, "+Equal").replace(/\+-$/, "+Minus").replace(/\+\\$/, "+Backslash");

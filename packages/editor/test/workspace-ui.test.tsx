@@ -138,6 +138,21 @@ describe("workspace", () => {
     expect(within(view).queryByRole("button", { name: /^Select/ })).toBeNull();
   });
 
+  it("hiding all panels with Mod+\\ zooms the open scene to fit; showing them again leaves the zoom alone", async () => {
+    await mount();
+    fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);
+    const fit = () => within(screen.getByRole("toolbar", { name: "Zoom" })).getByRole("button", { name: "Zoom to fit" }).getAttribute("aria-pressed");
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Zoom" })).getByRole("button", { name: "Zoom in" }));
+    expect(fit()).toBe("false");
+
+    act(() => void fireEvent.keyDown(window, { key: "\\", ...mod() }));
+    expect(fit()).toBe("true");
+
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Zoom" })).getByRole("button", { name: "Zoom in" }));
+    act(() => void fireEvent.keyDown(window, { key: "\\", ...mod() }));
+    expect(fit()).toBe("false");
+  });
+
   it("deleting a referenced object asks first", async () => {
     const ed = await mount();
     fireEvent.click(screen.getByRole("treeitem", { name: "scene Garden" }).firstElementChild!);

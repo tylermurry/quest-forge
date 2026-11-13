@@ -64,13 +64,14 @@ describe("app commands", () => {
     expect(isPlainShortcut("Mod+0")).toBe(false);
   });
 
-  it("Ctrl+\\ hides all panels with the Control key on every platform", () => {
-    expect(commandForKey(key("\\", { ctrl: true }), true, false)).toBe("view.panels");
+  it("Cmd+\\ on macOS and Ctrl+\\ elsewhere hides all panels", () => {
+    expect(commandForKey(key("\\", { meta: true }), true, false)).toBe("view.panels");
     expect(commandForKey(key("\\", { ctrl: true }), false, false)).toBe("view.panels");
-    expect(commandForKey(key("\\", { meta: true }), true, false)).toBeNull();
+    // Control on macOS is not the shortcut.
+    expect(commandForKey(key("\\", { ctrl: true }), true, false)).toBeNull();
     // Not plain: it works in text fields and the native menu owns it in the app.
-    expect(isPlainShortcut("Ctrl+\\")).toBe(false);
-    expect(commandForKey(key("\\", { ctrl: true }), true, true)).toBe("view.panels");
-    expect(accelerator("Ctrl+\\")).toBe("Control+Backslash");
+    expect(isPlainShortcut("Mod+\\")).toBe(false);
+    expect(commandForKey(key("\\", { meta: true }), true, true)).toBe("view.panels");
+    expect(accelerator("Mod+\\")).toBe("CmdOrCtrl+Backslash");
   });
 });

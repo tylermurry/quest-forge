@@ -1,4 +1,4 @@
-// Hide all side panels (Ctrl+\): the first press hides the project browser,
+// Hide all side panels (Cmd+\ on macOS, Ctrl+\ elsewhere): the first press hides the project browser,
 // the inspector and the Problems dock; the next shows the ones that were showing.
 
 export type PanelName = "browser" | "inspector" | "dock";
@@ -27,7 +27,7 @@ export function togglePanels(shown: PanelsShown, saved: PanelName[] | null): Pan
 
 /**
  * What to do with the Inspector when the Game Settings tab is left. The tab hides the Inspector
- * only if it was up (`hiddenByTab`); a hide-all (Ctrl+\) done during the tab keeps it hidden,
+ * only if it was up (`hiddenByTab`); a hide-all (Mod+\) done during the tab keeps it hidden,
  * and while a game plays it comes back with the play's other panels.
  */
 export function inspectorOnLeavingGame(hiddenByTab: boolean, hideAllDuringTab: boolean, playing: boolean): "leave" | "expand" | "expand after play" | "stay hidden" {

@@ -120,7 +120,8 @@ export function Workspace({ root, editor, onClose }: Props) {
     setTick((t) => t + 1);
   };
   const shown = (p: React.RefObject<PanelImperativeHandle | null>) => !(p.current?.isCollapsed() ?? false);
-  // Ctrl+\ hides every panel, then brings back the ones that were up.
+  // Mod+\ hides every panel, then brings back the ones that were up. Hiding them on a scene zooms it to fit the
+  // larger canvas.
   const hiddenPanels = useRef<PanelName[] | null>(null);
   const hiddenAllInGame = useRef(false);
   const toggleAll = () => {
@@ -138,10 +139,12 @@ export function Workspace({ root, editor, onClose }: Props) {
     }
     setTick((t) => t + 1);
     registry.changed();
+    // Only an open scene editor registers Zoom to Fit, so this does nothing on other tabs or while a game plays.
+    if (next.saved) registry.run("scene.zoomFit");
   };
 
   // While a game runs, the playtest area replaces the scene editor and the browser and
-  // inspector are hidden (as with Ctrl+\\); stopping brings back the ones that were up.
+  // inspector are hidden (as with Mod+\\); stopping brings back the ones that were up.
   const playing = useSyncExternalStore(playtest.subscribe, () => playtest.playing);
   const hiddenForPlay = useRef<("browser" | "inspector")[] | null>(null);
   useEffect(() => {

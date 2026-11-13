@@ -36,8 +36,8 @@ To make room, hide panels you don't need:
 
 - **View ▸ Project Browser** (⌘1 / Ctrl+1), **View ▸ Inspector** (⌘2 / Ctrl+2) and **View ▸ Problems**
   (⌘3 / Ctrl+3) show or hide each panel.
-- **View ▸ Hide All Panels** (Ctrl+\\) hides everything except the editor tabs. Choose it again to bring
-  them back.
+- **View ▸ Hide All Panels** (⌘\\ / Ctrl+\\) hides everything except the editor tabs, and zooms an open scene to fit
+  the bigger space. Choose it again to bring them back.
 
 ## Save your work
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { inspectorOnLeavingGame, togglePanels } from "../src/model/panels.ts";
 
-// Ctrl+\ hides every side panel, then brings back the ones that were showing.
+// Mod+\ hides every side panel, then brings back the ones that were showing.
 
 const all = { browser: true, inspector: true, dock: true };
 const none = { browser: false, inspector: false, dock: false };
